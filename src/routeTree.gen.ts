@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
 import { Route as AuthenticatedDocumentsNewRouteImport } from './routes/_authenticated/documents/new'
+import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -30,9 +33,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDocumentsIndexRoute =
@@ -47,18 +60,30 @@ const AuthenticatedDocumentsNewRoute =
     path: '/documents/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDocumentsIdRoute =
+  AuthenticatedDocumentsIdRouteImport.update({
+    id: '/documents/$id',
+    path: '/documents/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
 }
@@ -67,21 +92,43 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/_authenticated/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/documents/new' | '/documents/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/dashboard'
+    | '/tasks'
+    | '/documents/$id'
+    | '/documents/new'
+    | '/documents/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/documents/new' | '/documents'
+  to:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/dashboard'
+    | '/tasks'
+    | '/documents/$id'
+    | '/documents/new'
+    | '/documents'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/approvals'
     | '/_authenticated/dashboard'
+    | '/_authenticated/tasks'
+    | '/_authenticated/documents/$id'
     | '/_authenticated/documents/new'
     | '/_authenticated/documents/'
   fileRoutesById: FileRoutesById
@@ -115,11 +162,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/approvals': {
+      id: '/_authenticated/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/documents/': {
@@ -136,17 +197,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/documents/$id': {
+      id: '/_authenticated/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
   AuthenticatedDocumentsNewRoute: typeof AuthenticatedDocumentsNewRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
   AuthenticatedDocumentsNewRoute: AuthenticatedDocumentsNewRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
 }
