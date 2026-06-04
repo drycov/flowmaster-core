@@ -44,7 +44,13 @@ export const getDocument = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const [doc, versions, sigs, comments, runs, events] = await Promise.all([
-      supabase.from("documents").select("*").eq("id", data.id).single(),
+      supabase
+        .from("documents")
+        .select(
+          "id, reg_number, doc_type, status, title_ru, title_kk, summary, body, nomenclature_id, template_id, current_version, created_by, assigned_to, department_id, due_at, sla_status, archived_at, legal_hold, created_at, updated_at",
+        )
+        .eq("id", data.id)
+        .single(),
       supabase
         .from("document_versions")
         .select("*")
