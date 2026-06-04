@@ -9,38 +9,291 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedNomenclatureRouteImport } from './routes/_authenticated/nomenclature'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
+import { Route as AuthenticatedArchiveRouteImport } from './routes/_authenticated/archive'
+import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
+import { Route as AuthenticatedWorkflowsIndexRouteImport } from './routes/_authenticated/workflows/index'
+import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates/index'
+import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
+import { Route as AuthenticatedWorkflowsIdRouteImport } from './routes/_authenticated/workflows/$id'
+import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenticated/templates/$id'
+import { Route as AuthenticatedDocumentsNewRouteImport } from './routes/_authenticated/documents/new'
+import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNomenclatureRoute =
+  AuthenticatedNomenclatureRouteImport.update({
+    id: '/nomenclature',
+    path: '/nomenclature',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedArchiveRoute = AuthenticatedArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWorkflowsIndexRoute =
+  AuthenticatedWorkflowsIndexRouteImport.update({
+    id: '/workflows/',
+    path: '/workflows/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTemplatesIndexRoute =
+  AuthenticatedTemplatesIndexRouteImport.update({
+    id: '/templates/',
+    path: '/templates/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentsIndexRoute =
+  AuthenticatedDocumentsIndexRouteImport.update({
+    id: '/documents/',
+    path: '/documents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWorkflowsIdRoute =
+  AuthenticatedWorkflowsIdRouteImport.update({
+    id: '/workflows/$id',
+    path: '/workflows/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTemplatesIdRoute =
+  AuthenticatedTemplatesIdRouteImport.update({
+    id: '/templates/$id',
+    path: '/templates/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentsNewRoute =
+  AuthenticatedDocumentsNewRouteImport.update({
+    id: '/documents/new',
+    path: '/documents/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentsIdRoute =
+  AuthenticatedDocumentsIdRouteImport.update({
+    id: '/documents/$id',
+    path: '/documents/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminDepartmentsRoute =
+  AuthenticatedAdminDepartmentsRouteImport.update({
+    id: '/admin/departments',
+    path: '/admin/departments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
+  '/archive': typeof AuthenticatedArchiveRoute
+  '/audit': typeof AuthenticatedAuditRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/nomenclature': typeof AuthenticatedNomenclatureRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
+  '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/templates/$id': typeof AuthenticatedTemplatesIdRoute
+  '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/templates/': typeof AuthenticatedTemplatesIndexRoute
+  '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
+  '/archive': typeof AuthenticatedArchiveRoute
+  '/audit': typeof AuthenticatedAuditRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/nomenclature': typeof AuthenticatedNomenclatureRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/documents/$id': typeof AuthenticatedDocumentsIdRoute
+  '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/templates/$id': typeof AuthenticatedTemplatesIdRoute
+  '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/documents': typeof AuthenticatedDocumentsIndexRoute
+  '/templates': typeof AuthenticatedTemplatesIndexRoute
+  '/workflows': typeof AuthenticatedWorkflowsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/archive': typeof AuthenticatedArchiveRoute
+  '/_authenticated/audit': typeof AuthenticatedAuditRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/nomenclature': typeof AuthenticatedNomenclatureRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
+  '/_authenticated/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/_authenticated/templates/$id': typeof AuthenticatedTemplatesIdRoute
+  '/_authenticated/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
+  '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/archive'
+    | '/audit'
+    | '/dashboard'
+    | '/nomenclature'
+    | '/notifications'
+    | '/search'
+    | '/tasks'
+    | '/admin/departments'
+    | '/admin/users'
+    | '/documents/$id'
+    | '/documents/new'
+    | '/templates/$id'
+    | '/workflows/$id'
+    | '/documents/'
+    | '/templates/'
+    | '/workflows/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/approvals'
+    | '/archive'
+    | '/audit'
+    | '/dashboard'
+    | '/nomenclature'
+    | '/notifications'
+    | '/search'
+    | '/tasks'
+    | '/admin/departments'
+    | '/admin/users'
+    | '/documents/$id'
+    | '/documents/new'
+    | '/templates/$id'
+    | '/workflows/$id'
+    | '/documents'
+    | '/templates'
+    | '/workflows'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/approvals'
+    | '/_authenticated/archive'
+    | '/_authenticated/audit'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/nomenclature'
+    | '/_authenticated/notifications'
+    | '/_authenticated/search'
+    | '/_authenticated/tasks'
+    | '/_authenticated/admin/departments'
+    | '/_authenticated/admin/users'
+    | '/_authenticated/documents/$id'
+    | '/_authenticated/documents/new'
+    | '/_authenticated/templates/$id'
+    | '/_authenticated/workflows/$id'
+    | '/_authenticated/documents/'
+    | '/_authenticated/templates/'
+    | '/_authenticated/workflows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +301,176 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/nomenclature': {
+      id: '/_authenticated/nomenclature'
+      path: '/nomenclature'
+      fullPath: '/nomenclature'
+      preLoaderRoute: typeof AuthenticatedNomenclatureRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit': {
+      id: '/_authenticated/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthenticatedAuditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/archive': {
+      id: '/_authenticated/archive'
+      path: '/archive'
+      fullPath: '/archive'
+      preLoaderRoute: typeof AuthenticatedArchiveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/approvals': {
+      id: '/_authenticated/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workflows/': {
+      id: '/_authenticated/workflows/'
+      path: '/workflows'
+      fullPath: '/workflows/'
+      preLoaderRoute: typeof AuthenticatedWorkflowsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/templates/': {
+      id: '/_authenticated/templates/'
+      path: '/templates'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/': {
+      id: '/_authenticated/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workflows/$id': {
+      id: '/_authenticated/workflows/$id'
+      path: '/workflows/$id'
+      fullPath: '/workflows/$id'
+      preLoaderRoute: typeof AuthenticatedWorkflowsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/templates/$id': {
+      id: '/_authenticated/templates/$id'
+      path: '/templates/$id'
+      fullPath: '/templates/$id'
+      preLoaderRoute: typeof AuthenticatedTemplatesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/new': {
+      id: '/_authenticated/documents/new'
+      path: '/documents/new'
+      fullPath: '/documents/new'
+      preLoaderRoute: typeof AuthenticatedDocumentsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/$id': {
+      id: '/_authenticated/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/departments': {
+      id: '/_authenticated/admin/departments'
+      path: '/admin/departments'
+      fullPath: '/admin/departments'
+      preLoaderRoute: typeof AuthenticatedAdminDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedArchiveRoute: typeof AuthenticatedArchiveRoute
+  AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedNomenclatureRoute: typeof AuthenticatedNomenclatureRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
+  AuthenticatedDocumentsNewRoute: typeof AuthenticatedDocumentsNewRoute
+  AuthenticatedTemplatesIdRoute: typeof AuthenticatedTemplatesIdRoute
+  AuthenticatedWorkflowsIdRoute: typeof AuthenticatedWorkflowsIdRoute
+  AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
+  AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
+  AuthenticatedWorkflowsIndexRoute: typeof AuthenticatedWorkflowsIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedArchiveRoute: AuthenticatedArchiveRoute,
+  AuthenticatedAuditRoute: AuthenticatedAuditRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedNomenclatureRoute: AuthenticatedNomenclatureRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
+  AuthenticatedDocumentsNewRoute: AuthenticatedDocumentsNewRoute,
+  AuthenticatedTemplatesIdRoute: AuthenticatedTemplatesIdRoute,
+  AuthenticatedWorkflowsIdRoute: AuthenticatedWorkflowsIdRoute,
+  AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
+  AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
+  AuthenticatedWorkflowsIndexRoute: AuthenticatedWorkflowsIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
