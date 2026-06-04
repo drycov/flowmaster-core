@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNomenclatureRouteImport } from './routes/_authenticated/nomenclature'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -52,6 +53,11 @@ const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
 const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/nomenclature'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/tasks'
     | '/admin/departments'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/nomenclature'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/tasks'
     | '/admin/departments'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/nomenclature'
     | '/_authenticated/notifications'
+    | '/_authenticated/onboarding'
     | '/_authenticated/search'
     | '/_authenticated/tasks'
     | '/_authenticated/admin/departments'
@@ -313,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notifications': {
@@ -430,6 +449,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNomenclatureRoute: typeof AuthenticatedNomenclatureRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
@@ -450,6 +470,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNomenclatureRoute: AuthenticatedNomenclatureRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
