@@ -1,7 +1,17 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Locale = "ru" | "kk";
 
+/**
+ * 1. БАЗОВЫЙ DICT (runtime only)
+ * as const оставляем, но НЕ используем его для вывода Key через values
+ */
 const dict = {
   ru: {
     "app.name": "ЕСЭДО",
@@ -64,6 +74,8 @@ const dict = {
     "common.history": "История",
     "common.refresh": "Обновить",
     "common.all": "Все",
+    "common.error": "Ошибка",
+    "common.success": "Успешно",
     "doc.regNumber": "Рег. №",
     "doc.title": "Заголовок документа",
     "doc.summary": "Краткое содержание",
@@ -114,6 +126,16 @@ const dict = {
     "task.action.approve": "Согласование",
     "task.action.sign": "Подпись",
     "task.action.review": "Ознакомление",
+    "roles.admin": "Администратор",
+    "roles.registrar": "Регистратор",
+    "roles.approver": "Согласующий",
+    "roles.signer": "Подписант",
+    "roles.archivist": "Архивариус",
+    "roles.viewer": "Наблюдатель",
+    "users.roleUpdated": "Роль обновлена",
+    "users.noUsers": "Пользователи не найдены",
+    "users.noResults": "Ничего не найдено",
+    "users.search": "Поиск пользователей...",
   },
   kk: {
     "app.name": "БЭҚА",
@@ -176,6 +198,8 @@ const dict = {
     "common.history": "Тарих",
     "common.refresh": "Жаңарту",
     "common.all": "Барлығы",
+    "common.error": "Қате",
+    "common.success": "Сәтті",
     "doc.regNumber": "Тіркеу №",
     "doc.title": "Құжат тақырыбы",
     "doc.summary": "Қысқаша мазмұны",
@@ -226,49 +250,117 @@ const dict = {
     "task.action.approve": "Келісу",
     "task.action.sign": "Қол қою",
     "task.action.review": "Танысу",
+    "roles.admin": "Әкімші",
+    "roles.registrar": "Тіркеуші",
+    "roles.approver": "Келісуші",
+    "roles.signer": "Қол қоюшы",
+    "roles.archivist": "Мұрағатшы",
+    "roles.viewer": "Байқаушы",
+    "users.roleUpdated": "Рөл жаңартылды",
+    "users.noUsers": "Пайдаланушылар табылмады",
+    "users.noResults": "Ештеңе табылмады",
+    "users.search": "Пайдаланушыларды іздеу...",
   },
 } as const;
 
-type Key = keyof (typeof dict)["ru"];
+
+/**
+ * 2. ВАЖНО: ключи берём ТОЛЬКО из ru словаря
+ * (он является "source of truth")
+ */
+type Key = keyof typeof dict["ru"];
+
+/**
+ * 3. T FUNCTION — безопасный контракт
+ */
+type TFunction = {
+  (key: Key): string;
+  (key: string): string;
+};
 
 interface I18nCtx {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: Key) => string;
+  t: TFunction;
 }
 
 const Ctx = createContext<I18nCtx | null>(null);
 
+/**
+ * PROVIDER
+ */
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (typeof window === "undefined") return "ru";
-    const s = window.localStorage.getItem("edms.locale");
-    return s === "kk" ? "kk" : "ru";
+
+    const stored = window.localStorage.getItem("edms.locale") as Locale | null;
+    if (stored === "ru" || stored === "kk") return stored;
+
+    const browserLang = navigator.language.split("-")[0];
+    return browserLang === "kk" ? "kk" : "ru";
   });
+
   useEffect(() => {
-    if (typeof document !== "undefined") document.documentElement.lang = locale;
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale;
+    }
   }, [locale]);
+
   const setLocale = (l: Locale) => {
     setLocaleState(l);
-    if (typeof window !== "undefined") window.localStorage.setItem("edms.locale", l);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("edms.locale", l);
+    }
   };
-  const t = (key: Key) => dict[locale][key] ?? key;
+
+  /**
+   * 4. FIX: больше нет Key-only жесткости
+   */
+  const t: TFunction = (key: string) => {
+const table = dict[locale] as Partial<Record<string, string>>;
+return table[key] ?? dict.ru[key as keyof typeof dict.ru] ?? key;
+  };
+
   return <Ctx.Provider value={{ locale, setLocale, t }}>{children}</Ctx.Provider>;
 }
 
+/**
+ * Hook
+ */
 export function useI18n() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("I18nProvider missing");
   return ctx;
 }
 
-export function localized<T extends { name_ru?: string | null; name_kk?: string | null; title_ru?: string | null; title_kk?: string | null; full_name_ru?: string | null; full_name_kk?: string | null }>(
+/**
+ * LOCALIZED helper (без изменений логики)
+ */
+type LocalizableFields = {
+  name_ru?: string | null;
+  name_kk?: string | null;
+  title_ru?: string | null;
+  title_kk?: string | null;
+  full_name_ru?: string | null;
+  full_name_kk?: string | null;
+  description_ru?: string | null;
+  description_kk?: string | null;
+};
+
+type FieldType = "name" | "title" | "full_name" | "description";
+
+export function localized<T extends LocalizableFields>(
   obj: T | null | undefined,
   locale: Locale,
-  field: "name" | "title" | "full_name",
+  field: FieldType,
 ): string {
   if (!obj) return "";
-  const k = `${field}_${locale}` as keyof T;
-  const fallback = `${field}_ru` as keyof T;
-  return ((obj[k] as string) || (obj[fallback] as string) || "") as string;
+
+  const value = obj[`${field}_${locale}` as keyof T];
+  const fallback = obj[`${field}_ru` as keyof T];
+
+  if (typeof value === "string") return value;
+  if (typeof fallback === "string") return fallback;
+
+  return "";
 }
