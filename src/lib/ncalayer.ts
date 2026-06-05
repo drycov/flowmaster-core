@@ -46,6 +46,40 @@ export interface CertificateInfo {
   cn?: string;
 }
 
+
+// =========================================================
+// ДОПОЛНИТЕЛЬНЫЕ ТИПЫ
+// =========================================================
+
+export interface SignatureRecord {
+  type: "CMS" | "XML" | "AUTH";
+  signedAt: string;        // ISO 8601
+  raw: string;             // CMS/XML/Auth signature (base64)
+  
+  signer?: {
+    iin?: string;
+    bin?: string;
+    cn?: string;
+  };
+
+  certificate?: {
+    subject?: string;
+    issuer?: string;
+    validFrom?: string;
+    validTo?: string;
+    serial?: string;
+    fingerprint?: string;   // SHA-256 thumbprint
+  };
+}
+
+export interface FullSignResult extends SignResult {
+  certInfo: CertificateInfo;
+  timestamp: string;
+  fingerprint: string;
+}
+
+
+
 /* =========================================================
    HELPERS
    ========================================================= */
@@ -274,6 +308,113 @@ export async function auth(
   if (!signature) throw new NCALayerError("auth signature not found");
 
   return { signature };
+}
+
+/* =========================================================
+   РАСШИРЕННЫЕ API (сбор полных данных)
+   ========================================================= */
+
+/**
+ * Вычисляет SHA-256 fingerprint сертификата
+ */
+async function getCertFingerprint(certBase64: string): Promise<string> {
+  // Декодируем Base64 DER сертификата
+  const derString = atob(certBase64);
+  const derBytes = new Uint8Array(derString.length);
+  for (let i = 0; i < derString.length; i++) {
+    derBytes[i] = derString.charCodeAt(i);
+  }
+  
+  // SHA-256 хеш
+  const hashBuffer = await crypto.subtle.digest("SHA-256", derBytes);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Получает активный сертификат из NCALayer
+ * (без подписи, просто текущий выбранный)
+ */
+export async function getActiveCertificate(
+  signal?: AbortSignal
+): Promise<{ certBase64: string; info: CertificateInfo }> {
+  const res = await connection.request<any>(
+    {
+      module: "kz.gov.pki.knca.commonUtils",
+      method: "getActiveCertificate",
+      args: [],
+    },
+    signal
+  );
+
+  const certBase64 = res?.certificate || res?.result;
+  if (!certBase64) throw new NCALayerError("no active certificate found");
+
+  const info = await getCertificateInfo(certBase64, signal);
+  
+  return { certBase64, info };
+}
+
+/**
+ * Подпись CMS с полным сбором данных о подписанте
+ */
+export async function signCMSFull(
+  dataB64: string,
+  signal?: AbortSignal
+): Promise<FullSignResult> {
+  // 1. Сначала получаем активный сертификат (кто будет подписывать)
+  const activeCert = await getActiveCertificate(signal);
+  
+  // 2. Выполняем подпись
+  const signature = await signCMS(dataB64, signal);
+  
+  // 3. Формируем полную запись
+  const fingerprint = await getCertFingerprint(activeCert.certBase64);
+  
+  return {
+    signature: signature.signature,
+    certInfo: activeCert.info,
+    timestamp: new Date().toISOString(),
+    fingerprint,
+  };
+}
+
+/**
+ * Подпись XML с полными данными
+ */
+export async function signXMLFull(
+  xml: string,
+  signal?: AbortSignal
+): Promise<FullSignResult> {
+  const activeCert = await getActiveCertificate(signal);
+  const signature = await signXML(xml, signal);
+  const fingerprint = await getCertFingerprint(activeCert.certBase64);
+  
+  return {
+    signature: signature.signature,
+    certInfo: activeCert.info,
+    timestamp: new Date().toISOString(),
+    fingerprint,
+  };
+}
+
+/**
+ * Аутентификация с полными данными
+ */
+export async function authFull(
+  dataB64: string,
+  signal?: AbortSignal
+): Promise<FullSignResult> {
+  const activeCert = await getActiveCertificate(signal);
+  const signature = await auth(dataB64, signal);
+  const fingerprint = await getCertFingerprint(activeCert.certBase64);
+  
+  return {
+    signature: signature.signature,
+    certInfo: activeCert.info,
+    timestamp: new Date().toISOString(),
+    fingerprint,
+  };
 }
 
 /* =========================================================

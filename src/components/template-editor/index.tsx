@@ -102,36 +102,26 @@ function TemplateEditor() {
         }
       />
       
-      <PageBody className="h-[calc(100vh-8rem)]">
-        <div className="grid lg:grid-cols-2 gap-4 h-full">
-          {/* Левая колонка - метаданные (30%) и поля (70%) */}
-          <div className="flex flex-col h-full gap-4">
-            <div className="flex-shrink-0" style={{ flexBasis: "30%" }}>
-              <MetadataCard
-                nameRu={nameRu}
-                nameKk={nameKk}
-                category={category}
-                onNameRuChange={setNameRu}
-                onNameKkChange={setNameKk}
-                onCategoryChange={setCategory}
-              />
-            </div>
-            
-            <div className="flex-1 min-h-0">
-              <FieldsCard
-                fields={fields}
-                onAddField={addField}
-                onUpdateField={updateField}
-                onDeleteField={deleteField}
-              />
-            </div>
-          </div>
+      <PageBody className="grid lg:grid-cols-2 gap-4 max-w-6xl">
+        <div className="space-y-4">
+          <MetadataCard
+            nameRu={nameRu}
+            nameKk={nameKk}
+            category={category}
+            onNameRuChange={setNameRu}
+            onNameKkChange={setNameKk}
+            onCategoryChange={setCategory}
+          />
           
-          {/* Правая колонка - тело шаблона */}
-          <div className="h-full">
-            <BodyTemplateCard body={body} onBodyChange={setBody} />
-          </div>
+          <BodyTemplateCard body={body} onBodyChange={setBody} />
         </div>
+        
+        <FieldsCard
+          fields={fields}
+          onAddField={addField}
+          onUpdateField={updateField}
+          onDeleteField={deleteField}
+        />
       </PageBody>
     </>
   );

@@ -1,0 +1,59 @@
+// src/components/document-new/types.ts
+import type { Json } from "@/integrations/supabase/types";
+
+export interface TemplateField {
+  key: string;
+  label_ru: string;
+  label_kk: string;
+  type: "text" | "textarea" | "number" | "date";
+  required?: boolean;
+}
+
+export interface TemplateSchema {
+  fields?: TemplateField[];
+}
+
+// Используем Json из Supabase для совместимости с API
+export interface Template {
+  id: string;
+  name_ru: string;
+  name_kk: string;
+  status: string;
+  category: string;
+  description: string | null;
+  file_format: string;
+  file_path: string | null;
+  version: number;
+  schema: Json; // Используем Json вместо TemplateSchema
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+}
+
+export interface Nomenclature {
+  id: string;
+  code: string;
+  title_ru: string;
+  title_kk: string;
+}
+
+export interface DocumentFormValues {
+  title_ru: string;
+  title_kk: string;
+  summary: string;
+  body: string;
+  nomenclature_id: string;
+  [key: string]: string;
+}
+
+// Вспомогательная функция для получения полей из schema
+export function getTemplateFields(template: Template | undefined): TemplateField[] {
+  if (!template?.schema) return [];
+  
+  const schema = template.schema as any;
+  if (schema && Array.isArray(schema.fields)) {
+    return schema.fields;
+  }
+  
+  return [];
+}
