@@ -87,7 +87,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const adminItems = [
     { to: "/audit", icon: ShieldCheck, label: t("nav.audit") },
     { to: "/admin/users", icon: Users, label: t("nav.users") },
+    { to: "/admin/roles", icon: ShieldCheck, label: t("nav.roles") },
+    { to: "/admin/organization", icon: Building2, label: t("nav.organization") },
     { to: "/admin/departments", icon: Building2, label: t("nav.departments") },
+    { to: "/admin/positions", icon: Settings, label: t("nav.positions") },
   ] as const;
 
   const profile = me?.profile as { full_name_ru?: string | null; full_name_kk?: string | null; email?: string } | undefined;
