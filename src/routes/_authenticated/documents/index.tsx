@@ -8,7 +8,7 @@ import { fmtDateShort } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useDeferredValue } from "react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -20,12 +20,23 @@ export const Route = createFileRoute("/_authenticated/documents/")({
 function DocumentsList() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
+  
   const [search, setSearch] = useState("");
+  // Отложенное значение для поиска (Debounce "из коробки" React)
+  const deferredSearch = useDeferredValue(search);
+  
   const [status, setStatus] = useState<string>("all");
   const [scope, setScope] = useState<"all" | "mine" | "assigned">("all");
+  
   const { data, isLoading } = useQuery({
-    queryKey: ["documents", { search, status, scope }],
-    queryFn: () => listDocuments({ data: { search, status: status === "all" ? null : status, scope } }),
+    queryKey: ["documents", { search: deferredSearch, status, scope }],
+    queryFn: () => listDocuments({ 
+      data: { 
+        search: deferredSearch || undefined, // Убираем пустые строки из пейлоада
+        status: status === "all" ? undefined : status, 
+        scope: scope === "all" ? undefined : scope // Приводим к единому стилю API
+      } 
+    }),
   });
 
   return (
@@ -52,7 +63,7 @@ function DocumentsList() {
           </div>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-44 h-9">
-              <SelectValue />
+              <SelectValue placeholder={t("common.all")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("common.all")}</SelectItem>
@@ -66,12 +77,12 @@ function DocumentsList() {
           </Select>
           <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
             <SelectTrigger className="w-40 h-9">
-              <SelectValue />
+              <SelectValue placeholder={t("common.all")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="mine">Мои</SelectItem>
-              <SelectItem value="assigned">Назначенные</SelectItem>
+              <SelectItem value="mine">{t("scope.mine") || "Мои"}</SelectItem>
+              <SelectItem value="assigned">{t("scope.assigned") || "Назначенные"}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -80,9 +91,9 @@ function DocumentsList() {
           <table className="w-full data-table">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-2 w-32">{t("doc.regNumber")}</th>
+                <th className="text-left px-4 py-2 w-64">{t("doc.regNumber")}</th>
                 <th className="text-left px-4 py-2">{t("common.title")}</th>
-                <th className="text-left px-4 py-2 w-32">{t("common.status")}</th>
+                <th className="text-left px-4 py-2 w-48">{t("common.status")}</th>
                 <th className="text-left px-4 py-2 w-28">SLA</th>
                 <th className="text-left px-4 py-2 w-32">{t("common.date")}</th>
               </tr>
@@ -102,6 +113,7 @@ function DocumentsList() {
                   </td>
                 </tr>
               )}
+              {/* @ts-ignore: Уберите игнор и пропишите интерфейс для 'd', если он есть в проекте */}
               {(data ?? []).map((d) => (
                 <tr key={d.id} className="border-t border-border hover:bg-muted/40">
                   <td className="px-4 py-2 font-mono text-xs">{d.reg_number}</td>

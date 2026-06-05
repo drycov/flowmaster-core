@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getOrganization, updateOrganization } from "@/lib/api/org.functions";
 import { listUsers } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useI18n, localized } from "@/lib/i18n";
-import { Loader2, Save, Building2 } from "lucide-react";
+import { Loader2, Save, Building2, RefreshCw, Brain, Contact2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/organization")({
@@ -37,50 +37,95 @@ type OrgForm = {
 function OrganizationPage() {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["org"], queryFn: () => getOrganization() });
-  const { data: users } = useQuery({ queryKey: ["users"], queryFn: () => listUsers() });
-  const [form, setForm] = useState<OrgForm | null>(null);
 
+  const { data: org, isLoading: orgLoading } = useQuery({
+    queryKey: ["org"],
+    queryFn: getOrganization,
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: listUsers,
+  });
+
+  const [form, setForm] = useState<OrgForm | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Initialize form
   useEffect(() => {
-    if (data && !form) {
+    if (org && !form) {
       setForm({
-        id: data.id,
-        name_ru: data.name_ru ?? "",
-        name_kk: data.name_kk ?? "",
-        short_name_ru: data.short_name_ru ?? "",
-        short_name_kk: data.short_name_kk ?? "",
-        bin: data.bin ?? "",
-        legal_address_ru: data.legal_address_ru ?? "",
-        legal_address_kk: data.legal_address_kk ?? "",
-        phone: data.phone ?? "",
-        email: data.email ?? "",
-        website: data.website ?? "",
-        head_user_id: data.head_user_id ?? null,
-        logo_url: data.logo_url ?? "",
-        reg_number_prefix: data.reg_number_prefix ?? "DOC",
+        id: org.id,
+        name_ru: org.name_ru ?? "",
+        name_kk: org.name_kk ?? "",
+        short_name_ru: org.short_name_ru ?? "",
+        short_name_kk: org.short_name_kk ?? "",
+        bin: org.bin ?? "",
+        legal_address_ru: org.legal_address_ru ?? "",
+        legal_address_kk: org.legal_address_kk ?? "",
+        phone: org.phone ?? "",
+        email: org.email ?? "",
+        website: org.website ?? "",
+        head_user_id: org.head_user_id ?? null,
+        logo_url: org.logo_url ?? "",
+        reg_number_prefix: org.reg_number_prefix ?? "DOC",
       });
     }
-  }, [data, form]);
+  }, [org, form]);
 
-  const save = useMutation({
-    mutationFn: () => updateOrganization({ data: form! }),
+  const saveMutation = useMutation({
+    mutationFn: (data: OrgForm) => updateOrganization({ data }),
     onSuccess: () => {
-      toast.success(t("common.success"));
+      toast.success(t("common.success") || "Сохранено успешно");
       qc.invalidateQueries({ queryKey: ["org"] });
+      setIsDirty(false);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
-  if (isLoading || !form) {
+  const updateField = useCallback(<K extends keyof OrgForm>(key: K, value: OrgForm[K]) => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const newForm = { ...prev, [key]: value };
+      setIsDirty(true);
+      return newForm;
+    });
+  }, []);
+
+  const resetForm = () => {
+    if (org) {
+      setForm({
+        id: org.id,
+        name_ru: org.name_ru ?? "",
+        name_kk: org.name_kk ?? "",
+        short_name_ru: org.short_name_ru ?? "",
+        short_name_kk: org.short_name_kk ?? "",
+        bin: org.bin ?? "",
+        legal_address_ru: org.legal_address_ru ?? "",
+        legal_address_kk: org.legal_address_kk ?? "",
+        phone: org.phone ?? "",
+        email: org.email ?? "",
+        website: org.website ?? "",
+        head_user_id: org.head_user_id ?? null,
+        logo_url: org.logo_url ?? "",
+        reg_number_prefix: org.reg_number_prefix ?? "DOC",
+      });
+      setIsDirty(false);
+    }
+  };
+
+  if (orgLoading || !form) {
     return (
       <>
         <PageHeader title={t("nav.organization")} />
-        <PageBody><div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div></PageBody>
+        <PageBody>
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        </PageBody>
       </>
     );
   }
-
-  const set = <K extends keyof OrgForm>(k: K, v: OrgForm[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   return (
     <>
@@ -88,83 +133,170 @@ function OrganizationPage() {
         title={t("nav.organization")}
         description={t("org.description")}
         actions={
-          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-            {t("common.save")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {isDirty && (
+              <Button variant="outline" size="sm" onClick={resetForm}>
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Сбросить
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => saveMutation.mutate(form)}
+              disabled={saveMutation.isPending || !isDirty}
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-1" />
+              )}
+              {t("common.save")}
+            </Button>
+          </div>
         }
       />
+
       <PageBody>
-        <div className="max-w-4xl space-y-6">
-          <Section title={t("org.identity")} icon={<Building2 className="w-4 h-4" />}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={`${t("org.fullName")} (RU)`}>
-                <Input value={form.name_ru} onChange={(e) => set("name_ru", e.target.value)} />
-              </Field>
-              <Field label={`${t("org.fullName")} (KK)`}>
-                <Input value={form.name_kk} onChange={(e) => set("name_kk", e.target.value)} />
-              </Field>
-              <Field label={`${t("org.shortName")} (RU)`}>
-                <Input value={form.short_name_ru} onChange={(e) => set("short_name_ru", e.target.value)} />
-              </Field>
-              <Field label={`${t("org.shortName")} (KK)`}>
-                <Input value={form.short_name_kk} onChange={(e) => set("short_name_kk", e.target.value)} />
-              </Field>
-              <Field label={t("org.bin")}>
-                <Input value={form.bin} onChange={(e) => set("bin", e.target.value)} maxLength={32} />
-              </Field>
-              <Field label={t("org.regPrefix")}>
-                <Input value={form.reg_number_prefix} onChange={(e) => set("reg_number_prefix", e.target.value)} maxLength={32} />
-              </Field>
-            </div>
-          </Section>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-          <Section title={t("org.contacts")}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={t("org.phone")}><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
-              <Field label={t("org.email")}><Input value={form.email} onChange={(e) => set("email", e.target.value)} /></Field>
-              <Field label={t("org.website")}><Input value={form.website} onChange={(e) => set("website", e.target.value)} /></Field>
-              <Field label={t("org.logoUrl")}><Input value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} /></Field>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <Field label={`${t("org.legalAddress")} (RU)`}>
-                <Textarea rows={3} value={form.legal_address_ru} onChange={(e) => set("legal_address_ru", e.target.value)} />
-              </Field>
-              <Field label={`${t("org.legalAddress")} (KK)`}>
-                <Textarea rows={3} value={form.legal_address_kk} onChange={(e) => set("legal_address_kk", e.target.value)} />
-              </Field>
-            </div>
-          </Section>
+          <div className="space-y-6">
 
-          <Section title={t("org.management")}>
-            <Field label={t("org.head")}>
-              <Select value={form.head_user_id ?? "__none"} onValueChange={(v) => set("head_user_id", v === "__none" ? null : v)}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">—</SelectItem>
-                  {(users ?? []).map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {localized(u, locale, "full_name") || u.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </Section>
+            {/* Identity Section */}
+            <Section title={t("org.identity")} icon={<Building2 className="w-4 h-4" />}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label={`${t("org.fullName")} (RU)`}>
+                  <Input
+                    value={form.name_ru}
+                    onChange={(e) => updateField("name_ru", e.target.value)}
+                  />
+                </Field>
+                <Field label={`${t("org.fullName")} (KK)`}>
+                  <Input
+                    value={form.name_kk}
+                    onChange={(e) => updateField("name_kk", e.target.value)}
+                  />
+                </Field>
+
+                <Field label={`${t("org.shortName")} (RU)`}>
+                  <Input
+                    value={form.short_name_ru}
+                    onChange={(e) => updateField("short_name_ru", e.target.value)}
+                  />
+                </Field>
+                <Field label={`${t("org.shortName")} (KK)`}>
+                  <Input
+                    value={form.short_name_kk}
+                    onChange={(e) => updateField("short_name_kk", e.target.value)}
+                  />
+                </Field>
+
+                <Field label={t("org.bin")}>
+                  <Input
+                    value={form.bin}
+                    onChange={(e) => updateField("bin", e.target.value)}
+                    maxLength={12}
+                    placeholder="123456789012"
+                  />
+                </Field>
+
+                <Field label={t("org.regPrefix")}>
+                  <Input
+                    value={form.reg_number_prefix}
+                    onChange={(e) => updateField("reg_number_prefix", e.target.value)}
+                    maxLength={10}
+                    placeholder="DOC"
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {/* Contacts Section */}
+            <Section title={t("org.contacts")} icon={<Contact2 className="w-4 h-4" />}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label={t("org.phone")}>
+                  <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} />
+                </Field>
+                <Field label={t("org.email")}>
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => updateField("email", e.target.value)}
+                  />
+                </Field>
+                <Field label={t("org.website")}>
+                  <Input value={form.website} onChange={(e) => updateField("website", e.target.value)} />
+                </Field>
+                <Field label={t("org.logoUrl")}>
+                  <Input value={form.logo_url} onChange={(e) => updateField("logo_url", e.target.value)} />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <Field label={`${t("org.legalAddress")} (RU)`}>
+                  <Textarea
+                    rows={3}
+                    value={form.legal_address_ru}
+                    onChange={(e) => updateField("legal_address_ru", e.target.value)}
+                  />
+                </Field>
+                <Field label={`${t("org.legalAddress")} (KK)`}>
+                  <Textarea
+                    rows={3}
+                    value={form.legal_address_kk}
+                    onChange={(e) => updateField("legal_address_kk", e.target.value)}
+                  />
+                </Field>
+              </div>
+            </Section>
+          </div>
+          <div className="space-y-6">
+
+            {/* Management Section */}
+            <Section title={t("org.management")} icon={<Brain className="w-4 h-4" />}>
+              <Field label={t("org.head")}>
+                <Select
+                  value={form.head_user_id ?? "__none"}
+                  onValueChange={(v) => updateField("head_user_id", v === "__none" ? null : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Не назначен" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— Не назначен —</SelectItem>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {localized(u, locale, "full_name") || u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </Section>
+          </div>
         </div>
+
       </PageBody>
     </>
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+/* Reusable Components */
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="bg-card border border-border rounded-sm">
-      <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-muted/40">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-border flex items-center gap-2 bg-muted/50">
         {icon}
-        <h2 className="text-sm font-semibold">{title}</h2>
+        <h2 className="font-semibold">{title}</h2>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -172,7 +304,7 @@ function Section({ title, icon, children }: { title: string; icon?: React.ReactN
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-sm text-muted-foreground font-medium">{label}</Label>
       {children}
     </div>
   );
