@@ -103,7 +103,7 @@ const apiService = {
 interface ComboboxOption {
   value: string;
   label: string;
-  metadata?: Record<string, unknown>;
+  metadata?: unknown;
 }
 
 interface ComboboxProps {
@@ -1031,7 +1031,7 @@ function WorkflowDesigner() {
                 <div className="space-y-2">
                   <Label>Метка на схеме</Label>
                   <Input
-                    value={selectedEdge.label || ""}
+                    value={typeof selectedEdge.label === "string" ? selectedEdge.label : ""}
                     onChange={(e) => updateEdgeData({ label: e.target.value })}
                     placeholder="Например: Согласовано, Отклонено, Да, Нет"
                   />
