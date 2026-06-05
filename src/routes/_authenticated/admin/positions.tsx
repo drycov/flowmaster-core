@@ -59,7 +59,10 @@ function PositionsPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
-  const openEdit = (p: typeof data extends (infer X)[] | undefined ? X : never) => {
+  const openEdit = (p: {
+    id: string; code: string; title_ru: string; title_kk: string;
+    department_id: string | null; level: number | null; is_head: boolean | null;
+  }) => {
     setForm({
       id: p.id,
       code: p.code,
