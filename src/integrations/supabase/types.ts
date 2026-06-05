@@ -57,28 +57,40 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          email: string | null
+          head_user_id: string | null
           id: string
+          kind: string
           name_kk: string
           name_ru: string
           parent_id: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
           code: string
           created_at?: string
+          email?: string | null
+          head_user_id?: string | null
           id?: string
+          kind?: string
           name_kk: string
           name_ru: string
           parent_id?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
           code?: string
           created_at?: string
+          email?: string | null
+          head_user_id?: string | null
           id?: string
+          kind?: string
           name_kk?: string
           name_ru?: string
           parent_id?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -472,6 +484,107 @@ export type Database = {
         }
         Relationships: []
       }
+      organization: {
+        Row: {
+          bin: string | null
+          created_at: string
+          email: string | null
+          head_user_id: string | null
+          id: string
+          legal_address_kk: string | null
+          legal_address_ru: string | null
+          logo_url: string | null
+          name_kk: string
+          name_ru: string
+          phone: string | null
+          reg_number_prefix: string | null
+          short_name_kk: string | null
+          short_name_ru: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          bin?: string | null
+          created_at?: string
+          email?: string | null
+          head_user_id?: string | null
+          id?: string
+          legal_address_kk?: string | null
+          legal_address_ru?: string | null
+          logo_url?: string | null
+          name_kk?: string
+          name_ru?: string
+          phone?: string | null
+          reg_number_prefix?: string | null
+          short_name_kk?: string | null
+          short_name_ru?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          bin?: string | null
+          created_at?: string
+          email?: string | null
+          head_user_id?: string | null
+          id?: string
+          legal_address_kk?: string | null
+          legal_address_ru?: string | null
+          logo_url?: string | null
+          name_kk?: string
+          name_ru?: string
+          phone?: string | null
+          reg_number_prefix?: string | null
+          short_name_kk?: string | null
+          short_name_ru?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      positions: {
+        Row: {
+          code: string
+          created_at: string
+          department_id: string | null
+          id: string
+          is_head: boolean
+          level: number
+          title_kk: string
+          title_ru: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          is_head?: boolean
+          level?: number
+          title_kk: string
+          title_ru: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          is_head?: boolean
+          level?: number
+          title_kk?: string
+          title_ru?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -481,6 +594,7 @@ export type Database = {
           full_name_ru: string | null
           id: string
           locale: string
+          position_id: string | null
           position_kk: string | null
           position_ru: string | null
           updated_at: string
@@ -493,6 +607,7 @@ export type Database = {
           full_name_ru?: string | null
           id: string
           locale?: string
+          position_id?: string | null
           position_kk?: string | null
           position_ru?: string | null
           updated_at?: string
@@ -505,6 +620,7 @@ export type Database = {
           full_name_ru?: string | null
           id?: string
           locale?: string
+          position_id?: string | null
           position_kk?: string | null
           position_ru?: string | null
           updated_at?: string
@@ -517,7 +633,47 @@ export type Database = {
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      role_definitions: {
+        Row: {
+          created_at: string
+          description_kk: string | null
+          description_ru: string | null
+          permissions: Json
+          role: Database["public"]["Enums"]["app_role"]
+          title_kk: string
+          title_ru: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_kk?: string | null
+          description_ru?: string | null
+          permissions?: Json
+          role: Database["public"]["Enums"]["app_role"]
+          title_kk: string
+          title_ru: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_kk?: string | null
+          description_ru?: string | null
+          permissions?: Json
+          role?: Database["public"]["Enums"]["app_role"]
+          title_kk?: string
+          title_ru?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
