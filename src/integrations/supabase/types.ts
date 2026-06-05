@@ -592,6 +592,7 @@ export type Database = {
           email: string
           full_name_kk: string | null
           full_name_ru: string | null
+          avatar_url: string | null
           id: string
           locale: string
           position_id: string | null

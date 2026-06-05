@@ -17,11 +17,12 @@ import {
   ChevronDown,
   Languages,
   CheckSquare,
+  User,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { getMyProfile } from "@/lib/api/admin.functions";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,6 +216,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                   ))}
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+                <User className="w-4 h-4 mr-2" />
+                {t("nav.profile")}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />

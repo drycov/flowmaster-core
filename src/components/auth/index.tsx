@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-
+import { useAuth } from "./hooks/useAuth";
+import { useAuthForm } from "./hooks/useAuthForm";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { AuthLeftPanel } from "./components/AuthLeftPanel";
+import { AuthRightPanel } from "./components/AuthRightPanel";
 import { useI18n } from "@/lib/i18n";
-import { useAuth } from "@/components/auth/hooks/useAuth";
-import { useAuthForm } from "@/components/auth/hooks/useAuthForm";
-import { AuthLeftPanel } from "@/components/auth/components/AuthLeftPanel";
-import { LanguageSwitcher } from "@/components/auth/components/LanguageSwitcher";
-import { AuthRightPanel } from "@/components/auth/components/AuthRightPanel";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
