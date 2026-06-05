@@ -88,6 +88,10 @@ export const upsertDepartment = createServerFn({ method: "POST" })
       code: z.string().min(1).max(64),
       name_ru: z.string().min(1),
       name_kk: z.string().min(1),
+      kind: z.string().max(32).optional(),
+      phone: z.string().max(64).optional(),
+      email: z.string().max(255).optional(),
+      head_user_id: z.string().uuid().nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
