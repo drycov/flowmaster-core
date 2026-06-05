@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { listNomenclature, upsertNomenclature, deleteNomenclature } from "@/lib/api/nomenclature.functions";
 // Импортируйте функцию listDepartments из вашего файла функций (измените путь при необходимости)
-import { listDepartments } from "@/lib/api/admin.functions"; 
+import { listDepartments } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,24 +18,24 @@ export const Route = createFileRoute("/_authenticated/nomenclature")({
   component: NomenclaturePage,
 });
 
-interface NomItem { 
-  id: string; 
-  parent_id: string | null; 
-  department_id: string | null; 
-  code: string; 
-  title_ru: string; 
-  title_kk: string; 
-  retention_years: number; 
+interface NomItem {
+  id: string;
+  parent_id: string | null;
+  department_id: string | null;
+  code: string;
+  title_ru: string;
+  title_kk: string;
+  retention_years: number;
   archive_rule: string;
-  sort_order: number; 
+  sort_order: number;
 }
 
-const INITIAL_FORM = { 
-  code: "", 
-  title_ru: "", 
-  title_kk: "", 
-  retention: 5, 
-  archive_rule: "5 лет", 
+const INITIAL_FORM = {
+  code: "",
+  title_ru: "",
+  title_kk: "",
+  retention: 5,
+  archive_rule: "5 лет",
   sort_order: 10,
   department_id: "none"
 };
@@ -43,11 +43,11 @@ const INITIAL_FORM = {
 function NomenclaturePage() {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
-  
+
   // Запросы данных из API
   const { data } = useQuery({ queryKey: ["nom"], queryFn: () => listNomenclature() });
   const { data: departmentsData } = useQuery({ queryKey: ["departments"], queryFn: () => listDepartments() });
-  
+
   const departments = departmentsData ?? [];
 
   // Состояния интерфейса
@@ -147,7 +147,7 @@ function NomenclaturePage() {
           )}
 
           <span className="font-mono text-xs text-muted-foreground w-16 shrink-0">{item.code}</span>
-          
+
           <div className="text-sm flex-1 flex items-center gap-2 min-w-0 truncate">
             <span className="truncate">{localized(item, locale, "title")}</span>
             {itemDept && (
@@ -158,7 +158,7 @@ function NomenclaturePage() {
           </div>
 
           <span className="text-xs text-muted-foreground shrink-0">{item.archive_rule || `${item.retention_years} лет`}</span>
-          
+
           {/* Действия */}
           <div className="flex items-center gap-0.5 opacity-80 hover:opacity-100">
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEditInit(item)}>
@@ -191,12 +191,11 @@ function NomenclaturePage() {
                 <Plus className="w-4 h-4 mr-1" />{t("nom.add_section")}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent   className="w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
               <DialogHeader>
                 <DialogTitle>{editingId ? "Редактировать раздел" : t("nom.add_section")}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
-                
+              <div className="space-y-4 py-1">
                 {/* Выбор родителя */}
                 <div>
                   <Label>Родительский раздел</Label>
@@ -218,8 +217,8 @@ function NomenclaturePage() {
                 {/* Выбор департамента */}
                 <div>
                   <Label>Привязка к департаменту</Label>
-                  <Select 
-                    value={form.department_id || "none"} 
+                  <Select
+                    value={form.department_id || "none"}
                     onValueChange={(val) => setForm(f => ({ ...f, department_id: val }))}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -247,7 +246,7 @@ function NomenclaturePage() {
 
                 <div><Label>{t("common.title")} (RU)</Label><Input value={form.title_ru} onChange={(e) => setForm((f) => ({ ...f, title_ru: e.target.value }))} /></div>
                 <div><Label>{t("common.title")} (KK)</Label><Input value={form.title_kk} onChange={(e) => setForm((f) => ({ ...f, title_kk: e.target.value }))} /></div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>{t("nom.retention")} (лет)</Label>
@@ -268,7 +267,7 @@ function NomenclaturePage() {
           </Dialog>
         }
       />
-      
+
       <PageBody>
         <div className="bg-card border border-border rounded-sm p-2">
           {items.length === 0 ? (

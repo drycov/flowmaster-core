@@ -188,7 +188,7 @@ function PositionsPage() {
 
       {/* Edit / Create Dialog */}
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-        <DialogContent className="sm:max-w-md">
+            <DialogContent   className="w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>
               {form.id ? t("common.edit") : t("positions.new")}
