@@ -20,44 +20,77 @@ import type { ProfileFormData, PasswordFormData, UserProfile } from "./types";
 
 // Функция для загрузки профиля пользователя по ID
 async function fetchUserProfile(userId: string): Promise<UserProfile> {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
-  
-  if (error && error.code !== "PGRST116") throw error;
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const [{ data: profile, error: profileError }, { data: rolesData }, auth] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).single(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.auth.getUser(),
+    ]);
+
+  if (profileError && profileError.code !== "PGRST116") {
+    throw profileError;
+  }
+
+  const user = auth.data.user;
+
+  const { data: department } = profile?.department_id
+    ? await supabase
+        .from("departments")
+        .select("name_ru, name_kk")
+        .eq("id", profile.department_id)
+        .single()
+    : { data: null };
+
+  const { data: position } = profile?.position_id
+    ? await supabase
+        .from("positions")
+        .select("title_ru, title_kk")
+        .eq("id", profile.position_id)
+        .single()
+    : { data: null };
+
   return {
-    id: userId,
-    email: profile?.email || user?.email || "",
-    full_name_ru: profile?.full_name_ru,
-    full_name_kk: profile?.full_name_kk,
-    avatar_url: profile?.avatar_url,
-    roles: profile?.roles || [],
-    created_at: profile?.created_at || user?.created_at || new Date().toISOString(),
-    updated_at: profile?.updated_at,
-    last_sign_in_at: user?.last_sign_in_at,
-    department: profile?.department,
-    position: profile?.position,
-    phone: profile?.phone,
+    id: profile?.id ?? userId,
+    email: profile?.email ?? user?.email ?? "",
+
+    full_name_ru: profile?.full_name_ru ?? null,
+    full_name_kk: profile?.full_name_kk ?? null,
+    avatar_url: profile?.avatar_url ?? null,
+
+    roles: rolesData?.map(r => r.role) ?? [],
+
+    created_at:
+      profile?.created_at ?? user?.created_at ?? new Date().toISOString(),
+
+    updated_at:
+      profile?.updated_at ?? new Date().toISOString(),
+
+    last_sign_in_at: user?.last_sign_in_at ?? undefined,
+
+    department: department
+      ? `${department.name_ru} / ${department.name_kk}`
+      : null,
+
+    position: position
+      ? `${position.title_ru} / ${position.title_kk}`
+      : null,
   };
 }
+
+
 
 export default function ProfilePage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const router = useRouterState();
-  
+
   // Безопасное получение параметров
   const params = router.matches
     .flatMap(m => m.params)
     .find(p => p && typeof p === 'object' && 'id' in p) as { id?: string } | undefined;
-  
+
   const userId = params?.id;
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -71,17 +104,17 @@ export default function ProfilePage() {
   }, []);
 
   // Загрузка профиля (свой или чужой)
-  const { 
-    profile: ownProfile, 
-    isLoading: isLoadingOwn, 
-    refetch: refetchOwn 
+  const {
+    profile: ownProfile,
+    isLoading: isLoadingOwn,
+    refetch: refetchOwn
   } = useProfile();
 
-  const { 
-    data: userProfile, 
-    isLoading: isLoadingUser, 
+  const {
+    data: userProfile,
+    isLoading: isLoadingUser,
     error: userError,
-    refetch: refetchUser 
+    refetch: refetchUser
   } = useQuery({
     queryKey: ["user-profile", userId],
     queryFn: () => fetchUserProfile(userId!),
@@ -94,10 +127,10 @@ export default function ProfilePage() {
   const isLoading = isOwnProfile ? isLoadingOwn : isLoadingUser;
   const error = isOwnProfile ? null : userError;
 
-  const { 
-    updateProfile, 
-    isUpdatingProfile, 
-    updatePassword, 
+  const {
+    updateProfile,
+    isUpdatingProfile,
+    updatePassword,
     isUpdatingPassword,
     updateAvatar,
     isUpdatingAvatar,
@@ -126,8 +159,8 @@ export default function ProfilePage() {
         <PageBody>
           <div className="text-center py-12">
             <p className="text-muted-foreground">{t("profile.notFound")}</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4"
               onClick={() => navigate({ to: "/admin/users" })}
             >
@@ -176,20 +209,20 @@ export default function ProfilePage() {
     }
   };
 
-  const pageTitle = isOwnProfile 
-    ? t("profile.title") 
+  const pageTitle = isOwnProfile
+    ? t("profile.title")
     : `${t("profile.userProfile")}: ${displayName}`;
 
   return (
     <>
-      <PageHeader 
+      <PageHeader
         title={pageTitle}
         actions={
           <>
             {!isOwnProfile && (
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => navigate({ to: "/admin/users" })}
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
@@ -205,7 +238,7 @@ export default function ProfilePage() {
           </>
         }
       />
-      
+
       <PageBody>
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Profile Header Card */}
@@ -216,10 +249,9 @@ export default function ProfilePage() {
               initials={initials}
               onAvatarUpload={handleAvatarUpload}
               isUploadingAvatar={isUpdatingAvatar}
-              canEdit={canEdit}
             />
           </div>
-          
+
           {/* Tabs */}
           <Tabs defaultValue="info">
             <TabsList>
@@ -234,7 +266,7 @@ export default function ProfilePage() {
                 </TabsTrigger>
               )}
             </TabsList>
-            
+
             <TabsContent value="info">
               {isEditing && canEdit ? (
                 <ProfileForm
@@ -247,7 +279,7 @@ export default function ProfilePage() {
                 <ProfileInfo profile={profile} />
               )}
             </TabsContent>
-            
+
             {isOwnProfile && (
               <TabsContent value="security">
                 <div className="bg-card border rounded-lg p-6 space-y-6">
