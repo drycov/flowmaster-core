@@ -1,5 +1,5 @@
 /* =========================================================
-   NCALayer SDK (browser-safe, modular, production-ready)
+   NCALayer SDK (browser-safe module)
    ========================================================= */
 
 const NCA_URL = "wss://127.0.0.1:13579/";
@@ -62,10 +62,7 @@ function extractSignature(msg: any): string | null {
   );
 }
 
-/**
- * RFC/KZ PKI subject parsing (OID + legacy fallback)
- */
-function extractFromSubject(subject: string): Pick<CertificateInfo, "iin" | "bin" | "cn"> {
+function extractIINFromSubject(subject: string): Pick<CertificateInfo, "iin" | "bin" | "cn"> {
   if (!subject) return {};
 
   const iin =
@@ -97,7 +94,7 @@ class NCALayerConnection {
     }
 
     return new Promise((resolve, reject) => {
-      log("connecting:", NCA_URL);
+      log("connecting", NCA_URL);
 
       const ws = new WebSocket(NCA_URL);
       this.socket = ws;
@@ -168,7 +165,7 @@ class NCALayerConnection {
         resolve(msg);
       });
 
-      log("send:", payload);
+      log("send", payload);
       ws.send(JSON.stringify(payload));
     });
   }
@@ -200,7 +197,7 @@ export async function getCertificateInfo(
   const subject = res?.subjectDn || res?.subject || "";
   const issuer = res?.issuerDn || res?.issuer || "";
 
-  const parsed = extractFromSubject(subject);
+  const identity = extractIINFromSubject(subject);
 
   return {
     subject,
@@ -208,12 +205,12 @@ export async function getCertificateInfo(
     serial: res?.serialNumber,
     validFrom: res?.notBefore,
     validTo: res?.notAfter,
-    ...parsed,
+    ...identity,
   };
 }
 
 /* =========================================================
-   SIGN API
+   SIGNING API
    ========================================================= */
 
 export async function signCMS(
@@ -231,7 +228,9 @@ export async function signCMS(
 
   const signature = extractSignature(res);
 
-  if (!signature) throw new NCALayerError("signature not found");
+  if (!signature) {
+    throw new NCALayerError("signature not found");
+  }
 
   return { signature };
 }
@@ -251,7 +250,9 @@ export async function signXML(
 
   const signature = extractSignature(res);
 
-  if (!signature) throw new NCALayerError("xml signature not found");
+  if (!signature) {
+    throw new NCALayerError("xml signature not found");
+  }
 
   return { signature };
 }
@@ -271,13 +272,15 @@ export async function auth(
 
   const signature = extractSignature(res);
 
-  if (!signature) throw new NCALayerError("auth signature not found");
+  if (!signature) {
+    throw new NCALayerError("auth signature not found");
+  }
 
   return { signature };
 }
 
 /* =========================================================
-   PUBLIC FACADE
+   OPTIONAL EXPORT (low-level)
    ========================================================= */
 
 export const NCALayerAPI = {
