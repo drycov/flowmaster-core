@@ -1,11 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { listAuditLogs } from "@/lib/api/admin.functions";
+import { listAuditLogs, getMyProfile } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/audit")({
+  beforeLoad: async () => {
+    const data = await getMyProfile();
+    const isAdmin = data.roles.includes("admin");
+    const canViewAudit = data.permissions["view_audit"];
+    if (!isAdmin && !canViewAudit) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: AuditPage,
 });
 

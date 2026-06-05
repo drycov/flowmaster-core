@@ -43,6 +43,7 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
             type: z.string(),
             label: z.string().optional(),
             assignee_id: z.string().nullable().optional(),
+            assignee_type: z.string().optional(),
             sla_hours: z.number().optional(),
             position: z.object({ x: z.number(), y: z.number() }).optional(),
             config: z.record(z.string(), z.unknown()).optional(),
@@ -92,6 +93,7 @@ interface WfNode {
   type: string;
   label?: string;
   assignee_id?: string | null;
+  assignee_type?: string;
   sla_hours?: number;
 }
 interface WfEdge {
@@ -110,29 +112,75 @@ function nextNode(def: WfDef, fromId: string): WfNode | null {
 }
 
 async function createTaskForNode(
-  supabase: ReturnType<typeof Object> | any,
+  supabase: any,
   runId: string,
   docId: string,
   node: WfNode,
+  initiatorId: string,
 ) {
   if (!["APPROVAL", "SIGNATURE", "TASK", "NOTIFICATION"].includes(node.type)) return;
+
+  let assigneeId = node.assignee_id ?? null;
+  let roleCode = null;
+  let departmentId = null;
+  let isManager = false;
+
+  const type = node.assignee_type || "user";
+
+  if (type === "initiator_manager") {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("department_id")
+      .eq("id", initiatorId)
+      .single();
+    if (profile?.department_id) {
+      const { data: dept } = await supabase
+        .from("departments")
+        .select("head_user_id")
+        .eq("id", profile.department_id)
+        .single();
+      assigneeId = dept?.head_user_id || null;
+    }
+    isManager = true;
+  } else if (type === "department_manager") {
+    const { data: dept } = await supabase
+      .from("departments")
+      .select("head_user_id")
+      .eq("id", node.assignee_id)
+      .single();
+    assigneeId = dept?.head_user_id || null;
+    departmentId = node.assignee_id as string;
+    isManager = true;
+  } else if (type === "role") {
+    roleCode = node.assignee_id;
+    assigneeId = null;
+  } else if (type === "department") {
+    departmentId = node.assignee_id as string;
+    assigneeId = null;
+  }
+
   const due = node.sla_hours
     ? new Date(Date.now() + node.sla_hours * 3600_000).toISOString()
     : null;
+
   await supabase.from("workflow_tasks").insert({
     run_id: runId,
     document_id: docId,
     node_id: node.id,
     node_type: node.type,
     title: node.label || node.type,
-    assignee_id: node.assignee_id ?? null,
+    assignee_id: assigneeId,
+    role_code: roleCode,
+    department_id: departmentId,
+    is_manager: isManager,
     action_required:
       node.type === "APPROVAL" ? "approve" : node.type === "SIGNATURE" ? "sign" : "review",
     due_at: due,
   });
-  if (node.assignee_id) {
+
+  if (assigneeId) {
     await supabase.from("notifications").insert({
-      user_id: node.assignee_id,
+      user_id: assigneeId,
       type: "task",
       title: `Новая задача: ${node.label || node.type}`,
       body: null,
@@ -163,6 +211,11 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+
+    // Get initiator ID (who created the document)
+    const { data: doc } = await supabase.from("documents").select("created_by").eq("id", data.document_id).single();
+    const initiatorId = doc?.created_by || userId;
+
     await supabase.from("workflow_events").insert({
       run_id: run.id,
       document_id: data.document_id,
@@ -172,7 +225,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
       payload: {},
     } as never);
     await supabase.from("documents").update({ status: "in_review" as never }).eq("id", data.document_id);
-    if (first) await createTaskForNode(supabase, run.id, data.document_id, first);
+    if (first) await createTaskForNode(supabase, run.id, data.document_id, first, initiatorId);
     return { run_id: run.id };
   });
 
@@ -231,6 +284,11 @@ export const completeTask = createServerFn({ method: "POST" })
     const wf = await supabase.from("workflows").select("definition").eq("id", wfId).single();
     const def = wf.data?.definition as unknown as WfDef;
     const next = def ? nextNode(def, task.data.node_id) : null;
+
+    // Get initiator ID
+    const { data: doc } = await supabase.from("documents").select("created_by").eq("id", task.data.document_id).single();
+    const initiatorId = doc?.created_by || userId;
+
     if (!next || next.type === "END" || next.type === "ARCHIVE") {
       await supabase
         .from("workflow_runs")
@@ -251,7 +309,7 @@ export const completeTask = createServerFn({ method: "POST" })
       .from("workflow_runs")
       .update({ current_node: next.id } as never)
       .eq("id", task.data.run_id);
-    await createTaskForNode(supabase, task.data.run_id, task.data.document_id, next);
+    await createTaskForNode(supabase, task.data.run_id, task.data.document_id, next, initiatorId);
     return { ok: true, next: next.id };
   });
 

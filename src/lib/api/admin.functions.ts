@@ -6,13 +6,29 @@ export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const [profile, roles] = await Promise.all([
-      supabase.from("profiles").select("*, departments(id, name_ru, name_kk, code)").eq("id", userId).single(),
+    const [profile, roles, roleDefs] = await Promise.all([
+      supabase.from("profiles").select("*, departments(id, name_ru, name_kk, code), positions(*)").eq("id", userId).single(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("role_definitions").select("*"),
     ]);
+
+    const userRoles = (roles.data ?? []).map((r) => r.role);
+    const permissions: Record<string, boolean> = {};
+
+    // Merge permissions from all roles
+    (roleDefs.data ?? []).forEach((def) => {
+      if (userRoles.includes(def.role)) {
+        const rolePerms = def.permissions as Record<string, boolean>;
+        Object.keys(rolePerms).forEach((p) => {
+          if (rolePerms[p]) permissions[p] = true;
+        });
+      }
+    });
+
     return {
       profile: profile.data,
-      roles: (roles.data ?? []).map((r) => r.role),
+      roles: userRoles,
+      permissions,
     };
   });
 

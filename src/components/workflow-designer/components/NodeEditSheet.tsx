@@ -43,7 +43,10 @@ export function NodeEditSheet({
       case "role":
         return (roles || []).map((r) => ({ value: r.id, label: r.name, metadata: r }));
       case "department":
+      case "department_manager":
         return (departments || []).map((d) => ({ value: d.id, label: d.name, metadata: d }));
+      case "initiator_manager":
+        return [];
       default:
         return [];
     }
@@ -100,7 +103,9 @@ export function NodeEditSheet({
                   <SelectContent>
                     <SelectItem value="user">Конкретный сотрудник</SelectItem>
                     <SelectItem value="role">Роль / Должность</SelectItem>
-                    <SelectItem value="department">Подразделение</SelectItem>
+                    <SelectItem value="department">Подразделение (все сотрудники)</SelectItem>
+                    <SelectItem value="department_manager">Руководитель подразделения</SelectItem>
+                    <SelectItem value="initiator_manager">Руководитель инициатора</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

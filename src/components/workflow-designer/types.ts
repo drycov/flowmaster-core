@@ -12,7 +12,7 @@ export type NodeType =
   | "ARCHIVE"
   | "END";
 
-export type AssigneeType = "user" | "role" | "department";
+export type AssigneeType = "user" | "role" | "department" | "department_manager" | "initiator_manager";
 export type WorkflowStatus = "draft" | "published" | "archived";
 export type SlaUnit = "hours" | "business_days";
 
