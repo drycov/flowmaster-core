@@ -103,17 +103,18 @@ export const createDocument = createServerFn({ method: "POST" })
       template_id: z.string().uuid().nullable().optional(),
       assigned_to: z.string().uuid().nullable().optional(),
       due_at: z.string().nullable().optional(),
+      workflow_id: z.string().uuid().nullable().optional(),
+      custom_route: z.array(z.record(z.string(), z.any())).nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: row, error } = await supabase
-      .from("documents")
+    const { data: row, error } = await (supabase.from("documents") as any)
       .insert({
         ...data,
         reg_number: "",
         created_by: userId,
-      } as never)
+      })
       .select("id, reg_number")
       .single();
     if (error) throw new Error(error.message);
