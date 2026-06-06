@@ -1,8 +1,18 @@
 // src/routes/_authenticated/templates/$id.tsx
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
 
 import { useTemplateData } from "@/components/template-editor/hooks/useTemplateData";
@@ -10,6 +20,7 @@ import { useTemplateSave } from "@/components/template-editor/hooks/useTemplateS
 import { MetadataCard } from "@/components/template-editor/components/MetadataCard";
 import { BodyTemplateCard } from "@/components/template-editor/components/BodyTemplateCard";
 import { FieldsCard } from "@/components/template-editor/components/FieldsCard";
+import { listWorkflows } from "@/lib/api/workflows.functions";
 
 export const Route = createFileRoute("/_authenticated/templates/$id")({
   component: TemplateEditor,
@@ -26,6 +37,8 @@ function TemplateEditor() {
     status,
     fields,
     body,
+    defaultWorkflowId,
+    allowCustomRoute,
     isLoading,
     setNameRu,
     setNameKk,
@@ -33,6 +46,8 @@ function TemplateEditor() {
     setStatus,
     setFields,
     setBody,
+    setDefaultWorkflowId,
+    setAllowCustomRoute,
   } = useTemplateData(id);
 
   const { save, isSaving } = useTemplateSave({
@@ -43,6 +58,13 @@ function TemplateEditor() {
     status,
     fields,
     body,
+    defaultWorkflowId,
+    allowCustomRoute,
+  });
+
+  const { data: workflows = [] } = useQuery({
+    queryKey: ["wfs"],
+    queryFn: () => listWorkflows(),
   });
 
   const addField = () => {
@@ -101,37 +123,67 @@ function TemplateEditor() {
           </div>
         }
       />
-      
-      <PageBody className="h-[calc(100vh-8rem)]">
-        <div className="grid lg:grid-cols-2 gap-4 h-full">
-          {/* Левая колонка - метаданные (30%) и поля (70%) */}
-          <div className="flex flex-col h-full gap-4">
-            <div className="flex-shrink-0" style={{ flexBasis: "30%" }}>
-              <MetadataCard
-                nameRu={nameRu}
-                nameKk={nameKk}
-                category={category}
-                onNameRuChange={setNameRu}
-                onNameKkChange={setNameKk}
-                onCategoryChange={setCategory}
-              />
-            </div>
-            
-            <div className="flex-1 min-h-0">
-              <FieldsCard
-                fields={fields}
-                onAddField={addField}
-                onUpdateField={updateField}
-                onDeleteField={deleteField}
-              />
-            </div>
-          </div>
-          
-          {/* Правая колонка - тело шаблона */}
-          <div className="h-full">
-            <BodyTemplateCard body={body} onBodyChange={setBody} />
-          </div>
+
+      <PageBody className="grid lg:grid-cols-2 gap-4 max-w-6xl">
+        <div className="space-y-4">
+          <MetadataCard
+            nameRu={nameRu}
+            nameKk={nameKk}
+            category={category}
+            onNameRuChange={setNameRu}
+            onNameKkChange={setNameKk}
+            onCategoryChange={setCategory}
+          />
+
+          <Card className="rounded-sm">
+            <CardHeader>
+              <CardTitle className="text-sm">Маршрут согласования</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label>Маршрут по умолчанию</Label>
+                <Select
+                  value={defaultWorkflowId ?? "none"}
+                  onValueChange={(v) => setDefaultWorkflowId(v === "none" ? null : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Без маршрута" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Без маршрута</SelectItem>
+                    {(workflows as any[]).map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.name_ru} {w.status !== "published" && `(${w.status})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Этот маршрут будет применён автоматически при создании документа из шаблона.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="allow-custom"
+                  checked={allowCustomRoute}
+                  onCheckedChange={setAllowCustomRoute}
+                />
+                <Label htmlFor="allow-custom">
+                  Разрешить пользователю собрать собственный маршрут
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <BodyTemplateCard body={body} onBodyChange={setBody} />
         </div>
+
+        <FieldsCard
+          fields={fields}
+          onAddField={addField}
+          onUpdateField={updateField}
+          onDeleteField={deleteField}
+        />
       </PageBody>
     </>
   );

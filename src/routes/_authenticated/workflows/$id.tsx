@@ -6,7 +6,11 @@ import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { upsertWorkflow } from "@/lib/api/workflows.functions";
-
+import {
+  listUsersBrief,
+  listDepartmentsBrief,
+  listRolesBrief,
+} from "@/lib/api/admin.functions";
 
 import { useEffect, useState } from "react";
 import { useWorkflowData } from "@/components/workflow-designer/hooks/useWorkflowData";
@@ -17,23 +21,6 @@ import { FlowCanvas } from "@/components/workflow-designer/components/FlowCanvas
 import { NodeEditSheet } from "@/components/workflow-designer/components/NodeEditSheet";
 import { EdgeEditSheet } from "@/components/workflow-designer/components/EdgeEditSheet";
 import { DeleteConfirmDialog } from "@/components/workflow-designer/components/DeleteConfirmDialog";
-
-// API сервисы (заглушки)
-const apiService = {
-  getUsers: async () => {
-    // TODO: заменить на реальный API вызов
-    return [];
-  },
-  getRoles: async () => {
-    return [];
-  },
-  getDepartments: async () => {
-    return [];
-  },
-  getDocumentFields: async () => {
-    return [];
-  },
-};
 
 export const Route = createFileRoute("/_authenticated/workflows/$id")({
   component: WorkflowDesigner,
@@ -81,30 +68,32 @@ export function WorkflowDesigner() {
   // Валидация
   const { validationErrors, validate, clearErrors } = useWorkflowValidation();
 
-  // Справочники
-  const { data: users } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => apiService.getUsers(),
-    enabled: false,
+  // Справочники — реальные источники данных
+  const { data: usersRaw } = useQuery({
+    queryKey: ["wf-users"],
+    queryFn: () => listUsersBrief(),
+  });
+  const { data: rolesRaw } = useQuery({
+    queryKey: ["wf-roles"],
+    queryFn: () => listRolesBrief(),
+  });
+  const { data: departmentsRaw } = useQuery({
+    queryKey: ["wf-departments"],
+    queryFn: () => listDepartmentsBrief(),
   });
 
-  const { data: roles } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => apiService.getRoles(),
-    enabled: false,
-  });
-
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: () => apiService.getDepartments(),
-    enabled: false,
-  });
-
-  const { data: documentFields } = useQuery({
-    queryKey: ["documentFields"],
-    queryFn: () => apiService.getDocumentFields(),
-    enabled: false,
-  });
+  const users = (usersRaw ?? []).map((u: any) => ({
+    id: u.id,
+    name: u.full_name_ru || u.email || u.id,
+    email: u.email ?? "",
+    role: "",
+  }));
+  const roles = (rolesRaw ?? []).map((r: any) => ({ id: r.role, name: r.title_ru || r.role }));
+  const departments = (departmentsRaw ?? []).map((d: any) => ({
+    id: d.id,
+    name: d.name_ru || d.code,
+  }));
+  const documentFields: any[] = [];
 
   // Состояния UI
   const [sheetOpen, setSheetOpen] = useState(false);

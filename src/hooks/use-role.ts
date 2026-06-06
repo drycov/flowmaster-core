@@ -29,7 +29,7 @@ export function useRole() {
   };
 
   const hasRole = (role: string) => {
-    return roles.includes(role);
+    return roles.includes(role as any);
   };
 
   const isAdmin = roles.includes("admin");

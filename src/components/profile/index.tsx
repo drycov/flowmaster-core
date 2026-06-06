@@ -16,6 +16,7 @@ import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileInfo } from "./components/ProfileInfo";
 import { ProfileForm } from "./components/ProfileForm";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
+import { AssignmentsCard } from "./components/AssignmentsCard";
 import type { ProfileFormData, PasswordFormData, UserProfile } from "./types";
 
 // Функция для загрузки профиля пользователя по ID
@@ -49,31 +50,23 @@ async function fetchUserProfile(userId: string): Promise<UserProfile> {
         .single()
     : { data: null };
 
+  const p = profile as any;
   return {
-    id: profile?.id ?? userId,
-    email: profile?.email ?? user?.email ?? "",
+    id: p?.id ?? userId,
+    email: p?.email ?? user?.email ?? "",
 
-    full_name_ru: profile?.full_name_ru ?? null,
-    full_name_kk: profile?.full_name_kk ?? null,
-    avatar_url: profile?.avatar_url ?? null,
+    full_name_ru: p?.full_name_ru ?? null,
+    full_name_kk: p?.full_name_kk ?? null,
+    avatar_url: p?.avatar_url ?? null,
 
-    roles: rolesData?.map(r => r.role) ?? [],
+    roles: rolesData?.map((r) => r.role) ?? [],
 
-    created_at:
-      profile?.created_at ?? user?.created_at ?? new Date().toISOString(),
-
-    updated_at:
-      profile?.updated_at ?? new Date().toISOString(),
-
+    created_at: p?.created_at ?? user?.created_at ?? new Date().toISOString(),
+    updated_at: p?.updated_at ?? new Date().toISOString(),
     last_sign_in_at: user?.last_sign_in_at ?? undefined,
 
-    department: department
-      ? `${department.name_ru} / ${department.name_kk}`
-      : null,
-
-    position: position
-      ? `${position.title_ru} / ${position.title_kk}`
-      : null,
+    department: department ? `${department.name_ru} / ${department.name_kk}` : null,
+    position: position ? `${position.title_ru} / ${position.title_kk}` : null,
   };
 }
 
@@ -267,7 +260,7 @@ export default function ProfilePage() {
               )}
             </TabsList>
 
-            <TabsContent value="info">
+            <TabsContent value="info" className="space-y-4">
               {isEditing && canEdit ? (
                 <ProfileForm
                   profile={profile}
@@ -278,6 +271,7 @@ export default function ProfilePage() {
               ) : (
                 <ProfileInfo profile={profile} />
               )}
+              <AssignmentsCard userId={profile.id} />
             </TabsContent>
 
             {isOwnProfile && (

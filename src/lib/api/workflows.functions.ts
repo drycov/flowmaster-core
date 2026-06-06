@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 // ============== WORKFLOW DEFINITIONS ==============
 export const listWorkflows = createServerFn({ method: "GET" })
@@ -56,6 +57,7 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_workflows");
     const { supabase, userId } = context;
     if (data.id) {
       const { error } = await supabase
@@ -97,6 +99,7 @@ interface WfNode {
   sla_hours?: number;
 }
 interface WfEdge {
+  id?: string;
   source: string;
   target: string;
 }
@@ -191,10 +194,109 @@ async function createTaskForNode(
 
 export const startWorkflow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ workflow_id: z.string().uuid(), document_id: z.string().uuid() }))
+  .inputValidator(
+    z.object({
+      document_id: z.string().uuid(),
+      workflow_id: z.string().uuid().nullable().optional(),
+      custom_route: z
+        .array(
+          z.object({
+            order: z.number().int().min(0),
+            label: z.string().max(255).optional(),
+            assignee_user_id: z.string().uuid().nullable().optional(),
+            assignee_position_id: z.string().uuid().nullable().optional(),
+            assignee_department_id: z.string().uuid().nullable().optional(),
+            assignee_mode: z
+              .enum(["user", "position", "department_head", "role"])
+              .default("user"),
+            assignee_role: z.string().max(64).nullable().optional(),
+            sla_hours: z.number().int().min(0).max(8760).default(72),
+            action: z.enum(["approve", "sign", "review"]).default("approve"),
+          }),
+        )
+        .optional()
+        .nullable(),
+    }),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const wf = await supabase.from("workflows").select("definition").eq("id", data.workflow_id).single();
+
+    // Get initiator
+    const { data: doc } = await supabase
+      .from("documents")
+      .select("created_by")
+      .eq("id", data.document_id)
+      .single();
+    const initiatorId = doc?.created_by || userId;
+
+    // === CUSTOM ROUTE branch ===
+    if (data.custom_route && data.custom_route.length > 0) {
+      const nodes: WfNode[] = [
+        { id: "start", type: "START", label: "Start" },
+        ...data.custom_route
+          .sort((a, b) => a.order - b.order)
+          .map((step, idx) => ({
+            id: `step-${idx}`,
+            type: step.action === "sign" ? "SIGNATURE" : "APPROVAL",
+            label: step.label || `Шаг ${idx + 1}`,
+            assignee_id:
+              step.assignee_mode === "user"
+                ? step.assignee_user_id ?? null
+                : step.assignee_mode === "role"
+                  ? step.assignee_role ?? null
+                  : (step.assignee_department_id ?? null),
+            assignee_type:
+              step.assignee_mode === "department_head"
+                ? "department_manager"
+                : step.assignee_mode === "role"
+                  ? "role"
+                  : step.assignee_mode === "position"
+                    ? "position"
+                    : "user",
+            sla_hours: step.sla_hours,
+          })),
+        { id: "end", type: "END", label: "End" },
+      ];
+      const edges: WfEdge[] = [];
+      for (let i = 0; i < nodes.length - 1; i++) {
+        edges.push({ id: `e-${i}`, source: nodes[i].id, target: nodes[i + 1].id });
+      }
+
+      const { data: run, error } = await (supabase.from("workflow_runs") as any)
+        .insert({
+          workflow_id: null,
+          document_id: data.document_id,
+          current_node: nodes[1]?.id ?? "start",
+          status: "running",
+          context: { custom_route: data.custom_route, nodes, edges },
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+
+      await supabase.from("workflow_events").insert({
+        run_id: run.id,
+        document_id: data.document_id,
+        event_type: "workflow.started",
+        node_id: "start",
+        actor_id: userId,
+        payload: { custom: true },
+      } as never);
+      await supabase.from("documents").update({ status: "in_review" as never }).eq("id", data.document_id);
+      const first = nodes[1];
+      if (first && first.type !== "END") {
+        await createTaskForNode(supabase, run.id, data.document_id, first, initiatorId);
+      }
+      return { run_id: run.id };
+    }
+
+    // === STANDARD WORKFLOW branch ===
+    if (!data.workflow_id) throw new Error("workflow_id or custom_route is required");
+    const wf = await supabase
+      .from("workflows")
+      .select("definition")
+      .eq("id", data.workflow_id)
+      .single();
     if (wf.error) throw new Error(wf.error.message);
     const def = wf.data.definition as unknown as WfDef;
     const start = def.nodes.find((n) => n.type === "START");
@@ -211,10 +313,6 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-
-    // Get initiator ID (who created the document)
-    const { data: doc } = await supabase.from("documents").select("created_by").eq("id", data.document_id).single();
-    const initiatorId = doc?.created_by || userId;
 
     await supabase.from("workflow_events").insert({
       run_id: run.id,

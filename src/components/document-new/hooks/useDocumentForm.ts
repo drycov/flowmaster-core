@@ -37,8 +37,8 @@ export function useDocumentForm({ templateId, template }: UseDocumentFormProps) 
   useEffect(() => {
     if (templateFields.length > 0) {
       templateFields.forEach((field: any) => {
-        if (!form.getValues(field.key as keyof DocumentFormValues)) {
-          form.setValue(field.key as keyof DocumentFormValues, "");
+        if (!form.getValues(field.key as any)) {
+          form.setValue(field.key as any, "");
         }
       });
     }
@@ -47,8 +47,8 @@ export function useDocumentForm({ templateId, template }: UseDocumentFormProps) 
   const getTemplateFieldValues = (): Record<string, string> => {
     const values: Record<string, string> = {};
     templateFields.forEach((field: any) => {
-      const value = form.getValues(field.key as keyof DocumentFormValues);
-      if (value && typeof value === 'string' && value.trim() !== "") {
+      const value = form.getValues(field.key as any) as unknown as string;
+      if (value && typeof value === "string" && value.trim() !== "") {
         values[field.key] = value;
       }
     });
@@ -57,7 +57,7 @@ export function useDocumentForm({ templateId, template }: UseDocumentFormProps) 
 
   const resetTemplateFields = () => {
     templateFields.forEach((field: any) => {
-      form.setValue(field.key as keyof DocumentFormValues, "");
+      form.setValue(field.key as any, "");
     });
   };
 

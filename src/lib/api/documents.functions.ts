@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 // ============== LIST ==============
 export const listDocuments = createServerFn({ method: "POST" })
@@ -103,17 +104,18 @@ export const createDocument = createServerFn({ method: "POST" })
       template_id: z.string().uuid().nullable().optional(),
       assigned_to: z.string().uuid().nullable().optional(),
       due_at: z.string().nullable().optional(),
+      workflow_id: z.string().uuid().nullable().optional(),
+      custom_route: z.array(z.record(z.string(), z.any())).nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: row, error } = await supabase
-      .from("documents")
+    const { data: row, error } = await (supabase.from("documents") as any)
       .insert({
         ...data,
         reg_number: "",
         created_by: userId,
-      } as never)
+      })
       .select("id, reg_number")
       .single();
     if (error) throw new Error(error.message);
@@ -170,7 +172,10 @@ export const updateDocumentStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    if (data.status === "archived") {
+      await requirePermission(supabase, userId, "archive_documents");
+    }
     const patch: Record<string, unknown> = { status: data.status };
     if (data.status === "archived") patch.archived_at = new Date().toISOString();
     const { error } = await supabase.from("documents").update(patch as never).eq("id", data.id);
