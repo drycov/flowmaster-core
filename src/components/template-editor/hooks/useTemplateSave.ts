@@ -11,9 +11,21 @@ interface UseTemplateSaveProps {
   status: TemplateStatus;
   fields: Field[];
   body: string;
+  defaultWorkflowId?: string | null;
+  allowCustomRoute?: boolean;
 }
 
-export function useTemplateSave({ id, nameRu, nameKk, category, status, fields, body }: UseTemplateSaveProps) {
+export function useTemplateSave({
+  id,
+  nameRu,
+  nameKk,
+  category,
+  status,
+  fields,
+  body,
+  defaultWorkflowId,
+  allowCustomRoute,
+}: UseTemplateSaveProps) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -26,13 +38,15 @@ export function useTemplateSave({ id, nameRu, nameKk, category, status, fields, 
           category,
           status,
           schema: { fields, body_template: body },
+          default_workflow_id: defaultWorkflowId ?? null,
+          allow_custom_route: allowCustomRoute ?? true,
         },
       });
-      
+
       if (!result?.id) {
         throw new Error("Не удалось сохранить шаблон");
       }
-      
+
       return result;
     },
     onSuccess: () => {
