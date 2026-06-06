@@ -12,6 +12,16 @@ import {
   listRolesBrief,
 } from "@/lib/api/admin.functions";
 
+import { useEffect, useState } from "react";
+import { useWorkflowData } from "@/components/workflow-designer/hooks/useWorkflowData";
+import { useFlowState } from "@/components/workflow-designer/hooks/useFlowState";
+import { useWorkflowValidation } from "@/components/workflow-designer/hooks/useWorkflowValidation";
+import { LeftPanel } from "@/components/workflow-designer/components/LeftPanel";
+import { FlowCanvas } from "@/components/workflow-designer/components/FlowCanvas";
+import { NodeEditSheet } from "@/components/workflow-designer/components/NodeEditSheet";
+import { EdgeEditSheet } from "@/components/workflow-designer/components/EdgeEditSheet";
+import { DeleteConfirmDialog } from "@/components/workflow-designer/components/DeleteConfirmDialog";
+
 export const Route = createFileRoute("/_authenticated/workflows/$id")({
   component: WorkflowDesigner,
 });
