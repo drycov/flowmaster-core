@@ -85,7 +85,8 @@ export function WorkflowDesigner() {
   const users = (usersRaw ?? []).map((u: any) => ({
     id: u.id,
     name: u.full_name_ru || u.email || u.id,
-    role: u.email ?? "",
+    email: u.email ?? "",
+    role: "",
   }));
   const roles = (rolesRaw ?? []).map((r: any) => ({ id: r.role, name: r.title_ru || r.role }));
   const departments = (departmentsRaw ?? []).map((d: any) => ({
