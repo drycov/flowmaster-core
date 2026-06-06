@@ -6,34 +6,11 @@ import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { upsertWorkflow } from "@/lib/api/workflows.functions";
-
-
-import { useEffect, useState } from "react";
-import { useWorkflowData } from "@/components/workflow-designer/hooks/useWorkflowData";
-import { useFlowState } from "@/components/workflow-designer/hooks/useFlowState";
-import { useWorkflowValidation } from "@/components/workflow-designer/hooks/useWorkflowValidation";
-import { LeftPanel } from "@/components/workflow-designer/components/LeftPanel";
-import { FlowCanvas } from "@/components/workflow-designer/components/FlowCanvas";
-import { NodeEditSheet } from "@/components/workflow-designer/components/NodeEditSheet";
-import { EdgeEditSheet } from "@/components/workflow-designer/components/EdgeEditSheet";
-import { DeleteConfirmDialog } from "@/components/workflow-designer/components/DeleteConfirmDialog";
-
-// API сервисы (заглушки)
-const apiService = {
-  getUsers: async () => {
-    // TODO: заменить на реальный API вызов
-    return [];
-  },
-  getRoles: async () => {
-    return [];
-  },
-  getDepartments: async () => {
-    return [];
-  },
-  getDocumentFields: async () => {
-    return [];
-  },
-};
+import {
+  listUsersBrief,
+  listDepartmentsBrief,
+  listRolesBrief,
+} from "@/lib/api/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/workflows/$id")({
   component: WorkflowDesigner,
