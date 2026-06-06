@@ -13,6 +13,8 @@ import type {
   FieldType,
 } from "./types";
 
+export type { Locale, LocalizableFields, FieldType } from "./types";
+
 import { ruDictionary } from "./locales/ru";
 import { kkDictionary } from "./locales/kk";
 
