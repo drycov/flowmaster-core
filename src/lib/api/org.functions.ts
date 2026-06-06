@@ -38,6 +38,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(orgSchema)
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_org");
     const { id, ...patch } = data;
     const { error } = await context.supabase
       .from("organization")
@@ -75,6 +76,7 @@ export const upsertPosition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(positionSchema)
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_org");
     if (data.id) {
       const { id, ...patch } = data;
       const { error } = await context.supabase.from("positions").update(patch as never).eq("id", id);
@@ -96,6 +98,7 @@ export const deletePosition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_org");
     const { error } = await context.supabase.from("positions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -129,6 +132,7 @@ export const updateRoleDefinition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(roleDefSchema)
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_users");
     const { role, ...patch } = data;
     const { error } = await context.supabase
       .from("role_definitions")
