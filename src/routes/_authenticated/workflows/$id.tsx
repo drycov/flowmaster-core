@@ -68,30 +68,31 @@ export function WorkflowDesigner() {
   // Валидация
   const { validationErrors, validate, clearErrors } = useWorkflowValidation();
 
-  // Справочники
-  const { data: users } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => apiService.getUsers(),
-    enabled: false,
+  // Справочники — реальные источники данных
+  const { data: usersRaw } = useQuery({
+    queryKey: ["wf-users"],
+    queryFn: () => listUsersBrief(),
+  });
+  const { data: rolesRaw } = useQuery({
+    queryKey: ["wf-roles"],
+    queryFn: () => listRolesBrief(),
+  });
+  const { data: departmentsRaw } = useQuery({
+    queryKey: ["wf-departments"],
+    queryFn: () => listDepartmentsBrief(),
   });
 
-  const { data: roles } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => apiService.getRoles(),
-    enabled: false,
-  });
-
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: () => apiService.getDepartments(),
-    enabled: false,
-  });
-
-  const { data: documentFields } = useQuery({
-    queryKey: ["documentFields"],
-    queryFn: () => apiService.getDocumentFields(),
-    enabled: false,
-  });
+  const users = (usersRaw ?? []).map((u: any) => ({
+    id: u.id,
+    name: u.full_name_ru || u.email || u.id,
+    role: u.email ?? "",
+  }));
+  const roles = (rolesRaw ?? []).map((r: any) => ({ id: r.role, name: r.title_ru || r.role }));
+  const departments = (departmentsRaw ?? []).map((d: any) => ({
+    id: d.id,
+    name: d.name_ru || d.code,
+  }));
+  const documentFields: any[] = [];
 
   // Состояния UI
   const [sheetOpen, setSheetOpen] = useState(false);
