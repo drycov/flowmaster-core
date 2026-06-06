@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 export const listTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -46,36 +47,32 @@ export const upsertTemplate = createServerFn({ method: "POST" })
       description: z.string().nullable().optional(),
       status: z.enum(["draft", "published", "archived"]).default("draft"),
       schema: z.object({ fields: z.array(fieldSchema), body_template: z.string().optional() }),
+      default_workflow_id: z.string().uuid().nullable().optional(),
+      allow_custom_route: z.boolean().default(true),
     }),
   )
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_templates");
     const { supabase, userId } = context;
+    const payload = {
+      name_ru: data.name_ru,
+      name_kk: data.name_kk,
+      category: data.category,
+      description: data.description ?? null,
+      status: data.status,
+      schema: data.schema,
+      default_workflow_id: data.default_workflow_id ?? null,
+      allow_custom_route: data.allow_custom_route,
+    };
     if (data.id) {
-      const { error } = await supabase
-        .from("document_templates")
-        .update({
-          name_ru: data.name_ru,
-          name_kk: data.name_kk,
-          category: data.category,
-          description: data.description ?? null,
-          status: data.status,
-          schema: data.schema,
-        } as never)
+      const { error } = await (supabase.from("document_templates") as any)
+        .update(payload)
         .eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id };
     }
-    const { data: row, error } = await supabase
-      .from("document_templates")
-      .insert({
-        name_ru: data.name_ru,
-        name_kk: data.name_kk,
-        category: data.category,
-        description: data.description ?? null,
-        status: data.status,
-        schema: data.schema,
-        created_by: userId,
-      } as never)
+    const { data: row, error } = await (supabase.from("document_templates") as any)
+      .insert({ ...payload, created_by: userId })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -107,17 +104,17 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     for (const [k, v] of Object.entries(data.values)) {
       body = body.replaceAll(`{{${k}}}`, String(v));
     }
-    const { data: doc, error } = await supabase
-      .from("documents")
+    const { data: doc, error } = await (supabase.from("documents") as any)
       .insert({
         title_ru: data.title_ru,
-        title_kk: data.title_kk ?? null,
+        title_kk: data.title_kk ?? data.title_ru,
         body,
         template_id: data.template_id,
         nomenclature_id: data.nomenclature_id ?? null,
         created_by: userId,
         reg_number: "",
-      } as never)
+        workflow_id: (tpl.data as any).default_workflow_id ?? null,
+      })
       .select("id, reg_number")
       .single();
     if (error) throw new Error(error.message);
