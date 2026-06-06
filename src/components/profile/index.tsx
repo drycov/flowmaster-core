@@ -260,7 +260,7 @@ export default function ProfilePage() {
               )}
             </TabsList>
 
-            <TabsContent value="info">
+            <TabsContent value="info" className="space-y-4">
               {isEditing && canEdit ? (
                 <ProfileForm
                   profile={profile}
@@ -271,12 +271,7 @@ export default function ProfilePage() {
               ) : (
                 <ProfileInfo profile={profile} />
               )}
-            </TabsContent>
-
-            <TabsContent value="info">
-              <div className="mt-4">
-                <AssignmentsCard userId={profile.id} />
-              </div>
+              <AssignmentsCard userId={profile.id} />
             </TabsContent>
 
             {isOwnProfile && (
