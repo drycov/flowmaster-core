@@ -99,6 +99,7 @@ interface WfNode {
   sla_hours?: number;
 }
 interface WfEdge {
+  id?: string;
   source: string;
   target: string;
 }
