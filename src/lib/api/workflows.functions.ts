@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 // ============== WORKFLOW DEFINITIONS ==============
 export const listWorkflows = createServerFn({ method: "GET" })
@@ -56,6 +57,7 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_workflows");
     const { supabase, userId } = context;
     if (data.id) {
       const { error } = await supabase
