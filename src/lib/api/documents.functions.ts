@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 // ============== LIST ==============
 export const listDocuments = createServerFn({ method: "POST" })
@@ -171,7 +172,10 @@ export const updateDocumentStatus = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    if (data.status === "archived") {
+      await requirePermission(supabase, userId, "archive_documents");
+    }
     const patch: Record<string, unknown> = { status: data.status };
     if (data.status === "archived") patch.archived_at = new Date().toISOString();
     const { error } = await supabase.from("documents").update(patch as never).eq("id", data.id);
