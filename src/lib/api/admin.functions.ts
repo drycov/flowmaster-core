@@ -112,6 +112,7 @@ export const upsertDepartment = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_org");
     const { supabase } = context;
     if (data.id) {
       const { error } = await supabase.from("departments").update(data as never).eq("id", data.id);
@@ -123,6 +124,41 @@ export const upsertDepartment = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase.from("departments").insert(insert as never).select("id").single();
     if (error) throw new Error(error.message);
     return row;
+  });
+
+// ============ DESIGNER HELPERS ============
+
+export const listUsersBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("id, full_name_ru, full_name_kk, email, department_id, position_id")
+      .order("full_name_ru", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listDepartmentsBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("departments")
+      .select("id, code, name_ru, name_kk, head_user_id, parent_id")
+      .order("code", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listRolesBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("role_definitions")
+      .select("role, title_ru, title_kk")
+      .order("role", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
 
 export const listAuditLogs = createServerFn({ method: "POST" })
