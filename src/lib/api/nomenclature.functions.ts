@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "./_helpers";
 
 export const listNomenclature = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -25,9 +26,11 @@ export const upsertNomenclature = createServerFn({ method: "POST" })
       retention_years: z.number().min(0).max(75).default(5),
       archive_rule: z.string().default("standard"),
       department_id: z.string().uuid().nullable().optional(),
+      sort_order: z.number().int().min(0).max(9999).default(0),
     }),
   )
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_nomenclature");
     const { supabase } = context;
     if (data.id) {
       const { error } = await supabase
@@ -52,6 +55,7 @@ export const deleteNomenclature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "manage_nomenclature");
     const { error } = await context.supabase.from("nomenclature_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
