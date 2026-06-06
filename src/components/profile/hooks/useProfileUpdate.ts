@@ -5,18 +5,13 @@ import { toast } from "sonner";
 import type { ProfileFormData } from "../types";
 
 async function updateProfile(data: ProfileFormData & { id: string }) {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      full_name_ru: data.full_name_ru || null,
-      full_name_kk: data.full_name_kk || null,
-      phone: data.phone || null,
-      department: data.department || null,
-      position: data.position || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", data.id);
-  
+  const patch: Record<string, unknown> = {
+    full_name_ru: data.full_name_ru || null,
+    full_name_kk: data.full_name_kk || null,
+    phone: data.phone || null,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await (supabase.from("profiles") as any).update(patch).eq("id", data.id);
   if (error) throw error;
   return data;
 }
@@ -27,36 +22,26 @@ async function updatePassword(password: string) {
 }
 
 async function updateAvatar(file: File, userId: string) {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${Date.now()}.${fileExt}`;
-  const filePath = `avatars/${fileName}`;
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${userId}/${Date.now()}.${fileExt}`;
 
-  // Сначала удаляем старый аватар, если есть
-  const { data: existing } = await supabase.storage
-    .from('avatars')
-    .list(userId);
-  
+  const { data: existing } = await supabase.storage.from("avatars").list(userId);
   if (existing && existing.length > 0) {
-    await supabase.storage
-      .from('avatars')
-      .remove(existing.map(f => `${userId}/${f.name}`));
+    await supabase.storage.from("avatars").remove(existing.map((f) => `${userId}/${f.name}`));
   }
 
   const { error: uploadError } = await supabase.storage
-    .from('avatars')
+    .from("avatars")
     .upload(filePath, file, { upsert: true });
-  
   if (uploadError) throw uploadError;
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(filePath);
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
-  const { error: updateError } = await supabase
-    .from('user_profiles')
+  const { error: updateError } = await (supabase.from("profiles") as any)
     .update({ avatar_url: publicUrl })
-    .eq('id', userId);
-  
+    .eq("id", userId);
   if (updateError) throw updateError;
 
   return publicUrl;

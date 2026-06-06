@@ -75,8 +75,8 @@ function NomenclaturePage() {
           title_kk: form.title_kk,
           retention_years: Number(form.retention),
           archive_rule: form.archive_rule,
-          sort_order: Number(form.sort_order), // <-- ИСПРАВЛЕНО: добавлена отправка сортировки
-        },
+          sort_order: Number(form.sort_order),
+        } as any,
       }),
     onSuccess: () => {
       toast.success(editingId ? "Изменения сохранены" : "Добавлено");
