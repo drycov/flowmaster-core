@@ -16,6 +16,7 @@ import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileInfo } from "./components/ProfileInfo";
 import { ProfileForm } from "./components/ProfileForm";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
+import { AssignmentsCard } from "./components/AssignmentsCard";
 import type { ProfileFormData, PasswordFormData, UserProfile } from "./types";
 
 // Функция для загрузки профиля пользователя по ID
@@ -270,6 +271,12 @@ export default function ProfilePage() {
               ) : (
                 <ProfileInfo profile={profile} />
               )}
+            </TabsContent>
+
+            <TabsContent value="info">
+              <div className="mt-4">
+                <AssignmentsCard userId={profile.id} />
+              </div>
             </TabsContent>
 
             {isOwnProfile && (
