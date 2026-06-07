@@ -70,7 +70,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
           position_id: posId === "none" ? null : posId,
           start_date: startDate,
           is_primary: isPrimary,
-          note: note || undefined,
+          notes: note || undefined,
         },
       }),
     onSuccess: () => {
