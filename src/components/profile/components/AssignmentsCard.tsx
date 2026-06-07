@@ -25,7 +25,7 @@ import {
 import { Plus, X } from "lucide-react";
 import {
   createAssignment,
-  endAssignment,
+  terminateAssignment,
   listUserAssignments,
 } from "@/lib/api/assignments.functions";
 import { listDepartments } from "@/lib/api/admin.functions";
@@ -70,7 +70,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
           position_id: posId === "none" ? null : posId,
           start_date: startDate,
           is_primary: isPrimary,
-          note: note || undefined,
+          notes: note || undefined,
         },
       }),
     onSuccess: () => {
@@ -85,7 +85,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
   });
 
   const close = useMutation({
-    mutationFn: (id: string) => endAssignment({ data: { id } }),
+    mutationFn: () => terminateAssignment({ data: { user_id: userId } }),
     onSuccess: () => {
       toast.success("Назначение завершено");
       qc.invalidateQueries({ queryKey: ["assignments", userId] });
@@ -199,13 +199,13 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
                       </Badge>
                     )}
                   </div>
-                  {a.note && <div className="text-xs italic">{a.note}</div>}
+                  {a.notes && <div className="text-xs italic">{a.notes}</div>}
                 </div>
                 {canManage && !a.end_date && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => close.mutate(a.id)}
+                    onClick={() => close.mutate()}
                     title="Завершить"
                   >
                     <X className="h-4 w-4" />
