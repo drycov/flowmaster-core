@@ -205,7 +205,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => close.mutate(a.id)}
+                    onClick={() => close.mutate()}
                     title="Завершить"
                   >
                     <X className="h-4 w-4" />
