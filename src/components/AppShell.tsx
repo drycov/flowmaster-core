@@ -89,6 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/audit", icon: ShieldCheck, label: t("nav.audit") },
     { to: "/admin/users", icon: Users, label: t("nav.users") },
     { to: "/admin/roles", icon: ShieldCheck, label: t("nav.roles") },
+    { to: "/admin/permissions", icon: ShieldCheck, label: "Разрешения" },
     { to: "/admin/organization", icon: Building2, label: t("nav.organization") },
     { to: "/admin/departments", icon: Building2, label: t("nav.departments") },
     { to: "/admin/positions", icon: Settings, label: t("nav.positions") },
