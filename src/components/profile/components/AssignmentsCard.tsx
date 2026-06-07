@@ -85,7 +85,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
   });
 
   const close = useMutation({
-    mutationFn: (id: string) => endAssignment({ data: { id } }),
+    mutationFn: () => terminateAssignment({ data: { user_id: userId } }),
     onSuccess: () => {
       toast.success("Назначение завершено");
       qc.invalidateQueries({ queryKey: ["assignments", userId] });
