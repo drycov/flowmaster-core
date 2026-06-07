@@ -199,7 +199,7 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
                       </Badge>
                     )}
                   </div>
-                  {a.note && <div className="text-xs italic">{a.note}</div>}
+                  {a.notes && <div className="text-xs italic">{a.notes}</div>}
                 </div>
                 {canManage && !a.end_date && (
                   <Button
