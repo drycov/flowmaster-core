@@ -25,7 +25,7 @@ import {
 import { Plus, X } from "lucide-react";
 import {
   createAssignment,
-  endAssignment,
+  terminateAssignment,
   listUserAssignments,
 } from "@/lib/api/assignments.functions";
 import { listDepartments } from "@/lib/api/admin.functions";
