@@ -1166,6 +1166,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      app_advance_workflow_task: {
+        Args: { _comment?: string; _decision: string; _task_id: string }
+        Returns: Json
+      }
       can_view_document: {
         Args: { _doc_id: string; _user: string }
         Returns: boolean
