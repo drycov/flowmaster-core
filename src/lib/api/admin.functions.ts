@@ -298,14 +298,24 @@ export const listRoleGrants = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("user_role_grants")
-      .select("*, roles(code, name_ru), profiles!user_role_grants_user_id_fkey(id, full_name_ru, email)")
+      .select("*, roles(code, name_ru)")
       .order("granted_at", { ascending: false })
       .limit(500);
     if (data?.role_id) q = q.eq("role_id", data.role_id);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    let profilesMap = new Map<string, { full_name_ru: string | null; email: string }>();
+    if (userIds.length > 0) {
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, full_name_ru, email")
+        .in("id", userIds);
+      (profs ?? []).forEach((p) => profilesMap.set(p.id, { full_name_ru: p.full_name_ru, email: p.email }));
+    }
+    return (rows ?? []).map((r) => ({ ...r, profile: profilesMap.get(r.user_id) ?? null }));
   });
+
 
 export const grantRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
