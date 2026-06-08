@@ -461,12 +461,13 @@ function GrantsCard({
               expires_at: string | null;
               revoked_at: string | null;
               reason: string | null;
-              profiles?: { full_name_ru: string | null; email: string } | null;
+              profile?: { full_name_ru: string | null; email: string } | null;
             }>).map((g) => (
               <tr key={g.id} className="border-b">
                 <td className="px-3 py-2">
-                  {g.profiles?.full_name_ru || g.profiles?.email || g.user_id.slice(0, 8)}
+                  {g.profile?.full_name_ru || g.profile?.email || g.user_id.slice(0, 8)}
                 </td>
+
                 <td className="px-3 py-2 text-xs text-muted-foreground">
                   {new Date(g.granted_at).toLocaleString()}
                 </td>
