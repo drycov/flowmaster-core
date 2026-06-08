@@ -424,3 +424,27 @@ export const listMyTasks = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+// ============== ADVANCE (approve / reject / return) ==============
+export const advanceWorkflowTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      task_id: z.string().uuid(),
+      decision: z.enum(["approve", "reject", "return"]),
+      comment: z.string().max(4000).optional().nullable(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    if (data.decision !== "approve" && !data.comment?.trim()) {
+      throw new Error("Комментарий обязателен для отклонения или возврата");
+    }
+    const { data: res, error } = await supabase.rpc("app_advance_workflow_task" as never, {
+      _task_id: data.task_id,
+      _decision: data.decision,
+      _comment: data.comment ?? null,
+    } as never);
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; next: string | null; correlation_id: string };
+  });
