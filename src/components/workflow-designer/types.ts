@@ -12,7 +12,16 @@ export type NodeType =
   | "ARCHIVE"
   | "END";
 
-export type AssigneeType = "user" | "role" | "department" | "department_manager" | "initiator_manager";
+export type AssigneeType =
+  | "user"
+  | "position"
+  | "department"
+  | "department_head"
+  | "parent_department_head"
+  | "initiator_manager"
+  | "role"
+  | "group";
+
 export type WorkflowStatus = "draft" | "published" | "archived";
 export type SlaUnit = "hours" | "business_days";
 
@@ -24,11 +33,14 @@ export interface WorkflowNode {
   position: { x: number; y: number };
   assignee_id?: string | null;
   assignee_type?: AssigneeType;
+  assignee_mode?: AssigneeType;
+  assignee_ref?: string | null;
   sla_hours?: number;
   sla_unit?: SlaUnit;
   sla_working_hours_only?: boolean;
   config?: Record<string, unknown>;
 }
+
 
 export interface WorkflowEdge {
   id: string;

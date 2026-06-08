@@ -44,11 +44,11 @@ export const getDocument = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const [doc, versions, sigs, comments, runs, events] = await Promise.all([
+    const [doc, versions, sigs, comments, runs, events, tasks] = await Promise.all([
       supabase
         .from("documents")
         .select(
-          "id, reg_number, doc_type, status, title_ru, title_kk, summary, body, nomenclature_id, template_id, current_version, created_by, assigned_to, department_id, due_at, sla_status, archived_at, legal_hold, created_at, updated_at",
+          "id, reg_number, doc_type, status, title_ru, title_kk, summary, body, nomenclature_id, template_id, current_version, created_by, assigned_to, department_id, due_at, sla_status, archived_at, legal_hold, created_at, updated_at, workflow_id, custom_route",
         )
         .eq("id", data.id)
         .single(),
@@ -78,6 +78,11 @@ export const getDocument = createServerFn({ method: "POST" })
         .eq("document_id", data.id)
         .order("created_at", { ascending: false })
         .limit(100),
+      supabase
+        .from("workflow_tasks")
+        .select("*")
+        .eq("document_id", data.id)
+        .order("created_at", { ascending: false }),
     ]);
     if (doc.error) throw new Error(doc.error.message);
     return {
@@ -87,8 +92,10 @@ export const getDocument = createServerFn({ method: "POST" })
       comments: comments.data ?? [],
       runs: runs.data ?? [],
       events: events.data ?? [],
+      tasks: tasks.data ?? [],
     };
   });
+
 
 // ============== CREATE ==============
 export const createDocument = createServerFn({ method: "POST" })

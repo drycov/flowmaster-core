@@ -45,15 +45,19 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
             label: z.string().optional(),
             assignee_id: z.string().nullable().optional(),
             assignee_type: z.string().optional(),
+            assignee_mode: z.string().optional(),
+            assignee_ref: z.string().nullable().optional(),
             sla_hours: z.number().optional(),
             position: z.object({ x: z.number(), y: z.number() }).optional(),
             config: z.record(z.string(), z.unknown()).optional(),
+            data: z.record(z.string(), z.unknown()).optional(),
           }),
         ),
         edges: z.array(
           z.object({ id: z.string(), source: z.string(), target: z.string(), label: z.string().optional() }),
         ),
       }),
+
     }),
   )
   .handler(async ({ data, context }) => {
@@ -423,4 +427,28 @@ export const listMyTasks = createServerFn({ method: "GET" })
       .order("due_at", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+// ============== ADVANCE (approve / reject / return) ==============
+export const advanceWorkflowTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      task_id: z.string().uuid(),
+      decision: z.enum(["approve", "reject", "return"]),
+      comment: z.string().max(4000).optional().nullable(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    if (data.decision !== "approve" && !data.comment?.trim()) {
+      throw new Error("Комментарий обязателен для отклонения или возврата");
+    }
+    const { data: res, error } = await supabase.rpc("app_advance_workflow_task" as never, {
+      _task_id: data.task_id,
+      _decision: data.decision,
+      _comment: data.comment ?? null,
+    } as never);
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; next: string | null; correlation_id: string };
   });

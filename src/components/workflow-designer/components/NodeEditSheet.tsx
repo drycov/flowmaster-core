@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "./Combobox";
 import { NODE_TYPE_ICONS, NODE_TYPE_LABELS } from "../constants";
+import { listPositions } from "@/lib/api/org.functions";
 import type { FlowNode, AssigneeType, User, Role, Department } from "../types";
 
 interface NodeEditSheetProps {
@@ -21,6 +24,17 @@ interface NodeEditSheetProps {
   onDeleteConfirm: () => void;
 }
 
+const ASSIGNEE_MODES: { value: AssigneeType; label: string; needsRef: boolean }[] = [
+  { value: "user", label: "Конкретный сотрудник", needsRef: true },
+  { value: "position", label: "Должность", needsRef: true },
+  { value: "department", label: "Подразделение (любой сотрудник)", needsRef: true },
+  { value: "department_head", label: "Руководитель подразделения", needsRef: true },
+  { value: "parent_department_head", label: "Руководитель родительского подразделения", needsRef: true },
+  { value: "initiator_manager", label: "Руководитель инициатора", needsRef: false },
+  { value: "role", label: "По роли", needsRef: true },
+  { value: "group", label: "Группа пользователей", needsRef: true },
+];
+
 export function NodeEditSheet({
   open,
   node,
@@ -32,21 +46,34 @@ export function NodeEditSheet({
   onDelete,
   onDeleteConfirm,
 }: NodeEditSheetProps) {
+  void onDelete;
+  const { data: positions = [] } = useQuery({
+    queryKey: ["positions"],
+    queryFn: () => listPositions(),
+  });
+
   if (!node) return null;
 
-  const getAssigneeOptions = () => {
-    const assigneeType = node.data.assignee_type || "user";
+  const assigneeType = (node.data.assignee_type || "user") as AssigneeType;
+  const modeMeta = ASSIGNEE_MODES.find((m) => m.value === assigneeType);
 
+  const getAssigneeOptions = () => {
     switch (assigneeType) {
       case "user":
         return (users || []).map((u) => ({ value: u.id, label: `${u.name} (${u.role})`, metadata: u }));
       case "role":
         return (roles || []).map((r) => ({ value: r.id, label: r.name, metadata: r }));
       case "department":
-      case "department_manager":
+      case "department_head":
+      case "parent_department_head":
         return (departments || []).map((d) => ({ value: d.id, label: d.name, metadata: d }));
-      case "initiator_manager":
-        return [];
+      case "position":
+        return (positions as Array<{ id: string; title_ru: string }>).map((p) => ({
+          value: p.id,
+          label: p.title_ru,
+        }));
+      case "group":
+        return (roles || []).map((r) => ({ value: r.id, label: r.name, metadata: r }));
       default:
         return [];
     }
@@ -92,46 +119,50 @@ export function NodeEditSheet({
           {showAssigneeBlock && (
             <>
               <div className="space-y-2">
-                <Label>Тип ответственного</Label>
+                <Label>Назначение исполнителя</Label>
                 <Select
-                  value={node.data.assignee_type || "user"}
+                  value={assigneeType}
                   onValueChange={(v: AssigneeType) => onUpdate({ assignee_type: v, assignee_id: null })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">Конкретный сотрудник</SelectItem>
-                    <SelectItem value="role">Роль / Должность</SelectItem>
-                    <SelectItem value="department">Подразделение (все сотрудники)</SelectItem>
-                    <SelectItem value="department_manager">Руководитель подразделения</SelectItem>
-                    <SelectItem value="initiator_manager">Руководитель инициатора</SelectItem>
+                    {ASSIGNEE_MODES.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Используется функцией <code>resolve_workflow_assignees</code> при запуске маршрута.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label>
-                  {node.data.assignee_type === "user"
-                    ? "Сотрудник"
-                    : node.data.assignee_type === "role"
-                    ? "Роль"
-                    : "Подразделение"}
-                </Label>
-                <Combobox
-                  options={getAssigneeOptions()}
-                  value={node.data.assignee_id || undefined}
-                  onChange={(value) => onUpdate({ assignee_id: value || null })}
-                  placeholder={`Выберите ${
-                    node.data.assignee_type === "user"
-                      ? "сотрудника"
-                      : node.data.assignee_type === "role"
-                      ? "роль"
-                      : "подразделение"
-                  }`}
-                  disabled={!users && !roles && !departments}
-                  isLoading={!users && !roles && !departments}
+              {modeMeta?.needsRef && (
+                <div className="space-y-2">
+                  <Label>Источник</Label>
+                  <Combobox
+                    options={getAssigneeOptions()}
+                    value={node.data.assignee_id || undefined}
+                    onChange={(value) => onUpdate({ assignee_id: value || null })}
+                    placeholder="Выберите значение"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="isRequired"
+                  checked={(node.data.config?.is_required as boolean) ?? true}
+                  onCheckedChange={(c) =>
+                    onUpdate({ config: { ...node.data.config, is_required: !!c } })
+                  }
                 />
+                <Label htmlFor="isRequired" className="text-sm font-normal cursor-pointer">
+                  Обязательный этап (нельзя пропустить при модификации маршрута)
+                </Label>
               </div>
             </>
           )}
@@ -139,7 +170,7 @@ export function NodeEditSheet({
           {showSlaBlock && (
             <>
               <div className="space-y-2">
-                <Label>SLA (Service Level Agreement)</Label>
+                <Label>SLA</Label>
                 <div className="flex gap-2">
                   <Input
                     type="number"
@@ -171,15 +202,13 @@ export function NodeEditSheet({
               </div>
 
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="workingHoursOnly"
                   checked={node.data.sla_working_hours_only || false}
-                  onChange={(e) => onUpdate({ sla_working_hours_only: e.target.checked })}
-                  className="rounded border-gray-300"
+                  onCheckedChange={(c) => onUpdate({ sla_working_hours_only: !!c })}
                 />
                 <Label htmlFor="workingHoursOnly" className="text-sm font-normal cursor-pointer">
-                  Учитывать только рабочее время (согласно производственному календарю)
+                  Только рабочее время
                 </Label>
               </div>
             </>
