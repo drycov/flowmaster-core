@@ -5,6 +5,7 @@ import {
   getDocument, addComment, addSignature, updateDocumentStatus,
 } from "@/lib/api/documents.functions";
 import { listWorkflows, startWorkflow } from "@/lib/api/workflows.functions";
+import { getMyProfile } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
+import { WorkflowActions } from "@/components/document-detail/components/WorkflowActions";
 import { useI18n, localized } from "@/lib/i18n";
 import { fmtDate, fmtDateShort } from "@/lib/format";
 import { toast } from "sonner";
@@ -21,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   GitBranch, MessageSquare, History, Shield, FileSearch, Send, FileEdit, Archive,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/documents/$id")({
   component: DocumentDetail,
