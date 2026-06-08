@@ -41,17 +41,18 @@ export const toDomainNode = (n: FlowNode): WorkflowNode => ({
   position: n.position,
   assignee_id: n.data.assignee_id ?? null,
   assignee_type: n.data.assignee_type,
+  // Aliases consumed by SQL resolve_workflow_assignees(_node, _doc).
+  assignee_mode: n.data.assignee_type,
+  assignee_ref: n.data.assignee_id ?? null,
   sla_hours: n.data.sla_hours ?? undefined,
   sla_unit: n.data.sla_unit,
   sla_working_hours_only: n.data.sla_working_hours_only,
-  // Persist resolver-compatible aliases so resolve_workflow_assignees can pick them up.
   config: {
     ...(n.data.config ?? {}),
-    assignee_mode: n.data.assignee_type ?? "user",
-    assignee_ref: n.data.assignee_id ?? null,
     is_required: (n.data.config as { is_required?: boolean } | undefined)?.is_required ?? true,
   },
 });
+
 
 
 export const toDomainEdge = (e: FlowEdge): WorkflowEdge => ({
