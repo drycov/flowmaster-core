@@ -45,15 +45,19 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
             label: z.string().optional(),
             assignee_id: z.string().nullable().optional(),
             assignee_type: z.string().optional(),
+            assignee_mode: z.string().optional(),
+            assignee_ref: z.string().nullable().optional(),
             sla_hours: z.number().optional(),
             position: z.object({ x: z.number(), y: z.number() }).optional(),
             config: z.record(z.string(), z.unknown()).optional(),
+            data: z.record(z.string(), z.unknown()).optional(),
           }),
         ),
         edges: z.array(
           z.object({ id: z.string(), source: z.string(), target: z.string(), label: z.string().optional() }),
         ),
       }),
+
     }),
   )
   .handler(async ({ data, context }) => {
