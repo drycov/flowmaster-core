@@ -215,6 +215,12 @@ function DocumentDetail() {
         </div>
 
         <div className="space-y-4">
+          <WorkflowActions
+            documentId={id}
+            tasks={((data as { tasks?: Array<{ id: string; title: string; node_id: string; node_type: string; status: string; assignee_id: string | null; action_required: string; due_at: string | null }> }).tasks) ?? []}
+            currentUserId={me?.profile?.id}
+          />
+
           <Card className="rounded-sm">
             <CardHeader><CardTitle className="text-sm">{t("doc.metadata")}</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
