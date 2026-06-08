@@ -33,11 +33,14 @@ export interface WorkflowNode {
   position: { x: number; y: number };
   assignee_id?: string | null;
   assignee_type?: AssigneeType;
+  assignee_mode?: AssigneeType;
+  assignee_ref?: string | null;
   sla_hours?: number;
   sla_unit?: SlaUnit;
   sla_working_hours_only?: boolean;
   config?: Record<string, unknown>;
 }
+
 
 export interface WorkflowEdge {
   id: string;
