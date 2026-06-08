@@ -39,6 +39,8 @@ function DocumentDetail() {
     queryKey: ["document", id],
     queryFn: () => getDocument({ data: { id } }),
   });
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
+
 
   useEffect(() => {
     const ch = supabase
