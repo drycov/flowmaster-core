@@ -19,9 +19,14 @@ import type { PasswordFormData } from "../types";
 interface ChangePasswordDialogProps {
   onChangePassword: (data: PasswordFormData) => void;
   isUpdating: boolean;
+  requiresCurrentPassword?: boolean;
 }
 
-export function ChangePasswordDialog({ onChangePassword, isUpdating }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({
+  onChangePassword,
+  isUpdating,
+  requiresCurrentPassword = true,
+}: ChangePasswordDialogProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<PasswordFormData>({
@@ -34,7 +39,7 @@ export function ChangePasswordDialog({ onChangePassword, isUpdating }: ChangePas
   const validate = (): boolean => {
     const newErrors: Partial<PasswordFormData> = {};
     
-    if (!formData.currentPassword) {
+    if (requiresCurrentPassword && !formData.currentPassword) {
       newErrors.currentPassword = t("profile.currentPasswordRequired");
     }
     if (!formData.newPassword) {
@@ -70,31 +75,37 @@ export function ChangePasswordDialog({ onChangePassword, isUpdating }: ChangePas
       <DialogTrigger asChild>
         <Button variant="outline">
           <Key className="w-4 h-4 mr-1" />
-          {t("profile.changePassword")}
+          {requiresCurrentPassword ? t("profile.changePassword") : t("profile.setPassword")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("profile.changePassword")}</DialogTitle>
+          <DialogTitle>
+            {requiresCurrentPassword ? t("profile.changePassword") : t("profile.setPassword")}
+          </DialogTitle>
           <DialogDescription>
-            {t("profile.changePasswordDescription")}
+            {requiresCurrentPassword
+              ? t("profile.changePasswordDescription")
+              : t("profile.setPasswordDescription")}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>{t("profile.currentPassword")}</Label>
-            <Input
-              type="password"
-              value={formData.currentPassword}
-              onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-              placeholder="••••••"
-            />
-            {errors.currentPassword && (
-              <p className="text-xs text-destructive">{errors.currentPassword}</p>
-            )}
-          </div>
-          
+          {requiresCurrentPassword && (
+            <div className="space-y-2">
+              <Label>{t("profile.currentPassword")}</Label>
+              <Input
+                type="password"
+                value={formData.currentPassword}
+                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                placeholder="••••••"
+              />
+              {errors.currentPassword && (
+                <p className="text-xs text-destructive">{errors.currentPassword}</p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>{t("profile.newPassword")}</Label>
             <Input
@@ -132,7 +143,7 @@ export function ChangePasswordDialog({ onChangePassword, isUpdating }: ChangePas
             ) : (
               <Key className="w-4 h-4 mr-1" />
             )}
-            {t("profile.changePassword")}
+            {requiresCurrentPassword ? t("profile.changePassword") : t("profile.setPassword")}
           </Button>
         </DialogFooter>
       </DialogContent>

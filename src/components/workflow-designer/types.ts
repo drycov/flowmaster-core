@@ -6,6 +6,8 @@ export type NodeType =
   | "SIGNATURE"
   | "TASK"
   | "CONDITION"
+  | "FORK"
+  | "JOIN"
   | "NOTIFICATION"
   | "TIMER"
   | "ESCALATION"

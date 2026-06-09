@@ -2,7 +2,7 @@ import { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import type { AuthMode } from "../types";
 
 interface AuthFormProps {
@@ -40,7 +40,7 @@ export function AuthForm({
             onChange={(e) => onFullNameChange(e.target.value)}
             required
             disabled={loading}
-            placeholder="Иванов Иван Иванович"
+            placeholder={t("auth.placeholder.fullName")}
           />
         </div>
       )}
@@ -54,7 +54,7 @@ export function AuthForm({
           required
           disabled={loading}
           autoComplete="email"
-          placeholder="user@example.com"
+          placeholder={t("auth.placeholder.email")}
         />
       </div>
       

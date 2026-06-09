@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/components/auth/hooks/useAuth";
+import { useEdsAuth } from "@/components/auth/hooks/useEdsAuth";
 import { useAuthForm } from "@/components/auth/hooks/useAuthForm";
 import { AuthLeftPanel } from "@/components/auth/components/AuthLeftPanel";
 import { LanguageSwitcher } from "@/components/auth/components/LanguageSwitcher";
@@ -18,7 +19,8 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { loading, signIn, signUp, signInWithGoogle } = useAuth();
+  const { loading, signIn, signUp } = useAuth();
+  const { loading: edsLoading, signInWithEds } = useEdsAuth();
   const {
     mode,
     email,
@@ -39,9 +41,6 @@ function AuthPage() {
       await signIn(email, password);
     } else {
       await signUp(email, password, fullName, locale);
-      if (!loading) {
-        switchMode();
-      }
     }
   };
 
@@ -59,13 +58,16 @@ function AuthPage() {
           email={email}
           password={password}
           fullName={fullName}
-          loading={loading}
+          loading={loading || edsLoading}
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
           onFullNameChange={setFullName}
           onModeSwitch={switchMode}
           onSubmit={handleSubmit}
-          onGoogleSignIn={signInWithGoogle}
+          onEdsAuth={() =>
+            signInWithEds(mode, fullName || undefined, email || undefined, password || undefined)
+          }
+          edsLoading={edsLoading}
         />
       </div>
     </div>

@@ -12,6 +12,10 @@ export interface UserProfile {
   department?: string | null;
   position?: string | null;
   phone?: string | null;
+  auth_method?: "email" | "eds" | "both";
+  iin?: string | null;
+  has_password?: boolean;
+  has_eds?: boolean;
 }
 
 export interface ProfileFormData {

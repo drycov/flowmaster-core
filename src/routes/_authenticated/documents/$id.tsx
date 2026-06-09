@@ -26,7 +26,7 @@ import { WorkflowActions } from "@/components/document-detail/components/Workflo
 import { WorkflowCard } from "@/components/document-detail/components/WorkflowCard";
 // Инструменты и Иконки
 import { fmtDate, fmtDateShort } from "@/lib/format";
-import { localized, useI18n } from "@/lib/i18n";
+import { localized, useI18n } from "@/i18n";
 import {
   Archive,
   FileEdit,
@@ -78,9 +78,10 @@ function DocumentDetail() {
 
   const doc = data.document;
 
+  const hasActiveRun = (data?.runs ?? []).some((r) => r.status === "running");
+
   const handleStartWorkflow = () => {
-    if (!chosenWf) return;
-    startWorkflow(chosenWf, {
+    startWorkflow(chosenWf || undefined, {
       onSuccess: () => {
         setWfDialog(false);
         setChosenWf("");
@@ -107,39 +108,43 @@ function DocumentDetail() {
             </Button>
 
             {/* Диалог запуска маршрута */}
-            <Dialog open={wfDialog} onOpenChange={setWfDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <GitBranch className="w-4 h-4 mr-1" />
-                  {t("doc.start_workflow")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t("doc.start_workflow")}</DialogTitle>
-                </DialogHeader>
-                <Select value={chosenWf} onValueChange={setChosenWf}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите маршрут..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workflows.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        ={localized(w, locale, "name")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <DialogFooter>
-                  <Button
-                    onClick={handleStartWorkflow}
-                    disabled={!chosenWf || isStartingWorkflow}
-                  >
-                    {t("common.submit")}
+            {!hasActiveRun && (
+              <Dialog open={wfDialog} onOpenChange={setWfDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <GitBranch className="w-4 h-4 mr-1" />
+                    {t("doc.start_workflow")}
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("doc.start_workflow")}</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {doc.workflow_id || doc.custom_route
+                      ? t("doc.routeSavedHint")
+                      : t("doc.routeSelectHint")}
+                  </p>
+                  <Select value={chosenWf} onValueChange={setChosenWf}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("doc.selectRouteOptional")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workflows.map((w) => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {localized(w, locale, "name")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <DialogFooter>
+                    <Button onClick={handleStartWorkflow} disabled={isStartingWorkflow}>
+                      {t("common.submit")}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
 
             {/* Кнопка подписания через ЭЦП (NCALayer) */}
             <Button size="sm" onClick={() => handleSign(doc.body)}>
@@ -189,7 +194,11 @@ function DocumentDetail() {
 
             {/* Вкладка 3: Журнал версий файла */}
             <TabsContent value="versions">
-              <VersionsTab versions={data.versions} />
+              <VersionsTab
+                documentId={id}
+                versions={data.versions}
+                canUpload={doc.status === "draft" || doc.status === "in_review"}
+              />
             </TabsContent>
 
             {/* Вкладка 4: Секция комментариев */}
@@ -238,6 +247,10 @@ function DocumentDetail() {
             documentId={id}
             tasks={data.tasks ?? []}
             currentUserId={me?.profile?.id}
+            roleCodes={me?.roles ?? []}
+            departmentId={(me?.profile as { department_id?: string | null })?.department_id}
+            isAdmin={me?.roles?.includes("admin")}
+            signPayload={doc.body ?? doc.title_ru ?? id}
           />
 
           {/* Карточка системных метаданных документа */}

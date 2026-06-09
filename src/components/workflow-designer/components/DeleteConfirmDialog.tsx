@@ -1,5 +1,6 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { FlowNode, FlowEdge } from "../types";
+import { useI18n } from "@/i18n";
+import type { FlowNode } from "../types";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -10,26 +11,28 @@ interface DeleteConfirmDialogProps {
 }
 
 export function DeleteConfirmDialog({ open, node, connectedEdgesCount, onClose, onConfirm }: DeleteConfirmDialogProps) {
+  const { t } = useI18n();
+
   if (!node) return null;
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Вы уверены, что хотите удалить узел?</AlertDialogTitle>
+          <AlertDialogTitle>{t("wf.deleteNodeConfirm")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Узел <strong>"{node.data.label}"</strong> и все его связи будут удалены без возможности восстановления.
+            {node.data.label}
             {connectedEdgesCount > 0 && (
               <span className="block mt-2 text-amber-600">
-                ⚠️ Будут удалены все {connectedEdgesCount} связанных переходов.
+                {connectedEdgesCount}
               </span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Отмена</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-red-600 hover:bg-red-700">
-            Удалить
+            {t("common.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAnyPermission } from "@/lib/auth/route-guards";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { PageState } from "@/components/PageLayout";
+import { useI18n, interpolate } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +40,7 @@ import {
 } from "@/lib/api/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/roles")({
+  beforeLoad: () => requireAnyPermission("manage_users", "manage_roles"),
   component: RolesPage,
 });
 
@@ -53,6 +57,7 @@ type RoleV2 = {
 };
 
 function RolesPage() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ["roles-v2"],
@@ -95,7 +100,7 @@ function RolesPage() {
         data: { role_id: selectedId!, permission_codes: Array.from(draftPerms) },
       }),
     onSuccess: () => {
-      toast.success("Разрешения сохранены");
+      toast.success(t("admin.roles.permissionsSaved"));
       setPermsDirty(false);
       qc.invalidateQueries({ queryKey: ["roles-v2"] });
     },
@@ -114,22 +119,11 @@ function RolesPage() {
     return Array.from(m.entries());
   }, [permissions]);
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title="Роли и разрешения" />
-        <PageBody>
-          <Loader2 className="animate-spin" />
-        </PageBody>
-      </>
-    );
-  }
-
   return (
-    <>
+    <PageState title={t("nav.roles")} loading={isLoading}>
       <PageHeader
-        title="Роли и разрешения"
-        description="Матрица RBAC, временные grant'ы"
+        title={t("nav.roles")}
+        description={t("roles.description")}
         actions={<NewRoleDialog onCreated={() => qc.invalidateQueries({ queryKey: ["roles-v2"] })} />}
       />
       <PageBody>
@@ -137,7 +131,7 @@ function RolesPage() {
           {/* LEFT: roles list */}
           <Card className="col-span-4 rounded-sm">
             <CardHeader>
-              <CardTitle className="text-sm">Роли</CardTitle>
+              <CardTitle className="text-sm">{t("admin.roles.title")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y border-t">
@@ -154,17 +148,17 @@ function RolesPage() {
                       <span className="font-medium text-sm">{r.name_ru}</span>
                       {r.is_system && (
                         <Badge variant="outline" className="text-[10px]">
-                          system
+                          {t("admin.roles.system")}
                         </Badge>
                       )}
                       {!r.is_active && (
                         <Badge variant="secondary" className="text-[10px]">
-                          off
+                          {t("admin.roles.off")}
                         </Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground font-mono">
-                      {r.code} · {r.kind} · {r.permission_codes.length} прав
+                      {r.code} · {r.kind} · {r.permission_codes.length} {t("admin.roles.perms")}
                     </div>
                   </button>
                 ))}
@@ -177,7 +171,7 @@ function RolesPage() {
             {!selected ? (
               <Card className="rounded-sm">
                 <CardContent className="p-12 text-center text-muted-foreground text-sm">
-                  Выберите роль слева, чтобы редактировать разрешения и grant'ы
+                  {t("admin.roles.selectHint")}
                 </CardContent>
               </Card>
             ) : (
@@ -202,7 +196,7 @@ function RolesPage() {
                       ) : (
                         <Save className="w-4 h-4 mr-1" />
                       )}
-                      Сохранить
+                      {t("common.save")}
                     </Button>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -245,11 +239,12 @@ function RolesPage() {
           </div>
         </div>
       </PageBody>
-    </>
+    </PageState>
   );
 }
 
 function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     code: "",
@@ -261,7 +256,7 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
   const mut = useMutation({
     mutationFn: () => upsertRoleV2({ data: form }),
     onSuccess: () => {
-      toast.success("Роль создана");
+      toast.success(t("admin.roles.created"));
       setOpen(false);
       setForm({ code: "", name_ru: "", name_kk: "", description: "", kind: "org" });
       onCreated();
@@ -273,37 +268,37 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="w-4 h-4 mr-1" />
-          Новая роль
+          {t("admin.roles.new")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Новая роль</DialogTitle>
+          <DialogTitle>{t("admin.roles.new")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <div>
-            <Label>Код (a-z0-9_)</Label>
+            <Label>{t("admin.roles.codeLabel")}</Label>
             <Input
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
             />
           </div>
           <div>
-            <Label>Название (RU)</Label>
+            <Label>{t("wf.nameRu")}</Label>
             <Input
               value={form.name_ru}
               onChange={(e) => setForm({ ...form, name_ru: e.target.value })}
             />
           </div>
           <div>
-            <Label>Атауы (KK)</Label>
+            <Label>{t("wf.nameKk")}</Label>
             <Input
               value={form.name_kk}
               onChange={(e) => setForm({ ...form, name_kk: e.target.value })}
             />
           </div>
           <div>
-            <Label>Тип</Label>
+            <Label>{t("admin.departments.type")}</Label>
             <Select
               value={form.kind}
               onValueChange={(v) => setForm({ ...form, kind: v as never })}
@@ -312,17 +307,17 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="system">Системная</SelectItem>
-                <SelectItem value="org">Организационная</SelectItem>
-                <SelectItem value="department">Подразделения</SelectItem>
-                <SelectItem value="temporary">Временная</SelectItem>
+                <SelectItem value="system">{t("admin.roles.system")}</SelectItem>
+                <SelectItem value="org">{t("admin.roles.org")}</SelectItem>
+                <SelectItem value="department">{t("admin.roles.kindDepartment")}</SelectItem>
+                <SelectItem value="temporary">{t("admin.roles.kindTemporary")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
-            Создать
+            {t("common.create")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -339,6 +334,7 @@ function GrantsCard({
   roleName: string;
   users: Array<{ id: string; full_name_ru: string | null; email: string }>;
 }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { data: grants = [] } = useQuery({
     queryKey: ["role-grants", roleId],
@@ -363,7 +359,7 @@ function GrantsCard({
         },
       }),
     onSuccess: () => {
-      toast.success("Роль выдана");
+      toast.success(t("admin.roles.granted"));
       setOpen(false);
       setForm({ user_id: "", expires_at: "", reason: "" });
       qc.invalidateQueries({ queryKey: ["role-grants", roleId] });
@@ -374,7 +370,7 @@ function GrantsCard({
   const revokeMut = useMutation({
     mutationFn: (id: string) => revokeRoleGrant({ data: { grant_id: id } }),
     onSuccess: () => {
-      toast.success("Grant отозван");
+      toast.success(t("admin.roles.grantRevoked"));
       qc.invalidateQueries({ queryKey: ["role-grants", roleId] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
@@ -383,27 +379,29 @@ function GrantsCard({
   return (
     <Card className="rounded-sm">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm">Выданные роли — {roleName}</CardTitle>
+        <CardTitle className="text-sm">
+          {interpolate(t("admin.roles.grantsTitle"), { name: roleName })}
+        </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
               <UserPlus className="w-4 h-4 mr-1" />
-              Выдать
+              {t("admin.roles.grant")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Выдать роль</DialogTitle>
+              <DialogTitle>{t("admin.roles.grantTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-2">
               <div>
-                <Label>Пользователь</Label>
+                <Label>{t("admin.roles.grantUser")}</Label>
                 <Select
                   value={form.user_id}
                   onValueChange={(v) => setForm({ ...form, user_id: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите пользователя" />
+                    <SelectValue placeholder={t("admin.roles.selectUser")} />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((u) => (
@@ -415,7 +413,7 @@ function GrantsCard({
                 </Select>
               </div>
               <div>
-                <Label>Срок действия (опционально)</Label>
+                <Label>{t("admin.roles.expiresAt")}</Label>
                 <Input
                   type="datetime-local"
                   value={form.expires_at}
@@ -423,11 +421,11 @@ function GrantsCard({
                 />
               </div>
               <div>
-                <Label>Основание</Label>
+                <Label>{t("admin.roles.reason")}</Label>
                 <Input
                   value={form.reason}
                   onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                  placeholder="Приказ №…"
+                  placeholder={t("admin.roles.reasonPlaceholder")}
                 />
               </div>
             </div>
@@ -436,7 +434,7 @@ function GrantsCard({
                 disabled={!form.user_id || grantMut.isPending}
                 onClick={() => grantMut.mutate()}
               >
-                Выдать
+                {t("admin.roles.grant")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -446,10 +444,10 @@ function GrantsCard({
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-y text-xs">
             <tr>
-              <th className="text-left px-3 py-2">Пользователь</th>
-              <th className="text-left px-3 py-2">Выдано</th>
-              <th className="text-left px-3 py-2">Действует до</th>
-              <th className="text-left px-3 py-2">Статус</th>
+              <th className="text-left px-3 py-2">{t("admin.roles.grantUser")}</th>
+              <th className="text-left px-3 py-2">{t("admin.roles.colGranted")}</th>
+              <th className="text-left px-3 py-2">{t("admin.roles.colExpires")}</th>
+              <th className="text-left px-3 py-2">{t("common.status")}</th>
               <th className="px-3 py-2 w-12" />
             </tr>
           </thead>
@@ -477,14 +475,14 @@ function GrantsCard({
                 <td className="px-3 py-2">
                   {g.revoked_at ? (
                     <Badge variant="destructive" className="text-[10px]">
-                      отозван
+                      {t("admin.roles.revoked")}
                     </Badge>
                   ) : g.expires_at && new Date(g.expires_at) < new Date() ? (
                     <Badge variant="secondary" className="text-[10px]">
-                      истёк
+                      {t("admin.roles.expired")}
                     </Badge>
                   ) : (
-                    <Badge className="text-[10px]">активен</Badge>
+                    <Badge className="text-[10px]">{t("admin.roles.active")}</Badge>
                   )}
                 </td>
                 <td className="px-3 py-2">
@@ -493,7 +491,7 @@ function GrantsCard({
                       size="icon"
                       variant="ghost"
                       onClick={() => revokeMut.mutate(g.id)}
-                      title="Отозвать"
+                      title={t("admin.roles.grantRevoke")}
                     >
                       <Ban className="w-4 h-4" />
                     </Button>
@@ -504,7 +502,7 @@ function GrantsCard({
             {(grants as unknown[]).length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground text-xs">
-                  Нет выданных grant'ов
+                  {t("admin.roles.noGrants")}
                 </td>
               </tr>
             )}

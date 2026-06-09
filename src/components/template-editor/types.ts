@@ -12,7 +12,20 @@ export interface Field {
 export interface TemplateSchema {
   fields?: Field[];
   body_template?: string;
+  title_template_ru?: string;
+  title_template_kk?: string;
 }
+
+export type TemplateSyncResult = {
+  fields: Field[];
+  metadata: {
+    name_ru: string;
+    name_kk: string;
+    description: string | null;
+    category: string;
+  };
+  metadata_updated?: boolean;
+};
 
 export interface Template {
   id: string;

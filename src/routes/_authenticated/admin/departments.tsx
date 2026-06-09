@@ -1,18 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAnyPermission } from "@/lib/auth/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { listDepartments, upsertDepartment, listUsers } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { ListEmpty, PageLoading, PanelCard } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { Plus, Pencil, Building2, ChevronRight, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({
+  beforeLoad: () => requireAnyPermission("manage_org"),
   component: DepartmentsPage,
 });
 
@@ -149,7 +152,7 @@ function DepartmentsPage() {
             </div>
             {head && (
               <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                Руководитель: {localized(head, locale, "full_name") || head.email}
+                {t("departments.headLabel")}: {localized(head, locale, "full_name") || head.email}
               </div>
             )}
           </div>
@@ -189,25 +192,21 @@ function DepartmentsPage() {
       <PageBody>
         <div className="flex gap-6 h-full">
           {/* Левая часть — дерево */}
-          <div className="flex-1 bg-card border border-border rounded-xl overflow-hidden max-w-2xl flex flex-col">
+          <PanelCard className="flex-1 max-w-2xl flex flex-col">
             {isLoading ? (
-              <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin" />
-              </div>
+              <PageLoading />
             ) : roots.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                {t("common.empty")}
-              </div>
+              <ListEmpty>{t("common.empty")}</ListEmpty>
             ) : (
               <div className="divide-y divide-border overflow-auto flex-1">
                 {roots.map((d) => renderNode(d, 0))}
               </div>
             )}
-          </div>
+          </PanelCard>
 
           {/* Правая карточка с информацией */}
           {selectedDep ? (
-            <div className="w-96 bg-card border border-border rounded-xl p-6 flex-shrink-0 self-start">
+            <PanelCard className="w-96 p-6 flex-shrink-0 self-start">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <div className="font-mono text-sm text-muted-foreground mb-1">{selectedDep.code}</div>
@@ -226,19 +225,23 @@ function DepartmentsPage() {
 
               <div className="space-y-5">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Тип</Label>
-                  <p className="capitalize">{selectedDep.kind || "—"}</p>
+                  <Label className="text-xs text-muted-foreground">{t("departments.kind")}</Label>
+                  <p className="capitalize">
+                    {selectedDep.kind
+                      ? t(`departments.kind.${selectedDep.kind}` as "departments.kind.company")
+                      : "—"}
+                  </p>
                 </div>
 
                 {selectedDep.parent_id && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Родитель</Label>
+                    <Label className="text-xs text-muted-foreground">{t("departments.parent")}</Label>
                     <p>{departments.find(d => d.id === selectedDep.parent_id)?.code} — {localized(departments.find(d => d.id === selectedDep.parent_id), locale, "name")}</p>
                   </div>
                 )}
 
                 <div>
-                  <Label className="text-xs text-muted-foreground">Руководитель</Label>
+                  <Label className="text-xs text-muted-foreground">{t("departments.head")}</Label>
                   <p>
                     {users.find(u => u.id === selectedDep.head_user_id)
                       ? localized(users.find(u => u.id === selectedDep.head_user_id)!, locale, "full_name") || users.find(u => u.id === selectedDep.head_user_id)!.email
@@ -248,14 +251,14 @@ function DepartmentsPage() {
 
                 {selectedDep.phone && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Телефон</Label>
+                    <Label className="text-xs text-muted-foreground">{t("departments.phone")}</Label>
                     <p>{selectedDep.phone}</p>
                   </div>
                 )}
 
                 {selectedDep.email && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Эл. почта</Label>
+                    <Label className="text-xs text-muted-foreground">{t("departments.email")}</Label>
                     <p>{selectedDep.email}</p>
                   </div>
                 )}
@@ -266,13 +269,13 @@ function DepartmentsPage() {
                 onClick={() => openEdit(selectedDep)}
               >
                 <Pencil className="w-4 h-4 mr-2" />
-                Редактировать
+                {t("common.edit")}
               </Button>
-            </div>
+            </PanelCard>
           ) : (
-            <div className="w-96 flex-shrink-0 self-start bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
-              Выберите подразделение слева для просмотра информации
-            </div>
+            <PanelCard className="w-96 flex-shrink-0 self-start p-8 text-center text-muted-foreground">
+              {t("departments.selectHint")}
+            </PanelCard>
           )}
         </div>
       </PageBody>
@@ -282,34 +285,34 @@ function DepartmentsPage() {
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
             <DialogTitle className="text-lg">
-              {form.id ? "Редактировать" : t("departments.new")}
+              {form.id ? t("common.edit") : t("departments.new")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 py-2">
             <div className="col-span-2 sm:col-span-1">
-              <Label>Код</Label>
+              <Label>{t("admin.departments.code")}</Label>
               <Input value={form.code} onChange={(e) => updateField("code", e.target.value)} />
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <Label>Тип</Label>
+              <Label>{t("admin.departments.type")}</Label>
               <Select value={form.kind} onValueChange={(v) => updateField("kind", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="company">Компания</SelectItem>
-                  <SelectItem value="branch">Филиал</SelectItem>
-                  <SelectItem value="department">Отдел</SelectItem>
-                  <SelectItem value="division">Подразделение</SelectItem>
+                  <SelectItem value="company">{t("departments.kind.company")}</SelectItem>
+                  <SelectItem value="branch">{t("departments.kind.branch")}</SelectItem>
+                  <SelectItem value="department">{t("departments.kind.department")}</SelectItem>
+                  <SelectItem value="division">{t("departments.kind.division")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div><Label>Название (RU)</Label><Input value={form.name_ru} onChange={(e) => updateField("name_ru", e.target.value)} /></div>
-            <div><Label>Название (KK)</Label><Input value={form.name_kk} onChange={(e) => updateField("name_kk", e.target.value)} /></div>
+            <div><Label>{t("wf.nameRu")}</Label><Input value={form.name_ru} onChange={(e) => updateField("name_ru", e.target.value)} /></div>
+            <div><Label>{t("wf.nameKk")}</Label><Input value={form.name_kk} onChange={(e) => updateField("name_kk", e.target.value)} /></div>
 
             <div className="col-span-2">
-              <Label>Родительское подразделение</Label>
+              <Label>{t("departments.parent")}</Label>
               <Select value={form.parent_id ?? "__none"} onValueChange={(v) => updateField("parent_id", v === "__none" ? null : v)}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
@@ -324,7 +327,7 @@ function DepartmentsPage() {
             </div>
 
             <div className="col-span-2">
-              <Label>Руководитель</Label>
+              <Label>{t("departments.head")}</Label>
               <Select value={form.head_user_id ?? "__none"} onValueChange={(v) => updateField("head_user_id", v === "__none" ? null : v)}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
@@ -338,15 +341,15 @@ function DepartmentsPage() {
               </Select>
             </div>
 
-            <div><Label>Телефон</Label><Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} /></div>
-            <div><Label>Эл. почта</Label><Input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} /></div>
+            <div><Label>{t("departments.phone")}</Label><Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} /></div>
+            <div><Label>{t("departments.email")}</Label><Input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} /></div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleClose}>Отмена</Button>
+            <Button variant="outline" onClick={handleClose}>{t("common.cancel")}</Button>
             <Button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}>
               {saveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Сохранить
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/api/documents.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { fmtRel } from "@/lib/format";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
 import { FileText, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { getMyProfile } from "@/lib/api/admin.functions";
+import { SetupChecklist } from "@/components/setup/SetupChecklist";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -14,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { t, locale } = useI18n();
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
+  const isAdmin = (me?.roles ?? []).includes("admin");
   const { data } = useQuery({ queryKey: ["dashboard"], queryFn: () => getDashboardStats() });
 
   const stats = [
@@ -27,6 +31,8 @@ function Dashboard() {
     <>
       <PageHeader title={t("nav.dashboard")} description={t("app.tagline")} />
       <PageBody className="space-y-6">
+        <SetupChecklist isAdmin={isAdmin} />
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {stats.map((s) => (
             <Card key={s.label} className="rounded-sm">
@@ -75,7 +81,7 @@ function Dashboard() {
 
           <Card className="rounded-sm">
             <CardHeader>
-              <CardTitle className="text-sm">{t("nav.documents")} — мои</CardTitle>
+              <CardTitle className="text-sm">{t("nav.documents")}{t("dashboard.myDocuments")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {(data?.myDocs ?? []).length === 0 ? (

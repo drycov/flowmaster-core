@@ -11,6 +11,8 @@ export interface TemplateField {
 
 export interface TemplateSchema {
   fields?: TemplateField[];
+  title_template_ru?: string;
+  title_template_kk?: string;
 }
 
 // Используем Json из Supabase для совместимости с API

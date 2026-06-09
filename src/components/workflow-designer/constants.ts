@@ -7,6 +7,8 @@ export const NODE_TYPES: NodeType[] = [
   "SIGNATURE",
   "TASK",
   "CONDITION",
+  "FORK",
+  "JOIN",
   "NOTIFICATION",
   "TIMER",
   "ESCALATION",
@@ -14,17 +16,19 @@ export const NODE_TYPES: NodeType[] = [
   "END",
 ];
 
-export const NODE_TYPE_LABELS: Record<NodeType, string> = {
-  START: "Старт",
-  APPROVAL: "Согласование",
-  SIGNATURE: "Подписание",
-  TASK: "Задача",
-  CONDITION: "Условие",
-  NOTIFICATION: "Уведомление",
-  TIMER: "Таймер",
-  ESCALATION: "Эскалация",
-  ARCHIVE: "Архивация",
-  END: "Завершение",
+export const NODE_TYPE_LABEL_KEYS: Record<NodeType, string> = {
+  START: "wf.node.START",
+  APPROVAL: "wf.node.APPROVAL",
+  SIGNATURE: "wf.node.SIGNATURE",
+  TASK: "wf.node.TASK",
+  CONDITION: "wf.node.CONDITION",
+  FORK: "wf.node.FORK",
+  JOIN: "wf.node.JOIN",
+  NOTIFICATION: "wf.node.NOTIFICATION",
+  TIMER: "wf.node.TIMER",
+  ESCALATION: "wf.node.ESCALATION",
+  ARCHIVE: "wf.node.ARCHIVE",
+  END: "wf.node.END",
 };
 
 export const NODE_TYPE_ICONS: Partial<Record<NodeType, string>> = {
@@ -33,6 +37,8 @@ export const NODE_TYPE_ICONS: Partial<Record<NodeType, string>> = {
   SIGNATURE: "✍️",
   TASK: "📋",
   CONDITION: "🔀",
+  FORK: "⑂",
+  JOIN: "⑃",
   NOTIFICATION: "🔔",
   TIMER: "⏱️",
   ESCALATION: "⚠️",
@@ -48,22 +54,24 @@ export const NODE_STYLE_BY_TYPE: Partial<Record<NodeType, CSSProperties>> = {
   TASK: { background: "#f8fafc", border: "2px solid #64748b" },
   ARCHIVE: { background: "#f3f4f6", border: "2px solid #6b7280" },
   CONDITION: { background: "#fefce8", borderColor: "#eab308", border: "2px solid #eab308" },
+  FORK: { background: "#f0f9ff", borderColor: "#0ea5e9", border: "2px solid #0ea5e9" },
+  JOIN: { background: "#f0fdf4", borderColor: "#22c55e", border: "2px solid #22c55e" },
   NOTIFICATION: { background: "#fef2f2", borderColor: "#ef4444", border: "2px solid #ef4444" },
   TIMER: { background: "#ecfdf5", borderColor: "#10b981", border: "2px solid #10b981" },
   ESCALATION: { background: "#fef3c7", borderColor: "#d97706", border: "2px solid #d97706" },
 };
 
 export const OPERATORS = [
-  { id: "===", label: "Равно" },
-  { id: "!==", label: "Не равно" },
-  { id: ">", label: "Больше" },
-  { id: "<", label: "Меньше" },
-  { id: ">=", label: "Больше или равно" },
-  { id: "<=", label: "Меньше или равно" },
-  { id: "includes", label: "Содержит" },
-  { id: "startsWith", label: "Начинается с" },
-  { id: "endsWith", label: "Заканчивается на" },
-];
+  { id: "===", labelKey: "wf.op.equals" },
+  { id: "!==", labelKey: "wf.op.notEquals" },
+  { id: ">", labelKey: "wf.op.gt" },
+  { id: "<", labelKey: "wf.op.lt" },
+  { id: ">=", labelKey: "wf.op.gte" },
+  { id: "<=", labelKey: "wf.op.lte" },
+  { id: "includes", labelKey: "wf.op.includes" },
+  { id: "startsWith", labelKey: "wf.op.startsWith" },
+  { id: "endsWith", labelKey: "wf.op.endsWith" },
+] as const;
 
 export const DEFAULT_NODE_STYLE: CSSProperties = {
   padding: "12px 8px",

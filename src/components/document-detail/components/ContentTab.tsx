@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Save, X } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import DOMPurify from "dompurify";
 
 interface ContentTabProps {
@@ -73,7 +73,7 @@ export function ContentTab({
           <div className="flex justify-end mb-4">
             <Button size="sm" variant="outline" onClick={handleStartEditing}>
               <Pencil className="w-4 h-4 mr-1" />
-              Редактировать
+              {t("doc.edit")}
             </Button>
           </div>
         )}
@@ -85,16 +85,16 @@ export function ContentTab({
               onChange={(e) => setEditedBody(e.target.value)}
               rows={15}
               className="font-mono text-sm"
-              placeholder="Введите содержимое документа или структуру шаблона..."
+              placeholder={t("doc.contentPlaceholder")}
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="outline" onClick={handleCancel}>
                 <X className="w-4 h-4 mr-1" />
-                Отмена
+                {t("common.cancel")}
               </Button>
               <Button size="sm" onClick={handleSave} disabled={isSaving}>
                 <Save className="w-4 h-4 mr-1" />
-                {isSaving ? "Сохранение..." : "Сохранить"}
+                {isSaving ? t("doc.saving") : t("doc.save")}
               </Button>
             </div>
           </div>

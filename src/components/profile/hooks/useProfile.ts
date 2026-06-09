@@ -1,45 +1,57 @@
-// src/components/profile/hooks/useProfile.ts
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/i18n";
+import { getMyProfile, getUserProfile } from "@/lib/api/admin.functions";
 import type { UserProfile } from "../types";
 
-async function fetchProfile(): Promise<UserProfile> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not found");
-
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  if (error) throw error;
-  const profile = data as any;
-
-  const { data: rolesData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
-
+function toUserProfile(profile: Record<string, unknown>, roles: string[]): UserProfile {
   return {
-    id: user.id,
-    email: user.email!,
-    full_name_ru: profile.full_name_ru,
-    full_name_kk: profile.full_name_kk,
-    avatar_url: profile.avatar_url ?? null,
-    roles: (rolesData ?? []).map((r) => r.role),
-    created_at: profile.created_at || user.created_at,
-    updated_at: profile.updated_at,
-    last_sign_in_at: user.last_sign_in_at,
-    department: profile.department_id ?? null,
-    position: profile.position_id ?? null,
-    phone: profile.phone ?? null,
+    id: profile.id as string,
+    email: (profile.email as string | null | undefined) ?? "",
+    full_name_ru: (profile.full_name_ru as string) ?? null,
+    full_name_kk: (profile.full_name_kk as string) ?? null,
+    avatar_url: (profile.avatar_url as string | null) ?? null,
+    roles,
+    created_at: (profile.created_at as string) ?? new Date().toISOString(),
+    updated_at: (profile.updated_at as string) ?? new Date().toISOString(),
+    last_sign_in_at: undefined,
+    department: (profile.department_label as string | null) ?? null,
+    position: (profile.position_label as string | null) ?? null,
+    phone: (profile.phone as string | null) ?? null,
+    auth_method: (profile.auth_method as UserProfile["auth_method"]) ?? "email",
+    iin: (profile.iin as string | null) ?? null,
+    has_password: !!(profile.has_password as boolean | undefined),
+    has_eds: !!(profile.has_eds as boolean | undefined),
   };
 }
 
-export function useProfile() {
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["profile"],
-    queryFn: fetchProfile,
+async function loadProfile(viewUserId: string | undefined, t: (key: string) => string): Promise<UserProfile> {
+  if (!viewUserId) {
+    const me = await getMyProfile();
+    const profile = me.profile as Record<string, unknown> | null;
+    if (!profile) throw new Error(t("profile.notFoundError"));
+    return toUserProfile(profile, me.roles ?? []);
+  }
+
+  const result = await getUserProfile({ data: { user_id: viewUserId } });
+  return toUserProfile(result.profile as Record<string, unknown>, result.roles);
+}
+
+export function useProfile(viewUserId?: string) {
+  const { t } = useI18n();
+  const isOwnProfile = !viewUserId;
+
+  const query = useQuery({
+    queryKey: ["user-profile", viewUserId ?? "me"],
+    queryFn: () => loadProfile(viewUserId, t),
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
-  return { profile: data, isLoading, error, refetch };
+  return {
+    profile: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+    isOwnProfile,
+  };
 }

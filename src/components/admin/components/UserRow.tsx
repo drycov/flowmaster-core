@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "../domain/roles";
 import { User } from "../domain/types";
-import { localized } from "@/lib/i18n";
+import { localized } from "@/i18n";
 
 export function UserRow({
   user,

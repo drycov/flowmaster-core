@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { fmtDate } from "@/lib/format";
 import type { WorkflowEvent } from "../types";
 

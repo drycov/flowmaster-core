@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { upsertTemplate } from "@/lib/api/templates.functions";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 import type { TemplateStatus, Field } from "../types";
 
 interface UseTemplateSaveProps {
@@ -8,6 +9,7 @@ interface UseTemplateSaveProps {
   nameRu: string;
   nameKk: string;
   category: string;
+  description: string;
   status: TemplateStatus;
   fields: Field[];
   body: string;
@@ -20,6 +22,7 @@ export function useTemplateSave({
   nameRu,
   nameKk,
   category,
+  description,
   status,
   fields,
   body,
@@ -27,6 +30,7 @@ export function useTemplateSave({
   allowCustomRoute,
 }: UseTemplateSaveProps) {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -36,6 +40,7 @@ export function useTemplateSave({
           name_ru: nameRu,
           name_kk: nameKk,
           category,
+          description: description.trim() || null,
           status,
           schema: { fields, body_template: body },
           default_workflow_id: defaultWorkflowId ?? null,
@@ -44,19 +49,19 @@ export function useTemplateSave({
       });
 
       if (!result?.id) {
-        throw new Error("Не удалось сохранить шаблон");
+        throw new Error(t("tpl.saveFailed"));
       }
 
       return result;
     },
     onSuccess: () => {
-      toast.success("Шаблон сохранён");
+      toast.success(t("tpl.saved"));
       queryClient.invalidateQueries({ queryKey: ["tpl", id] });
       queryClient.invalidateQueries({ queryKey: ["tpls"] });
     },
     onError: (error) => {
       console.error("Save error:", error);
-      let errorMessage = "Ошибка при сохранении шаблона";
+      let errorMessage = t("tpl.saveError");
       if (error instanceof Error) {
         errorMessage = error.message;
       }

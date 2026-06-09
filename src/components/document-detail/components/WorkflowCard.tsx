@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized, type TFunction } from "@/i18n";
 import { GitFork, Play, CheckCircle2, AlertCircle, Clock } from "lucide-react"; 
 import type { WorkflowRun } from "../types";
 
@@ -7,10 +7,16 @@ interface WorkflowCardProps {
   runs: WorkflowRun[];
 }
 
-function getNodeLabel(run: WorkflowRun, locale: string): string {
+function getRunDefinition(run: WorkflowRun): unknown {
+  const ctx = (run as { context?: { nodes?: unknown[] } }).context;
+  if (ctx?.nodes?.length) return ctx;
+  return run.workflows?.definition;
+}
+
+function getNodeLabel(run: WorkflowRun, locale: string, t: TFunction): string {
   if (!run.current_node) return "—";
 
-  const definition = run.workflows?.definition;
+  const definition = getRunDefinition(run);
   if (definition) {
     try {
       // Парсим схему, если она пришла в виде JSON-строки
@@ -21,8 +27,6 @@ function getNodeLabel(run: WorkflowRun, locale: string): string {
 
       if (currentNodeData) {
         // Лог для отладки в консоли браузера, чтобы точно увидеть структуру узла:
-        console.log("Данные текущего узла маршрута:", currentNodeData);
-
         // 1. Проверяем стандартный объект data (React Flow)
         if (currentNodeData.data) {
           const labelRu = currentNodeData.data.name_ru || 
@@ -49,20 +53,19 @@ function getNodeLabel(run: WorkflowRun, locale: string): string {
   }
 
   // Фолбэк для системных узлов
-  if (run.current_node.toLowerCase() === "start") return "Начало процесса";
-  if (run.current_node.toLowerCase() === "end") return "Завершено";
+  if (run.current_node.toLowerCase() === "start") return t("doc.processStart");
+  if (run.current_node.toLowerCase() === "end") return t("status.completed");
 
   // Если текст совсем не найден в схеме, делаем ID более читаемым для пользователя
   if (run.current_node.startsWith("node_")) {
     const timestamp = run.current_node.split("_")[1];
-    // Если это таймстамп, можно вывести его как порядковый номер, но лучше вернуть "Действие без названия"
-    return `Безымянный этап (ID: ${timestamp?.slice(-5) || "—"})`;
+    return `${t("doc.notSpecified")} (ID: ${timestamp?.slice(-5) || "—"})`;
   }
 
   return run.current_node;
 }
 
-function getStatusConfig(status: string) {
+function getStatusConfig(status: string, t: TFunction) {
   switch (status.toLowerCase()) {
     case "active":
     case "running":
@@ -70,7 +73,7 @@ function getStatusConfig(status: string) {
       return {
         bg: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
         icon: <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 mr-1 animate-pulse" />,
-        label: "Выполняется",
+        label: t("doc.workflowRunning"),
       };
     case "completed":
     case "success":
@@ -78,7 +81,7 @@ function getStatusConfig(status: string) {
       return {
         bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
         icon: <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-1" />,
-        label: "Завершен",
+        label: t("doc.workflowCompleted"),
       };
     case "rejected":
     case "cancelled":
@@ -86,7 +89,7 @@ function getStatusConfig(status: string) {
       return {
         bg: "bg-destructive/10 text-destructive dark:bg-destructive/20",
         icon: <AlertCircle className="w-3 h-3 text-destructive mr-1" />,
-        label: "Отклонен",
+        label: t("status.rejected"),
       };
     default:
       return {
@@ -111,16 +114,19 @@ export function WorkflowCard({ runs }: WorkflowCardProps) {
       <CardContent>
         {runs.length === 0 ? (
           <div className="text-sm text-muted-foreground py-2 italic text-center">
-            {t("common.empty") || "Маршруты не запущены"}
+            {t("common.empty")}
           </div>
         ) : (
           <div className="space-y-3">
             {runs.map((r, index) => {
-              const statusCfg = getStatusConfig(r.status);
-              const workflowName = r.workflows ? localized(r.workflows, locale, "name") : "Без названия";
+              const statusCfg = getStatusConfig(r.status, t);
+              const workflowName = r.workflows
+                ? localized(r.workflows, locale, "name")
+                : (r as { context?: { nodes?: unknown[] } }).context?.nodes
+                  ? t("doc.customRoute")
+                  : t("doc.notSpecified");
               
-              // ИСПРАВЛЕНО: Вычисление вынесено внутрь контекста итератора конкретного рана
-              const nodeName = getNodeLabel(r, locale);
+              const nodeName = getNodeLabel(r, locale, t);
 
               return (
                 <div
@@ -139,7 +145,7 @@ export function WorkflowCard({ runs }: WorkflowCardProps) {
                   </div>
 
                   <div className="text-[11px] text-muted-foreground flex justify-between items-center pt-2 border-t border-border/40">
-                    <span>Текущий этап:</span>
+                    <span>{t("doc.currentStage")}</span>
                     <span
                       className={`font-medium px-2 py-0.5 rounded text-foreground bg-background border border-border/60 max-w-[60%] truncate ${
                         r.current_node?.startsWith("node_") ? "font-sans" : "font-mono text-xs"

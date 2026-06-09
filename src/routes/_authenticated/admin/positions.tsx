@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAnyPermission } from "@/lib/auth/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { listPositions, upsertPosition, deletePosition } from "@/lib/api/org.functions";
 import { listDepartments } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { DataTableShell, PageLoading, TableStatusRow } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +13,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/positions")({
+  beforeLoad: () => requireAnyPermission("manage_org"),
   component: PositionsPage,
 });
 
@@ -122,30 +125,24 @@ function PositionsPage() {
       />
 
       <PageBody>
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <DataTableShell>
           {isLoading ? (
-            <div className="py-20 flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
+            <PageLoading />
           ) : (
             <table className="w-full data-table">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-3 w-32">{t("common.code")}</th>
-                  <th className="text-left px-4 py-3">{t("positions.title")}</th>
-                  <th className="text-left px-4 py-3">{t("nav.departments")}</th>
-                  <th className="text-center px-4 py-3 w-20">{t("positions.level")}</th>
-                  <th className="text-center px-4 py-3 w-24">{t("positions.isHead")}</th>
-                  <th className=" px-4 py-3" />
+                  <th className="text-left px-4 py-2 w-32">{t("common.code")}</th>
+                  <th className="text-left px-4 py-2">{t("positions.title")}</th>
+                  <th className="text-left px-4 py-2">{t("nav.departments")}</th>
+                  <th className="text-center px-4 py-2 w-20">{t("positions.level")}</th>
+                  <th className="text-center px-4 py-2 w-24">{t("positions.isHead")}</th>
+                  <th className="px-4 py-2 w-24" />
                 </tr>
               </thead>
               <tbody>
                 {positions.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="text-center text-muted-foreground py-12">
-                      {t("common.empty")}
-                    </td>
-                  </tr>
+                  <TableStatusRow colSpan={6}>{t("common.empty")}</TableStatusRow>
                 )}
                 {positions.map((p) => (
                   <tr key={p.id} className="border-t border-border hover:bg-muted/30">
@@ -183,7 +180,7 @@ function PositionsPage() {
               </tbody>
             </table>
           )}
-        </div>
+        </DataTableShell>
       </PageBody>
 
       {/* Edit / Create Dialog */}
@@ -280,18 +277,18 @@ function PositionsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить должность?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.positions.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Это действие нельзя отменить. Должность будет удалена безвозвратно.
+              {t("admin.positions.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
             >
-              Удалить
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { listMyTasks } from "@/lib/api/workflows.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listMyTasks, completeTask } from "@/lib/api/workflows.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
-import { useI18n } from "@/lib/i18n";
+import { TasksTable } from "@/components/tasks/TasksTable";
+import { useI18n } from "@/i18n";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   component: ApprovalsPage,
@@ -10,16 +12,35 @@ export const Route = createFileRoute("/_authenticated/approvals")({
 
 function ApprovalsPage() {
   const { t } = useI18n();
-  const { data } = useQuery({ queryKey: ["myTasks"], queryFn: () => listMyTasks() });
-  const approvals = (data ?? []).filter((t) => t.node_type === "APPROVAL");
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["myTasks"], queryFn: () => listMyTasks() });
+
+  const approvals = (data ?? []).filter((task) => task.node_type === "APPROVAL");
+
+  const act = useMutation({
+    mutationFn: (vars: { task_id: string; decision: "approve" | "reject" }) =>
+      completeTask({ data: vars }),
+    onSuccess: (_d, v) => {
+      toast.success(v.decision === "approve" ? t("common.approve") : t("common.reject"));
+      qc.invalidateQueries({ queryKey: ["myTasks"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+  });
 
   return (
     <>
-      <PageHeader title={t("nav.approvals")} description={`${approvals.length} активных`} />
+      <PageHeader
+        title={t("nav.approvals")}
+        description={`${approvals.length} — ${t("approvals.description")}`}
+      />
       <PageBody>
-        <div className="text-sm text-muted-foreground">
-          Перейдите в раздел "{t("nav.tasks")}" для действий с задачами. Здесь показаны только согласования: {approvals.length}.
-        </div>
+        <TasksTable
+          tasks={approvals as never}
+          isLoading={isLoading}
+          isPending={act.isPending}
+          onDecision={(taskId, decision) => act.mutate({ task_id: taskId, decision })}
+        />
       </PageBody>
     </>
   );

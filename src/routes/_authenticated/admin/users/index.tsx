@@ -1,11 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { requireAnyPermission } from "@/lib/auth/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, useMemo } from "react";
-import { listUsers, setUserRole } from "@/lib/api/admin.functions";
+// Добавляем функцию createUser (убедитесь, что она экспортируется из вашего API)
+import { listUsers, setUserRole, createUser } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import {
+  DataTableShell,
+  PageState,
+  PageToolbar,
+  SearchField,
+  TableStatusRow,
+} from "@/components/PageLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button"; // Импортируем кнопку
+import { Label } from "@/components/ui/label";   // Импортируем Label для формы
 import {
   Select,
   SelectContent,
@@ -13,9 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { toast } from "sonner";
-import { Loader2, Search, X, Filter } from "lucide-react";
+import { Loader2, Filter, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -23,6 +34,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
 } from "@/components/ui/sheet";
 
 /* =======================
@@ -30,6 +42,7 @@ import {
 ======================= */
 
 export const Route = createFileRoute("/_authenticated/admin/users/")({
+  beforeLoad: () => requireAnyPermission("manage_users"),
   component: UsersAdmin,
 });
 
@@ -102,7 +115,7 @@ function UserRow({
   isUpdating: boolean;
   updatingUserId: string | null;
   updatingRole: Role | null;
-  onRowClick: (user: User) => void;
+  onRowClick: (userId: string) => void;
 }) {
   const { locale } = useI18n();
 
@@ -112,7 +125,6 @@ function UserRow({
   const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
     const target = e.target as HTMLElement;
     
-    // Предотвращаем открытие панели, если кликнули по чекбоксу или его обертке
     if (
       target.closest("button") || 
       target.closest("input") || 
@@ -121,7 +133,7 @@ function UserRow({
       return;
     }
     
-    onRowClick(user);
+    onRowClick(user.id);
   };
 
   return (
@@ -154,10 +166,7 @@ function UserRow({
                     onRoleChange(user.id, role, checked === true)
                   }
                   disabled={isUpdating}
-                  className={cn(
-                    "transition-transform active:scale-95",
-                    hasRole && "border-primary text-primary-foreground"
-                  )}
+                  className={cn("transition-transform active:scale-95")}
                 />
               )}
             </div>
@@ -169,7 +178,7 @@ function UserRow({
 }
 
 /* =======================
-   Filters Component
+   Filters & Actions Component
 ======================= */
 
 function UserFilters({
@@ -188,41 +197,22 @@ function UserFilters({
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-4">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
-        <Input
-          placeholder={t("users.search") || "Поиск пользователей..."}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 pr-9 h-10"
-        />
-
-        {searchTerm && (
-          <button
-            onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            type="button"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
+    <PageToolbar>
+      <SearchField
+        value={searchTerm}
+        onChange={onSearchChange}
+        placeholder={t("users.search")}
+        clearable
+      />
       <Select value={roleFilter} onValueChange={onRoleFilterChange}>
-        <SelectTrigger className="w-full sm:w-56 h-10">
+        <SelectTrigger className="w-44 h-9">
           <div className="flex items-center gap-2 truncate">
             <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-            <SelectValue placeholder={t("users.filterByRole") || "Все роли"} />
+            <SelectValue placeholder={t("users.filterByRole")} />
           </div>
         </SelectTrigger>
-
         <SelectContent>
-          <SelectItem value="all">
-            {t("users.allRoles") || "Все роли"}
-          </SelectItem>
-
+          <SelectItem value="all">{t("users.allRoles")}</SelectItem>
           {roles.map((role) => (
             <SelectItem key={role} value={role}>
               {t(`roles.${role}`) || role}
@@ -230,7 +220,7 @@ function UserFilters({
           ))}
         </SelectContent>
       </Select>
-    </div>
+    </PageToolbar>
   );
 }
 
@@ -268,13 +258,13 @@ function UsersStats({
 
   return (
     <div className="flex flex-wrap gap-2 mb-5 text-sm items-center">
-      <Badge variant="secondary" className="px-2.5 py-1 font-medium bg-secondary text-secondary-foreground">
-        {t("users.totalUsers") || "Пользователи"}: {users.length}
+      <Badge variant="secondary" className="px-2.5 py-1 font-medium">
+        {t("users.totalUsers")} {users.length}
       </Badge>
 
       {roles.map((role) =>
         roleCounts[role] > 0 ? (
-          <Badge key={role} variant="outline" className="px-2.5 py-1 font-normal text-muted-foreground bg-background">
+          <Badge key={role} variant="outline" className="px-2.5 py-1 font-normal text-muted-foreground">
             {t(`roles.${role}`) || role}: {roleCounts[role]}
           </Badge>
         ) : null
@@ -288,12 +278,18 @@ function UsersStats({
 ======================= */
 
 function UsersAdmin() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Состояния для модалки создания пользователя
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newFullNameRu, setNewFullNameRu] = useState("");
+  const [newFullNameKk, setNewFullNameKk] = useState("");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["users"],
@@ -302,6 +298,25 @@ function UsersAdmin() {
     staleTime: 30_000,
   });
 
+  // Мутация создания пользователя
+  const createUserMutation = useMutation({
+    mutationFn: (payload: { email: string; full_name_ru: string; full_name_kk: string }) =>
+      createUser({ data: payload }),
+    onSuccess: () => {
+      toast.success(t("admin.users.createdSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      // Очищаем форму и закрываем панель
+      setNewEmail("");
+      setNewFullNameRu("");
+      setNewFullNameKk("");
+      setIsCreateOpen(false);
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : t("admin.users.createError"));
+    },
+  });
+
+  // Мутация изменения роли
   const roleMutation = useMutation({
     mutationFn: ({
       userId,
@@ -332,36 +347,21 @@ function UsersAdmin() {
         })
       );
 
-      // Синхронизируем состояние боковой панели, если она открыта для этого пользователя
-      setSelectedUser((current) => {
-        if (!current || current.id !== userId) return current;
-        return {
-          ...current,
-          roles: enabled
-            ? [...current.roles, role]
-            : current.roles.filter((r) => r !== role),
-        };
-      });
-
       return { previousUsers };
     },
     onError: (err, variables, context) => {
       if (context?.previousUsers) {
         queryClient.setQueryData(["users"], context.previousUsers);
-        
-        // Откатываем состояние и в боковой панели
-        const originalUser = context.previousUsers.find(u => u.id === variables.userId);
-        if (originalUser) setSelectedUser(originalUser);
       }
       toast.error(
-        err instanceof Error ? err.message : "Ошибка при обновлении роли"
+        err instanceof Error ? err.message : t("admin.users.roleUpdateError")
       );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
     onSuccess: () => {
-      toast.success(t("users.roleUpdated") || "Роль успешно обновлена");
+      toast.success(t("users.roleUpdated"));
     },
   });
 
@@ -391,39 +391,38 @@ function UsersAdmin() {
     [roleMutation]
   );
 
-  const handleRowClick = useCallback((user: User) => {
-    setSelectedUser(user);
-  }, []);
+  const handleRowClick = useCallback((userId: string) => {
+    navigate({
+      to: "/admin/users/$id",
+      params: { id: userId },
+    });
+  }, [navigate]);
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader title={t("nav.users") || "Пользователи"} />
-        <PageBody>
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </PageBody>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <PageHeader title={t("nav.users") || "Пользователи"} />
-        <PageBody>
-          <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive text-sm">
-            {error instanceof Error ? error.message : "Не удалось загрузить данные"}
-          </div>
-        </PageBody>
-      </>
-    );
-  }
+  // Обработчик отправки формы создания пользователя
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim()) {
+      toast.error(t("admin.users.emailRequired"));
+      return;
+    }
+    createUserMutation.mutate({
+      email: newEmail.trim(),
+      full_name_ru: newFullNameRu.trim(),
+      full_name_kk: newFullNameKk.trim(),
+    });
+  };
 
   return (
-    <>
-      <PageHeader title={t("nav.users") || "Пользователи"} />
+    <PageState title={t("nav.users")} loading={isLoading} error={error}>
+      <PageHeader
+        title={t("nav.users")}
+        actions={
+          <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-1" />
+            {t("users.create")}
+          </Button>
+        }
+      />
       <PageBody>
         <div className="space-y-4">
           <UserFilters
@@ -436,26 +435,23 @@ function UsersAdmin() {
 
           <UsersStats users={data ?? []} roles={ROLES} />
 
-          <div className="rounded-md border border-border bg-background overflow-hidden">
+          <DataTableShell>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
+              <table className="w-full data-table">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50 text-muted-foreground text-xs font-medium uppercase tracking-wider">
-                    <th className="px-4 py-3 font-semibold text-foreground/80 h-11 align-middle">
-                      {t("users.user") || "Пользователи"}
-                    </th>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-4 py-2">{t("users.user")}</th>
                     {ROLES.map((r) => (
                       <th
                         key={r}
-                        className="px-2 py-3 text-center font-semibold text-foreground/80 h-11 align-middle whitespace-nowrap min-w-[110px]"
+                        className="px-2 py-2 text-center whitespace-nowrap min-w-[110px]"
                       >
                         {t(`roles.${r}`) || r}
                       </th>
                     ))}
                   </tr>
                 </thead>
-
-                <tbody className="divide-y divide-border/40">
+                <tbody>
                   {filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
                       <UserRow
@@ -470,86 +466,94 @@ function UsersAdmin() {
                       />
                     ))
                   ) : (
-                    <tr>
-                      <td
-                        colSpan={ROLES.length + 1}
-                        className="px-4 py-8 text-center text-sm text-muted-foreground"
-                      >
-                        Пользователи не найдены
-                      </td>
-                    </tr>
+                    <TableStatusRow colSpan={ROLES.length + 1}>
+                      {t("users.noUsers")}
+                    </TableStatusRow>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </DataTableShell>
         </div>
 
-        {/* Боковая панель деталей пользователя */}
-        <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        {/* Боковая панель для СОЗДАНИЯ нового пользователя */}
+        <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <SheetContent className="w-full sm:max-w-md">
-            {selectedUser && (
-              <>
+            <form onSubmit={handleCreateSubmit} className="h-full flex flex-col justify-between">
+              <div>
                 <SheetHeader className="pb-4 border-b">
                   <SheetTitle className="text-xl font-semibold text-foreground">
-                    {localized(selectedUser, locale, "full_name") || "Без имени"}
+                    {t("users.createTitle")}
                   </SheetTitle>
-                  <SheetDescription className="text-xs font-mono mt-1 text-muted-foreground select-all">
-                    ID: {selectedUser.id}
-                  </SheetDescription>
+                  <SheetDescription>{t("users.createDescription")}</SheetDescription>
                 </SheetHeader>
 
-                <div className="py-6 space-y-5 text-sm">
+                <div className="py-5 space-y-4">
                   <div className="space-y-1">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">
-                      Email
-                    </span>
-                    <span className="font-medium text-foreground text-base select-all">
-                      {selectedUser.email}
-                    </span>
+                    <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Email <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      placeholder={t("admin.users.emailPlaceholder")}
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      disabled={createUserMutation.isPending}
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">
-                      Дата создания
-                    </span>
-                    <span className="text-foreground">
-                      {selectedUser.created_at 
-                        ? new Date(selectedUser.created_at).toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'kk-KZ', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        : "—"}
-                    </span>
+                    <Label htmlFor="fullNameRu" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {t("admin.users.fullNameRu")}
+                    </Label>
+                    <Input
+                      id="fullNameRu"
+                      type="text"
+                      placeholder={t("profile.placeholder.fullName")}
+                      value={newFullNameRu}
+                      onChange={(e) => setNewFullNameRu(e.target.value)}
+                      disabled={createUserMutation.isPending}
+                    />
                   </div>
 
-                  <div className="space-y-2.5 pt-2 border-t border-border/60">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">
-                      Назначенные роли
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedUser.roles.length > 0 ? (
-                        selectedUser.roles.map((r) => (
-                          <Badge key={r} variant="secondary" className="px-2.5 py-0.5 font-medium">
-                            {t(`roles.${r}`) || r}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground text-xs italic">
-                          У пользователя нет активных ролей
-                        </span>
-                      )}
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="fullNameKk" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {t("admin.users.fullNameKk")}
+                    </Label>
+                    <Input
+                      id="fullNameKk"
+                      type="text"
+                      placeholder={t("profile.placeholder.fullName")}
+                      value={newFullNameKk}
+                      onChange={(e) => setNewFullNameKk(e.target.value)}
+                      disabled={createUserMutation.isPending}
+                    />
                   </div>
                 </div>
-              </>
-            )}
+              </div>
+
+              <SheetFooter className="pt-4 border-t flex-row justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  disabled={createUserMutation.isPending}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  )}
+                  {t("common.create")}
+                </Button>
+              </SheetFooter>
+            </form>
           </SheetContent>
         </Sheet>
       </PageBody>
-    </>
+    </PageState>
   );
 }

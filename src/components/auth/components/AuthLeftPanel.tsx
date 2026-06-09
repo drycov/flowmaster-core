@@ -1,5 +1,5 @@
 import { ShieldCheck, FileCheck2, Workflow, Archive } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 
 export function AuthLeftPanel() {
   const { t } = useI18n();
@@ -7,27 +7,23 @@ export function AuthLeftPanel() {
   const features = [
     {
       icon: FileCheck2,
-      title: "Управление документами",
-      description:
-        "Единое пространство для регистрации, согласования и контроля исполнения документов.",
+      title: t("auth.feature.documents.title"),
+      description: t("auth.feature.documents.desc"),
     },
     {
       icon: Workflow,
-      title: "Workflow и согласование",
-      description:
-        "Гибкие маршруты согласования, SLA, делегирование и автоматическая эскалация.",
+      title: t("auth.feature.workflow.title"),
+      description: t("auth.feature.workflow.desc"),
     },
     {
       icon: ShieldCheck,
-      title: "Юридически значимая подпись",
-      description:
-        "Интеграция с NCALayer, ЭЦП РК, журналирование и контроль подлинности документов.",
+      title: t("auth.feature.eds.title"),
+      description: t("auth.feature.eds.desc"),
     },
     {
       icon: Archive,
-      title: "Электронный архив",
-      description:
-        "Долговременное хранение документов с полной историей изменений и действий.",
+      title: t("auth.feature.archive.title"),
+      description: t("auth.feature.archive.desc"),
     },
   ];
 
@@ -39,26 +35,15 @@ export function AuthLeftPanel() {
         </div>
 
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("app.name")}
-          </h1>
+          <h1 className="text-xl font-semibold tracking-tight">{t("app.name")}</h1>
           <p className="text-sm text-white/70">{t("app.tagline")}</p>
         </div>
       </div>
 
       <div className="max-w-xl">
-        <h2 className="mb-5 text-4xl font-semibold leading-tight">
-          Корпоративная система
-          <br />
-          электронного
-          <br />
-          документооборота
-        </h2>
+        <h2 className="mb-5 text-4xl font-semibold leading-tight">{t("auth.heroTitle")}</h2>
 
-        <p className="mb-8 text-base leading-relaxed text-white/75">
-          Автоматизация полного жизненного цикла документов —
-          от создания и согласования до подписания ЭЦП и архивного хранения.
-        </p>
+        <p className="mb-8 text-base leading-relaxed text-white/75">{t("auth.heroDescription")}</p>
 
         <div className="space-y-5">
           {features.map((item) => {
@@ -72,9 +57,7 @@ export function AuthLeftPanel() {
 
                 <div>
                   <div className="font-medium">{item.title}</div>
-                  <div className="text-sm leading-relaxed text-white/70">
-                    {item.description}
-                  </div>
+                  <div className="text-sm leading-relaxed text-white/70">{item.description}</div>
                 </div>
               </div>
             );

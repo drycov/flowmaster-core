@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -12,14 +30,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
-import { listWorkflows } from "@/lib/api/workflows.functions";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { useI18n } from "@/i18n";
+import { listWorkflows, getWorkflow } from "@/lib/api/workflows.functions";
 import {
   listUsersBrief,
   listDepartmentsBrief,
   listRolesBrief,
 } from "@/lib/api/admin.functions";
 import { listPositions } from "@/lib/api/org.functions";
+import {
+  buildModifiedDefinition,
+  extractActionableNodes,
+  type ModifyNodeOverride,
+} from "@/lib/workflow/route-builder";
+import type { WorkflowDefinition } from "@/components/workflow-designer/types";
 
 export type RouteStep = {
   order: number;
@@ -36,6 +61,7 @@ export type RouteStep = {
 export type RouteValue =
   | { kind: "template_default" }
   | { kind: "workflow"; workflow_id: string }
+  | { kind: "modify"; workflow_id: string; overrides: ModifyNodeOverride[] }
   | { kind: "custom"; steps: RouteStep[] }
   | { kind: "none" };
 
@@ -46,34 +72,224 @@ interface Props {
   onChange: (v: RouteValue) => void;
 }
 
+function SortableStep({
+  id,
+  step,
+  idx,
+  onUpdate,
+  onRemove,
+  users,
+  positions,
+  departments,
+  roles,
+}: {
+  id: string;
+  step: RouteStep;
+  idx: number;
+  onUpdate: (patch: Partial<RouteStep>) => void;
+  onRemove: () => void;
+  users: any[];
+  positions: any[];
+  departments: any[];
+  roles: any[];
+}) {
+  const { t } = useI18n();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="border rounded-sm p-3 space-y-2 bg-card">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="cursor-grab text-muted-foreground hover:text-foreground"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <Badge variant="secondary">{t("doc.routeStep")} {idx + 1}</Badge>
+        </div>
+        <Button size="icon" variant="ghost" onClick={onRemove} type="button">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">{t("common.type")}</Label>
+          <Select
+            value={step.assignee_mode}
+            onValueChange={(v) => onUpdate({ assignee_mode: v as RouteStep["assignee_mode"] })}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="user">{t("audit.entity.user")}</SelectItem>
+              <SelectItem value="position">{t("audit.entity.position")}</SelectItem>
+              <SelectItem value="department_head">{t("wf.assignee.deptHead")}</SelectItem>
+              <SelectItem value="role">{t("wf.assignee.role")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">{t("common.actions")}</Label>
+          <Select
+            value={step.action}
+            onValueChange={(v) => onUpdate({ action: v as RouteStep["action"] })}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="approve">{t("doc.routeApproval")}</SelectItem>
+              <SelectItem value="sign">{t("doc.routeSigning")}</SelectItem>
+              <SelectItem value="review">{t("task.action.review")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {step.assignee_mode === "user" && (
+        <Select
+          value={step.assignee_user_id ?? ""}
+          onValueChange={(v) => onUpdate({ assignee_user_id: v })}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue placeholder={t("audit.entity.user")} />
+          </SelectTrigger>
+          <SelectContent>
+            {users.map((u) => (
+              <SelectItem key={u.id} value={u.id}>
+                {u.full_name_ru || u.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {step.assignee_mode === "position" && (
+        <Select
+          value={step.assignee_position_id ?? ""}
+          onValueChange={(v) => onUpdate({ assignee_position_id: v })}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue placeholder={t("audit.entity.position")} />
+          </SelectTrigger>
+          <SelectContent>
+            {positions.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.title_ru}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {step.assignee_mode === "department_head" && (
+        <Select
+          value={step.assignee_department_id ?? ""}
+          onValueChange={(v) => onUpdate({ assignee_department_id: v })}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue placeholder={t("audit.entity.department")} />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name_ru} ({d.code})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {step.assignee_mode === "role" && (
+        <Select
+          value={step.assignee_role ?? ""}
+          onValueChange={(v) => onUpdate({ assignee_role: v })}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue placeholder={t("wf.assignee.role")} />
+          </SelectTrigger>
+          <SelectContent>
+            {roles.map((r) => (
+              <SelectItem key={r.role} value={r.role}>
+                {r.title_ru || r.role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">{t("wf.sla.hours")}</Label>
+          <Input
+            type="number"
+            className="h-8"
+            value={step.sla_hours}
+            onChange={(e) => onUpdate({ sla_hours: Number(e.target.value) })}
+          />
+        </div>
+        <div>
+          <Label className="text-xs">{t("wf.edgeLabel")}</Label>
+          <Input
+            className="h-8"
+            value={step.label ?? ""}
+            onChange={(e) => onUpdate({ label: e.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function RoutePickerCard({
   templateDefaultWorkflowId,
   templateAllowCustom = true,
   value,
   onChange,
 }: Props) {
+  const { t } = useI18n();
   const { data: workflows = [] } = useQuery({
     queryKey: ["wfs"],
     queryFn: () => listWorkflows(),
   });
-  const { data: users = [] } = useQuery({
-    queryKey: ["wf-users"],
-    queryFn: () => listUsersBrief(),
-  });
+  const { data: users = [] } = useQuery({ queryKey: ["wf-users"], queryFn: () => listUsersBrief() });
   const { data: departments = [] } = useQuery({
     queryKey: ["wf-departments"],
     queryFn: () => listDepartmentsBrief(),
   });
-  const { data: positions = [] } = useQuery({
-    queryKey: ["positions"],
-    queryFn: () => listPositions(),
-  });
-  const { data: roles = [] } = useQuery({
-    queryKey: ["wf-roles"],
-    queryFn: () => listRolesBrief(),
+  const { data: positions = [] } = useQuery({ queryKey: ["positions"], queryFn: () => listPositions() });
+  const { data: roles = [] } = useQuery({ queryKey: ["wf-roles"], queryFn: () => listRolesBrief() });
+
+  const modifyWorkflowId =
+    value.kind === "modify"
+      ? value.workflow_id
+      : templateDefaultWorkflowId ?? null;
+
+  const { data: baseWorkflow } = useQuery({
+    queryKey: ["wf-modify", modifyWorkflowId],
+    queryFn: () => getWorkflow({ data: { id: modifyWorkflowId! } }),
+    enabled: !!modifyWorkflowId && value.kind === "modify",
   });
 
   const [kind, setKind] = useState<RouteValue["kind"]>(value.kind);
+
+  useEffect(() => {
+    setKind(value.kind);
+  }, [value.kind]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const handleKindChange = (k: RouteValue["kind"]) => {
     setKind(k);
@@ -81,62 +297,91 @@ export function RoutePickerCard({
     else if (k === "template_default") onChange({ kind: "template_default" });
     else if (k === "workflow")
       onChange({ kind: "workflow", workflow_id: (workflows as any[])[0]?.id ?? "" });
+    else if (k === "modify")
+      onChange({
+        kind: "modify",
+        workflow_id: templateDefaultWorkflowId ?? (workflows as any[])[0]?.id ?? "",
+        overrides: [],
+      });
     else if (k === "custom") onChange({ kind: "custom", steps: [] });
   };
 
+  const initModifyOverrides = (def: WorkflowDefinition): ModifyNodeOverride[] =>
+    extractActionableNodes(def).map((n) => ({
+      id: n.id,
+      enabled: (n.config as { is_required?: boolean })?.is_required !== false,
+      label: n.label,
+      assignee_mode: n.assignee_mode ?? n.assignee_type,
+      assignee_ref: n.assignee_ref ?? n.assignee_id ?? null,
+      sla_hours: n.sla_hours,
+    }));
+
+  useEffect(() => {
+    if (value.kind === "modify" && baseWorkflow && value.overrides.length === 0) {
+      const def = (baseWorkflow as { definition: WorkflowDefinition }).definition;
+      onChange({
+        kind: "modify",
+        workflow_id: value.workflow_id,
+        overrides: initModifyOverrides(def),
+      });
+    }
+  }, [value.kind, baseWorkflow]);
+
   const steps = value.kind === "custom" ? value.steps : [];
+  const stepIds = steps.map((_, i) => `step-${i}`);
 
   const updateSteps = (next: RouteStep[]) => {
     onChange({ kind: "custom", steps: next.map((s, i) => ({ ...s, order: i })) });
   };
 
-  const addStep = () => {
-    updateSteps([
-      ...steps,
-      {
-        order: steps.length,
-        assignee_mode: "user",
-        sla_hours: 72,
-        action: "approve",
-      },
-    ]);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = stepIds.indexOf(String(active.id));
+    const newIndex = stepIds.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    updateSteps(arrayMove(steps, oldIndex, newIndex));
   };
 
-  const updateStep = (idx: number, patch: Partial<RouteStep>) => {
-    const next = [...steps];
-    next[idx] = { ...next[idx], ...patch };
-    updateSteps(next);
+  const updateOverride = (id: string, patch: Partial<ModifyNodeOverride>) => {
+    if (value.kind !== "modify") return;
+    onChange({
+      ...value,
+      overrides: value.overrides.map((o) => (o.id === id ? { ...o, ...patch } : o)),
+    });
   };
 
-  const removeStep = (idx: number) => updateSteps(steps.filter((_, i) => i !== idx));
-  const moveStep = (idx: number, dir: -1 | 1) => {
-    const next = [...steps];
-    const j = idx + dir;
-    if (j < 0 || j >= next.length) return;
-    [next[idx], next[j]] = [next[j], next[idx]];
-    updateSteps(next);
-  };
+  const modifyDef =
+    value.kind === "modify" && baseWorkflow
+      ? buildModifiedDefinition(
+          (baseWorkflow as { definition: WorkflowDefinition }).definition,
+          value.overrides,
+        )
+      : null;
 
   return (
     <Card className="rounded-sm">
       <CardHeader>
-        <CardTitle className="text-sm">Маршрут согласования</CardTitle>
+        <CardTitle className="text-sm">{t("doc.routeTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <Label>Источник маршрута</Label>
+          <Label>{t("common.type")}</Label>
           <Select value={kind} onValueChange={(v) => handleKindChange(v as RouteValue["kind"])}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Без маршрута</SelectItem>
+              <SelectItem value="none">{t("tpl.noWorkflow")}</SelectItem>
               {templateDefaultWorkflowId && (
-                <SelectItem value="template_default">По умолчанию (из шаблона)</SelectItem>
+                <SelectItem value="template_default">{t("doc.from_template")}</SelectItem>
               )}
-              <SelectItem value="workflow">Выбрать существующий маршрут</SelectItem>
+              {templateDefaultWorkflowId && templateAllowCustom && (
+                <SelectItem value="modify">{t("common.edit")}</SelectItem>
+              )}
+              <SelectItem value="workflow">{t("doc.selectRoute")}</SelectItem>
               {templateAllowCustom && (
-                <SelectItem value="custom">Собрать собственный маршрут</SelectItem>
+                <SelectItem value="custom">{t("tpl.allowCustomRoute")}</SelectItem>
               )}
             </SelectContent>
           </Select>
@@ -144,7 +389,7 @@ export function RoutePickerCard({
 
         {value.kind === "workflow" && (
           <div>
-            <Label>Маршрут</Label>
+            <Label>{t("audit.entity.workflow")}</Label>
             <Select
               value={value.workflow_id}
               onValueChange={(v) => onChange({ kind: "workflow", workflow_id: v })}
@@ -163,191 +408,119 @@ export function RoutePickerCard({
           </div>
         )}
 
+        {value.kind === "modify" && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {t("doc.routeWillBeUsed")}
+            </p>
+            {!baseWorkflow ? (
+              <p className="text-sm text-muted-foreground">{t("tpl.loading")}</p>
+            ) : value.overrides.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+            ) : (
+              value.overrides.map((o) => (
+                <div key={o.id} className="border rounded-sm p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={o.enabled}
+                        onCheckedChange={(c) => updateOverride(o.id, { enabled: c })}
+                      />
+                      <span className="text-sm font-medium">{o.label || o.id}</span>
+                    </div>
+                    <Badge variant={o.enabled ? "secondary" : "outline"}>
+                      {o.enabled ? t("doc.enabled") : t("doc.disabled")}
+                    </Badge>
+                  </div>
+                  {o.enabled && (
+                    <>
+                      <Input
+                        className="h-8"
+                        placeholder={t("wf.edgeLabel")}
+                        value={o.label ?? ""}
+                        onChange={(e) => updateOverride(o.id, { label: e.target.value })}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Select
+                          value={o.assignee_mode ?? "user"}
+                          onValueChange={(v) => updateOverride(o.id, { assignee_mode: v })}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">{t("audit.entity.user")}</SelectItem>
+                            <SelectItem value="position">{t("audit.entity.position")}</SelectItem>
+                            <SelectItem value="department_head">{t("wf.assignee.deptHead")}</SelectItem>
+                            <SelectItem value="role">{t("wf.assignee.role")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          className="h-8"
+                          placeholder={t("wf.sla.hours")}
+                          value={o.sla_hours ?? ""}
+                          onChange={(e) =>
+                            updateOverride(o.id, { sla_hours: Number(e.target.value) || undefined })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))
+            )}
+            {modifyDef && (
+              <p className="text-xs text-muted-foreground">
+                {t("wf.nodesCount")} {modifyDef.nodes.filter((n) =>
+                  ["APPROVAL", "SIGNATURE", "TASK"].includes(n.type),
+                ).length}
+                , {t("wf.edgesCount")} {modifyDef.edges.length}
+              </p>
+            )}
+          </div>
+        )}
+
         {value.kind === "custom" && (
           <div className="space-y-2">
-            {steps.length === 0 && (
-              <p className="text-sm text-muted-foreground">Шагов пока нет</p>
-            )}
-            {steps.map((step, idx) => (
-              <div key={idx} className="border rounded-sm p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary">Шаг {idx + 1}</Badge>
-                  <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => moveStep(idx, -1)}
-                      disabled={idx === 0}
-                      type="button"
-                    >
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => moveStep(idx, 1)}
-                      disabled={idx === steps.length - 1}
-                      type="button"
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => removeStep(idx)}
-                      type="button"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Тип исполнителя</Label>
-                    <Select
-                      value={step.assignee_mode}
-                      onValueChange={(v) =>
-                        updateStep(idx, { assignee_mode: v as RouteStep["assignee_mode"] })
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">Пользователь</SelectItem>
-                        <SelectItem value="position">Должность</SelectItem>
-                        <SelectItem value="department_head">Руководитель подразделения</SelectItem>
-                        <SelectItem value="role">Роль</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Действие</Label>
-                    <Select
-                      value={step.action}
-                      onValueChange={(v) =>
-                        updateStep(idx, { action: v as RouteStep["action"] })
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="approve">Согласование</SelectItem>
-                        <SelectItem value="sign">Подписание</SelectItem>
-                        <SelectItem value="review">Ознакомление</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {step.assignee_mode === "user" && (
-                  <div>
-                    <Label className="text-xs">Пользователь</Label>
-                    <Select
-                      value={step.assignee_user_id ?? ""}
-                      onValueChange={(v) => updateStep(idx, { assignee_user_id: v })}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Выберите" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(users as any[]).map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.full_name_ru || u.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
+                {steps.length === 0 && (
+                  <p className="text-sm text-muted-foreground">{t("common.empty")}</p>
                 )}
-                {step.assignee_mode === "position" && (
-                  <div>
-                    <Label className="text-xs">Должность</Label>
-                    <Select
-                      value={step.assignee_position_id ?? ""}
-                      onValueChange={(v) => updateStep(idx, { assignee_position_id: v })}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Выберите" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(positions as any[]).map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.title_ru}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {step.assignee_mode === "department_head" && (
-                  <div>
-                    <Label className="text-xs">Подразделение</Label>
-                    <Select
-                      value={step.assignee_department_id ?? ""}
-                      onValueChange={(v) => updateStep(idx, { assignee_department_id: v })}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Выберите" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(departments as any[]).map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
-                            {d.name_ru} ({d.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {step.assignee_mode === "role" && (
-                  <div>
-                    <Label className="text-xs">Роль</Label>
-                    <Select
-                      value={step.assignee_role ?? ""}
-                      onValueChange={(v) => updateStep(idx, { assignee_role: v })}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Выберите" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(roles as any[]).map((r) => (
-                          <SelectItem key={r.role} value={r.role}>
-                            {r.title_ru || r.role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                {steps.map((step, idx) => (
+                  <SortableStep
+                    key={stepIds[idx]}
+                    id={stepIds[idx]}
+                    step={step}
+                    idx={idx}
+                    users={users as any[]}
+                    positions={positions as any[]}
+                    departments={departments as any[]}
+                    roles={roles as any[]}
+                    onUpdate={(patch) => {
+                      const next = [...steps];
+                      next[idx] = { ...next[idx], ...patch };
+                      updateSteps(next);
+                    }}
+                    onRemove={() => updateSteps(steps.filter((_, i) => i !== idx))}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">SLA (часы)</Label>
-                    <Input
-                      type="number"
-                      className="h-8"
-                      value={step.sla_hours}
-                      onChange={(e) => updateStep(idx, { sla_hours: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Метка шага</Label>
-                    <Input
-                      className="h-8"
-                      value={step.label ?? ""}
-                      onChange={(e) => updateStep(idx, { label: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <Button variant="outline" size="sm" type="button" onClick={addStep}>
-              <Plus className="h-4 w-4 mr-1" /> Добавить шаг
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() =>
+                updateSteps([
+                  ...steps,
+                  { order: steps.length, assignee_mode: "user", sla_hours: 72, action: "approve" },
+                ])
+              }
+            >
+              <Plus className="h-4 w-4 mr-1" /> {t("doc.addStep")}
             </Button>
           </div>
         )}

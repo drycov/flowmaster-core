@@ -1,27 +1,38 @@
 // src/components/document-new/hooks/useDocumentForm.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { getMyProfile } from "@/lib/api/admin.functions";
+import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import type { DocumentFormValues, Template } from "../types";
+import { getTemplateFields } from "../types";
 
 interface UseDocumentFormProps {
-  templateId: string;
-  template?: Template;
+  templateId?: string;
+  template?: Template | null;
 }
 
-// Вспомогательная функция для извлечения полей из schema
-function extractTemplateFields(schema: any): any[] {
-  if (!schema) return [];
-  if (schema.fields && Array.isArray(schema.fields)) {
-    return schema.fields;
-  }
-  return [];
-}
+export function useDocumentForm({ templateId = "none", template }: UseDocumentFormProps = {}) {
+  const [internalTemplateId, setInternalTemplateId] = useState(templateId);
 
-export function useDocumentForm({ templateId, template }: UseDocumentFormProps) {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templateId);
-  
-  // Безопасное получение полей шаблона
-  const templateFields = extractTemplateFields(template?.schema);
+  useEffect(() => {
+    setInternalTemplateId(templateId);
+  }, [templateId]);
+
+  const activeTemplateId = templateId !== "none" ? templateId : internalTemplateId;
+
+  const templateFields = useMemo(() => getTemplateFields(template ?? undefined), [template]);
+
+  const { data: me } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => getMyProfile(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const authorDefaults = useMemo(
+    () => (me as { template_defaults?: Record<string, string> } | undefined)?.template_defaults ?? {},
+    [me],
+  );
 
   const form = useForm<DocumentFormValues>({
     defaultValues: {
@@ -33,21 +44,58 @@ export function useDocumentForm({ templateId, template }: UseDocumentFormProps) 
     },
   });
 
-  // Динамическая регистрация полей
+  const watchedFieldKeys = useMemo(
+    () => templateFields.map((field) => field.key),
+    [templateFields],
+  );
+  const watchedFieldValues = form.watch(
+    watchedFieldKeys.length > 0 ? (watchedFieldKeys as (keyof DocumentFormValues)[]) : [],
+  );
+
   useEffect(() => {
-    if (templateFields.length > 0) {
-      templateFields.forEach((field: any) => {
-        if (!form.getValues(field.key as any)) {
-          form.setValue(field.key as any, "");
-        }
-      });
+    templateFields.forEach((field) => {
+      const autoValue = authorDefaults[field.key];
+      form.setValue(
+        field.key as keyof DocumentFormValues,
+        autoValue ?? "",
+      );
+    });
+  }, [activeTemplateId, templateFields, authorDefaults, form]);
+
+  useEffect(() => {
+    if (!template || activeTemplateId === "none") {
+      return;
     }
-  }, [templateFields, form]);
+
+    const fieldValues: Record<string, string> = { ...authorDefaults };
+    templateFields.forEach((field, index) => {
+      const raw = Array.isArray(watchedFieldValues)
+        ? watchedFieldValues[index]
+        : watchedFieldValues;
+      const value =
+        (form.getValues(field.key as keyof DocumentFormValues) as string | undefined) ??
+        (typeof raw === "string" ? raw : "");
+      if (value) {
+        fieldValues[field.key] = value;
+      }
+    });
+
+    const { title_ru, title_kk } = resolveDocumentTitles(template, fieldValues);
+    form.setValue("title_ru", title_ru, { shouldValidate: true });
+    form.setValue("title_kk", title_kk, { shouldValidate: true });
+  }, [
+    activeTemplateId,
+    template,
+    templateFields,
+    authorDefaults,
+    watchedFieldValues,
+    form,
+  ]);
 
   const getTemplateFieldValues = (): Record<string, string> => {
     const values: Record<string, string> = {};
-    templateFields.forEach((field: any) => {
-      const value = form.getValues(field.key as any) as unknown as string;
+    templateFields.forEach((field) => {
+      const value = form.getValues(field.key as keyof DocumentFormValues) as unknown as string;
       if (value && typeof value === "string" && value.trim() !== "") {
         values[field.key] = value;
       }
@@ -55,22 +103,12 @@ export function useDocumentForm({ templateId, template }: UseDocumentFormProps) 
     return values;
   };
 
-  const resetTemplateFields = () => {
-    templateFields.forEach((field: any) => {
-      form.setValue(field.key as any, "");
-    });
-  };
-
-  useEffect(() => {
-    resetTemplateFields();
-  }, [selectedTemplateId]);
-
   return {
     form,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateId: activeTemplateId,
+    setSelectedTemplateId: setInternalTemplateId,
     templateFields,
+    authorDefaults,
     getTemplateFieldValues,
-    resetTemplateFields,
   };
 }

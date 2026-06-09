@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { fmtDateShort } from "@/lib/format";
 import { Field } from "./Field";
 import type { Document } from "../types";

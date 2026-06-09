@@ -5,6 +5,6 @@ export * from "@/i18n";
 // Optional: Add deprecation warning in development
 if (process.env.NODE_ENV === "development") {
   console.warn(
-    "⚠️ @/lib/i18n.tsx is deprecated. Please update imports to use @/i18n instead."
+    "⚠️ @/i18n.tsx is deprecated. Please update imports to use @/i18n instead."
   );
 }

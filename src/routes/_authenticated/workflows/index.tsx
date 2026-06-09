@@ -2,8 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkflows, upsertWorkflow } from "@/lib/api/workflows.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { ListEmpty } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
+import { ruDictionary } from "@/i18n/locales/ru";
+import { kkDictionary } from "@/i18n/locales/kk";
 import { fmtDateShort } from "@/lib/format";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,13 +25,13 @@ function WorkflowsList() {
     mutationFn: () =>
       upsertWorkflow({
         data: {
-          name_ru: "Новый маршрут",
-          name_kk: "Жаңа бағыт",
+          name_ru: ruDictionary["wf.newRoute"],
+          name_kk: kkDictionary["wf.newRoute"],
           status: "draft",
           definition: {
             nodes: [
-              { id: "start", type: "START", label: "Начало", position: { x: 50, y: 100 } },
-              { id: "end", type: "END", label: "Конец", position: { x: 400, y: 100 } },
+              { id: "start", type: "START", label: ruDictionary["wf.node.start"], position: { x: 50, y: 100 } },
+              { id: "end", type: "END", label: ruDictionary["wf.node.end"], position: { x: 400, y: 100 } },
             ],
             edges: [{ id: "e1", source: "start", target: "end" }],
           },
@@ -57,7 +60,7 @@ function WorkflowsList() {
                     <div className="text-xs text-muted-foreground mt-1">{w.description || "—"}</div>
                   </div>
                   <Badge variant="outline" className="text-[10px] uppercase">
-                    {w.status === "published" ? t("wf.published") : t("wf.draft")}
+                    {w.status === "published" ? t("wf.status.published") : t("wf.status.draft")}
                   </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground mt-3">{fmtDateShort(w.updated_at, locale)} · v{w.version}</div>
@@ -65,7 +68,9 @@ function WorkflowsList() {
             </Link>
           ))}
           {(data ?? []).length === 0 && (
-            <div className="col-span-2 text-center py-12 text-muted-foreground text-sm">{t("common.empty")}</div>
+            <div className="col-span-2">
+              <ListEmpty>{t("common.empty")}</ListEmpty>
+            </div>
           )}
         </div>
       </PageBody>

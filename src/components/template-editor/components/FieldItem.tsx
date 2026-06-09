@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, GripVertical } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import type { Field, FieldType } from "../types";
 
 interface FieldItemProps {
@@ -12,15 +12,15 @@ interface FieldItemProps {
   onDelete: () => void;
 }
 
-const fieldTypes: { value: FieldType; label: string }[] = [
-  { value: "text", label: "Текст" },
-  { value: "textarea", label: "Многострочный текст" },
-  { value: "number", label: "Число" },
-  { value: "date", label: "Дата" },
-];
-
 export function FieldItem({ field, index, onUpdate, onDelete }: FieldItemProps) {
   const { t } = useI18n();
+
+  const fieldTypes: { value: FieldType; label: string }[] = [
+    { value: "text", label: t("tpl.field.text") },
+    { value: "textarea", label: t("tpl.field.textarea") },
+    { value: "number", label: t("tpl.field.number") },
+    { value: "date", label: t("tpl.field.date") },
+  ];
 
   return (
     <div className="border border-border rounded-sm p-3 space-y-2 group relative">
@@ -31,7 +31,7 @@ export function FieldItem({ field, index, onUpdate, onDelete }: FieldItemProps) 
       <div className="pl-6 space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <Input
-            placeholder="ключ (например: full_name)"
+            placeholder={t("tpl.field.keyPlaceholder")}
             value={field.key}
             onChange={(e) => onUpdate({ key: e.target.value })}
             className="font-mono text-xs"
@@ -51,13 +51,13 @@ export function FieldItem({ field, index, onUpdate, onDelete }: FieldItemProps) 
         </div>
         
         <Input
-          placeholder="Подпись (RU)"
+          placeholder={t("tpl.field.labelRu")}
           value={field.label_ru}
           onChange={(e) => onUpdate({ label_ru: e.target.value })}
         />
         
         <Input
-          placeholder="Подпись (KK)"
+          placeholder={t("tpl.field.labelKk")}
           value={field.label_kk}
           onChange={(e) => onUpdate({ label_kk: e.target.value })}
         />
@@ -70,7 +70,7 @@ export function FieldItem({ field, index, onUpdate, onDelete }: FieldItemProps) 
               onChange={(e) => onUpdate({ required: e.target.checked })}
               className="rounded border-gray-300"
             />
-            Обязательное поле
+            {t("tpl.field.required")}
           </label>
           
           <Button variant="ghost" size="sm" onClick={onDelete}>

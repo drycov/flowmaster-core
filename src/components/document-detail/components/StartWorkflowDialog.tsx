@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GitBranch } from "lucide-react";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 
 interface StartWorkflowDialogProps {
   workflows: Array<{ id: string; name_ru: string; name_kk: string }>;
@@ -14,7 +14,7 @@ interface StartWorkflowDialogProps {
 export function StartWorkflowDialog({ workflows, onStart, isStarting }: StartWorkflowDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
 
   const handleStart = () => {
     if (selectedWorkflow) {
@@ -29,16 +29,16 @@ export function StartWorkflowDialog({ workflows, onStart, isStarting }: StartWor
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <GitBranch className="w-4 h-4 mr-1" />
-          Запустить маршрут
+          {t("doc.start_workflow")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Запустить маршрут согласования</DialogTitle>
+          <DialogTitle>{t("doc.routeTitle")}</DialogTitle>
         </DialogHeader>
         <Select value={selectedWorkflow} onValueChange={setSelectedWorkflow}>
           <SelectTrigger>
-            <SelectValue placeholder="Выберите маршрут..." />
+            <SelectValue placeholder={t("doc.selectRoute")} />
           </SelectTrigger>
           <SelectContent>
             {workflows.map((wf) => (
@@ -50,7 +50,7 @@ export function StartWorkflowDialog({ workflows, onStart, isStarting }: StartWor
         </Select>
         <DialogFooter>
           <Button onClick={handleStart} disabled={!selectedWorkflow || isStarting}>
-            {isStarting ? "Запуск..." : "Запустить"}
+            {isStarting ? t("doc.starting") : t("doc.start_workflow")}
           </Button>
         </DialogFooter>
       </DialogContent>

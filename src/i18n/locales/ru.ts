@@ -1,4 +1,5 @@
 import type { Dictionary } from "../types";
+import { messagesRu } from "./messages.ru";
 
 export const ruDictionary: Dictionary = {
     // App
@@ -11,6 +12,7 @@ export const ruDictionary: Dictionary = {
     "nav.tasks": "Задачи",
     "nav.approvals": "Согласования",
     "nav.workflows": "Маршруты",
+    "nav.references": "Справочники",
     "nav.nomenclature": "Номенклатура дел",
     "nav.templates": "Шаблоны",
     "nav.archive": "Архив",
@@ -23,6 +25,7 @@ export const ruDictionary: Dictionary = {
     "nav.organization": "Организация",
     "nav.positions": "Должности",
     "nav.roles": "Роли и доступ",
+    "nav.permissions": "Разрешения",
     "nav.profile": "Профиль",
     "nav.signout": "Выйти",
 
@@ -77,8 +80,6 @@ export const ruDictionary: Dictionary = {
     "auth.email": "Электронная почта",
     "auth.password": "Пароль",
     "auth.fullname": "ФИО",
-    "auth.google": "Войти через Google",
-    "auth.orEmail": "или по электронной почте",
     "auth.haveAccount": "Уже есть аккаунт? Войти",
     "auth.noAccount": "Нет аккаунта? Зарегистрироваться",
     "auth.subtitle": "Доступ к системе электронного документооборота",
@@ -115,6 +116,7 @@ export const ruDictionary: Dictionary = {
     "common.version": "Версия",
     "common.history": "История",
     "common.refresh": "Обновить",
+    "common.retry": "Повторить",
     "common.all": "Все",
     "common.error": "Ошибка",
     "common.success": "Успешно",
@@ -167,7 +169,7 @@ export const ruDictionary: Dictionary = {
     "wf.simulate": "Симуляция",
 
     // Templates
-    "tpl.upload_docx": "Загрузить DOCX",
+    "tpl.upload_docx": "Загрузить файл",
     "tpl.fields": "Поля шаблона",
     "tpl.add_field": "Добавить поле",
 
@@ -230,11 +232,32 @@ export const ruDictionary: Dictionary = {
     "profile.removeAvatar": "Удалить аватар",
 
     // Password dialog keys
+    "profile.currentPassword": "Текущий пароль",
+    "profile.currentPasswordRequired": "Введите текущий пароль",
     "profile.newPassword": "Новый пароль",
+    "profile.newPasswordRequired": "Введите новый пароль",
     "profile.confirmPassword": "Подтвердите пароль",
     "profile.passwordMismatch": "Пароли не совпадают",
-    "profile.passwordTooShort": "Пароль должен содержать минимум 6 символов",
+    "profile.passwordsDoNotMatch": "Пароли не совпадают",
+    "profile.passwordTooShort": "Пароль должен содержать минимум 8 символов",
     "profile.updatePassword": "Обновить пароль",
+    "profile.setPassword": "Установить пароль",
+    "profile.setPasswordDescription": "Задайте пароль для входа по email",
+
+    // Auth methods (email ↔ EDS)
+    "profile.authMethods": "Способы входа",
+    "profile.authMethodsDescription": "Подключите вход по ЭЦП и email к одному аккаунту",
+    "profile.authMethodsConfigured": "Настроены оба способа входа: email и ЭЦП",
+    "profile.linkedIin": "Привязанный ИИН",
+    "profile.linkEdsTitle": "Привязать ЭЦП",
+    "profile.linkEdsDescription": "Подпишите запрос сертификатом NCALayer, чтобы войти по ЭЦП с этим аккаунтом",
+    "profile.linkEdsAction": "Подписать и привязать ЭЦП",
+    "profile.enableEmailTitle": "Включить вход по email",
+    "profile.enableEmailDescription": "Укажите реальный email и пароль для входа без ЭЦП",
+    "profile.enableEmailAction": "Сохранить email и пароль",
+    "profile.emailLoginEnabled": "Вход по email включён",
+    "profile.emailLoginEnableError": "Не удалось включить вход по email",
+    "profile.cnMismatch": "CN сертификата не совпадает с ФИО в профиле",
 
     // Toast messages
     "profile.profileUpdated": "Профиль успешно обновлен",
@@ -247,4 +270,49 @@ export const ruDictionary: Dictionary = {
     "profile.joined": "Присоединился ",
 
     "users.totalUsers": "Всего пользователей:",
+    "users.create": "Добавить пользователя",
+    "users.createTitle": "Новый пользователь",
+    "users.createDescription": "Заполните основные данные для регистрации пользователя в системе.",
+    "users.filterByRole": "Все роли",
+    "users.loadError": "Не удалось загрузить данные",
+
+    // Permissions
+    "permissions.title": "Справочник разрешений",
+    "permissions.description": "Атомарные права доступа, используемые системой. Управляются через роли.",
+    "permissions.empty": "Справочник пуст. Запустите миграцию для загрузки базового набора.",
+
+    // Audit
+    "audit.description": "Неизменяемый журнал всех операций",
+    "audit.allEntities": "Все сущности",
+    "audit.searchPlaceholder": "Поиск по ID / actor / действию…",
+    "audit.records": "Записей",
+    "audit.entity": "Сущность",
+    "audit.action": "Действие",
+    "audit.actor": "Кто изменил",
+    "audit.details": "Детали",
+    "audit.system": "Система",
+
+    // Approvals
+    "approvals.description": "Задачи на согласование документов",
+
+    // Notifications
+    "notifications.markAllRead": "Прочитать все",
+    "notifications.goTo": "Перейти",
+
+    // Search
+    "search.placeholder": "Поиск по номеру, заголовку, тексту...",
+    "search.noResults": "Ничего не найдено",
+    "search.enterQuery": "Введите запрос (минимум 2 символа)",
+
+    // Departments panel
+    "departments.selectHint": "Выберите подразделение слева для просмотра информации",
+    "departments.headLabel": "Руководитель",
+    "departments.phone": "Телефон",
+    "departments.email": "Эл. почта",
+
+    // Scope
+    "scope.mine": "Мои",
+    "scope.assigned": "Назначенные",
+
+    ...messagesRu,
 };

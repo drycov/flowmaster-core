@@ -1,7 +1,5 @@
 import { LockKeyhole, ShieldCheck } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
-
-import { GoogleButton } from "./GoogleButton";
+import { useI18n } from "@/i18n";
 import { AuthForm } from "./AuthForm";
 import type { AuthMode } from "../types";
 
@@ -16,7 +14,8 @@ interface AuthRightPanelProps {
   onFullNameChange: (value: string) => void;
   onModeSwitch: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onGoogleSignIn: () => void;
+  onEdsAuth: () => void;
+  edsLoading?: boolean;
 }
 
 export function AuthRightPanel({
@@ -30,51 +29,28 @@ export function AuthRightPanel({
   onFullNameChange,
   onModeSwitch,
   onSubmit,
-  onGoogleSignIn,
+  onEdsAuth,
+  edsLoading = false,
 }: AuthRightPanelProps) {
   const { t } = useI18n();
 
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-8 py-10">
       <div className="w-full max-w-md">
-
         <div className="mb-8">
           <div className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs">
             <ShieldCheck className="h-4 w-4" />
-            Защищенный доступ
+            {t("auth.secureAccess")}
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight">
-            {mode === "signin"
-              ? "Вход в систему"
-              : "Регистрация пользователя"}
+            {mode === "signin" ? t("auth.signInTitle") : t("auth.signUpTitle")}
           </h1>
 
-          <p className="mt-2 text-sm text-muted-foreground">
-            Система электронного документооборота и управления жизненным
-            циклом документов.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("auth.pageDescription")}</p>
         </div>
 
         <div className="space-y-5">
-
-          <GoogleButton
-            onClick={onGoogleSignIn}
-            disabled={loading}
-          />
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-
-            <div className="relative flex justify-center">
-              <span className="bg-background px-3 text-xs uppercase text-muted-foreground">
-                или
-              </span>
-            </div>
-          </div>
-
           <AuthForm
             mode={mode}
             email={email}
@@ -89,11 +65,17 @@ export function AuthRightPanel({
 
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-md border py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+            disabled={loading || edsLoading}
+            onClick={onEdsAuth}
+            className="flex w-full items-center justify-center gap-2 rounded-md border py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
           >
             <LockKeyhole className="h-4 w-4" />
-            Вход с использованием ЭЦП
+            {mode === "signup" ? t("auth.edsSignUp") : t("auth.edsSignIn")}
           </button>
+
+          {email && password && (
+            <p className="text-xs text-muted-foreground text-center">{t("auth.edsLinkHint")}</p>
+          )}
 
           <div className="border-t pt-5 text-center">
             <button
@@ -102,17 +84,12 @@ export function AuthRightPanel({
               onClick={onModeSwitch}
               className="text-sm text-primary hover:underline"
             >
-              {mode === "signin"
-                ? "Создать учетную запись"
-                : "Уже есть учетная запись"}
+              {mode === "signin" ? t("auth.createAccount") : t("auth.haveAccountLink")}
             </button>
           </div>
         </div>
 
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          Продолжая работу, вы принимаете политику безопасности и правила
-          обработки электронных документов.
-        </div>
+        <div className="mt-8 text-center text-xs text-muted-foreground">{t("auth.policyFooter")}</div>
       </div>
     </div>
   );

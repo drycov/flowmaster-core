@@ -5,7 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import {
   Bold, Italic, List, ListOrdered, Code, Undo, Redo,
   Eye, EyeOff, Maximize2, Minimize2, HelpCircle, Plus,
@@ -27,25 +27,30 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+type SchemaField = { key: string; label_ru: string; label_kk?: string };
+
 interface BodyTemplateCardProps {
   body: string;
   onBodyChange: (value: string) => void;
+  schemaFields?: SchemaField[];
+  onEnsureField?: (key: string, labelRu: string) => void;
 }
 
 // Предустановленные поля с иконками из lucide-react
 const PRESET_PLACEHOLDERS = [
-  { key: "full_name", label: "ФИО сотрудника", icon: User },
-  { key: "document_date", label: "Дата документа", icon: Calendar },
-  { key: "department", label: "Название отдела", icon: Building2 },
-  { key: "registration_number", label: "Регистрационный номер", icon: Hash },
-  { key: "document_title", label: "Название документа", icon: FileText },
-  { key: "responsible_person", label: "Ответственный", icon: Briefcase },
-  { key: "signature_name", label: "Подпись", icon: Signature },
-  { key: "content_body", label: "Основное содержание", icon: File },
+  { key: "full_name", labelKey: "tpl.preset.fullName", icon: User },
+  { key: "document_date", labelKey: "tpl.preset.documentDate", icon: Calendar },
+  { key: "department", labelKey: "tpl.preset.department", icon: Building2 },
+  { key: "registration_number", labelKey: "tpl.preset.regNumber", icon: Hash },
+  { key: "document_title", labelKey: "tpl.preset.documentTitle", icon: FileText },
+  { key: "responsible_person", labelKey: "tpl.preset.responsible", icon: Briefcase },
+  { key: "signature_name", labelKey: "tpl.preset.signature", icon: Signature },
+  { key: "content_body", labelKey: "tpl.preset.content", icon: File },
 ];
 
 export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) {
   const { t } = useI18n();
+  const presets = PRESET_PLACEHOLDERS.map((p) => ({ ...p, label: t(p.labelKey) }));
   const [showPlaceholders, setShowPlaceholders] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -61,7 +66,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
         },
       }),
       Placeholder.configure({
-        placeholder: "Напишите текст шаблона... Используйте {{ключ_поля}} для подстановки значений",
+        placeholder: t("tpl.bodyPlaceholder"),
       }),
     ],
     content: body,
@@ -101,7 +106,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
   }, [editor]);
 
   const insertCustomPlaceholder = useCallback(() => {
-    const key = prompt("Введите ключ поля (например: full_name, document_date, etc.)");
+    const key = prompt(t("tpl.fieldKeyPrompt"));
     if (key && editor) {
       insertPlaceholder(key);
     }
@@ -127,7 +132,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="text-xs h-8">
                     <Plus className="w-3 h-3 mr-1" />
-                    Вставить поле
+                    {t("tpl.insertField")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -136,10 +141,10 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                   sideOffset={5}
                 >
                   <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
-                    Предустановленные поля
+                    {t("tpl.presetFields")}
                   </div>
                   <DropdownMenuSeparator />
-                  {PRESET_PLACEHOLDERS.map((item) => {
+                  {presets.map((item) => {
                     const IconComponent = item.icon;
                     return (
                       <DropdownMenuItem
@@ -159,7 +164,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     className="cursor-pointer whitespace-nowrap"
                   >
                     <Code className="w-3 h-3 mr-2" />
-                    <span>Свой ключ...</span>
+                    <span>{t("tpl.customKey")}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -176,7 +181,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Показать/скрыть подсказки</p>
+                  <p>{t("tpl.toggleHelp")}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -192,7 +197,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{showPlaceholders ? "Скрыть подсказки" : "Показать подсказки"}</p>
+                  <p>{showPlaceholders ? t("tpl.hideHints") : t("tpl.showHints")}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -208,7 +213,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isFullscreen ? "Выход из полноэкранного режима" : "Полноэкранный режим"}</p>
+                  <p>{isFullscreen ? t("tpl.exitFullscreen") : t("tpl.fullscreen")}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -227,7 +232,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <Bold className="w-4 h-4" />
                   </Toggle>
                 </TooltipTrigger>
-                <TooltipContent>Жирный</TooltipContent>
+                <TooltipContent>{t("tpl.bold")}</TooltipContent>
               </Tooltip>
 
               <Tooltip>
@@ -240,7 +245,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <Italic className="w-4 h-4" />
                   </Toggle>
                 </TooltipTrigger>
-                <TooltipContent>Курсив</TooltipContent>
+                <TooltipContent>{t("tpl.italic")}</TooltipContent>
               </Tooltip>
 
               <div className="w-px h-6 bg-border mx-1" />
@@ -255,7 +260,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <List className="w-4 h-4" />
                   </Toggle>
                 </TooltipTrigger>
-                <TooltipContent>Маркированный список</TooltipContent>
+                <TooltipContent>{t("tpl.bulletList")}</TooltipContent>
               </Tooltip>
 
               <Tooltip>
@@ -268,7 +273,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <ListOrdered className="w-4 h-4" />
                   </Toggle>
                 </TooltipTrigger>
-                <TooltipContent>Нумерованный список</TooltipContent>
+                <TooltipContent>{t("tpl.orderedList")}</TooltipContent>
               </Tooltip>
 
               <div className="w-px h-6 bg-border mx-1" />
@@ -285,7 +290,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <Undo className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Отменить</TooltipContent>
+                <TooltipContent>{t("tpl.undo")}</TooltipContent>
               </Tooltip>
 
               <Tooltip>
@@ -300,18 +305,18 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     <Redo className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Повторить</TooltipContent>
+                <TooltipContent>{t("tpl.redo")}</TooltipContent>
               </Tooltip>
             </div>
 
             {/* Подсказка о placeholder */}
             {showPlaceholders && showHelp && (
               <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 p-2 rounded-md mb-3 shrink-0">
-                <p className="font-medium text-blue-800 mb-1">📌 Как использовать поля:</p>
+                <p className="font-medium text-blue-800 mb-1">📌 {t("tpl.fieldsHelpTitle")}</p>
                 <p className="mb-1">
-                  <span className="font-mono text-primary bg-yellow-50 px-1 rounded">{"{{ключ_поля}}"}</span> — будут заменены на значения при создании документа
+                  <span className="font-mono text-primary bg-yellow-50 px-1 rounded">{"{{ключ_поля}}"}</span> — {t("tpl.fieldsHelp")}
                 </p>
-                <p className="text-xs">Вы можете вставить поле через кнопку <strong>"Вставить поле"</strong> или написать вручную</p>
+                <p className="text-xs">{t("tpl.fieldsHelpAction")}</p>
               </div>
             )}
 
@@ -323,9 +328,9 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
             {/* Примеры доступных полей */}
             {showPlaceholders && showHelp && (
               <div className="text-xs text-muted-foreground bg-muted/30 rounded-md p-3 mt-3 shrink-0">
-                <p className="font-medium mb-2">🔧 Популярные поля для подстановки:</p>
+                <p className="font-medium mb-2">🔧 {t("tpl.popularFields")}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {PRESET_PLACEHOLDERS.slice(0, 4).map((item) => {
+                  {presets.slice(0, 4).map((item) => {
                     const IconComponent = item.icon;
                     return (
                       <div key={item.key} className="flex items-center gap-2">

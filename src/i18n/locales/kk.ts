@@ -1,4 +1,5 @@
 import type { Dictionary } from "../types";
+import { messagesKk } from "./messages.kk";
 
 export const kkDictionary: Dictionary = {
     // App
@@ -11,6 +12,7 @@ export const kkDictionary: Dictionary = {
     "nav.tasks": "Тапсырмалар",
     "nav.approvals": "Келісімдер",
     "nav.workflows": "Бағыттар",
+    "nav.references": "Анықтамалар",
     "nav.nomenclature": "Іс номенклатурасы",
     "nav.templates": "Үлгілер",
     "nav.archive": "Мұрағат",
@@ -23,6 +25,7 @@ export const kkDictionary: Dictionary = {
     "nav.organization": "Ұйым",
     "nav.positions": "Лауазымдар",
     "nav.roles": "Рөлдер мен қатынау",
+    "nav.permissions": "Рұқсаттар",
     "nav.profile": "Профиль",
     "nav.signout": "Шығу",
 
@@ -77,8 +80,6 @@ export const kkDictionary: Dictionary = {
     "auth.email": "Электрондық пошта",
     "auth.password": "Құпиясөз",
     "auth.fullname": "Аты-жөні",
-    "auth.google": "Google арқылы кіру",
-    "auth.orEmail": "немесе электрондық поштамен",
     "auth.haveAccount": "Аккаунтыңыз бар ма? Кіру",
     "auth.noAccount": "Аккаунтыңыз жоқ па? Тіркелу",
     "auth.subtitle": "Электрондық құжат айналымы жүйесіне қол жеткізу",
@@ -115,6 +116,7 @@ export const kkDictionary: Dictionary = {
     "common.version": "Нұсқа",
     "common.history": "Тарих",
     "common.refresh": "Жаңарту",
+    "common.retry": "Қайталау",
     "common.all": "Барлығы",
     "common.error": "Қате",
     "common.success": "Сәтті",
@@ -167,7 +169,7 @@ export const kkDictionary: Dictionary = {
     "wf.simulate": "Симуляция",
 
     // Templates
-    "tpl.upload_docx": "DOCX жүктеу",
+    "tpl.upload_docx": "Файл жүктеу",
     "tpl.fields": "Үлгі өрістері",
     "tpl.add_field": "Өріс қосу",
 
@@ -229,9 +231,30 @@ export const kkDictionary: Dictionary = {
     "profile.removeAvatar": "Аватарды жою",
 
     // Password dialog keys
+    "profile.currentPassword": "Ағымдағы құпиясөз",
+    "profile.currentPasswordRequired": "Ағымдағы құпиясөзді енгізіңіз",
     "profile.newPassword": "Жаңа құпиясөз",
+    "profile.newPasswordRequired": "Жаңа құпиясөзді енгізіңіз",
     "profile.confirmPassword": "Құпиясөзді растаңыз",
     "profile.passwordMismatch": "Құпиясөздер сәйкес келмейді",
+    "profile.passwordsDoNotMatch": "Құпиясөздер сәйкес келмейді",
+    "profile.setPassword": "Құпиясөзді орнату",
+    "profile.setPasswordDescription": "Email арқылы кіру үшін құпиясөз орнатыңыз",
+
+    // Auth methods (email ↔ EDS)
+    "profile.authMethods": "Кіру әдістері",
+    "profile.authMethodsDescription": "Email және ЭЦҚ кіруін бір аккаунтқа байланыстырыңыз",
+    "profile.authMethodsConfigured": "Email және ЭЦҚ кіруі бапталған",
+    "profile.linkedIin": "Байланған ЖСН",
+    "profile.linkEdsTitle": "ЭЦҚ байлау",
+    "profile.linkEdsDescription": "Осы аккаунтқа ЭЦҚ арқылы кіру үшін NCALayer сертификатымен қол қойыңыз",
+    "profile.linkEdsAction": "Қол қою және ЭЦҚ байлау",
+    "profile.enableEmailTitle": "Email арқылы кіруді қосу",
+    "profile.enableEmailDescription": "ЭЦҚсыз кіру үшін нақты email және құпиясөз көрсетіңіз",
+    "profile.enableEmailAction": "Email және құпиясөзді сақтау",
+    "profile.emailLoginEnabled": "Email арқылы кіру қосылды",
+    "profile.emailLoginEnableError": "Email арқылы кіруді қосу сәтсіз аяқталды",
+    "profile.cnMismatch": "Сертификат CN профильдегі аты-жөнімен сәйкес келмейді",
     "profile.passwordTooShort": "Құпиясөз кемінде 6 таңбадан тұруы керек",
     "profile.updatePassword": "Құпиясөзді жаңарту",
 
@@ -244,5 +267,42 @@ export const kkDictionary: Dictionary = {
     "profile.avatarUpdateError": "Аватарды жаңарту кезінде қате орын алды",
 
     "users.totalUsers": "Барлық пайдаланушылар: ",
+    "users.create": "Пайдаланушы қосу",
+    "users.createTitle": "Жаңа пайдаланушы",
+    "users.createDescription": "Жүйеге тіркеу үшін негізгі деректерді толтырыңыз.",
+    "users.filterByRole": "Барлық рөлдер",
+    "users.loadError": "Деректерді жүктеу мүмкін болмады",
 
+    "permissions.title": "Рұқсаттар анықтамалығы",
+    "permissions.description": "Жүйеде қолданылатын атомдық қол жеткізу құқықтары. Рөлдер арқылы басқарылады.",
+    "permissions.empty": "Анықтамалық бос. Негізгі жиынтықты жүктеу үшін миграцияны іске қосыңыз.",
+
+    "audit.description": "Барлық операциялардың өзгертілмейтін журналы",
+    "audit.allEntities": "Барлық объектілер",
+    "audit.searchPlaceholder": "ID / actor / әрекет бойынша іздеу…",
+    "audit.records": "Жазбалар",
+    "audit.entity": "Объект",
+    "audit.action": "Әрекет",
+    "audit.actor": "Кім өзгертті",
+    "audit.details": "Толығырақ",
+    "audit.system": "Жүйе",
+
+    "approvals.description": "Құжаттарды келісу тапсырмалары",
+
+    "notifications.markAllRead": "Барлығын оқылған деп белгілеу",
+    "notifications.goTo": "Өту",
+
+    "search.placeholder": "Нөмір, тақырып, мәтін бойынша іздеу...",
+    "search.noResults": "Ештеңе табылмады",
+    "search.enterQuery": "Сұрау енгізіңіз (кемінде 2 таңба)",
+
+    "departments.selectHint": "Ақпаратты көру үшін сол жақтан бөлімді таңдаңыз",
+    "departments.headLabel": "Басшы",
+    "departments.phone": "Телефон",
+    "departments.email": "Эл. пошта",
+
+    "scope.mine": "Менің",
+    "scope.assigned": "Тапсырылған",
+
+    ...messagesKk,
 };

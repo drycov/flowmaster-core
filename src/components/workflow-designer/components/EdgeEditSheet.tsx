@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, ArrowRight, Code2, MousePointerSquareDashed } from "lucide-react";
 import { OPERATORS } from "../constants";
 import { parseCondition, buildCondition } from "../utils/condition-builder";
+import { useI18n } from "@/i18n";
 import type { FlowNode, FlowEdge, DocumentField } from "../types";
 
 interface EdgeEditSheetProps {
@@ -31,6 +32,7 @@ export function EdgeEditSheet({
   onUpdate,
   onDelete,
 }: EdgeEditSheetProps) {
+  const { t } = useI18n();
   const [isRawCondition, setIsRawCondition] = useState(false);
 
   if (!edge) return null;
@@ -45,7 +47,7 @@ export function EdgeEditSheet({
     <Sheet open={open} onOpenChange={onClose} modal={false}>
       <SheetContent className="w-[450px] sm:w-[540px] overflow-y-auto shadow-xl border-l" style={{ zIndex: 40 }}>
         <SheetHeader>
-          <SheetTitle>Редактирование перехода</SheetTitle>
+          <SheetTitle>{t("wf.editEdge")}</SheetTitle>
           <SheetDescription className="flex items-center gap-2 mt-2 text-sm text-slate-700">
             <span className="font-medium px-2 py-1 bg-slate-100 rounded border">{sourceNode?.data.label}</span>
             <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -55,11 +57,11 @@ export function EdgeEditSheet({
 
         <div className="space-y-6 mt-6">
           <div className="space-y-2">
-            <Label>Метка на схеме</Label>
+            <Label>{t("wf.edgeLabel")}</Label>
             <Input
               value={typeof edge.label === "string" ? edge.label : ""}
               onChange={(e) => onUpdate({ label: e.target.value })}
-              placeholder="Например: Согласовано, Отклонено, Да, Нет"
+              placeholder={t("wf.edgeLabel")}
             />
           </div>
 
@@ -72,7 +74,7 @@ export function EdgeEditSheet({
                 ) : (
                   <Code2 className="w-3 h-3 mr-1" />
                 )}
-                {isRawCondition ? "Визуальный билдер" : "Режим кода"}
+                {isRawCondition ? t("wf.visualBuilder") : t("wf.codeMode")}
               </Button>
             </div>
 
@@ -86,7 +88,7 @@ export function EdgeEditSheet({
                       onValueChange={(v) => handleVisualConditionChange(v, parsedCondition.operator, parsedCondition.value)}
                     >
                       <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Выберите поле..." />
+                        <SelectValue placeholder={t("wf.selectField")} />
                       </SelectTrigger>
                       <SelectContent>
                         {(documentFields || []).map((f) => (
@@ -110,7 +112,7 @@ export function EdgeEditSheet({
                       <SelectContent>
                         {OPERATORS.map((op) => (
                           <SelectItem key={op.id} value={op.id}>
-                            {op.label}
+                            {t(op.labelKey)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -120,7 +122,7 @@ export function EdgeEditSheet({
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground">Значение</label>
                     <Input
-                      placeholder="Значение"
+                      placeholder={t("wf.value")}
                       className="bg-white"
                       value={parsedCondition.value}
                       onChange={(e) =>
@@ -129,23 +131,16 @@ export function EdgeEditSheet({
                     />
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Документ пойдет по этому маршруту, если выполнится указанное условие
-                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 <Textarea
                   value={edge.data?.condition || ""}
                   onChange={(e) => onUpdate({ condition: e.target.value })}
-                  placeholder="Пример: data.status === 'APPROVED' &amp;&amp; data.amount > 10000"
+                  placeholder="data.status === 'APPROVED'"
                   className="font-mono text-sm bg-slate-900 text-green-400"
                   rows={4}
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Используйте JavaScript выражение, которое возвращает true/false. Доступные переменные:{" "}
-                  <code className="text-xs bg-slate-100 px-1">data</code> - данные документа
-                </p>
               </div>
             )}
           </div>
@@ -153,7 +148,7 @@ export function EdgeEditSheet({
           <div className="border-t pt-4">
             <Button variant="destructive" onClick={onDelete} className="w-full">
               <Trash2 className="w-4 h-4 mr-2" />
-              Удалить связь
+              {t("wf.deleteEdge")}
             </Button>
           </div>
         </div>

@@ -2,12 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listDocuments } from "@/lib/api/documents.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { DataTableShell, PageToolbar, SearchField, TableStatusRow } from "@/components/PageLayout";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { fmtDateShort } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useDeferredValue } from "react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -51,16 +51,12 @@ function DocumentsList() {
         }
       />
       <PageBody>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input
-              placeholder={t("common.search")}
-              className="pl-8 h-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <PageToolbar>
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder={t("common.search")}
+          />
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder={t("common.all")} />
@@ -81,13 +77,13 @@ function DocumentsList() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="mine">{t("scope.mine") || "Мои"}</SelectItem>
-              <SelectItem value="assigned">{t("scope.assigned") || "Назначенные"}</SelectItem>
+              <SelectItem value="mine">{t("scope.mine")}</SelectItem>
+              <SelectItem value="assigned">{t("scope.assigned")}</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </PageToolbar>
 
-        <div className="bg-card border border-border rounded-sm overflow-hidden">
+        <DataTableShell>
           <table className="w-full data-table">
             <thead>
               <tr className="border-b border-border bg-muted/50">
@@ -100,18 +96,10 @@ function DocumentsList() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    {t("common.loading")}
-                  </td>
-                </tr>
+                <TableStatusRow colSpan={5}>{t("common.loading")}</TableStatusRow>
               )}
               {!isLoading && (data ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    {t("common.empty")}
-                  </td>
-                </tr>
+                <TableStatusRow colSpan={5}>{t("common.empty")}</TableStatusRow>
               )}
               {/* @ts-ignore: Уберите игнор и пропишите интерфейс для 'd', если он есть в проекте */}
               {(data ?? []).map((d) => (
@@ -135,7 +123,7 @@ function DocumentsList() {
               ))}
             </tbody>
           </table>
-        </div>
+        </DataTableShell>
       </PageBody>
     </>
   );

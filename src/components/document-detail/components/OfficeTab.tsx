@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "Начните писать документ...",
+        placeholder: t("doc.contentPlaceholder"),
       }),
     ],
     content: initialContent,
@@ -46,9 +46,9 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
     setIsSaving(true);
     try {
       await onSave(editor.getHTML());
-      toast.success("Документ сохранён");
+      toast.success(t("doc.saved"));
     } catch (error) {
-      toast.error("Ошибка при сохранении");
+      toast.error(t("doc.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -62,7 +62,7 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
           {!isReadOnly && onSave && (
             <Button size="sm" variant="outline" onClick={handleSave} disabled={isSaving}>
               <Save className="w-4 h-4 mr-1" />
-              {isSaving ? "Сохранение..." : "Сохранить"}
+              {isSaving ? t("doc.saving") : t("doc.save")}
             </Button>
           )}
         </div>
@@ -134,7 +134,7 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
 
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             <Save className="w-4 h-4 mr-1" />
-            {isSaving ? "Сохранение..." : "Сохранить"}
+            {isSaving ? t("doc.saving") : t("doc.save")}
           </Button>
         </div>
       )}
@@ -146,8 +146,8 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
       {!officeUrl && (
         <div className="border-2 border-dashed border-border rounded-sm p-4 text-center text-sm text-muted-foreground space-y-2">
           <FileEdit className="w-8 h-8 mx-auto opacity-50" />
-          <div className="font-medium text-foreground">WYSIWYG Редактор</div>
-          <p>Редактирование документа во встроенном редакторе</p>
+          <div className="font-medium text-foreground">{t("doc.officeEditor")}</div>
+          <p>{t("office.placeholder")}</p>
           <p className="text-xs font-mono">document_id = {documentId}</p>
         </div>
       )}

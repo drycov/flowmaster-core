@@ -18,6 +18,8 @@ export interface DocumentVersion {
   id: string;
   version_no: number;
   comment?: string;
+  file_path?: string | null;
+  file_format?: string | null;
   created_at: string;
 }
 

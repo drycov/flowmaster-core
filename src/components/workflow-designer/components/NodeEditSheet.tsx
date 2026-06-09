@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "./Combobox";
-import { NODE_TYPE_ICONS, NODE_TYPE_LABELS } from "../constants";
+import { NODE_TYPE_ICONS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { useI18n } from "@/i18n";
 import { listPositions } from "@/lib/api/org.functions";
 import type { FlowNode, AssigneeType, User, Role, Department } from "../types";
 
@@ -24,15 +25,15 @@ interface NodeEditSheetProps {
   onDeleteConfirm: () => void;
 }
 
-const ASSIGNEE_MODES: { value: AssigneeType; label: string; needsRef: boolean }[] = [
-  { value: "user", label: "Конкретный сотрудник", needsRef: true },
-  { value: "position", label: "Должность", needsRef: true },
-  { value: "department", label: "Подразделение (любой сотрудник)", needsRef: true },
-  { value: "department_head", label: "Руководитель подразделения", needsRef: true },
-  { value: "parent_department_head", label: "Руководитель родительского подразделения", needsRef: true },
-  { value: "initiator_manager", label: "Руководитель инициатора", needsRef: false },
-  { value: "role", label: "По роли", needsRef: true },
-  { value: "group", label: "Группа пользователей", needsRef: true },
+const ASSIGNEE_MODE_KEYS: { value: AssigneeType; labelKey: string; needsRef: boolean }[] = [
+  { value: "user", labelKey: "wf.assignee.user", needsRef: true },
+  { value: "position", labelKey: "wf.assignee.position", needsRef: true },
+  { value: "department", labelKey: "wf.assignee.department", needsRef: true },
+  { value: "department_head", labelKey: "wf.assignee.deptHead", needsRef: true },
+  { value: "parent_department_head", labelKey: "wf.assignee.parentDeptHead", needsRef: true },
+  { value: "initiator_manager", labelKey: "wf.assignee.initiatorManager", needsRef: false },
+  { value: "role", labelKey: "wf.assignee.role", needsRef: true },
+  { value: "group", labelKey: "wf.assignee.group", needsRef: true },
 ];
 
 export function NodeEditSheet({
@@ -47,6 +48,7 @@ export function NodeEditSheet({
   onDeleteConfirm,
 }: NodeEditSheetProps) {
   void onDelete;
+  const { t } = useI18n();
   const { data: positions = [] } = useQuery({
     queryKey: ["positions"],
     queryFn: () => listPositions(),
@@ -55,7 +57,7 @@ export function NodeEditSheet({
   if (!node) return null;
 
   const assigneeType = (node.data.assignee_type || "user") as AssigneeType;
-  const modeMeta = ASSIGNEE_MODES.find((m) => m.value === assigneeType);
+  const modeMeta = ASSIGNEE_MODE_KEYS.find((m) => m.value === assigneeType);
 
   const getAssigneeOptions = () => {
     switch (assigneeType) {
@@ -88,19 +90,19 @@ export function NodeEditSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <span>{NODE_TYPE_ICONS[node.data.type]}</span>
-            <span>Редактирование узла</span>
+            <span>{t("wf.editNode")}</span>
           </SheetTitle>
-          <SheetDescription>Тип: {NODE_TYPE_LABELS[node.data.type]}</SheetDescription>
+          <SheetDescription>{t("common.type")}: {t(NODE_TYPE_LABEL_KEYS[node.data.type])}</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 mt-6">
           <div className="space-y-2">
-            <Label>Название узла (RU)</Label>
+            <Label>{t("wf.nodeNameRu")}</Label>
             <Input value={node.data.label || ""} onChange={(e) => onUpdate({ label: e.target.value })} />
           </div>
 
           <div className="space-y-2">
-            <Label>Название узла (KK)</Label>
+            <Label>{t("wf.nodeNameKk")}</Label>
             <Input
               value={(node.data.config?.label_kk as string) || ""}
               onChange={(e) => onUpdate({ config: { ...node.data.config, label_kk: e.target.value } })}
@@ -108,7 +110,7 @@ export function NodeEditSheet({
           </div>
 
           <div className="space-y-2">
-            <Label>Описание</Label>
+            <Label>{t("wf.nodeDescription")}</Label>
             <Textarea
               value={node.data.description || ""}
               onChange={(e) => onUpdate({ description: e.target.value })}
@@ -119,7 +121,7 @@ export function NodeEditSheet({
           {showAssigneeBlock && (
             <>
               <div className="space-y-2">
-                <Label>Назначение исполнителя</Label>
+                <Label>{t("wf.assigneeBlock")}</Label>
                 <Select
                   value={assigneeType}
                   onValueChange={(v: AssigneeType) => onUpdate({ assignee_type: v, assignee_id: null })}
@@ -128,26 +130,26 @@ export function NodeEditSheet({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ASSIGNEE_MODES.map((m) => (
+                    {ASSIGNEE_MODE_KEYS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
-                        {m.label}
+                        {t(m.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Используется функцией <code>resolve_workflow_assignees</code> при запуске маршрута.
+                  {t("wf.assigneeHint")}
                 </p>
               </div>
 
               {modeMeta?.needsRef && (
                 <div className="space-y-2">
-                  <Label>Источник</Label>
+                  <Label>{t("wf.assigneeSource")}</Label>
                   <Combobox
                     options={getAssigneeOptions()}
                     value={node.data.assignee_id || undefined}
                     onChange={(value) => onUpdate({ assignee_id: value || null })}
-                    placeholder="Выберите значение"
+                    placeholder={t("wf.selectValue")}
                   />
                 </div>
               )}
@@ -194,8 +196,8 @@ export function NodeEditSheet({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hours">Часы</SelectItem>
-                      <SelectItem value="business_days">Рабочие дни</SelectItem>
+                      <SelectItem value="hours">{t("wf.sla.hours")}</SelectItem>
+                      <SelectItem value="business_days">{t("wf.sla.workdays")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -244,12 +246,49 @@ export function NodeEditSheet({
                     onChange={(v) =>
                       onUpdate({ config: { ...node.data.config, escalation_role: v || null } })
                     }
-                    placeholder="Выберите роль"
+                    placeholder={t("wf.selectRole")}
                   />
                   <p className="text-xs text-muted-foreground">
                     Задача будет продублирована на всех пользователей с активным грантом этой роли.
                   </p>
                 </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label>Макс. эскалаций</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={String((node.data.config?.max_escalations as number) ?? 5)}
+                    onChange={(e) => {
+                      const v = Math.min(20, Math.max(1, Number(e.target.value) || 5));
+                      onUpdate({ config: { ...node.data.config, max_escalations: v } });
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Повтор (часы)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={168}
+                    value={String((node.data.config?.sla_repeat_hours as number) ?? 24)}
+                    onChange={(e) => {
+                      const v = Math.min(168, Math.max(1, Number(e.target.value) || 24));
+                      onUpdate({ config: { ...node.data.config, sla_repeat_hours: v } });
+                    }}
+                  />
+                </div>
+              </div>
+
+              {((node.data.config?.timeout_action as string) === "approve" ||
+                (node.data.config?.timeout_action as string) === "reject") && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-sm p-2">
+                  Авто-действие выполняется от имени системы (SLA) с записью в audit_logs и единым
+                  correlation_id. Требуется назначенный исполнитель или корректная орг-логика.
+                </p>
               )}
             </>
           )}
@@ -257,7 +296,7 @@ export function NodeEditSheet({
           <div className="border-t pt-4">
             <Button variant="destructive" onClick={onDeleteConfirm} className="w-full">
               <Trash2 className="w-4 h-4 mr-2" />
-              Удалить узел
+              {t("wf.deleteNode")}
             </Button>
           </div>
         </div>

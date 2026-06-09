@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { Loader2, Plus } from "lucide-react";
+import { useI18n } from "@/i18n";
 import { FieldItem } from "./FieldItem";
 import type { Field } from "../types";
 
@@ -10,9 +10,16 @@ interface FieldsCardProps {
   onAddField: () => void;
   onUpdateField: (index: number, patch: Partial<Field>) => void;
   onDeleteField: (index: number) => void;
+  isLoading?: boolean;
 }
 
-export function FieldsCard({ fields, onAddField, onUpdateField, onDeleteField }: FieldsCardProps) {
+export function FieldsCard({
+  fields,
+  onAddField,
+  onUpdateField,
+  onDeleteField,
+  isLoading,
+}: FieldsCardProps) {
   const { t } = useI18n();
 
   return (
@@ -25,14 +32,20 @@ export function FieldsCard({ fields, onAddField, onUpdateField, onDeleteField }:
         </Button>
       </CardHeader>
       <CardContent className="space-y-2">
-        {fields.length === 0 && (
+        {isLoading && (
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {t("tpl.fileTemplate.parsing")}
+          </div>
+        )}
+        {!isLoading && fields.length === 0 && (
           <div className="text-sm text-muted-foreground text-center py-8">
-            <p>Нет полей</p>
-            <p className="text-xs mt-1">Добавьте поля для заполнения при создании документа</p>
+            <p>{t("tpl.noFields")}</p>
+            <p className="text-xs mt-1">{t("tpl.noFieldsHint")}</p>
           </div>
         )}
         
-        {fields.map((field, index) => (
+        {!isLoading && fields.map((field, index) => (
           <FieldItem
             key={index}
             field={field}

@@ -6,7 +6,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { localized } from "@/lib/i18n";
+import { localized } from "@/i18n";
 
 export function UserSheet({ user, locale, t, onClose }: any) {
   return (

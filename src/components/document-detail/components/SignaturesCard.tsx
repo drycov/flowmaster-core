@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { fmtDate } from "@/lib/format";
 import { ShieldCheck } from "lucide-react"; // Добавим иконку для визуального подтверждения валидности подписи
 import type { Signature } from "../types";
@@ -31,7 +31,7 @@ export function SignaturesCard({ signatures }: SignaturesCardProps) {
       <CardContent>
         {signatures.length === 0 ? (
           <div className="text-sm text-muted-foreground py-2 italic text-center">
-            {t("common.empty") || "Подписей нет"}
+            {t("doc.noSignatures")}
           </div>
         ) : (
           <div className="space-y-2">
@@ -60,7 +60,7 @@ export function SignaturesCard({ signatures }: SignaturesCardProps) {
                   )}
 
                   <div className="text-[11px] text-muted-foreground flex justify-between items-center mt-2 pt-1.5 border-t border-border/40">
-                    <span>Статус подписи:</span>
+                    <span>{t("doc.signatureStatus")}</span>
                     <span className="font-medium">
                       {s.signed_at ? fmtDate(s.signed_at, locale) : "—"}
                     </span>

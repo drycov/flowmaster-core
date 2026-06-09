@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requirePermission } from "./_helpers";
+import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
+import { ensureDocumentRegNumber } from "@/lib/documents/registration.server";
 
 // ============== LIST ==============
 export const listDocuments = createServerFn({ method: "POST" })
@@ -112,21 +115,34 @@ export const createDocument = createServerFn({ method: "POST" })
       assigned_to: z.string().uuid().nullable().optional(),
       due_at: z.string().nullable().optional(),
       workflow_id: z.string().uuid().nullable().optional(),
-      custom_route: z.array(z.record(z.string(), z.any())).nullable().optional(),
+      custom_route: customRouteSchema,
     }),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: row, error } = await (supabase.from("documents") as any)
+    const { userId } = context;
+    const { title_ru, title_kk, summary, body, doc_type, nomenclature_id, template_id, assigned_to, due_at, workflow_id, custom_route } = data;
+    const { data: row, error } = await (supabaseAdmin.from("documents") as any)
       .insert({
-        ...data,
-        reg_number: "",
+        title_ru,
+        title_kk,
+        summary,
+        body,
+        doc_type,
+        nomenclature_id,
+        template_id,
+        assigned_to,
+        due_at,
+        workflow_id,
+        custom_route,
         created_by: userId,
+        reg_number: "",
       })
       .select("id, reg_number")
       .single();
     if (error) throw new Error(error.message);
-    return row;
+
+    const regNumber = await ensureDocumentRegNumber(row.id);
+    return { ...row, reg_number: regNumber };
   });
 
 // ============== ADD COMMENT ==============
@@ -154,18 +170,30 @@ export const addSignature = createServerFn({ method: "POST" })
       cert_serial: z.string().optional().nullable(),
       cert_issuer: z.string().optional().nullable(),
       signature_type: z.string().default("CMS"),
+      workflow_task_id: z.string().uuid().optional().nullable(),
     }),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { workflow_task_id, ...signatureData } = data;
     const { error } = await supabase.from("document_signatures").insert({
-      ...data,
+      ...signatureData,
       signer_id: userId,
       status: "signed",
       signed_at: new Date().toISOString(),
     } as never);
     if (error) throw new Error(error.message);
     await supabase.from("documents").update({ status: "signed" as never }).eq("id", data.document_id);
+
+    if (workflow_task_id) {
+      const { error: wfError } = await supabase.rpc("app_advance_workflow_task" as never, {
+        _task_id: workflow_task_id,
+        _decision: "approve",
+        _comment: null,
+      } as never);
+      if (wfError) throw new Error(wfError.message);
+    }
+
     return { ok: true };
   });
 

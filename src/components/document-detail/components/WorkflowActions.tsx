@@ -1,157 +1,467 @@
 import { useState } from "react";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
+
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Undo2, Loader2, MessageSquare } from "lucide-react"; // Добавили Loader2 для состояния загрузки
+
+import { Check, X, Undo2, Loader2, MessageSquare, LockKeyhole } from "lucide-react";
+
 import { toast } from "sonner";
+
 import { advanceWorkflowTask } from "@/lib/api/workflows.functions";
 
-interface Task {
-  id: string;
-  title: string;
-  node_id: string;
-  node_type: string;
-  status: string;
-  assignee_id: string | null;
-  action_required: string;
-  due_at: string | null;
-}
+import { addSignature } from "@/lib/api/documents.functions";
+
+import { findMyPendingTask, type WorkflowTaskRow } from "@/lib/workflow/task-match";
+
+import { signCMSFull, NCALayerError } from "@/lib/ncalayer";
+
+import { useI18n } from "@/i18n";
+
+import { ncalayerErrorMessage } from "@/i18n/ncalayer-messages";
+
+
 
 interface Props {
+
   documentId: string;
-  tasks: Task[];
+
+  tasks: WorkflowTaskRow[];
+
   currentUserId?: string;
+
+  roleCodes?: string[];
+
+  departmentId?: string | null;
+
+  isAdmin?: boolean;
+
+  signPayload?: string;
+
 }
+
+
 
 type DecisionType = "approve" | "reject" | "return";
 
-export function WorkflowActions({ documentId, tasks, currentUserId }: Props) {
+
+
+function toSignPayload(text?: string) {
+
+  if (!text) return "";
+
+  return btoa(unescape(encodeURIComponent(text)));
+
+}
+
+
+
+export function WorkflowActions({
+
+  documentId,
+
+  tasks,
+
+  currentUserId,
+
+  roleCodes = [],
+
+  departmentId,
+
+  isAdmin = false,
+
+  signPayload,
+
+}: Props) {
+
+  const { t } = useI18n();
+
   const qc = useQueryClient();
+
   const [comment, setComment] = useState("");
 
-  // Безопасный поиск активной задачи текущего пользователя
-  const myTask = tasks?.find(
-    (t) => t.status === "pending" && t.assignee_id === currentUserId,
-  );
+
+
+  const myTask = findMyPendingTask(tasks ?? [], currentUserId, {
+
+    roleCodes,
+
+    deptId: departmentId,
+
+    isAdmin,
+
+  });
+
+
+
+  const isSignTask = myTask?.action_required === "sign";
+
+
 
   const mutation = useMutation({
+
     mutationFn: (decision: DecisionType) => {
-      // Дополнительная runtime-проверка безопасности, чтобы TS не ругался на myTask!.id
+
       if (!myTask) {
-        return Promise.reject(new Error("Активная задача не найдена"));
+
+        return Promise.reject(new Error(t("doc.action.noTask")));
+
       }
 
-      // Валидация комментария перед отправкой на бэкенд
+
+
       const cleanComment = comment.trim();
+
       if ((decision === "reject" || decision === "return") && !cleanComment) {
-        return Promise.reject(new Error("Для данного действия необходимо указать комментарий"));
+
+        return Promise.reject(new Error(t("doc.action.commentRequired")));
+
       }
+
+
 
       return advanceWorkflowTask({
-        data: { 
-          task_id: myTask.id, 
-          decision, 
-          comment: cleanComment || null 
+
+        data: {
+
+          task_id: myTask.id,
+
+          decision,
+
+          comment: cleanComment || null,
+
         },
+
       });
+
     },
+
     onSuccess: (_, decision) => {
+
       const messages: Record<DecisionType, string> = {
-        approve: "Документ успешно согласован",
-        return: "Документ возвращен на доработку",
-        reject: "Документ отклонен",
+
+        approve: t("doc.action.approved"),
+
+        return: t("doc.action.returned"),
+
+        reject: t("doc.action.rejected"),
+
       };
 
+
+
       toast.success(messages[decision]);
+
       setComment("");
-      
-      // Инвалидируем кэш документа и связанных списков воркфлоу
+
       qc.invalidateQueries({ queryKey: ["document", documentId] });
+
     },
+
     onError: (e) => {
-      toast.error(e instanceof Error ? e.message : "Произошла ошибка при выполнении действия");
+
+      toast.error(e instanceof Error ? e.message : t("doc.action.error"));
+
     },
+
   });
+
+
+
+  const signMutation = useMutation({
+
+    mutationFn: async () => {
+
+      if (!myTask) throw new Error(t("doc.action.noTask"));
+
+
+
+      const payload = toSignPayload(signPayload || documentId);
+
+      const result = await signCMSFull(payload);
+
+
+
+      await addSignature({
+
+        data: {
+
+          document_id: documentId,
+
+          payload: result.signature,
+
+          signature_type: "CMS",
+
+          cert_subject: result.certInfo.subject ?? null,
+
+          cert_serial: result.certInfo.serial ?? null,
+
+          cert_issuer: result.certInfo.issuer ?? null,
+
+          workflow_task_id: myTask.id,
+
+        },
+
+      });
+
+    },
+
+    onSuccess: () => {
+
+      toast.success(t("doc.action.signed"));
+
+      setComment("");
+
+      qc.invalidateQueries({ queryKey: ["document", documentId] });
+
+    },
+
+    onError: (e) => {
+
+      if (e instanceof NCALayerError) {
+
+        toast.error(ncalayerErrorMessage(t, e));
+
+      } else {
+
+        toast.error(e instanceof Error ? e.message : t("doc.action.error"));
+
+      }
+
+    },
+
+  });
+
+
 
   if (!myTask) return null;
 
-  const isPending = mutation.isPending;
+
+
+  const isPending = mutation.isPending || signMutation.isPending;
+
   const isCommentEmpty = !comment.trim();
 
-  return (
-    <Card className="rounded-sm border-primary/40 shadow-sm bg-gradient-to-b from-background to-muted/10">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
-          <MessageSquare className="w-4 h-4 text-primary" />
-          Моё действие
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-xs text-muted-foreground bg-background p-2 rounded border border-border/60">
-          Текущая задача: <span className="text-foreground font-semibold">{myTask.title}</span>
-        </div>
-        
-        <Textarea
-          placeholder="Укажите комментарий (обязательно при отклонении или возврате на доработку)..."
-          rows={3}
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          disabled={isPending}
-          className="resize-none focus-visible:ring-primary/50 text-sm"
-        />
-        
-        <div className="grid grid-cols-3 gap-2">
-          {/* Кнопка: Согласовать */}
+
+
+  if (isSignTask) {
+
+    return (
+
+      <Card className="rounded-sm border-primary/40 shadow-sm bg-gradient-to-b from-background to-muted/10">
+
+        <CardHeader className="pb-2">
+
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
+
+            <LockKeyhole className="w-4 h-4 text-primary" />
+
+            {t("doc.action.signEds")}
+
+          </CardTitle>
+
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+
+          <div className="text-xs text-muted-foreground bg-background p-2 rounded border border-border/60">
+
+            {t("doc.currentStage")}{" "}
+
+            <span className="text-foreground font-semibold">{myTask.title ?? myTask.node_id}</span>
+
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+
+            {t("ncalayer.title")}
+
+          </p>
+
           <Button
+
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+
             disabled={isPending}
-            onClick={() => mutation.mutate("approve")}
+
+            onClick={() => signMutation.mutate()}
+
           >
-            {isPending && mutation.variables === "approve" ? (
+
+            {signMutation.isPending ? (
+
               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+
             ) : (
-              <Check className="w-4 h-4 mr-1" />
+
+              <LockKeyhole className="w-4 h-4 mr-1" />
+
             )}
-            Согласовать
+
+            {t("ncalayer.sign")}
+
           </Button>
 
-          {/* Кнопка: На доработку */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-amber-500/50 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 font-medium"
-            disabled={isPending || isCommentEmpty}
-            onClick={() => mutation.mutate("return")}
-            title={isCommentEmpty ? "Заполните комментарий для возврата" : ""}
-          >
-            {isPending && mutation.variables === "return" ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-            ) : (
-              <Undo2 className="w-4 h-4 mr-1" />
-            )}
-            На доработку
-          </Button>
+        </CardContent>
 
-          {/* Кнопка: Отклонить */}
-          <Button
-            size="sm"
-            variant="destructive"
-            className="font-medium"
-            disabled={isPending || isCommentEmpty}
-            onClick={() => mutation.mutate("reject")}
-            title={isCommentEmpty ? "Заполните комментарий для отклонения" : ""}
-          >
-            {isPending && mutation.variables === "reject" ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-            ) : (
-              <X className="w-4 h-4 mr-1" />
-            )}
-            Отклонить
-          </Button>
+      </Card>
+
+    );
+
+  }
+
+
+
+  return (
+
+    <Card className="rounded-sm border-primary/40 shadow-sm bg-gradient-to-b from-background to-muted/10">
+
+      <CardHeader className="pb-2">
+
+        <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
+
+          <MessageSquare className="w-4 h-4 text-primary" />
+
+          {t("common.actions")}
+
+        </CardTitle>
+
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+
+        <div className="text-xs text-muted-foreground bg-background p-2 rounded border border-border/60">
+
+          {t("doc.currentStage")}{" "}
+
+          <span className="text-foreground font-semibold">{myTask.title ?? myTask.node_id}</span>
+
         </div>
+
+
+
+        <Textarea
+
+          placeholder={t("doc.action.commentRequired")}
+
+          rows={3}
+
+          value={comment}
+
+          onChange={(e) => setComment(e.target.value)}
+
+          disabled={isPending}
+
+          className="resize-none focus-visible:ring-primary/50 text-sm"
+
+        />
+
+
+
+        <div className="grid grid-cols-3 gap-2">
+
+          <Button
+
+            size="sm"
+
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+
+            disabled={isPending}
+
+            onClick={() => mutation.mutate("approve")}
+
+          >
+
+            {mutation.isPending && mutation.variables === "approve" ? (
+
+              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+
+            ) : (
+
+              <Check className="w-4 h-4 mr-1" />
+
+            )}
+
+            {t("doc.action.approve")}
+
+          </Button>
+
+
+
+          <Button
+
+            size="sm"
+
+            variant="outline"
+
+            className="border-amber-500/50 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 font-medium"
+
+            disabled={isPending || isCommentEmpty}
+
+            onClick={() => mutation.mutate("return")}
+
+            title={isCommentEmpty ? t("doc.action.commentRequired") : ""}
+
+          >
+
+            {mutation.isPending && mutation.variables === "return" ? (
+
+              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+
+            ) : (
+
+              <Undo2 className="w-4 h-4 mr-1" />
+
+            )}
+
+            {t("doc.action.return")}
+
+          </Button>
+
+
+
+          <Button
+
+            size="sm"
+
+            variant="destructive"
+
+            className="font-medium"
+
+            disabled={isPending || isCommentEmpty}
+
+            onClick={() => mutation.mutate("reject")}
+
+            title={isCommentEmpty ? t("doc.action.commentRequired") : ""}
+
+          >
+
+            {mutation.isPending && mutation.variables === "reject" ? (
+
+              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+
+            ) : (
+
+              <X className="w-4 h-4 mr-1" />
+
+            )}
+
+            {t("doc.action.reject")}
+
+          </Button>
+
+        </div>
+
       </CardContent>
+
     </Card>
+
   );
+
 }

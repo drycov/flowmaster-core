@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addComment, addSignature, updateDocumentStatus } from "@/lib/api/documents.functions";
 import { listWorkflows, startWorkflow } from "@/lib/api/workflows.functions";
-import { signCMS } from "@/lib/ncalayer";
+import { getDocument } from "@/lib/api/documents.functions";
+import { parseStoredCustomRoute } from "@/lib/workflow/route-builder";
+import { signCMSFull } from "@/lib/ncalayer";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 import type { Workflow } from "../types";
 
 export function useDocumentActions(documentId: string) {
   const qc = useQueryClient();
+  const { t } = useI18n();
 
   const { data: workflows } = useQuery({
     queryKey: ["wfs-pub"],
@@ -17,39 +21,67 @@ export function useDocumentActions(documentId: string) {
     mutationFn: (body: string) => addComment({ data: { document_id: documentId, body } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["document", documentId] });
-      toast.success("Комментарий добавлен");
+      toast.success(t("doc.commentAdded"));
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Ошибка при добавлении комментария"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("doc.commentError")),
   });
 
   const startWorkflowMutation = useMutation({
-    mutationFn: (workflowId: string) => startWorkflow({ data: { workflow_id: workflowId, document_id: documentId } }),
+    mutationFn: async (workflowId?: string) => {
+      const docData = await getDocument({ data: { id: documentId } });
+      const doc = docData.document as {
+        workflow_id?: string | null;
+        custom_route?: unknown;
+      };
+      const parsed = parseStoredCustomRoute(doc.custom_route);
+      return startWorkflow({
+        data: {
+          document_id: documentId,
+          workflow_id: workflowId ?? doc.workflow_id ?? null,
+          graph_definition: parsed.graph,
+          custom_route: parsed.steps as never,
+        },
+      });
+    },
     onSuccess: () => {
-      toast.success("Маршрут запущен");
+      toast.success(t("doc.workflowStarted"));
       qc.invalidateQueries({ queryKey: ["document", documentId] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Ошибка при запуске маршрута"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("doc.workflowStartError")),
   });
 
   const archiveMutation = useMutation({
     mutationFn: () => updateDocumentStatus({ data: { id: documentId, status: "archived" } }),
     onSuccess: () => {
-      toast.success("Документ архивирован");
+      toast.success(t("doc.archived"));
       qc.invalidateQueries({ queryKey: ["document", documentId] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Ошибка при архивации"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("doc.archiveError")),
   });
 
   const signMutation = useMutation({
     mutationFn: async (payload: string) => {
-      const result = await signCMS(payload);
-      await addSignature({ data: { document_id: documentId, payload: result.signature, signature_type: "CMS" } });
+      const result = await signCMSFull(payload);
+      await addSignature({
+        data: {
+          document_id: documentId,
+          payload: result.signature,
+          signature_type: "CMS",
+          cert_subject: result.certInfo.subject ?? null,
+          cert_serial: result.certInfo.serial ?? null,
+          cert_issuer: result.certInfo.issuer ?? null,
+        },
+      });
     },
     onSuccess: () => {
-      toast.success("Подпись добавлена");
+      toast.success(t("doc.signatureAdded"));
       qc.invalidateQueries({ queryKey: ["document", documentId] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Ошибка при подписании"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("doc.signatureError")),
   });
 
   const handleSign = async (documentBody?: string) => {
@@ -63,15 +95,9 @@ export function useDocumentActions(documentId: string) {
     isAddingComment: addCommentMutation.isPending,
     startWorkflow: startWorkflowMutation.mutate,
     isStartingWorkflow: startWorkflowMutation.isPending,
-    
-    // Метод архивации (экспортируем оба варианта имени для совместимости)
     archive: archiveMutation.mutate,
-    archiveDocument: archiveMutation.mutate, 
     isArchiving: archiveMutation.isPending,
-    
-    // Метод подписания через NCALayer (экспортируем оба варианта имени для совместимости)
-    sign: handleSign,
-    handleSign: handleSign, 
+    handleSign,
     isSigning: signMutation.isPending,
   };
 }

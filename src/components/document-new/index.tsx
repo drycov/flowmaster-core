@@ -10,12 +10,15 @@ import { useDocumentCreation } from "@/components/document-new/hooks/useDocument
 import { MetadataCard } from "@/components/document-new/components/MetadataCard";
 import { TemplateFieldsCard } from "@/components/document-new/components/TemplateFieldsCard";
 import { FormActions } from "@/components/document-new/components/FormActions";
+import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/documents/new")({
   component: NewDocument,
 });
 
 function NewDocument() {
+  const { t } = useI18n();
+
   // Загрузка данных
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ["tpls"],
@@ -57,10 +60,10 @@ function NewDocument() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Создание документа" />
+        <PageHeader title={t("doc.creating")} />
         <PageBody>
           <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Загрузка...</div>
+            <div className="text-muted-foreground">{t("doc.creatingLoading")}</div>
           </div>
         </PageBody>
       </>
@@ -69,7 +72,7 @@ function NewDocument() {
 
   return (
     <>
-      <PageHeader title="Создание документа" />
+      <PageHeader title={t("doc.creating")} />
       <PageBody>
         <form onSubmit={handleSubmit} className="max-w-3xl space-y-4">
           <MetadataCard

@@ -43,7 +43,7 @@ export function ProfileForm({ profile, onSave, onCancel, isSaving }: ProfileForm
               <Input
                 value={formData.full_name_ru}
                 onChange={(e) => setFormData({ ...formData, full_name_ru: e.target.value })}
-                placeholder="Иванов Иван Иванович"
+                placeholder={t("profile.placeholder.fullName")}
               />
             </div>
             <div>
@@ -51,7 +51,7 @@ export function ProfileForm({ profile, onSave, onCancel, isSaving }: ProfileForm
               <Input
                 value={formData.full_name_kk}
                 onChange={(e) => setFormData({ ...formData, full_name_kk: e.target.value })}
-                placeholder="Иванов Иван Иванович"
+                placeholder={t("profile.placeholder.fullName")}
               />
             </div>
             <div>
@@ -59,7 +59,7 @@ export function ProfileForm({ profile, onSave, onCancel, isSaving }: ProfileForm
               <Input
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+7 (XXX) XXX-XX-XX"
+                placeholder={t("profile.placeholder.phone")}
               />
             </div>
             <div>

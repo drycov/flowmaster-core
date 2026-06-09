@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 
 import { useTemplateData } from "@/components/template-editor/hooks/useTemplateData";
 import { useTemplateSave } from "@/components/template-editor/hooks/useTemplateSave";
@@ -50,8 +50,8 @@ function TemplateEditor() {
       ...prev,
       {
         key: `field_${prev.length + 1}`,
-        label_ru: "Новое поле",
-        label_kk: "Жаңа өріс",
+        label_ru: t("tpl.newField"),
+        label_kk: t("tpl.newField"),
         type: "text" as const,
         required: false,
       },
@@ -72,7 +72,7 @@ function TemplateEditor() {
         <PageHeader title={t("nav.templates")} />
         <PageBody>
           <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Загрузка...</div>
+            <div className="text-muted-foreground">{t("tpl.loading")}</div>
           </div>
         </PageBody>
       </>
@@ -96,7 +96,7 @@ function TemplateEditor() {
               </SelectContent>
             </Select>
             <Button size="sm" onClick={() => save()} disabled={isSaving}>
-              {isSaving ? "Сохранение..." : t("common.save")}
+              {isSaving ? t("tpl.saving") : t("common.save")}
             </Button>
           </div>
         }

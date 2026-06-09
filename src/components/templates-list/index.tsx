@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import { listTemplates } from "@/lib/api/templates.functions";
 
 import { useTemplateCreation } from "@/components/templates-list/hooks/useTemplateCreation";
@@ -46,7 +46,7 @@ function TemplatesList() {
             disabled={isCreating}
           >
             <Plus className="w-4 h-4 mr-1" />
-            {isCreating ? "Создание..." : t("common.create")}
+            {isCreating ? t("tpl.creating") : t("common.create")}
           </Button>
         }
       />

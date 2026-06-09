@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 
 interface FormActionsProps {
   isSubmitting: boolean;

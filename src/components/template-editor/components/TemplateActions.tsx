@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 
 interface TemplateActionsProps {
   status: "draft" | "published" | "archived";
@@ -26,7 +26,7 @@ export function TemplateActions({ status, onStatusChange, onSave, isSaving }: Te
       </Select>
       
       <Button size="sm" onClick={onSave} disabled={isSaving}>
-        {isSaving ? "Сохранение..." : t("common.save")}
+        {isSaving ? t("tpl.saving") : t("common.save")}
       </Button>
     </>
   );

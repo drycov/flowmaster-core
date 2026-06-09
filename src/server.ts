@@ -1,5 +1,8 @@
 // entry-server.tsx
 import "./lib/error-capture";
+import { loadServerEnv } from "./lib/env.server";
+
+loadServerEnv();
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage, renderErrorPageWithDetails } from "./lib/error-page";

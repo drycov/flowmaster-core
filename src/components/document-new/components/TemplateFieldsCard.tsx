@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
+import { isAuthorExecutorField, isAuthorSignatoryField } from "@/lib/templates/author-field-values";
 import type { UseFormReturn } from "react-hook-form";
 import type { TemplateField, DocumentFormValues } from "../types";
 
@@ -24,18 +25,29 @@ export function TemplateFieldsCard({ form, fields }: TemplateFieldsCardProps) {
         <CardTitle className="text-sm">{t("tpl.fields")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {fields.map((field) => (
+        {fields.map((field) => {
+          const isAutoField =
+            isAuthorExecutorField(field.key) || isAuthorSignatoryField(field.key);
+          const isRequired = field.required && !isAutoField;
+
+          return (
           <div key={field.key}>
             <Label>
               {locale === "ru" ? field.label_ru : field.label_kk}
-              {field.required && " *"}
+              {isRequired && " *"}
             </Label>
+            {isAuthorExecutorField(field.key) && (
+              <p className="mb-1 text-xs text-muted-foreground">{t("doc.executorFromAuthor")}</p>
+            )}
+            {isAuthorSignatoryField(field.key) && (
+              <p className="mb-1 text-xs text-muted-foreground">{t("doc.signatoryAutoFill")}</p>
+            )}
             {field.type === "textarea" ? (
               <Textarea
                 rows={4}
-                {...register(field.key, { 
-                  required: field.required,
-                  shouldUnregister: true  // Важно для динамических полей
+                {...register(field.key, {
+                  required: isRequired ? `${field.label_ru} — обязательное поле` : false,
+                  shouldUnregister: true,
                 })}
               />
             ) : (
@@ -47,14 +59,15 @@ export function TemplateFieldsCard({ form, fields }: TemplateFieldsCardProps) {
                     ? "date" 
                     : "text"
                 }
-                {...register(field.key, { 
-                  required: field.required,
-                  shouldUnregister: true  // Важно для динамических полей
+                {...register(field.key, {
+                  required: isRequired ? `${field.label_ru} — обязательное поле` : false,
+                  shouldUnregister: true,
                 })}
               />
             )}
           </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

@@ -1,10 +1,9 @@
-// src/components/templates-list/hooks/useTemplateCreation.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { upsertTemplate } from "@/lib/api/templates.functions";
 import { toast } from "sonner";
+import { useI18n, interpolate } from "@/i18n";
 
-// Добавляем тип для шаблона
 interface Template {
   id: string;
   name_ru: string;
@@ -20,22 +19,15 @@ interface UseTemplateCreationOptions {
   onSuccess?: (template: Template) => void;
   onError?: (error: Error) => void;
   redirectOnSuccess?: boolean;
-  defaultName?: {
-    ru: string;
-    kk: string;
-  };
 }
 
 export function useTemplateCreation(options: UseTemplateCreationOptions = {}) {
-  const {
-    onSuccess,
-    onError,
-    redirectOnSuccess = true,
-    defaultName = { ru: "Новый шаблон", kk: "Жаңа үлгі" },
-  } = options;
-  
+  const { onSuccess, onError, redirectOnSuccess = true } = options;
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const defaultName = { ru: t("tpl.defaultName"), kk: t("tpl.defaultNameKk") };
 
   const mutation = useMutation({
     mutationFn: async (): Promise<Template> => {
@@ -45,28 +37,25 @@ export function useTemplateCreation(options: UseTemplateCreationOptions = {}) {
           name_kk: defaultName.kk,
           category: "general",
           status: "draft",
-          schema: { 
-            fields: [], 
-            body_template: "Документ\n\n{{поле1}}\n" 
+          schema: {
+            fields: [],
+            body_template: t("tpl.defaultBody"),
           },
         },
       });
-      
+
       if (!result?.id) {
-        throw new Error("Не удалось создать шаблон");
+        throw new Error(t("tpl.createFailed"));
       }
-      
-      // Приводим результат к нужному типу
+
       return result as Template;
     },
     onSuccess: (template) => {
-      // Инвалидируем кэш
       queryClient.invalidateQueries({ queryKey: ["tpls"] });
-      
-      // Показываем уведомление
-      toast.success(`Шаблон "${template.name_ru}" создан`, {
+
+      toast.success(interpolate(t("tpl.created"), { name: template.name_ru }), {
         action: {
-          label: "Редактировать",
+          label: t("tpl.editAction"),
           onClick: () => {
             if (template?.id) {
               navigate({ to: "/templates/$id", params: { id: template.id } });
@@ -74,29 +63,24 @@ export function useTemplateCreation(options: UseTemplateCreationOptions = {}) {
           },
         },
       });
-      
-      // Вызываем пользовательский обработчик
+
       onSuccess?.(template);
-      
-      // Редирект на страницу редактирования
+
       if (redirectOnSuccess && template?.id) {
         navigate({ to: "/templates/$id", params: { id: template.id } });
       }
     },
     onError: (error) => {
-      console.error("Template creation error:", error);
-      
-      let errorMessage = "Ошибка при создании шаблона";
+      let errorMessage = t("tpl.createError");
       if (error instanceof Error) {
         if (error.message.includes("permission")) {
-          errorMessage = "У вас нет прав для создания шаблонов";
+          errorMessage = t("tpl.createForbidden");
         } else if (error.message.includes("network")) {
-          errorMessage = "Ошибка сети. Проверьте подключение";
+          errorMessage = t("tpl.createNetworkError");
         } else {
           errorMessage = error.message;
         }
       }
-      
       toast.error(errorMessage);
       onError?.(error as Error);
     },
@@ -104,10 +88,6 @@ export function useTemplateCreation(options: UseTemplateCreationOptions = {}) {
 
   return {
     createTemplate: mutation.mutate,
-    createTemplateAsync: mutation.mutateAsync,
     isCreating: mutation.isPending,
-    isError: mutation.isError,
-    error: mutation.error,
-    reset: mutation.reset,
   };
 }

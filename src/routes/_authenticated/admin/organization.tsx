@@ -1,27 +1,21 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { requireAnyPermission } from "@/lib/auth/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, useCallback } from "react";
 import { getOrganization, updateOrganization } from "@/lib/api/org.functions";
-import { listUsers, getMyProfile } from "@/lib/api/admin.functions";
+import { listUsers } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useI18n, localized } from "@/lib/i18n";
+import { useI18n, localized } from "@/i18n";
 import { Loader2, Save, Building2, RefreshCw, Brain, Contact2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/organization")({
-  beforeLoad: async () => {
-    const data = await getMyProfile();
-    const isAdmin = data.roles.includes("admin");
-    const canManage = data.permissions["manage_org"];
-    if (!isAdmin && !canManage) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
+  beforeLoad: () => requireAnyPermission("manage_org"),
   component: OrganizationPage,
 });
 
@@ -84,7 +78,7 @@ function OrganizationPage() {
   const saveMutation = useMutation({
     mutationFn: (data: OrgForm) => updateOrganization({ data }),
     onSuccess: () => {
-      toast.success(t("common.success") || "Сохранено успешно");
+      toast.success(t("common.success"));
       qc.invalidateQueries({ queryKey: ["org"] });
       setIsDirty(false);
     },
@@ -145,7 +139,7 @@ function OrganizationPage() {
             {isDirty && (
               <Button variant="outline" size="sm" onClick={resetForm}>
                 <RefreshCw className="w-4 h-4 mr-1" />
-                Сбросить
+                {t("admin.org.reset")}
               </Button>
             )}
             <Button
@@ -267,10 +261,10 @@ function OrganizationPage() {
                   onValueChange={(v) => updateField("head_user_id", v === "__none" ? null : v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Не назначен" />
+                    <SelectValue placeholder={t("admin.org.notAssigned")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">— Не назначен —</SelectItem>
+                    <SelectItem value="__none">{t("admin.org.notAssignedFull")}</SelectItem>
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
                         {localized(u, locale, "full_name") || u.email}

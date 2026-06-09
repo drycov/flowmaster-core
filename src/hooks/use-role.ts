@@ -1,21 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfile } from "@/lib/api/admin.functions";
+import type { Permission } from "@/lib/auth/permissions";
 
-export type Permission = 
-  | "manage_users"
-  | "manage_org"
-  | "manage_workflows"
-  | "manage_templates"
-  | "manage_nomenclature"
-  | "view_audit"
-  | "sign_documents"
-  | "register_documents"
-  | "approve_documents"
-  | "archive_documents";
+export type { Permission };
 
 export function useRole() {
   const { data, isLoading } = useQuery({
-    queryKey: ["my-profile"],
+    queryKey: ["me"],
     queryFn: () => getMyProfile(),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

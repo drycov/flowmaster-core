@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/i18n";
 import type { UseFormReturn } from "react-hook-form";
 import type { DocumentFormValues, Template, Nomenclature } from "../types";
 import { TemplateSelect } from "./TemplateSelect";
@@ -29,7 +29,9 @@ export function MetadataCard({
   isLoading,
 }: MetadataCardProps) {
   const { t } = useI18n();
-  const { register } = form;
+  const { register, watch } = form;
+  const titleRu = watch("title_ru");
+  const titleKk = watch("title_kk");
 
   return (
     <Card className="rounded-sm">
@@ -52,15 +54,29 @@ export function MetadataCard({
           />
         </div>
 
-        <div>
-          <Label>{t("doc.title")} (RU) *</Label>
-          <Input {...register("title_ru", { required: true })} />
-        </div>
+        {showManualFields ? (
+          <>
+            <div>
+              <Label>{t("doc.title")} (RU) *</Label>
+              <Input {...register("title_ru", { required: true })} />
+            </div>
 
-        <div>
-          <Label>{t("doc.title")} (KK)</Label>
-          <Input {...register("title_kk")} />
-        </div>
+            <div>
+              <Label>{t("doc.title")} (KK)</Label>
+              <Input {...register("title_kk")} />
+            </div>
+          </>
+        ) : (
+          <div className="rounded-sm border border-border bg-muted/30 px-3 py-2.5 space-y-1">
+            <p className="text-xs text-muted-foreground">{t("doc.titleFromTemplate")}</p>
+            <p className="text-sm font-medium">{titleRu || "—"}</p>
+            {titleKk && titleKk !== titleRu ? (
+              <p className="text-sm text-muted-foreground">{titleKk}</p>
+            ) : null}
+            <input type="hidden" {...register("title_ru")} />
+            <input type="hidden" {...register("title_kk")} />
+          </div>
+        )}
 
         {showManualFields && (
           <>

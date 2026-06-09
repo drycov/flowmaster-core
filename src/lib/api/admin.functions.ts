@@ -1,47 +1,72 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { ALL_PERMISSIONS, type Permission } from "@/lib/auth/permissions";
+import {
+  fetchProfileById,
+  fetchUserRoles,
+  mapProfileRow,
+  registerUser,
+  setUserRole as setUserRoleDb,
+} from "@/lib/auth/server";
+import { fetchUserPermissions, requireAnyPermission, requirePermission } from "./_helpers";
+import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
+
+function adminPermissions(): Record<Permission, boolean> {
+  return Object.fromEntries(ALL_PERMISSIONS.map((p) => [p, true])) as Record<Permission, boolean>;
+}
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const [profile, roles, roleDefs] = await Promise.all([
-      supabase.from("profiles").select("*, departments(id, name_ru, name_kk, code), positions(*)").eq("id", userId).single(),
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("role_definitions").select("*"),
-    ]);
+    const { userId } = context;
 
-    const userRoles = (roles.data ?? []).map((r) => r.role);
-    const permissions: Record<string, boolean> = {};
+    const profileData = await fetchProfileById(userId);
+    if (!profileData) throw new Error("Профиль пользователя не найден");
 
-    // Merge permissions from all roles
-    (roleDefs.data ?? []).forEach((def) => {
-      if (userRoles.includes(def.role)) {
-        const rolePerms = def.permissions as Record<string, boolean>;
-        Object.keys(rolePerms).forEach((p) => {
-          if (rolePerms[p]) permissions[p] = true;
-        });
-      }
-    });
+    const userRoles = await fetchUserRoles(userId);
+    const permissions = userRoles.includes("admin")
+      ? adminPermissions()
+      : await fetchUserPermissions(supabaseAdmin, userId);
+
+    const mapped = mapProfileRow(profileData, userRoles);
+    const template_defaults = await buildTemplateAuthorDefaultsForUser(userId);
 
     return {
-      profile: profile.data,
-      roles: userRoles,
+      profile: mapped.profile,
+      roles: mapped.roles,
       permissions,
+      template_defaults,
     };
+  });
+
+export const getUserProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const isSelf = data.user_id === context.userId;
+    if (!isSelf) {
+      await requirePermission(supabaseAdmin, context.userId, "manage_users");
+    }
+
+    const profileData = await fetchProfileById(data.user_id);
+    if (!profileData) throw new Error("Профиль пользователя не найден");
+
+    const userRoles = await fetchUserRoles(data.user_id);
+    return mapProfileRow(profileData, userRoles);
   });
 
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    await requirePermission(supabaseAdmin, context.userId, "manage_users");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name_ru, full_name_kk, position_ru, position_kk, department_id")
+      .select("id, email, full_name_ru, full_name_kk, position_ru, position_kk, department_id, created_at")
       .order("full_name_ru", { ascending: true });
     if (error) throw new Error(error.message);
-    const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
     const roleMap = new Map<string, string[]>();
     (roles ?? []).forEach((r) => {
       const arr = roleMap.get(r.user_id) ?? [];
@@ -61,27 +86,8 @@ export const setUserRole = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase
-      .from("user_roles")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!isAdmin) throw new Error("Admin only");
-    if (data.enabled) {
-      const { error } = await supabase
-        .from("user_roles")
-        .upsert({ user_id: data.user_id, role: data.role } as never, { onConflict: "user_id,role" });
-      if (error) throw new Error(error.message);
-    } else {
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", data.user_id)
-        .eq("role", data.role);
-      if (error) throw new Error(error.message);
-    }
+    await requirePermission(supabaseAdmin, context.userId, "manage_users");
+    await setUserRoleDb(data.user_id, data.role, data.enabled);
     return { ok: true };
   });
 
@@ -130,8 +136,8 @@ export const upsertDepartment = createServerFn({ method: "POST" })
 
 export const listUsersBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name_ru, full_name_kk, email, department_id, position_id")
       .order("full_name_ru", { ascending: true });
@@ -154,17 +160,23 @@ export const listRolesBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("role_definitions")
-      .select("role, title_ru, title_kk")
-      .order("role", { ascending: true });
+      .from("roles")
+      .select("code, name_ru, name_kk")
+      .eq("is_active", true)
+      .order("code", { ascending: true });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((r) => ({
+      role: r.code,
+      title_ru: r.name_ru,
+      title_kk: r.name_kk,
+    }));
   });
 
 export const listAuditLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ entity_type: z.string().optional(), entity_id: z.string().optional(), limit: z.number().max(500).default(100) }).optional())
   .handler(async ({ data, context }) => {
+    await requirePermission(context.supabase, context.userId, "view_audit");
     let q = context.supabase
       .from("audit_logs")
       .select("*")
@@ -174,7 +186,25 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     if (data?.entity_id) q = q.eq("entity_id", data.entity_id);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+
+    const actorIds = Array.from(
+      new Set((rows ?? []).map((r) => r.actor_id).filter(Boolean) as string[]),
+    );
+    const profileMap = new Map<string, { full_name_ru: string | null; email: string }>();
+    if (actorIds.length > 0) {
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, full_name_ru, email")
+        .in("id", actorIds);
+      (profs ?? []).forEach((p) =>
+        profileMap.set(p.id, { full_name_ru: p.full_name_ru, email: p.email }),
+      );
+    }
+
+    return (rows ?? []).map((r) => ({
+      ...r,
+      actor: r.actor_id ? profileMap.get(r.actor_id) ?? null : null,
+    }));
   });
 
 export const listNotifications = createServerFn({ method: "GET" })
@@ -206,6 +236,10 @@ export const markNotificationsRead = createServerFn({ method: "POST" })
 export const listPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await requireAnyPermission(context.supabase, context.userId, [
+      "manage_users",
+      "manage_roles",
+    ]);
     const { data, error } = await context.supabase
       .from("permissions")
       .select("*")
@@ -218,6 +252,10 @@ export const listPermissions = createServerFn({ method: "GET" })
 export const listRolesV2 = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await requireAnyPermission(context.supabase, context.userId, [
+      "manage_users",
+      "manage_roles",
+    ]);
     const [roles, perms] = await Promise.all([
       context.supabase.from("roles").select("*").order("code", { ascending: true }),
       context.supabase.from("role_permissions").select("role_id, permission_code"),
@@ -249,7 +287,10 @@ export const upsertRoleV2 = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_users");
+    await requireAnyPermission(context.supabase, context.userId, [
+      "manage_users",
+      "manage_roles",
+    ]);
     const { id, ...patch } = data;
     if (id) {
       const { error } = await context.supabase.from("roles").update(patch as never).eq("id", id);
@@ -274,7 +315,10 @@ export const setRolePermissions = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_users");
+    await requireAnyPermission(context.supabase, context.userId, [
+      "manage_users",
+      "manage_roles",
+    ]);
     const { supabase } = context;
     const { error: delErr } = await supabase
       .from("role_permissions")
@@ -296,6 +340,10 @@ export const listRoleGrants = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ role_id: z.string().uuid().optional() }).optional())
   .handler(async ({ data, context }) => {
+    await requireAnyPermission(context.supabase, context.userId, [
+      "manage_users",
+      "manage_roles",
+    ]);
     let q = context.supabase
       .from("user_role_grants")
       .select("*, roles(code, name_ru)")
@@ -363,3 +411,29 @@ export const revokeRoleGrant = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const createUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      email: z.string().email(),
+      full_name_ru: z.string().min(1),
+      full_name_kk: z.string().min(1),
+      password: z.string().min(8).optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await requirePermission(supabaseAdmin, context.userId, "manage_users");
+
+    const password = data.password ?? `${crypto.randomUUID()}Aa1!`;
+
+    const newUserId = await registerUser({
+      email: data.email,
+      password,
+      full_name_ru: data.full_name_ru,
+      full_name_kk: data.full_name_kk,
+      locale: "ru",
+      auth_method: "email",
+    });
+
+    return { id: newUserId, email: data.email };
+  });

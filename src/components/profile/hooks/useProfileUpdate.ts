@@ -1,87 +1,88 @@
-// src/components/profile/hooks/useProfileUpdate.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { avatarPath, STORAGE_BUCKETS } from "@/lib/storage/buckets";
+import {
+  getPublicStorageUrl,
+  listAuthenticatedFiles,
+  removeAuthenticatedFiles,
+  uploadAuthenticatedFile,
+} from "@/lib/storage/client";
+import { changeMyPassword, updateMyProfile } from "@/lib/api/auth.functions";
+import { useI18n } from "@/i18n";
 import type { ProfileFormData } from "../types";
 
 async function updateProfile(data: ProfileFormData & { id: string }) {
-  const patch: Record<string, unknown> = {
-    full_name_ru: data.full_name_ru || null,
-    full_name_kk: data.full_name_kk || null,
-    phone: data.phone || null,
-    updated_at: new Date().toISOString(),
-  };
-  const { error } = await (supabase.from("profiles") as any).update(patch).eq("id", data.id);
-  if (error) throw error;
+  await updateMyProfile({
+    data: {
+      full_name_ru: data.full_name_ru || undefined,
+      full_name_kk: data.full_name_kk || undefined,
+      phone: data.phone || null,
+    },
+  });
   return data;
 }
 
 async function updatePassword(password: string) {
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) throw error;
+  await changeMyPassword({ data: { password } });
 }
 
 async function updateAvatar(file: File, userId: string) {
   const fileExt = file.name.split(".").pop();
-  const filePath = `${userId}/${Date.now()}.${fileExt}`;
+  const fileName = `${Date.now()}.${fileExt}`;
+  const path = avatarPath(userId, fileName);
 
-  const { data: existing } = await supabase.storage.from("avatars").list(userId);
-  if (existing && existing.length > 0) {
-    await supabase.storage.from("avatars").remove(existing.map((f) => `${userId}/${f.name}`));
+  const existing = await listAuthenticatedFiles(STORAGE_BUCKETS.avatars, userId);
+  if (existing.length > 0) {
+    await removeAuthenticatedFiles(
+      STORAGE_BUCKETS.avatars,
+      existing.map((f) => avatarPath(userId, f.name)),
+    );
   }
 
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, file, { upsert: true });
-  if (uploadError) throw uploadError;
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-  const { error: updateError } = await (supabase.from("profiles") as any)
-    .update({ avatar_url: publicUrl })
-    .eq("id", userId);
-  if (updateError) throw updateError;
-
+  await uploadAuthenticatedFile(STORAGE_BUCKETS.avatars, path, file, { upsert: true });
+  const publicUrl = getPublicStorageUrl(STORAGE_BUCKETS.avatars, path);
+  await updateMyProfile({ data: { avatar_url: publicUrl } });
   return publicUrl;
 }
 
 export function useProfileUpdate() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   const profileMutation = useMutation({
     mutationFn: updateProfile,
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["user-profile", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Профиль успешно обновлён");
+      toast.success(t("profile.profileUpdated"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Ошибка при обновлении профиля");
+      toast.error(error instanceof Error ? error.message : t("profile.profileUpdateError"));
     },
   });
 
   const passwordMutation = useMutation({
     mutationFn: updatePassword,
     onSuccess: () => {
-      toast.success("Пароль успешно изменён");
+      toast.success(t("profile.passwordUpdated"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Ошибка при смене пароля");
+      toast.error(error instanceof Error ? error.message : t("profile.passwordUpdateError"));
     },
   });
 
   const avatarMutation = useMutation({
     mutationFn: ({ file, userId }: { file: File; userId: string }) => updateAvatar(file, userId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile", "me"] });
       queryClient.invalidateQueries({ queryKey: ["user-profile", variables.userId] });
-      toast.success("Аватар успешно обновлён");
+      toast.success(t("profile.avatarUpdated"));
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Ошибка при загрузке аватара");
+      toast.error(error instanceof Error ? error.message : t("profile.avatarUpdateError"));
     },
   });
 
