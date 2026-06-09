@@ -1,8 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentActions } from "@/components/document-detail/hooks/useDocumentActions";
+import { OfficeTab } from "@/components/document-detail/components/OfficeTab";
+import { listMySubstitutions } from "@/lib/api/substitutions.functions";
 import { useDocumentData } from "@/components/document-detail/hooks/useDocumentData";
 import { useRealtimeUpdates } from "@/components/document-detail/hooks/useRealtimeUpdates";
 import { getMyProfile } from "@/lib/api/admin.functions";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -17,8 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 // Изолированные компоненты деталки
+import { DocumentEditSheet } from "@/components/document-detail/components/DocumentEditSheet";
 import { AuditTab } from "@/components/document-detail/components/AuditTab";
 import { ContentTab } from "@/components/document-detail/components/ContentTab";
+import { DocumentLinksTab } from "@/components/document-detail/components/DocumentLinksTab";
+import { ArchiveRetentionCard } from "@/components/document-detail/components/ArchiveRetentionCard";
 import { SignaturesCard } from "@/components/document-detail/components/SignaturesCard";
 import { SlaBadgeSafe } from "@/components/document-detail/components/SlaBadgeSafe";
 import { VersionsTab } from "@/components/document-detail/components/VersionsTab";
@@ -29,8 +34,10 @@ import { fmtDate, fmtDateShort } from "@/lib/format";
 import { localized, useI18n } from "@/i18n";
 import {
   correspondentLabel,
+  deliveryMethodLabel,
   documentTypeLabel,
   priorityLabel,
+  registrationJournalLabel,
 } from "@/lib/documents/reference-display";
 import { findMyPendingTask } from "@/lib/workflow/task-match";
 import {
@@ -39,7 +46,9 @@ import {
   FileSearch,
   GitBranch,
   History,
+  Link2,
   MessageSquare,
+  Pencil,
   Send,
   Shield,
 } from "lucide-react";
@@ -68,13 +77,19 @@ function DocumentDetail() {
     isStartingWorkflow,
     // archiveDocument, 
     archive: archiveDocument,
+    saveContent,
   } = useDocumentActions(id);
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
+  const { data: subs } = useQuery({
+    queryKey: ["my-substitutions"],
+    queryFn: listMySubstitutions,
+  });
 
   const [comment, setComment] = useState("");
   const [wfDialog, setWfDialog] = useState(false);
   const [chosenWf, setChosenWf] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isLoading || !data?.document) {
     return <PageBody>{t("common.loading")}</PageBody>;
@@ -89,6 +104,16 @@ function DocumentDetail() {
   const myPendingTask = findMyPendingTask(data.tasks ?? [], me?.profile?.id, {
     isAdmin: me?.roles?.includes("admin"),
   });
+
+  const canEditMetadata =
+    me?.roles?.includes("admin") ||
+    (doc.created_by === me?.profile?.id &&
+      (doc.status === "draft" || doc.status === "returned_for_revision"));
+
+  const canManageArchive =
+    me?.roles?.includes("admin") ||
+    !!me?.permissions?.archive_documents ||
+    !!me?.permissions?.manage_documents;
 
   const handleStartWorkflow = () => {
     startWorkflow(chosenWf || undefined, {
@@ -116,6 +141,13 @@ function DocumentDetail() {
             <Button variant="outline" size="sm" onClick={() => navigate({ to: "/documents" })}>
               {t("common.back")}
             </Button>
+
+            {canEditMetadata && (
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+                <Pencil className="w-4 h-4 mr-1" />
+                {t("doc.edit")}
+              </Button>
+            )}
 
             {/* Диалог запуска маршрута */}
             {!hasActiveRun && (
@@ -157,7 +189,13 @@ function DocumentDetail() {
             )}
 
             {/* Кнопка архивации */}
-            <Button size="sm" variant="outline" onClick={() => archiveDocument()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => archiveDocument()}
+              disabled={!!doc.legal_hold}
+              title={doc.legal_hold ? t("archive.legalHoldBlock") : undefined}
+            >
               <Archive className="w-4 h-4 mr-1" />
               {t("common.archive")}
             </Button>
@@ -173,6 +211,7 @@ function DocumentDetail() {
               <TabsTrigger value="content"><FileEdit className="w-4 h-4 mr-1" />{t("doc.body")}</TabsTrigger>
               <TabsTrigger value="office"><FileSearch className="w-4 h-4 mr-1" />Office Web</TabsTrigger>
               <TabsTrigger value="versions"><History className="w-4 h-4 mr-1" />{t("doc.versions")}</TabsTrigger>
+              <TabsTrigger value="links"><Link2 className="w-4 h-4 mr-1" />{t("doc.links")}</TabsTrigger>
               <TabsTrigger value="comments"><MessageSquare className="w-4 h-4 mr-1" />{t("doc.comments")}</TabsTrigger>
               <TabsTrigger value="audit"><Shield className="w-4 h-4 mr-1" />{t("doc.audit")}</TabsTrigger>
             </TabsList>
@@ -184,15 +223,25 @@ function DocumentDetail() {
                 fieldValues={data.documentFields}
                 currentVersion={currentVersion}
                 summary={doc.summary}
-                isEditable={doc.status === "draft"}
+                isEditable={canEditMetadata}
+                onSave={saveContent}
               />
+            </TabsContent>
+
+            <TabsContent value="links">
+              <DocumentLinksTab documentId={id} canEdit={canEditMetadata} />
             </TabsContent>
 
             {/* Вкладка 2: Интеграция с редактором документов (ONLYOFFICE/MS Web) */}
             <TabsContent value="office">
               <Card className="rounded-sm">
                 <CardContent className="p-6">
-                  <OfficeEditor documentId={id} />
+                  <OfficeTab
+                    documentId={id}
+                    initialContent={doc.body ?? ""}
+                    isReadOnly={!canEditMetadata}
+                    onSave={saveContent}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -254,9 +303,12 @@ function DocumentDetail() {
               tasks={data.tasks ?? []}
               currentUserId={me?.profile?.id}
               isAdmin={me?.roles?.includes("admin")}
+              substituteFor={subs?.actingFor ?? []}
               signPayload={doc.body ?? doc.title_ru ?? id}
             />
           )}
+
+          <ArchiveRetentionCard document={doc as never} canManage={canManageArchive} />
 
           {/* Карточка системных метаданных документа */}
           <Card className="rounded-sm">
@@ -267,6 +319,16 @@ function DocumentDetail() {
               <Field label={t("doc.documentType")}>{documentTypeLabel(doc, locale)}</Field>
               <Field label={t("doc.priority")}>{priorityLabel(doc, locale)}</Field>
               <Field label={t("doc.correspondent")}>{correspondentLabel(doc, locale)}</Field>
+              <Field label={t("doc.registrationJournal")}>{registrationJournalLabel(doc, locale)}</Field>
+              <Field label={t("doc.deliveryMethod")}>{deliveryMethodLabel(doc, locale)}</Field>
+              <Field label={t("doc.externalRegNumber")}>{doc.external_reg_number || "—"}</Field>
+              <Field label={t("doc.receivedAt")}>
+                {doc.received_at ? fmtDateShort(doc.received_at, locale) : "—"}
+              </Field>
+              <Field label={t("doc.sentAt")}>
+                {doc.sent_at ? fmtDateShort(doc.sent_at, locale) : "—"}
+              </Field>
+              <Field label={t("doc.pagesCount")}>{doc.pages_count ?? "—"}</Field>
               <Field label={t("common.deadline")}>{doc.due_at ? fmtDateShort(doc.due_at, locale) : "—"}</Field>
               <Field label={t("common.version")}>v{doc.current_version}</Field>
             </CardContent>
@@ -282,9 +344,16 @@ function DocumentDetail() {
           />
 
           {/* Вынесенный компонент цифровых подписей (CMS/ЭЦП) */}
-          <SignaturesCard signatures={data.signatures} />
+          <SignaturesCard signatures={data.signatures} documentId={id} />
         </div>
       </PageBody>
+
+      <DocumentEditSheet
+        document={doc}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={() => refetch()}
+      />
     </>
   );
 }
@@ -296,21 +365,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span>{children}</span>
     </div>
   );
-}
-
-function OfficeEditor({ documentId }: { documentId: string }) {
-  const officeUrl = (import.meta.env.VITE_OFFICE_URL as string | undefined) || "";
-  const { t } = useI18n();
-
-  if (!officeUrl) {
-    return (
-      <div className="border-2 border-dashed border-border rounded-sm p-12 text-center text-sm text-muted-foreground space-y-2">
-        <FileEdit className="w-8 h-8 mx-auto opacity-50" />
-        <div className="font-medium text-foreground">ONLYOFFICE / MS Office Web</div>
-        <p>{t("office.placeholder")}</p>
-        <p className="text-xs font-mono">document_id = {documentId}</p>
-      </div>
-    );
-  }
-  return <iframe src={`${officeUrl}?doc=${documentId}`} className="w-full h-[600px] border border-border rounded-sm" />;
 }

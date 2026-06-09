@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/format";
 import { Download, Loader2, Upload } from "lucide-react";
 import type { DocumentVersion } from "../types";
 import { useDocumentVersionUpload } from "../hooks/useDocumentVersionUpload";
+import { VersionDiffPanel } from "./VersionDiffPanel";
 import { getSignedDownloadUrl } from "@/lib/api/storage.functions";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
 
@@ -119,6 +120,7 @@ export function VersionsTab({ documentId, versions, canUpload = true }: Versions
             )}
           </tbody>
         </table>
+        <VersionDiffPanel versions={versions} />
       </CardContent>
     </Card>
   );

@@ -1,5 +1,6 @@
 import type { Dictionary } from "../types";
 import { messagesKk } from "./messages.kk";
+import { helpKk } from "./help.kk";
 
 export const kkDictionary: Dictionary = {
     // App
@@ -9,6 +10,8 @@ export const kkDictionary: Dictionary = {
     // Navigation
     "nav.dashboard": "Басты бет",
     "nav.documents": "Құжаттар",
+    "nav.incoming": "Кіріс",
+    "nav.outgoing": "Шығыс",
     "nav.tasks": "Тапсырмалар",
     "nav.approvals": "Келісімдер",
     "nav.workflows": "Бағыттар",
@@ -19,6 +22,7 @@ export const kkDictionary: Dictionary = {
     "nav.archive": "Мұрағат",
     "nav.search": "Іздеу",
     "nav.notifications": "Хабарландырулар",
+    "nav.reports": "Есептер",
     "nav.audit": "Аудит",
     "nav.admin": "Әкімшілік",
     "nav.users": "Пайдаланушылар",
@@ -29,6 +33,7 @@ export const kkDictionary: Dictionary = {
     "nav.permissions": "Рұқсаттар",
     "nav.license": "Лицензия",
     "nav.profile": "Профиль",
+    "nav.help": "Құжаттама",
     "nav.signout": "Шығу",
 
     // License
@@ -223,9 +228,26 @@ export const kkDictionary: Dictionary = {
     "doc.documentType": "Құжат түрі",
     "doc.priority": "Басымдық",
     "doc.correspondent": "Контрагент",
+    "doc.registrationJournal": "Тіркеу журналы",
+    "doc.deliveryMethod": "Жеткізу тәсілі",
+    "doc.externalRegNumber": "Контрагент тіркеу №",
+    "doc.receivedAt": "Түскен күні",
+    "doc.sentAt": "Жіберілген күні",
+    "doc.pagesCount": "Бет саны",
+    "doc.copiesCount": "Дана саны",
     "doc.versions": "Нұсқалар",
     "doc.signatures": "Қолтаңбалар",
     "doc.comments": "Пікірлер",
+    "doc.links": "Байланыстар",
+    "doc.links.outgoing": "Шығыс байланыстар",
+    "doc.links.incoming": "Кіріс байланыстар",
+    "doc.links.add": "Байланыс қосу",
+    "doc.links.type": "Байланыс түрі",
+    "doc.links.searchDoc": "Байланысты құжат",
+    "doc.links.note": "Ескертпе",
+    "doc.links.empty": "Байланысты құжаттар жоқ",
+    "doc.links.created": "Байланыс қосылды",
+    "doc.links.error": "Байланыстармен қате",
     "doc.workflow": "Келісу бағыты",
     "doc.audit": "Аудит",
     "doc.start_workflow": "Бағытты іске қосу",
@@ -234,6 +256,10 @@ export const kkDictionary: Dictionary = {
     "doc.no_template": "Үлгісіз",
     "doc.certificate_details": "Сертификат мәліметтері",
     "doc.signature_valid": "Қолтаңба жарамды",
+
+    // Correspondence
+    "corr.incoming": "Кіріс журналы",
+    "corr.outgoing": "Шығыс журналы",
 
     // Statuses
     "status.draft": "Жоба",
@@ -273,7 +299,87 @@ export const kkDictionary: Dictionary = {
     "nom.retention": "Сақтау мерзімі (жыл)",
 
     // Office
-    "office.placeholder": "ONLYOFFICE / MS Office Web редакторы VITE_OFFICE_URL айнымалысы арқылы қосылады. Интеграция дайын.",
+    "office.placeholder": "ONLYOFFICE VITE_OFFICE_URL арқылы қосылады. Callback: /api/public/hooks/office-callback",
+    "office.noFileVersion": "ONLYOFFICE үшін құжаттың файл нұсқасы (DOCX) қажет. «Нұсқалар» қойындысынан жүктеңіз.",
+    "doc.versions.diff": "Нұсқаларды салыстыру",
+    "doc.versions.diffFrom": "A нұсқасы",
+    "doc.versions.diffTo": "B нұсқасы",
+    "doc.versions.compare": "Салыстыру",
+    "doc.versions.fileChanged": "Файл нұсқалары әртүрлі (хеш)",
+    "doc.versions.noTextSnapshot": "Мәтіндік суреттер жоқ",
+    "delegate.title": "Делегаттау",
+    "delegate.selectUser": "Қызметкерді таңдаңыз",
+    "delegate.success": "Тапсырма делегатталды",
+    "delegate.error": "Делегаттау қатесі",
+    "substitution.title": "Ауыстыру",
+    "substitution.hint": "Болмаған кезеңге ауыстырушы тағайындаңыз — ол келісу тапсырмаларын орындай алады.",
+    "substitution.substitute": "Ауыстырушы",
+    "substitution.validFrom": "Бастап",
+    "substitution.validUntil": "Дейін",
+    "substitution.add": "Ауыстыруды қосу",
+    "substitution.deactivate": "Өшіру",
+    "substitution.inactive": "белсенді емес",
+    "substitution.created": "Ауыстыру сақталды",
+    "substitution.error": "Ауыстыру қатесі",
+
+    // Archive & retention
+    "archive.title": "Мұрағат және сақтау",
+    "archive.legalHold": "Legal hold",
+    "archive.legalHoldNote": "Hold негізі",
+    "archive.legalHoldNotePlaceholder": "Сот ісі, тексеру…",
+    "archive.legalHoldBlock": "Legal hold — мұрағаттауға болмайды",
+    "archive.retention": "Сақтау мерзімі",
+    "archive.retentionDue": "Мерзім аяқталады",
+    "archive.retentionPeriod": "Сақтау кезеңі",
+    "archive.location": "Сақтау орны",
+    "archive.archivedAt": "Мұрағатталған күні",
+    "archive.permanent": "Тұрақты",
+    "archive.years": "жыл",
+    "archive.saved": "Мұрағат параметрлері сақталды",
+    "archive.error": "Сақтау қатесі",
+    "archive.saveNote": "Негізді сақтау",
+    "archive.filterArchived": "Мұрағатта",
+    "archive.filterExpiring": "Мерзімі бітеді",
+    "archive.filterLegalHold": "Legal hold",
+
+    // Email notifications
+    "email.prefs.title": "Email хабарландырулар",
+    "email.prefs.hint": "Қолданбадағы хабарламалардың көшірмесі. Серверде RESEND_API_KEY қажет.",
+    "email.prefs.enabled": "Email алу",
+    "email.prefs.taskAssigned": "Жаңа келісу тапсырмалары",
+    "email.prefs.workflowEvents": "Бағыт және SLA оқиғалары",
+    "email.prefs.documentReturned": "Қайта өңдеуге қайтару",
+    "email.prefs.saved": "Хабарландыру баптаулары сақталды",
+    "email.prefs.error": "Баптау қатесі",
+
+    // Reports
+    "reports.subtitle": "Құжат айналымы мен бағыт орындалуының аналитикасы",
+    "reports.period7": "7 күн",
+    "reports.period30": "30 күн",
+    "reports.period90": "90 күн",
+    "reports.period365": "1 жыл",
+    "reports.totalDocs": "Барлық құжаттар",
+    "reports.createdInPeriod": "Кезеңде жасалған",
+    "reports.tasksPending": "Орындалудағы тапсырмалар",
+    "reports.slaOverdue": "SLA мерзімі өткен",
+    "reports.byStatus": "Мәртебе бойынша",
+    "reports.byType": "Құжат түрі бойынша",
+    "reports.timeline": "Тіркеу динамикасы",
+    "reports.sla": "SLA",
+    "reports.workflow": "Бағыттар",
+    "reports.avgHours": "Орташа уақыт, сағ",
+    "reports.count": "Саны",
+
+    // EDS verification
+    "eds.iin": "ЖСН",
+    "eds.verifiedAt": "Тексерілді",
+    "eds.verify.action": "Қолтаңбаны тексеру",
+    "eds.verify.error": "Қолтаңба тексеру қатесі",
+    "eds.verify.unverified": "Тексерілмеген",
+    "eds.verify.valid": "Қолтаңба жарамды",
+    "eds.verify.expired": "Сертификат мерзімі өткен",
+    "eds.verify.invalid": "Қолтаңба жарамсыз",
+    "eds.verify.content_changed": "Құжат қол қойылғаннан кейін өзгертілген",
 
     // NCALayer
     "ncalayer.title": "NCALayer арқылы қол қою",
@@ -411,4 +517,5 @@ export const kkDictionary: Dictionary = {
     "scope.assigned": "Тапсырылған",
 
     ...messagesKk,
+    ...helpKk,
 };

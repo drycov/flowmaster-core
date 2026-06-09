@@ -1,9 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addComment, addSignature, updateDocumentStatus } from "@/lib/api/documents.functions";
+import {
+  addComment,
+  addSignature,
+  updateDocumentMetadata,
+  updateDocumentStatus,
+} from "@/lib/api/documents.functions";
 import { listWorkflows, startWorkflow } from "@/lib/api/workflows.functions";
 import { getDocument } from "@/lib/api/documents.functions";
 import { parseStoredCustomRoute } from "@/lib/workflow/route-builder";
 import { signCMSFull } from "@/lib/ncalayer";
+import { buildSignatureInsertData } from "@/lib/eds/build-signature-record";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import type { Workflow } from "../types";
@@ -62,18 +68,29 @@ export function useDocumentActions(documentId: string) {
       toast.error(error instanceof Error ? error.message : t("doc.archiveError")),
   });
 
+  const saveContentMutation = useMutation({
+    mutationFn: (body: string) =>
+      updateDocumentMetadata({ data: { id: documentId, body } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["document", documentId] });
+      toast.success(t("doc.saved"));
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("doc.saveError")),
+  });
+
   const signMutation = useMutation({
-    mutationFn: async (payload: string) => {
+    mutationFn: async (signText: string) => {
+      const payload = signText
+        ? btoa(unescape(encodeURIComponent(signText)))
+        : "";
       const result = await signCMSFull(payload);
       await addSignature({
-        data: {
-          document_id: documentId,
-          payload: result.signature,
-          signature_type: "CMS",
-          cert_subject: result.certInfo.subject ?? null,
-          cert_serial: result.certInfo.serial ?? null,
-          cert_issuer: result.certInfo.issuer ?? null,
-        },
+        data: buildSignatureInsertData({
+          documentId,
+          signText,
+          result,
+        }),
       });
     },
     onSuccess: () => {
@@ -85,8 +102,7 @@ export function useDocumentActions(documentId: string) {
   });
 
   const handleSign = async (documentBody?: string) => {
-    const payload = documentBody ? btoa(unescape(encodeURIComponent(documentBody))) : "";
-    await signMutation.mutateAsync(payload);
+    await signMutation.mutateAsync(documentBody ?? documentId);
   };
 
   return {
@@ -97,6 +113,8 @@ export function useDocumentActions(documentId: string) {
     isStartingWorkflow: startWorkflowMutation.isPending,
     archive: archiveMutation.mutate,
     isArchiving: archiveMutation.isPending,
+    saveContent: saveContentMutation.mutateAsync,
+    isSavingContent: saveContentMutation.isPending,
     handleSign,
     isSigning: signMutation.isPending,
   };

@@ -35,6 +35,8 @@ import { AuthMethodsCard } from "./components/AuthMethodsCard";
 import { EdsConnectionCard } from "./components/EdsConnectionCard";
 
 import { AssignmentsCard } from "./components/AssignmentsCard";
+import { SubstitutionsCard } from "./components/SubstitutionsCard";
+import { NotificationPreferencesCard } from "./components/NotificationPreferencesCard";
 
 import type { ProfileFormData, PasswordFormData } from "./types";
 
@@ -407,6 +409,10 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
                     <AuthMethodsCard profile={profile} onUpdated={() => refetch()} />
 
                   </div>
+
+                  <SubstitutionsCard />
+
+                  <NotificationPreferencesCard />
 
                   {profile.has_password && (
 

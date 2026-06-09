@@ -270,6 +270,13 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       document_type_id: z.string().uuid().nullable().optional(),
       priority_id: z.string().uuid().nullable().optional(),
       correspondent_id: z.string().uuid().nullable().optional(),
+      registration_journal_id: z.string().uuid().nullable().optional(),
+      delivery_method_id: z.string().uuid().nullable().optional(),
+      received_at: z.string().nullable().optional(),
+      sent_at: z.string().nullable().optional(),
+      pages_count: z.number().int().min(0).nullable().optional(),
+      copies_count: z.number().int().min(0).nullable().optional(),
+      external_reg_number: z.string().max(128).nullable().optional(),
       due_at: z.string().nullable().optional(),
       workflow_id: z.string().uuid().nullable().optional(),
       custom_route: customRouteSchema,
@@ -356,6 +363,13 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
         document_type_id: refs.document_type_id,
         priority_id: refs.priority_id,
         correspondent_id: refs.correspondent_id,
+        registration_journal_id: data.registration_journal_id ?? null,
+        delivery_method_id: data.delivery_method_id ?? null,
+        received_at: data.received_at ?? null,
+        sent_at: data.sent_at ?? null,
+        pages_count: data.pages_count ?? null,
+        copies_count: data.copies_count ?? null,
+        external_reg_number: data.external_reg_number ?? null,
         due_at: refs.due_at,
         created_by: userId,
         workflow_id: workflowId,
@@ -366,7 +380,7 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    const regNumber = await ensureDocumentRegNumber(doc.id);
+    const regNumber = await ensureDocumentRegNumber(doc.id, data.registration_journal_id);
     const finalValues = {
       ...preValues,
       ...buildSystemTemplateValues({

@@ -44,6 +44,13 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
       document_type_id: "",
       priority_id: "",
       correspondent_id: "",
+      registration_journal_id: "",
+      delivery_method_id: "",
+      received_at: "",
+      sent_at: "",
+      pages_count: "",
+      copies_count: "",
+      external_reg_number: "",
     },
   });
 

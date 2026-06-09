@@ -14,9 +14,11 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNomenclatureRouteImport } from './routes/_authenticated/nomenclature'
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedArchiveRouteImport } from './routes/_authenticated/archive'
@@ -30,6 +32,8 @@ import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedReferencesCatalogRouteImport } from './routes/_authenticated/references/$catalog'
 import { Route as AuthenticatedDocumentsNewRouteImport } from './routes/_authenticated/documents/new'
 import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
+import { Route as AuthenticatedCorrespondenceOutgoingRouteImport } from './routes/_authenticated/correspondence/outgoing'
+import { Route as AuthenticatedCorrespondenceIncomingRouteImport } from './routes/_authenticated/correspondence/incoming'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
 import { Route as AuthenticatedAdminPositionsRouteImport } from './routes/_authenticated/admin/positions'
 import { Route as AuthenticatedAdminPermissionsRouteImport } from './routes/_authenticated/admin/permissions'
@@ -38,6 +42,9 @@ import { Route as AuthenticatedAdminLicenseRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
 import { Route as ApiPublicHooksSlaTickRouteImport } from './routes/api/public/hooks/sla-tick'
+import { Route as ApiPublicHooksRetentionTickRouteImport } from './routes/api/public/hooks/retention-tick'
+import { Route as ApiPublicHooksOfficeCallbackRouteImport } from './routes/api/public/hooks/office-callback'
+import { Route as ApiPublicHooksEmailDispatchRouteImport } from './routes/api/public/hooks/email-dispatch'
 import { Route as AuthenticatedAdminUsersIdRouteImport } from './routes/_authenticated/admin/users/$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -64,6 +71,11 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -81,6 +93,11 @@ const AuthenticatedNomenclatureRoute =
     path: '/nomenclature',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -155,6 +172,18 @@ const AuthenticatedDocumentsIdRoute =
     path: '/documents/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCorrespondenceOutgoingRoute =
+  AuthenticatedCorrespondenceOutgoingRouteImport.update({
+    id: '/correspondence/outgoing',
+    path: '/correspondence/outgoing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCorrespondenceIncomingRoute =
+  AuthenticatedCorrespondenceIncomingRouteImport.update({
+    id: '/correspondence/incoming',
+    path: '/correspondence/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminRolesRoute = AuthenticatedAdminRolesRouteImport.update({
   id: '/admin/roles',
   path: '/admin/roles',
@@ -201,6 +230,24 @@ const ApiPublicHooksSlaTickRoute = ApiPublicHooksSlaTickRouteImport.update({
   path: '/api/public/hooks/sla-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRetentionTickRoute =
+  ApiPublicHooksRetentionTickRouteImport.update({
+    id: '/api/public/hooks/retention-tick',
+    path: '/api/public/hooks/retention-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksOfficeCallbackRoute =
+  ApiPublicHooksOfficeCallbackRouteImport.update({
+    id: '/api/public/hooks/office-callback',
+    path: '/api/public/hooks/office-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksEmailDispatchRoute =
+  ApiPublicHooksEmailDispatchRouteImport.update({
+    id: '/api/public/hooks/email-dispatch',
+    path: '/api/public/hooks/email-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminUsersIdRoute =
   AuthenticatedAdminUsersIdRouteImport.update({
     id: '/admin/users/$id',
@@ -215,9 +262,11 @@ export interface FileRoutesByFullPath {
   '/archive': typeof AuthenticatedArchiveRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -226,6 +275,8 @@ export interface FileRoutesByFullPath {
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
+  '/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
@@ -236,6 +287,9 @@ export interface FileRoutesByFullPath {
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
+  '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -246,9 +300,11 @@ export interface FileRoutesByTo {
   '/archive': typeof AuthenticatedArchiveRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -257,6 +313,8 @@ export interface FileRoutesByTo {
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
+  '/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
@@ -267,6 +325,9 @@ export interface FileRoutesByTo {
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflows': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
+  '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -279,9 +340,11 @@ export interface FileRoutesById {
   '/_authenticated/archive': typeof AuthenticatedArchiveRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/nomenclature': typeof AuthenticatedNomenclatureRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -290,6 +353,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/_authenticated/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/_authenticated/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
+  '/_authenticated/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
   '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/_authenticated/documents/new': typeof AuthenticatedDocumentsNewRoute
   '/_authenticated/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
@@ -300,6 +365,9 @@ export interface FileRoutesById {
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/_authenticated/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
+  '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -312,9 +380,11 @@ export interface FileRouteTypes {
     | '/archive'
     | '/audit'
     | '/dashboard'
+    | '/help'
     | '/nomenclature'
     | '/notifications'
     | '/profile'
+    | '/reports'
     | '/search'
     | '/tasks'
     | '/admin/departments'
@@ -323,6 +393,8 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
+    | '/correspondence/incoming'
+    | '/correspondence/outgoing'
     | '/documents/$id'
     | '/documents/new'
     | '/references/$catalog'
@@ -333,6 +405,9 @@ export interface FileRouteTypes {
     | '/templates/'
     | '/workflows/'
     | '/admin/users/$id'
+    | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/office-callback'
+    | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -343,9 +418,11 @@ export interface FileRouteTypes {
     | '/archive'
     | '/audit'
     | '/dashboard'
+    | '/help'
     | '/nomenclature'
     | '/notifications'
     | '/profile'
+    | '/reports'
     | '/search'
     | '/tasks'
     | '/admin/departments'
@@ -354,6 +431,8 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
+    | '/correspondence/incoming'
+    | '/correspondence/outgoing'
     | '/documents/$id'
     | '/documents/new'
     | '/references/$catalog'
@@ -364,6 +443,9 @@ export interface FileRouteTypes {
     | '/templates'
     | '/workflows'
     | '/admin/users/$id'
+    | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/office-callback'
+    | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
     | '/admin/users'
   id:
@@ -375,9 +457,11 @@ export interface FileRouteTypes {
     | '/_authenticated/archive'
     | '/_authenticated/audit'
     | '/_authenticated/dashboard'
+    | '/_authenticated/help'
     | '/_authenticated/nomenclature'
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
+    | '/_authenticated/reports'
     | '/_authenticated/search'
     | '/_authenticated/tasks'
     | '/_authenticated/admin/departments'
@@ -386,6 +470,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/permissions'
     | '/_authenticated/admin/positions'
     | '/_authenticated/admin/roles'
+    | '/_authenticated/correspondence/incoming'
+    | '/_authenticated/correspondence/outgoing'
     | '/_authenticated/documents/$id'
     | '/_authenticated/documents/new'
     | '/_authenticated/references/$catalog'
@@ -396,6 +482,9 @@ export interface FileRouteTypes {
     | '/_authenticated/templates/'
     | '/_authenticated/workflows/'
     | '/_authenticated/admin/users/$id'
+    | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/office-callback'
+    | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
     | '/_authenticated/admin/users/'
   fileRoutesById: FileRoutesById
@@ -404,6 +493,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksEmailDispatchRoute: typeof ApiPublicHooksEmailDispatchRoute
+  ApiPublicHooksOfficeCallbackRoute: typeof ApiPublicHooksOfficeCallbackRoute
+  ApiPublicHooksRetentionTickRoute: typeof ApiPublicHooksRetentionTickRoute
   ApiPublicHooksSlaTickRoute: typeof ApiPublicHooksSlaTickRoute
 }
 
@@ -444,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -463,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/nomenclature'
       fullPath: '/nomenclature'
       preLoaderRoute: typeof AuthenticatedNomenclatureRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/help': {
+      id: '/_authenticated/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -556,6 +662,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/correspondence/outgoing': {
+      id: '/_authenticated/correspondence/outgoing'
+      path: '/correspondence/outgoing'
+      fullPath: '/correspondence/outgoing'
+      preLoaderRoute: typeof AuthenticatedCorrespondenceOutgoingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/correspondence/incoming': {
+      id: '/_authenticated/correspondence/incoming'
+      path: '/correspondence/incoming'
+      fullPath: '/correspondence/incoming'
+      preLoaderRoute: typeof AuthenticatedCorrespondenceIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/roles': {
       id: '/_authenticated/admin/roles'
       path: '/admin/roles'
@@ -612,6 +732,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSlaTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/retention-tick': {
+      id: '/api/public/hooks/retention-tick'
+      path: '/api/public/hooks/retention-tick'
+      fullPath: '/api/public/hooks/retention-tick'
+      preLoaderRoute: typeof ApiPublicHooksRetentionTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/office-callback': {
+      id: '/api/public/hooks/office-callback'
+      path: '/api/public/hooks/office-callback'
+      fullPath: '/api/public/hooks/office-callback'
+      preLoaderRoute: typeof ApiPublicHooksOfficeCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/email-dispatch': {
+      id: '/api/public/hooks/email-dispatch'
+      path: '/api/public/hooks/email-dispatch'
+      fullPath: '/api/public/hooks/email-dispatch'
+      preLoaderRoute: typeof ApiPublicHooksEmailDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/users/$id': {
       id: '/_authenticated/admin/users/$id'
       path: '/admin/users/$id'
@@ -627,9 +768,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedArchiveRoute: typeof AuthenticatedArchiveRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedNomenclatureRoute: typeof AuthenticatedNomenclatureRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
@@ -638,6 +781,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminPermissionsRoute: typeof AuthenticatedAdminPermissionsRoute
   AuthenticatedAdminPositionsRoute: typeof AuthenticatedAdminPositionsRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
+  AuthenticatedCorrespondenceIncomingRoute: typeof AuthenticatedCorrespondenceIncomingRoute
+  AuthenticatedCorrespondenceOutgoingRoute: typeof AuthenticatedCorrespondenceOutgoingRoute
   AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
   AuthenticatedDocumentsNewRoute: typeof AuthenticatedDocumentsNewRoute
   AuthenticatedReferencesCatalogRoute: typeof AuthenticatedReferencesCatalogRoute
@@ -656,9 +801,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedArchiveRoute: AuthenticatedArchiveRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedNomenclatureRoute: AuthenticatedNomenclatureRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
@@ -667,6 +814,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminPermissionsRoute: AuthenticatedAdminPermissionsRoute,
   AuthenticatedAdminPositionsRoute: AuthenticatedAdminPositionsRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
+  AuthenticatedCorrespondenceIncomingRoute:
+    AuthenticatedCorrespondenceIncomingRoute,
+  AuthenticatedCorrespondenceOutgoingRoute:
+    AuthenticatedCorrespondenceOutgoingRoute,
   AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
   AuthenticatedDocumentsNewRoute: AuthenticatedDocumentsNewRoute,
   AuthenticatedReferencesCatalogRoute: AuthenticatedReferencesCatalogRoute,
@@ -687,6 +838,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksEmailDispatchRoute: ApiPublicHooksEmailDispatchRoute,
+  ApiPublicHooksOfficeCallbackRoute: ApiPublicHooksOfficeCallbackRoute,
+  ApiPublicHooksRetentionTickRoute: ApiPublicHooksRetentionTickRoute,
   ApiPublicHooksSlaTickRoute: ApiPublicHooksSlaTickRoute,
 }
 export const routeTree = rootRouteImport

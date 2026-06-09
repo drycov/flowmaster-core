@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -8,17 +8,34 @@ import { Button } from "@/components/ui/button";
 
 import { Textarea } from "@/components/ui/textarea";
 
-import { Check, X, Undo2, Loader2, MessageSquare, LockKeyhole } from "lucide-react";
+import { Check, X, Undo2, Loader2, MessageSquare, LockKeyhole, UserPlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { advanceWorkflowTask, delegateWorkflowTask } from "@/lib/api/workflows.functions";
+import { listUsersBrief } from "@/lib/api/admin.functions";
+import { localized } from "@/i18n";
 
 import { toast } from "sonner";
-
-import { advanceWorkflowTask } from "@/lib/api/workflows.functions";
 
 import { addSignature } from "@/lib/api/documents.functions";
 
 import { findMyPendingTask, type WorkflowTaskRow } from "@/lib/workflow/task-match";
 
 import { signCMSFull, NCALayerError } from "@/lib/ncalayer";
+import { buildSignatureInsertData } from "@/lib/eds/build-signature-record";
 
 import { useI18n } from "@/i18n";
 import { useLicenseStatus } from "@/lib/license/hooks";
@@ -38,6 +55,8 @@ interface Props {
   isAdmin?: boolean;
 
   signPayload?: string;
+
+  substituteFor?: string[];
 
 }
 
@@ -69,18 +88,27 @@ export function WorkflowActions({
 
   signPayload,
 
+  substituteFor = [],
+
 }: Props) {
 
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { isWritable, can: licenseCan } = useLicenseStatus();
 
   const qc = useQueryClient();
 
   const [comment, setComment] = useState("");
+  const [delegateOpen, setDelegateOpen] = useState(false);
+  const [delegateUserId, setDelegateUserId] = useState("");
+  const [delegateComment, setDelegateComment] = useState("");
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["users-brief"],
+    queryFn: listUsersBrief,
+    enabled: delegateOpen,
+  });
 
-
-  const myTask = findMyPendingTask(tasks ?? [], currentUserId, { isAdmin });
+  const myTask = findMyPendingTask(tasks ?? [], currentUserId, { isAdmin, substituteFor });
 
 
 
@@ -160,6 +188,29 @@ export function WorkflowActions({
 
 
 
+  const delegateMutation = useMutation({
+    mutationFn: () => {
+      if (!myTask) return Promise.reject(new Error(t("doc.action.noTask")));
+      if (!delegateUserId) return Promise.reject(new Error(t("delegate.selectUser")));
+      return delegateWorkflowTask({
+        data: {
+          task_id: myTask.id,
+          to_user_id: delegateUserId,
+          comment: delegateComment.trim() || null,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success(t("delegate.success"));
+      setDelegateOpen(false);
+      setDelegateUserId("");
+      setDelegateComment("");
+      qc.invalidateQueries({ queryKey: ["document", documentId] });
+      qc.invalidateQueries({ queryKey: ["myTasks"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("delegate.error")),
+  });
+
   const signMutation = useMutation({
 
     mutationFn: async () => {
@@ -168,32 +219,17 @@ export function WorkflowActions({
 
 
 
-      const payload = toSignPayload(signPayload || documentId);
-
+      const signText = signPayload || documentId;
+      const payload = toSignPayload(signText);
       const result = await signCMSFull(payload);
 
-
-
       await addSignature({
-
-        data: {
-
-          document_id: documentId,
-
-          payload: result.signature,
-
-          signature_type: "CMS",
-
-          cert_subject: result.certInfo.subject ?? null,
-
-          cert_serial: result.certInfo.serial ?? null,
-
-          cert_issuer: result.certInfo.issuer ?? null,
-
-          workflow_task_id: myTask.id,
-
-        },
-
+        data: buildSignatureInsertData({
+          documentId,
+          signText,
+          result,
+          workflowTaskId: myTask.id,
+        }),
       });
 
     },
@@ -455,6 +491,51 @@ export function WorkflowActions({
           </Button>
 
         </div>
+
+        <Dialog open={delegateOpen} onOpenChange={setDelegateOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="w-full" disabled={actionBlocked}>
+              <UserPlus className="w-4 h-4 mr-1" />
+              {t("delegate.title")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("delegate.title")}</DialogTitle>
+            </DialogHeader>
+            <Select
+              value={delegateUserId || "none"}
+              onValueChange={(v) => setDelegateUserId(v === "none" ? "" : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t("delegate.selectUser")} />
+              </SelectTrigger>
+              <SelectContent>
+                {users
+                  .filter((u) => u.id !== currentUserId)
+                  .map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {localized(u, locale, "full_name") || u.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              rows={2}
+              placeholder={t("doc.links.note")}
+              value={delegateComment}
+              onChange={(e) => setDelegateComment(e.target.value)}
+            />
+            <DialogFooter>
+              <Button
+                onClick={() => delegateMutation.mutate()}
+                disabled={!delegateUserId || delegateMutation.isPending}
+              >
+                {t("common.submit")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </CardContent>
 

@@ -82,6 +82,9 @@ function NewDocument() {
             showManualFields={showManualFields}
             templates={templates}
             nomenclatures={nomenclatures}
+            documentTypes={[]}
+            priorities={[]}
+            correspondents={[]}
             isLoading={isLoading}
           />
 

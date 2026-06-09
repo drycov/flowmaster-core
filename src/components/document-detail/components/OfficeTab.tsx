@@ -1,13 +1,20 @@
-// src/components/document-detail/components/OfficeTab.tsx (с TipTap)
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo } from "lucide-react";
+import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "sonner";
+import { getOfficeEditorConfig } from "@/lib/api/office.functions";
+
+declare global {
+  interface Window {
+    DocsAPI?: { DocEditor: (id: string, config: unknown) => void };
+  }
+}
 
 interface OfficeTabProps {
   documentId: string;
@@ -16,66 +23,121 @@ interface OfficeTabProps {
   isReadOnly?: boolean;
 }
 
-export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly = false }: OfficeTabProps) {
-  const officeUrl = (import.meta.env.VITE_OFFICE_URL as string | undefined) || "";
+function loadOnlyOfficeScript(serverUrl: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const src = `${serverUrl}/web-apps/apps/api/documents/api.js`;
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("ONLYOFFICE script load failed"));
+    document.body.appendChild(script);
+  });
+}
+
+export function OfficeTab({
+  documentId,
+  initialContent = "",
+  onSave,
+  isReadOnly = false,
+}: OfficeTabProps) {
+  const officeUrl = (import.meta.env.VITE_OFFICE_URL as string | undefined)?.replace(/\/$/, "") || "";
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const ooMounted = useRef(false);
+
+  const { data: officeConfig, isLoading: officeLoading } = useQuery({
+    queryKey: ["office-config", documentId],
+    queryFn: () => getOfficeEditorConfig({ data: { document_id: documentId } }),
+    enabled: !!officeUrl,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({
-        placeholder: t("doc.contentPlaceholder"),
-      }),
+      Placeholder.configure({ placeholder: t("doc.contentPlaceholder") }),
     ],
     content: initialContent,
     editable: !isReadOnly,
     immediatelyRender: false,
   });
 
-  // Обновляем содержимое при изменении initialContent
   useEffect(() => {
     if (editor && initialContent !== editor.getHTML()) {
       editor.commands.setContent(initialContent);
     }
   }, [editor, initialContent]);
 
+  useEffect(() => {
+    if (!officeUrl || !officeConfig?.available || !officeConfig.document_server_url) return;
+    if (!editorRef.current || ooMounted.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await loadOnlyOfficeScript(officeConfig.document_server_url!);
+        if (cancelled || !window.DocsAPI) return;
+        editorRef.current!.innerHTML = "";
+        window.DocsAPI.DocEditor(editorRef.current!, officeConfig.config);
+        ooMounted.current = true;
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [officeUrl, officeConfig]);
+
   const handleSave = async () => {
     if (!onSave || !editor) return;
-    
     setIsSaving(true);
     try {
       await onSave(editor.getHTML());
       toast.success(t("doc.saved"));
-    } catch (error) {
+    } catch {
       toast.error(t("doc.saveError"));
     } finally {
       setIsSaving(false);
     }
   };
 
-  // ONLYOFFICE / MS Office Web
   if (officeUrl) {
-    return (
-      <div className="relative">
-        <div className="absolute top-2 right-2 z-10 flex gap-2">
-          {!isReadOnly && onSave && (
-            <Button size="sm" variant="outline" onClick={handleSave} disabled={isSaving}>
-              <Save className="w-4 h-4 mr-1" />
-              {isSaving ? t("doc.saving") : t("doc.save")}
-            </Button>
-          )}
+    if (officeLoading) {
+      return (
+        <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          {t("common.loading")}
         </div>
-        <iframe
-          src={`${officeUrl}?doc=${documentId}`}
-          className="w-full h-[600px] border border-border rounded-sm"
-          title="Office Editor"
-        />
+      );
+    }
+
+    if (officeConfig?.available) {
+      return (
+        <div className="relative">
+          <div id="office-editor" ref={editorRef} className="w-full h-[600px]" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="border-2 border-dashed border-border rounded-sm p-8 text-center text-sm text-muted-foreground space-y-2">
+        <FileEdit className="w-8 h-8 mx-auto opacity-50" />
+        <div className="font-medium text-foreground">ONLYOFFICE</div>
+        <p>{t("office.noFileVersion")}</p>
+        <p className="text-xs">{t("office.placeholder")}</p>
       </div>
     );
   }
 
-  // WYSIWYG редактор (TipTap)
   return (
     <div className="space-y-4">
       {!isReadOnly && (
@@ -131,7 +193,6 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
               <Redo className="w-4 h-4" />
             </Button>
           </div>
-
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             <Save className="w-4 h-4 mr-1" />
             {isSaving ? t("doc.saving") : t("doc.save")}
@@ -143,14 +204,11 @@ export function OfficeTab({ documentId, initialContent = "", onSave, isReadOnly 
         <EditorContent editor={editor} className="prose prose-sm max-w-none" />
       </div>
 
-      {!officeUrl && (
-        <div className="border-2 border-dashed border-border rounded-sm p-4 text-center text-sm text-muted-foreground space-y-2">
-          <FileEdit className="w-8 h-8 mx-auto opacity-50" />
-          <div className="font-medium text-foreground">{t("doc.officeEditor")}</div>
-          <p>{t("office.placeholder")}</p>
-          <p className="text-xs font-mono">document_id = {documentId}</p>
-        </div>
-      )}
+      <div className="border-2 border-dashed border-border rounded-sm p-4 text-center text-sm text-muted-foreground space-y-2">
+        <FileEdit className="w-8 h-8 mx-auto opacity-50" />
+        <div className="font-medium text-foreground">{t("doc.officeEditor")}</div>
+        <p>{t("office.placeholder")}</p>
+      </div>
     </div>
   );
 }

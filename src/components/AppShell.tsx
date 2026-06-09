@@ -18,9 +18,13 @@ import {
   Languages,
   CheckSquare,
   User,
+  HelpCircle,
   BookMarked,
   KeyRound,
   AlertTriangle,
+  Inbox,
+  SendHorizontal,
+  BarChart3,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -135,6 +139,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const mainNavItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
     { to: "/documents", icon: FileText, label: t("nav.documents") },
+    { to: "/correspondence/incoming", icon: Inbox, label: t("nav.incoming") },
+    { to: "/correspondence/outgoing", icon: SendHorizontal, label: t("nav.outgoing") },
     { to: "/tasks", icon: CheckSquare, label: t("nav.tasks") },
     { to: "/approvals", icon: ListChecks, label: t("nav.approvals") },
     ...(showArchive ? [{ to: "/archive", icon: Archive, label: t("nav.archive") }] : []),
@@ -150,6 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   ].filter((item) => item.show !== false) as NavItem[];
 
   const adminItems = [
+    { to: "/reports", icon: BarChart3, label: t("nav.reports"), show: can("view_all_documents") },
     { to: "/audit", icon: ShieldCheck, label: t("nav.audit"), show: can("view_audit") && licensed("audit") },
     { to: "/admin/users", icon: Users, label: t("nav.users"), show: can("manage_users") },
     { to: "/admin/roles", icon: ShieldCheck, label: t("nav.roles"), show: can("manage_users") || can("manage_roles") },
@@ -305,6 +312,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
                 <User className="w-4 h-4 mr-2" />
                 {t("nav.profile")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/help" })}>
+                <HelpCircle className="w-4 h-4 mr-2" />
+                {t("nav.help")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>

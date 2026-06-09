@@ -43,6 +43,8 @@ export interface DocumentVersion {
   comment?: string;
   file_path?: string | null;
   file_format?: string | null;
+  body_snapshot?: string | null;
+  content_hash?: string | null;
   created_at: string;
 }
 
@@ -88,11 +90,24 @@ export interface Task {
   decision?: string | null;
 }
 
+export interface SignatureVerificationDetails {
+  errors?: string[];
+  warnings?: string[];
+  cryptoVerified?: boolean;
+}
+
 export interface Signature {
   id: string;
   signature_type: string;
   cert_subject?: string;
   signed_at?: string;
+  signer_iin?: string | null;
+  signer_bin?: string | null;
+  cert_valid_to?: string | null;
+  cert_fingerprint?: string | null;
+  verification_status?: string;
+  verified_at?: string | null;
+  verification_details?: SignatureVerificationDetails | null;
 }
 
 export interface Workflow {

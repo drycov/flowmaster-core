@@ -1,0 +1,93 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceLicense } from "./_helpers";
+
+const LINK_DOC_SELECT =
+  "id, reg_number, title_ru, title_kk, status, doc_type, created_at";
+
+const LINK_TYPE_SELECT = "id, code, name_ru, name_kk";
+
+export const listDocumentLinks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ document_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const docId = data.document_id;
+
+    const [outgoing, incoming] = await Promise.all([
+      supabase
+        .from("document_links")
+        .select(
+          `id, note, created_at, created_by,
+           link_type:ref_document_link_types!document_links_link_type_id_fkey(${LINK_TYPE_SELECT}),
+           target:documents!document_links_target_document_id_fkey(${LINK_DOC_SELECT})`,
+        )
+        .eq("source_document_id", docId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("document_links")
+        .select(
+          `id, note, created_at, created_by,
+           link_type:ref_document_link_types!document_links_link_type_id_fkey(${LINK_TYPE_SELECT}),
+           source:documents!document_links_source_document_id_fkey(${LINK_DOC_SELECT})`,
+        )
+        .eq("target_document_id", docId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (outgoing.error) throw new Error(outgoing.error.message);
+    if (incoming.error) throw new Error(incoming.error.message);
+
+    return {
+      outgoing: outgoing.data ?? [],
+      incoming: incoming.data ?? [],
+    };
+  });
+
+export const createDocumentLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      source_document_id: z.string().uuid(),
+      target_document_id: z.string().uuid(),
+      link_type_id: z.string().uuid(),
+      note: z.string().max(500).nullable().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true });
+    const { supabase, userId } = context;
+
+    if (data.source_document_id === data.target_document_id) {
+      throw new Error("Нельзя связать документ с самим собой");
+    }
+
+    const { data: row, error } = await supabase
+      .from("document_links")
+      .insert({
+        source_document_id: data.source_document_id,
+        target_document_id: data.target_document_id,
+        link_type_id: data.link_type_id,
+        note: data.note ?? null,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteDocumentLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true });
+    const { error } = await context.supabase
+      .from("document_links")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

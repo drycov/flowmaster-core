@@ -174,6 +174,19 @@ export const listRegistrationJournalsBrief = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const listDocumentLinkTypesBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("ref_document_link_types")
+      .select("id, code, name_ru, name_kk")
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("code");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const listDeliveryMethodsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -195,6 +208,19 @@ export const listCorrespondentsBrief = createServerFn({ method: "GET" })
       .select("id, code, name_ru, name_kk, bin")
       .eq("is_active", true)
       .order("name_ru")
+      .order("code");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listRetentionPeriodsBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("ref_retention_periods")
+      .select("id, code, name_ru, name_kk, years, is_permanent")
+      .eq("is_active", true)
+      .order("sort_order")
       .order("code");
     if (error) throw new Error(error.message);
     return data ?? [];

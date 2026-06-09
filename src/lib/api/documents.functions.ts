@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -6,14 +7,19 @@ import { enforceLicense, requirePermission } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { ensureDocumentRegNumber } from "@/lib/documents/registration.server";
 import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
+import { runSignatureVerification } from "@/lib/api/signatures.functions";
 
 const DOCUMENT_SELECT = `
   id, reg_number, doc_type, status, title_ru, title_kk, summary, body,
   nomenclature_id, template_id, current_version, created_by, assigned_to,
-  department_id, due_at, sla_status, archived_at, legal_hold,
+  department_id, due_at, sla_status, archived_at, legal_hold, legal_hold_note, legal_hold_at,
+  retention_period_id, retention_due_at,
   created_at, updated_at, workflow_id, custom_route,
   document_type_id, priority_id, correspondent_id,
   registration_journal_id, delivery_method_id, access_level_id, archive_location_id,
+  ref_archive_locations!documents_archive_location_id_fkey(id, code, name_ru, name_kk),
+  ref_retention_periods!documents_retention_period_id_fkey(id, code, name_ru, name_kk, years, is_permanent),
+  nomenclature_items!documents_nomenclature_id_fkey(id, code, title_ru, title_kk, retention_years),
   received_at, sent_at, pages_count, copies_count, external_reg_number,
   ref_document_types!documents_document_type_id_fkey(id, code, name_ru, name_kk),
   ref_priorities!documents_priority_id_fkey(id, code, name_ru, name_kk, color, sla_hours),
@@ -33,6 +39,8 @@ export const listDocuments = createServerFn({ method: "POST" })
         search: z.string().nullable().optional(),
         scope: z.enum(["all", "mine", "assigned", "archive"]).optional(),
         document_type_code: z.string().nullable().optional(),
+        legal_hold_only: z.boolean().optional(),
+        retention_expiring: z.boolean().optional(),
         limit: z.number().min(1).max(200).optional(),
       })
       .optional(),
@@ -59,7 +67,7 @@ export const listDocuments = createServerFn({ method: "POST" })
     let q = supabase
       .from("documents")
       .select(
-        "id, reg_number, title_ru, title_kk, status, doc_type, sla_status, due_at, created_at, created_by, assigned_to, current_version, received_at, sent_at, external_reg_number, ref_document_types!documents_document_type_id_fkey(code)",
+        "id, reg_number, title_ru, title_kk, status, doc_type, sla_status, due_at, created_at, created_by, assigned_to, current_version, received_at, sent_at, external_reg_number, legal_hold, retention_due_at, archived_at, ref_document_types!documents_document_type_id_fkey(code)",
       )
       .order("created_at", { ascending: false })
       .limit(data?.limit ?? 100);
@@ -67,8 +75,27 @@ export const listDocuments = createServerFn({ method: "POST" })
     if (data?.scope === "mine") q = q.eq("created_by", userId);
     if (data?.scope === "assigned") q = q.eq("assigned_to", userId);
     if (data?.scope === "archive") q = q.eq("status", "archived" as never);
+    if (data?.legal_hold_only) q = q.eq("legal_hold", true);
+    if (data?.retention_expiring) {
+      const horizon = new Date();
+      horizon.setDate(horizon.getDate() + 30);
+      q = q
+        .eq("legal_hold", false)
+        .not("retention_due_at", "is", null)
+        .lte("retention_due_at", horizon.toISOString())
+        .in("status", ["approved", "signed", "in_review"]);
+    }
     if (data?.document_type_code) {
-      q = q.eq("ref_document_types.code", data.document_type_code);
+      const { data: dt } = await supabase
+        .from("ref_document_types")
+        .select("id")
+        .eq("code", data.document_type_code)
+        .maybeSingle();
+      if (dt?.id) {
+        q = q.eq("document_type_id", dt.id);
+      } else {
+        q = q.eq("doc_type", data.document_type_code);
+      }
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -205,6 +232,13 @@ export const createDocument = createServerFn({ method: "POST" })
         document_type_id: refs.document_type_id,
         priority_id: refs.priority_id,
         correspondent_id: refs.correspondent_id,
+        registration_journal_id: registration_journal_id ?? null,
+        delivery_method_id: delivery_method_id ?? null,
+        received_at: received_at ?? null,
+        sent_at: sent_at ?? null,
+        pages_count: pages_count ?? null,
+        copies_count: copies_count ?? null,
+        external_reg_number: external_reg_number ?? null,
         nomenclature_id,
         template_id,
         assigned_to,
@@ -218,8 +252,128 @@ export const createDocument = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    const regNumber = await ensureDocumentRegNumber(row.id);
+    const regNumber = await ensureDocumentRegNumber(row.id, registration_journal_id);
     return { ...row, reg_number: regNumber };
+  });
+
+// ============== UPDATE METADATA ==============
+export const updateDocumentMetadata = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      id: z.string().uuid(),
+      title_ru: z.string().min(1).max(500).optional(),
+      title_kk: z.string().max(500).nullable().optional(),
+      summary: z.string().max(2000).nullable().optional(),
+      body: z.string().nullable().optional(),
+      document_type_id: z.string().uuid().nullable().optional(),
+      priority_id: z.string().uuid().nullable().optional(),
+      correspondent_id: z.string().uuid().nullable().optional(),
+      registration_journal_id: z.string().uuid().nullable().optional(),
+      delivery_method_id: z.string().uuid().nullable().optional(),
+      nomenclature_id: z.string().uuid().nullable().optional(),
+      due_at: z.string().nullable().optional(),
+      received_at: z.string().nullable().optional(),
+      sent_at: z.string().nullable().optional(),
+      pages_count: z.number().int().min(0).nullable().optional(),
+      copies_count: z.number().int().min(0).nullable().optional(),
+      external_reg_number: z.string().max(128).nullable().optional(),
+      legal_hold: z.boolean().optional(),
+      legal_hold_note: z.string().max(500).nullable().optional(),
+      retention_period_id: z.string().uuid().nullable().optional(),
+      archive_location_id: z.string().uuid().nullable().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true });
+    const { supabase, userId } = context;
+    const { id, ...patchIn } = data;
+
+    const { data: doc, error: readErr } = await supabase
+      .from("documents")
+      .select("id, status, created_by")
+      .eq("id", id)
+      .single();
+    if (readErr || !doc) throw new Error(readErr?.message ?? "Document not found");
+
+    const editableStatuses = ["draft", "returned_for_revision"];
+    const canManage = await (async () => {
+      try {
+        await requirePermission(supabase, userId, "manage_documents");
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!canManage && doc.created_by !== userId) {
+      throw new Error("Нет права редактировать документ");
+    }
+    if (!canManage && !editableStatuses.includes(doc.status)) {
+      throw new Error("Документ нельзя редактировать в текущем статусе");
+    }
+
+    const refs = await resolveDocumentReferences(supabaseAdmin, {
+      document_type_id: patchIn.document_type_id,
+      priority_id: patchIn.priority_id,
+      correspondent_id: patchIn.correspondent_id,
+      due_at: patchIn.due_at,
+    });
+
+    if (patchIn.legal_hold !== undefined) {
+      const canArchive = await (async () => {
+        try {
+          await requirePermission(supabase, userId, "archive_documents");
+          return true;
+        } catch {
+          try {
+            await requirePermission(supabase, userId, "manage_documents");
+            return true;
+          } catch {
+            return false;
+          }
+        }
+      })();
+      if (!canArchive) throw new Error("Нет права управлять legal hold");
+    }
+
+    const patch: Record<string, unknown> = { ...patchIn };
+    if (patchIn.legal_hold === true) {
+      patch.legal_hold_at = new Date().toISOString();
+      patch.legal_hold_by = userId;
+    }
+    if (patchIn.document_type_id !== undefined) patch.doc_type = refs.doc_type;
+    if (patchIn.document_type_id !== undefined) patch.document_type_id = refs.document_type_id;
+    if (patchIn.priority_id !== undefined) patch.priority_id = refs.priority_id;
+    if (patchIn.correspondent_id !== undefined) patch.correspondent_id = refs.correspondent_id;
+    if (patchIn.due_at !== undefined) patch.due_at = refs.due_at;
+
+    const { error } = await supabase.from("documents").update(patch as never).eq("id", id);
+    if (error) throw new Error(error.message);
+
+    if (patchIn.body !== undefined) {
+      const bodyText = patchIn.body ?? "";
+      const { data: latest } = await supabase
+        .from("document_versions")
+        .select("version_no")
+        .eq("document_id", id)
+        .order("version_no", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextNo = (latest?.version_no ?? 0) + 1;
+      const contentHash = createHash("sha256").update(bodyText).digest("hex");
+      await supabase.from("document_versions").insert({
+        document_id: id,
+        version_no: nextNo,
+        body_snapshot: bodyText,
+        content_hash: contentHash,
+        comment: "Редактирование содержимого",
+        created_by: userId,
+      } as never);
+      await supabase.from("documents").update({ current_version: nextNo } as never).eq("id", id);
+    }
+
+    return { ok: true };
   });
 
 // ============== ADD COMMENT ==============
@@ -249,6 +403,12 @@ export const addSignature = createServerFn({ method: "POST" })
       cert_issuer: z.string().optional().nullable(),
       signature_type: z.string().default("CMS"),
       workflow_task_id: z.string().uuid().optional().nullable(),
+      signer_iin: z.string().optional().nullable(),
+      signer_bin: z.string().optional().nullable(),
+      cert_valid_from: z.string().optional().nullable(),
+      cert_valid_to: z.string().optional().nullable(),
+      cert_fingerprint: z.string().optional().nullable(),
+      content_hash: z.string().optional().nullable(),
     }),
   )
   .handler(async ({ data, context }) => {
@@ -256,11 +416,45 @@ export const addSignature = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { workflow_task_id, ...signatureData } = data;
 
+    const [{ data: profile }, { data: org }, { data: isAdmin }] = await Promise.all([
+      supabase.from("profiles").select("iin").eq("id", userId).maybeSingle(),
+      supabase.from("organization").select("settings").limit(1).maybeSingle(),
+      supabase.rpc("is_admin" as never, { _user_id: userId } as never),
+    ]);
+
+    const edsPolicy = (org?.settings as { eds?: Record<string, boolean> } | null)?.eds ?? {};
+    const requireIinMatch = edsPolicy.require_iin_match !== false;
+    const requireCertValid = edsPolicy.require_cert_valid !== false;
+    const allowOrgCert = edsPolicy.allow_org_certificate !== false;
+
+    if (requireCertValid && data.cert_valid_to) {
+      const validTo = new Date(data.cert_valid_to);
+      if (!Number.isNaN(validTo.getTime()) && validTo < new Date()) {
+        throw new Error("Срок действия сертификата истёк");
+      }
+    }
+
+    if (requireIinMatch && !isAdmin) {
+      const profileIin = profile?.iin?.trim();
+      const signerIin = data.signer_iin?.trim();
+      if (profileIin && signerIin && profileIin !== signerIin) {
+        throw new Error("ИИН сертификата не совпадает с профилем пользователя");
+      }
+      if (profileIin && !signerIin && !data.signer_bin) {
+        throw new Error("В сертификате не найден ИИН");
+      }
+      if (!allowOrgCert && data.signer_bin && !signerIin) {
+        throw new Error("Подписание сертификатом организации запрещено политикой");
+      }
+    }
+
     let signTaskId = workflow_task_id ?? null;
+    let signTaskNodeId: string | null = null;
+    let signTaskRunId: string | null = null;
     if (signTaskId) {
       const { data: task, error: taskErr } = await supabase
         .from("workflow_tasks")
-        .select("id, document_id, assignee_id, status, action_required, node_type")
+        .select("id, document_id, assignee_id, status, action_required, node_type, node_id, run_id")
         .eq("id", signTaskId)
         .single();
       if (taskErr || !task) throw new Error("Задача подписания не найдена");
@@ -271,10 +465,12 @@ export const addSignature = createServerFn({ method: "POST" })
         task.action_required?.toLowerCase() === "sign" ||
         task.node_type?.toUpperCase() === "SIGNATURE";
       if (!isSign) throw new Error("Задача не является этапом подписания");
+      signTaskNodeId = task.node_id ?? null;
+      signTaskRunId = task.run_id ?? null;
     } else {
       const { data: pendingTask, error: pendingErr } = await supabase
         .from("workflow_tasks")
-        .select("id")
+        .select("id, node_id, run_id")
         .eq("document_id", data.document_id)
         .eq("assignee_id", userId)
         .eq("status", "pending")
@@ -284,13 +480,59 @@ export const addSignature = createServerFn({ method: "POST" })
       if (pendingErr) throw new Error(pendingErr.message);
       if (!pendingTask) throw new Error("Нет активной задачи подписания для этого документа");
       signTaskId = pendingTask.id;
+      signTaskNodeId = pendingTask.node_id ?? null;
+      signTaskRunId = pendingTask.run_id ?? null;
     }
+
+    if (signTaskRunId && signTaskNodeId) {
+      const { data: run } = await supabase
+        .from("workflow_runs")
+        .select("context, workflows(definition)")
+        .eq("id", signTaskRunId)
+        .maybeSingle();
+      const ctx = run?.context as { nodes?: Array<{ id: string; data?: { config?: { signature_provider?: string } } }> } | null;
+      const wfDef = (run?.workflows as { definition?: { nodes?: typeof ctx.nodes } } | null)?.definition;
+      const nodes = ctx?.nodes ?? wfDef?.nodes ?? [];
+      const node = nodes.find((n) => n.id === signTaskNodeId);
+      const provider = node?.data?.config?.signature_provider ?? "ncalayer";
+      if (provider === "ncalayer" && data.signature_type !== "CMS") {
+        throw new Error("Для этого этапа требуется подпись через NCALayer (CMS)");
+      }
+    }
+
+    const signedAt = new Date().toISOString();
+    const { data: docRow } = await supabase
+      .from("documents")
+      .select("id, body")
+      .eq("id", data.document_id)
+      .single();
+
+    const verification = docRow
+      ? await runSignatureVerification(
+          {
+            id: "pending",
+            document_id: data.document_id,
+            signer_id: userId,
+            payload: data.payload,
+            signed_at: signedAt,
+            signer_iin: data.signer_iin ?? null,
+            content_hash: data.content_hash ?? null,
+            cert_valid_from: data.cert_valid_from ?? null,
+            cert_valid_to: data.cert_valid_to ?? null,
+          },
+          docRow,
+          profile?.iin,
+        )
+      : null;
 
     const { error } = await supabase.from("document_signatures").insert({
       ...signatureData,
       signer_id: userId,
       status: "signed",
-      signed_at: new Date().toISOString(),
+      signed_at: signedAt,
+      verification_status: verification?.status ?? "unverified",
+      verified_at: verification?.verified_at ?? null,
+      verification_details: verification?.details ?? {},
     } as never);
     if (error) throw new Error(error.message);
 
@@ -328,10 +570,14 @@ export const updateDocumentStatus = createServerFn({ method: "POST" })
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
-      .select("id, status, created_by, assigned_to")
+      .select("id, status, created_by, assigned_to, legal_hold")
       .eq("id", data.id)
       .single();
     if (docErr || !doc) throw new Error(docErr?.message ?? "Document not found");
+
+    if (nextStatus === "archived" && doc.legal_hold) {
+      throw new Error("Документ на legal hold — архивация запрещена");
+    }
 
     if (nextStatus === "archived") {
       await requirePermission(supabase, userId, "archive_documents");
@@ -393,4 +639,11 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     });
     return {
       tasks: tasks.data ?? [],
-      tasksCount: tasks.count ?? 
+      tasksCount: tasks.count ?? 0,
+      myDocs: myDocs.data ?? [],
+      totalDocs: allDocs.count ?? 0,
+      byStatus,
+      overdue,
+      unread: notifications.count ?? 0,
+    };
+  });

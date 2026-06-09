@@ -76,6 +76,25 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       const documentTypeId = values.document_type_id?.trim() || null;
       const priorityId = values.priority_id?.trim() || null;
       const correspondentId = values.correspondent_id?.trim() || null;
+      const registrationJournalId = values.registration_journal_id?.trim() || null;
+      const deliveryMethodId = values.delivery_method_id?.trim() || null;
+      const receivedAt = values.received_at?.trim()
+        ? new Date(values.received_at).toISOString()
+        : null;
+      const sentAt = values.sent_at?.trim() ? new Date(values.sent_at).toISOString() : null;
+      const pagesCount = values.pages_count?.trim() ? Number(values.pages_count) : null;
+      const copiesCount = values.copies_count?.trim() ? Number(values.copies_count) : null;
+      const externalRegNumber = values.external_reg_number?.trim() || null;
+
+      const correspondenceFields = {
+        registration_journal_id: registrationJournalId,
+        delivery_method_id: deliveryMethodId,
+        received_at: receivedAt,
+        sent_at: sentAt,
+        pages_count: Number.isFinite(pagesCount) ? pagesCount : null,
+        copies_count: Number.isFinite(copiesCount) ? copiesCount : null,
+        external_reg_number: externalRegNumber,
+      };
 
       // Resolve workflow / custom_route from route value
       const tpl = template as any;
@@ -133,6 +152,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             document_type_id: documentTypeId,
             priority_id: priorityId,
             correspondent_id: correspondentId,
+            ...correspondenceFields,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
           },
@@ -148,6 +168,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             document_type_id: documentTypeId,
             priority_id: priorityId,
             correspondent_id: correspondentId,
+            ...correspondenceFields,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
           },

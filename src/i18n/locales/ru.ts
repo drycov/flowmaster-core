@@ -1,5 +1,6 @@
 import type { Dictionary } from "../types";
 import { messagesRu } from "./messages.ru";
+import { helpRu } from "./help.ru";
 
 export const ruDictionary: Dictionary = {
     // App
@@ -9,6 +10,8 @@ export const ruDictionary: Dictionary = {
     // Navigation
     "nav.dashboard": "Главная",
     "nav.documents": "Документы",
+    "nav.incoming": "Входящие",
+    "nav.outgoing": "Исходящие",
     "nav.tasks": "Задачи",
     "nav.approvals": "Согласования",
     "nav.workflows": "Маршруты",
@@ -19,6 +22,7 @@ export const ruDictionary: Dictionary = {
     "nav.archive": "Архив",
     "nav.search": "Поиск",
     "nav.notifications": "Уведомления",
+    "nav.reports": "Отчёты",
     "nav.audit": "Аудит",
     "nav.admin": "Администрирование",
     "nav.users": "Пользователи",
@@ -29,6 +33,7 @@ export const ruDictionary: Dictionary = {
     "nav.permissions": "Разрешения",
     "nav.license": "Лицензия",
     "nav.profile": "Профиль",
+    "nav.help": "Документация",
     "nav.signout": "Выйти",
 
     // License
@@ -223,9 +228,26 @@ export const ruDictionary: Dictionary = {
     "doc.documentType": "Вид документа",
     "doc.priority": "Приоритет",
     "doc.correspondent": "Контрагент",
+    "doc.registrationJournal": "Журнал регистрации",
+    "doc.deliveryMethod": "Способ доставки",
+    "doc.externalRegNumber": "Вх. № контрагента",
+    "doc.receivedAt": "Дата поступления",
+    "doc.sentAt": "Дата отправки",
+    "doc.pagesCount": "Листов",
+    "doc.copiesCount": "Экземпляров",
     "doc.versions": "Версии",
     "doc.signatures": "Подписи",
     "doc.comments": "Комментарии",
+    "doc.links": "Связи",
+    "doc.links.outgoing": "Исходящие связи",
+    "doc.links.incoming": "Входящие связи",
+    "doc.links.add": "Добавить связь",
+    "doc.links.type": "Тип связи",
+    "doc.links.searchDoc": "Связанный документ",
+    "doc.links.note": "Примечание",
+    "doc.links.empty": "Связанных документов нет",
+    "doc.links.created": "Связь добавлена",
+    "doc.links.error": "Ошибка при работе со связями",
     "doc.workflow": "Маршрут согласования",
     "doc.audit": "Аудит",
     "doc.start_workflow": "Запустить маршрут",
@@ -234,6 +256,10 @@ export const ruDictionary: Dictionary = {
     "doc.no_template": "Без шаблона",
     "doc.certificate_details": "Детали сертификата",
     "doc.signature_valid": "Подпись действительна",
+
+    // Correspondence
+    "corr.incoming": "Журнал входящих",
+    "corr.outgoing": "Журнал исходящих",
 
     // Statuses
     "status.draft": "Черновик",
@@ -273,7 +299,87 @@ export const ruDictionary: Dictionary = {
     "nom.retention": "Срок хранения (лет)",
 
     // Office
-    "office.placeholder": "Редактор ONLYOFFICE / MS Office Web подключается через переменную VITE_OFFICE_URL. Интеграция готова.",
+    "office.placeholder": "Редактор ONLYOFFICE подключается через VITE_OFFICE_URL (Document Server). Callback: /api/public/hooks/office-callback",
+    "office.noFileVersion": "Для ONLYOFFICE нужна файловая версия документа (DOCX). Загрузите файл на вкладке «Версии».",
+    "doc.versions.diff": "Сравнение версий",
+    "doc.versions.diffFrom": "Версия A",
+    "doc.versions.diffTo": "Версия B",
+    "doc.versions.compare": "Сравнить",
+    "doc.versions.fileChanged": "Файл версий отличается (разный хеш)",
+    "doc.versions.noTextSnapshot": "Нет текстовых снимков для сравнения",
+    "delegate.title": "Делегировать",
+    "delegate.selectUser": "Выберите сотрудника",
+    "delegate.success": "Задача делегирована",
+    "delegate.error": "Ошибка делегирования",
+    "substitution.title": "Замещение",
+    "substitution.hint": "Назначьте заместителя на период отсутствия — он сможет выполнять ваши задачи согласования.",
+    "substitution.substitute": "Заместитель",
+    "substitution.validFrom": "С",
+    "substitution.validUntil": "По",
+    "substitution.add": "Назначить замещение",
+    "substitution.deactivate": "Отключить",
+    "substitution.inactive": "неактивно",
+    "substitution.created": "Замещение сохранено",
+    "substitution.error": "Ошибка замещения",
+
+    // Archive & retention
+    "archive.title": "Архив и хранение",
+    "archive.legalHold": "Legal hold",
+    "archive.legalHoldNote": "Основание hold",
+    "archive.legalHoldNotePlaceholder": "Судебное дело, проверка…",
+    "archive.legalHoldBlock": "Документ на legal hold — архивация запрещена",
+    "archive.retention": "Срок хранения",
+    "archive.retentionDue": "Срок истекает",
+    "archive.retentionPeriod": "Период хранения",
+    "archive.location": "Место хранения",
+    "archive.archivedAt": "Дата архивации",
+    "archive.permanent": "Постоянно",
+    "archive.years": "лет",
+    "archive.saved": "Параметры архива сохранены",
+    "archive.error": "Ошибка сохранения",
+    "archive.saveNote": "Сохранить основание",
+    "archive.filterArchived": "В архиве",
+    "archive.filterExpiring": "Истекает срок",
+    "archive.filterLegalHold": "Legal hold",
+
+    // Email notifications
+    "email.prefs.title": "Email-уведомления",
+    "email.prefs.hint": "Дублирование in-app уведомлений на рабочую почту. Требуется RESEND_API_KEY на сервере.",
+    "email.prefs.enabled": "Получать email",
+    "email.prefs.taskAssigned": "Новые задачи согласования",
+    "email.prefs.workflowEvents": "События маршрута и SLA",
+    "email.prefs.documentReturned": "Возврат на доработку",
+    "email.prefs.saved": "Настройки уведомлений сохранены",
+    "email.prefs.error": "Ошибка сохранения настроек",
+
+    // Reports
+    "reports.subtitle": "Аналитика документооборота и исполнения маршрутов",
+    "reports.period7": "7 дней",
+    "reports.period30": "30 дней",
+    "reports.period90": "90 дней",
+    "reports.period365": "1 год",
+    "reports.totalDocs": "Всего документов",
+    "reports.createdInPeriod": "Создано за период",
+    "reports.tasksPending": "Задачи в работе",
+    "reports.slaOverdue": "Просрочено SLA",
+    "reports.byStatus": "По статусам",
+    "reports.byType": "По видам документов",
+    "reports.timeline": "Динамика регистрации",
+    "reports.sla": "SLA",
+    "reports.workflow": "Маршруты",
+    "reports.avgHours": "Ср. время задачи, ч",
+    "reports.count": "Количество",
+
+    // EDS verification
+    "eds.iin": "ИИН",
+    "eds.verifiedAt": "Проверено",
+    "eds.verify.action": "Проверить подпись",
+    "eds.verify.error": "Ошибка проверки подписи",
+    "eds.verify.unverified": "Не проверено",
+    "eds.verify.valid": "Подпись действительна",
+    "eds.verify.expired": "Сертификат истёк",
+    "eds.verify.invalid": "Подпись недействительна",
+    "eds.verify.content_changed": "Документ изменён после подписания",
 
     // NCALayer
     "ncalayer.title": "Подпись через NCALayer",
@@ -421,4 +527,5 @@ export const ruDictionary: Dictionary = {
     "scope.assigned": "Назначенные",
 
     ...messagesRu,
+    ...helpRu,
 };

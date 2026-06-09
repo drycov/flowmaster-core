@@ -301,16 +301,50 @@ export const listMyTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const now = new Date().toISOString();
 
-    // Engine resolves role/dept into concrete assignee_id per user via resolve_workflow_assignees
+    const { data: subs } = await supabase
+      .from("user_substitutions")
+      .select("principal_id")
+      .eq("substitute_id", userId)
+      .eq("is_active", true)
+      .lte("valid_from", now)
+      .gte("valid_until", now);
+
+    const principalIds = (subs ?? []).map((s) => s.principal_id as string);
+    const assigneeFilter =
+      principalIds.length > 0
+        ? `assignee_id.eq.${userId},assignee_id.in.(${principalIds.join(",")})`
+        : `assignee_id.eq.${userId}`;
+
     const { data, error } = await supabase
       .from("workflow_tasks")
       .select("*, documents(id, reg_number, title_ru, title_kk, status)")
-      .eq("assignee_id", userId)
+      .or(assigneeFilter)
       .in("status", ["pending", "in_progress"])
       .order("due_at", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+export const delegateWorkflowTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      task_id: z.string().uuid(),
+      to_user_id: z.string().uuid(),
+      comment: z.string().max(500).optional().nullable(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    const { data: res, error } = await context.supabase.rpc("delegate_workflow_task" as never, {
+      _task_id: data.task_id,
+      _to_user: data.to_user_id,
+      _comment: data.comment ?? null,
+    } as never);
+    if (error) throw new Error(error.message);
+    return res;
   });
 
 // ============== ADVANCE (approve / reject / return) ==============

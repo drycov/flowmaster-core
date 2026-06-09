@@ -41,3 +41,23 @@ export function correspondentLabel(
   }
   return "—";
 }
+
+export function registrationJournalLabel(
+  doc: { ref_registration_journals?: (NamedRef & { prefix?: string }) | (NamedRef & { prefix?: string })[] | null },
+  locale: Locale,
+): string {
+  const joined = unwrapJoin(doc.ref_registration_journals);
+  if (!joined) return "—";
+  const name = localized(joined as { name_ru: string; name_kk: string }, locale, "name");
+  const prefix = (joined as { prefix?: string }).prefix;
+  return prefix ? `${name} (${prefix})` : name;
+}
+
+export function deliveryMethodLabel(
+  doc: { ref_delivery_methods?: NamedRef | NamedRef[] | null },
+  locale: Locale,
+): string {
+  const joined = unwrapJoin(doc.ref_delivery_methods);
+  if (joined) return localized(joined as { name_ru: string; name_kk: string }, locale, "name");
+  return "—";
+}

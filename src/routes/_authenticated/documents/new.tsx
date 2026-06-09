@@ -13,8 +13,10 @@ import { listTemplates } from "@/lib/api/templates.functions";
 import { listNomenclature } from "@/lib/api/nomenclature.functions";
 import {
   listCorrespondentsBrief,
+  listDeliveryMethodsBrief,
   listDocumentTypesBrief,
   listPrioritiesBrief,
+  listRegistrationJournalsBrief,
 } from "@/lib/api/references.functions";
 
 
@@ -97,6 +99,16 @@ function NewDocument() {
     queryFn: listCorrespondentsBrief,
   });
 
+  const { data: registrationJournals = [], isLoading: journalsLoading } = useQuery({
+    queryKey: ["ref-registration-journals-brief"],
+    queryFn: listRegistrationJournalsBrief,
+  });
+
+  const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useQuery({
+    queryKey: ["ref-delivery-methods-brief"],
+    queryFn: listDeliveryMethodsBrief,
+  });
+
 
 
   const [selectedTemplateId, setSelectedTemplateId] = useState("none");
@@ -148,6 +160,14 @@ function NewDocument() {
     const match = documentTypes.find((dt) => dt.code === selectedTemplate.category);
     if (match) form.setValue("document_type_id", match.id);
   }, [selectedTemplateId, selectedTemplate?.category, documentTypes, form]);
+
+  const documentTypeId = form.watch("document_type_id");
+
+  useEffect(() => {
+    if (!documentTypeId || !registrationJournals.length) return;
+    const journal = registrationJournals.find((j) => j.document_type_id === documentTypeId);
+    if (journal) form.setValue("registration_journal_id", journal.id);
+  }, [documentTypeId, registrationJournals, form]);
 
 
 
@@ -201,7 +221,9 @@ function NewDocument() {
     nomenclaturesLoading ||
     documentTypesLoading ||
     prioritiesLoading ||
-    correspondentsLoading;
+    correspondentsLoading ||
+    journalsLoading ||
+    deliveryMethodsLoading;
 
   const showManualFields = selectedTemplateId === "none";
 
@@ -274,6 +296,8 @@ function NewDocument() {
               documentTypes={documentTypes}
               priorities={priorities}
               correspondents={correspondents}
+              registrationJournals={registrationJournals}
+              deliveryMethods={deliveryMethods}
               isLoading={isLoading}
 
             />

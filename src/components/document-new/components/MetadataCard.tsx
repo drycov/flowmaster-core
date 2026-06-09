@@ -5,7 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import type { UseFormReturn } from "react-hook-form";
-import type { DocumentFormValues, Template, Nomenclature, ReferenceBrief } from "../types";
+import type {
+  DocumentFormValues,
+  Template,
+  Nomenclature,
+  ReferenceBrief,
+  RegistrationJournalBrief,
+} from "../types";
 import { TemplateSelect } from "./TemplateSelect";
 import { NomenclatureSelect } from "./NomenclatureSelect";
 import { ReferenceSelect } from "./ReferenceSelect";
@@ -20,6 +26,8 @@ interface MetadataCardProps {
   documentTypes: ReferenceBrief[];
   priorities: ReferenceBrief[];
   correspondents: ReferenceBrief[];
+  registrationJournals?: RegistrationJournalBrief[];
+  deliveryMethods?: ReferenceBrief[];
   isLoading?: boolean;
 }
 
@@ -33,6 +41,8 @@ export function MetadataCard({
   documentTypes,
   priorities,
   correspondents,
+  registrationJournals = [],
+  deliveryMethods = [],
   isLoading,
 }: MetadataCardProps) {
   const { t, locale } = useI18n();
@@ -88,6 +98,53 @@ export function MetadataCard({
           locale={locale}
           isLoading={isLoading}
         />
+
+        <div className="grid grid-cols-2 gap-3">
+          <ReferenceSelect
+            label={t("doc.registrationJournal")}
+            value={form.watch("registration_journal_id")}
+            onChange={(v) => form.setValue("registration_journal_id", v)}
+            options={registrationJournals}
+            locale={locale}
+            isLoading={isLoading}
+          />
+          <ReferenceSelect
+            label={t("doc.deliveryMethod")}
+            value={form.watch("delivery_method_id")}
+            onChange={(v) => form.setValue("delivery_method_id", v)}
+            options={deliveryMethods}
+            locale={locale}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>{t("doc.externalRegNumber")}</Label>
+            <Input {...register("external_reg_number")} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>{t("doc.pagesCount")}</Label>
+              <Input type="number" min={0} {...register("pages_count")} />
+            </div>
+            <div>
+              <Label>{t("doc.copiesCount")}</Label>
+              <Input type="number" min={0} {...register("copies_count")} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>{t("doc.receivedAt")}</Label>
+            <Input type="datetime-local" {...register("received_at")} />
+          </div>
+          <div>
+            <Label>{t("doc.sentAt")}</Label>
+            <Input type="datetime-local" {...register("sent_at")} />
+          </div>
+        </div>
 
         {showManualFields ? (
           <>

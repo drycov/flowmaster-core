@@ -48,7 +48,19 @@ export interface DocumentFormValues {
   document_type_id: string;
   priority_id: string;
   correspondent_id: string;
+  registration_journal_id: string;
+  delivery_method_id: string;
+  received_at: string;
+  sent_at: string;
+  pages_count: string;
+  copies_count: string;
+  external_reg_number: string;
   [key: string]: string;
+}
+
+export interface RegistrationJournalBrief extends ReferenceBrief {
+  prefix?: string | null;
+  document_type_id?: string | null;
 }
 
 export interface ReferenceBrief {

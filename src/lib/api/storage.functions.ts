@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceLicense, requirePermission } from "./_helpers";
@@ -58,7 +59,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
-      .select("id, current_version, created_by")
+      .select("id, current_version, created_by, body")
       .eq("id", data.document_id)
       .single();
 
@@ -130,6 +131,9 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
       throw new Error("Файл не найден в хранилище. Сначала выполните загрузку.");
     }
 
+    const bodySnapshot = (doc as { body?: string | null }).body ?? null;
+    const contentHash = createHash("sha256").update(data.storage_path).digest("hex");
+
     const { data: version, error } = await supabase
       .from("document_versions")
       .insert({
@@ -138,6 +142,8 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
         file_path: data.storage_path,
         file_format: data.file_format ?? null,
         comment: data.comment ?? null,
+        body_snapshot: bodySnapshot,
+        content_hash: contentHash,
         created_by: userId,
       } as never)
       .select("id, version_no, file_path, file_format, created_at")
