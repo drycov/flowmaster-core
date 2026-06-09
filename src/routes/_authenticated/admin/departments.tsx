@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n, localized } from "@/i18n";
 import { Plus, Pencil, Building2, ChevronRight, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -287,6 +287,9 @@ function DepartmentsPage() {
             <DialogTitle className="text-lg">
               {form.id ? t("common.edit") : t("departments.new")}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {form.id ? t("departments.editDescription") : t("departments.newDescription")}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 py-2">

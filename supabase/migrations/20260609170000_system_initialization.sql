@@ -9,6 +9,7 @@ INSERT INTO public.permissions(code, category, description_ru, description_kk) V
   ('manage_workflows',     'admin', 'Управление маршрутами',         'Маршруттарды басқару'),
   ('manage_templates',     'admin', 'Управление шаблонами',          'Үлгілерді басқару'),
   ('manage_nomenclature',  'admin', 'Управление номенклатурой',      'Номенклатураны басқару'),
+  ('manage_references',    'admin', 'Управление справочниками СЭД',  'СЭД анықтамалықтарын басқару'),
   ('manage_roles',         'admin', 'Управление ролями и правами',   'Рөлдерді басқару'),
   ('view_audit',           'audit', 'Просмотр журнала аудита',       'Аудитті көру'),
   ('register_documents',   'docs',  'Регистрация документов',        'Құжаттарды тіркеу'),
@@ -24,15 +25,15 @@ ON CONFLICT (code) DO NOTHING;
 -- =============================================================================
 INSERT INTO public.role_definitions (role, title_ru, title_kk, description_ru, description_kk, permissions) VALUES
   ('admin','Администратор','Әкімші','Полный доступ ко всем функциям и настройкам','Барлық функциялар мен баптауларға толық қол жеткізу',
-   '{"manage_users":true,"manage_org":true,"manage_workflows":true,"manage_templates":true,"manage_nomenclature":true,"manage_roles":true,"view_audit":true,"sign_documents":true,"register_documents":true,"approve_documents":true,"archive_documents":true,"create_documents":true,"view_all_documents":true}'::jsonb),
+   '{"manage_users":true,"manage_org":true,"manage_workflows":true,"manage_templates":true,"manage_nomenclature":true,"manage_references":true,"manage_roles":true,"view_audit":true,"sign_documents":true,"register_documents":true,"approve_documents":true,"archive_documents":true,"create_documents":true,"view_all_documents":true}'::jsonb),
   ('registrar','Регистратор','Тіркеуші','Регистрация входящих и исходящих документов','Кіріс және шығыс құжаттарды тіркеу',
-   '{"register_documents":true,"manage_templates":true,"manage_nomenclature":true,"manage_workflows":true,"create_documents":true,"view_all_documents":true}'::jsonb),
+   '{"register_documents":true,"manage_templates":true,"manage_nomenclature":true,"manage_references":true,"manage_workflows":true,"create_documents":true,"view_all_documents":true}'::jsonb),
   ('approver','Согласующий','Келісуші','Согласование документов в маршрутах','Бағыттарда құжаттарды келісу',
    '{"approve_documents":true,"create_documents":true}'::jsonb),
   ('signer','Подписант','Қол қоюшы','Подписание документов ЭЦП','Құжаттарға ЭЦҚ қою',
    '{"sign_documents":true,"approve_documents":true,"create_documents":true}'::jsonb),
   ('archivist','Архивариус','Мұрағатшы','Управление архивом и номенклатурой','Мұрағат пен номенклатураны басқару',
-   '{"archive_documents":true,"manage_nomenclature":true,"view_all_documents":true,"create_documents":true}'::jsonb),
+   '{"archive_documents":true,"manage_nomenclature":true,"manage_references":true,"view_all_documents":true,"create_documents":true}'::jsonb),
   ('viewer','Наблюдатель','Байқаушы','Просмотр документов','Құжаттарды қарау',
    '{"create_documents":true}'::jsonb)
 ON CONFLICT (role) DO UPDATE SET

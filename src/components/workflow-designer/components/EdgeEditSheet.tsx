@@ -67,7 +67,7 @@ export function EdgeEditSheet({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Условие перехода</Label>
+              <Label>{t("wf.edgeCondition")}</Label>
               <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setIsRawCondition(!isRawCondition)}>
                 {isRawCondition ? (
                   <MousePointerSquareDashed className="w-3 h-3 mr-1" />
@@ -82,7 +82,7 @@ export function EdgeEditSheet({
               <div className="bg-slate-50 border rounded-md p-3 space-y-3">
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-start">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Поле документа</label>
+                    <label className="text-xs text-muted-foreground">{t("wf.docField")}</label>
                     <Select
                       value={parsedCondition.field}
                       onValueChange={(v) => handleVisualConditionChange(v, parsedCondition.operator, parsedCondition.value)}
@@ -101,7 +101,7 @@ export function EdgeEditSheet({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Оператор</label>
+                    <label className="text-xs text-muted-foreground">{t("wf.operator")}</label>
                     <Select
                       value={parsedCondition.operator}
                       onValueChange={(v) => handleVisualConditionChange(parsedCondition.field, v, parsedCondition.value)}
@@ -120,7 +120,7 @@ export function EdgeEditSheet({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Значение</label>
+                    <label className="text-xs text-muted-foreground">{t("wf.value")}</label>
                     <Input
                       placeholder={t("wf.value")}
                       className="bg-white"
@@ -143,6 +143,7 @@ export function EdgeEditSheet({
                 />
               </div>
             )}
+            <p className="text-xs text-muted-foreground">{t("wf.edgeConditionHint")}</p>
           </div>
 
           <div className="border-t pt-4">

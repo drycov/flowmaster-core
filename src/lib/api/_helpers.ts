@@ -1,5 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ALL_PERMISSIONS, type Permission } from "@/lib/auth/permissions";
+import {
+  enforceLicense,
+  requireAvailableSeat,
+  requireLicenseFeature,
+  requireLicenseFeatureAccess,
+  requireWritableLicense,
+} from "@/lib/license/enforcement";
+import type { LicenseFeature } from "@/lib/license/types";
+
+export {
+  enforceLicense,
+  requireWritableLicense,
+  requireLicenseFeature,
+  requireLicenseFeatureAccess,
+  requireAvailableSeat,
+};
 
 export async function requirePermission(
   supabase: SupabaseClient,

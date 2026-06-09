@@ -31,6 +31,7 @@ import { TemplateFileCard } from "@/components/template-editor/components/Templa
 import { TemplatePreviewCard } from "@/components/template-editor/components/TemplatePreviewCard";
 import { EditorPreviewLayout } from "@/components/shared/EditorPreviewLayout";
 import { listWorkflows } from "@/lib/api/workflows.functions";
+import { listTemplateCategoriesBrief } from "@/lib/api/references.functions";
 import { supportsTemplateProcessing } from "@/lib/templates/file-formats";
 import type { TemplateSyncResult } from "@/components/template-editor/types";
 import { useTemplateAutoSyncFields } from "@/components/template-editor/hooks/useTemplateAutoSyncFields";
@@ -83,6 +84,11 @@ function TemplateEditor() {
   const { data: workflows = [] } = useQuery({
     queryKey: ["wfs"],
     queryFn: () => listWorkflows(),
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ["ref-template-categories"],
+    queryFn: () => listTemplateCategoriesBrief(),
   });
 
   const addField = () => {
@@ -188,6 +194,8 @@ function TemplateEditor() {
             nameKk={nameKk}
             category={category}
             description={description}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
             onNameRuChange={setNameRu}
             onNameKkChange={setNameKk}
             onCategoryChange={setCategory}

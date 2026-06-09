@@ -5,17 +5,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import type { UseFormReturn } from "react-hook-form";
-import type { DocumentFormValues, Template, Nomenclature } from "../types";
+import type { DocumentFormValues, Template, Nomenclature, ReferenceBrief } from "../types";
 import { TemplateSelect } from "./TemplateSelect";
 import { NomenclatureSelect } from "./NomenclatureSelect";
+import { ReferenceSelect } from "./ReferenceSelect";
 
 interface MetadataCardProps {
   form: UseFormReturn<DocumentFormValues>;
   templateId: string;
   onTemplateChange: (value: string) => void;
   showManualFields: boolean;
-  templates: Template[]; // Теперь это Template[] из нашего типа
+  templates: Template[];
   nomenclatures: Nomenclature[];
+  documentTypes: ReferenceBrief[];
+  priorities: ReferenceBrief[];
+  correspondents: ReferenceBrief[];
   isLoading?: boolean;
 }
 
@@ -26,9 +30,12 @@ export function MetadataCard({
   showManualFields,
   templates,
   nomenclatures,
+  documentTypes,
+  priorities,
+  correspondents,
   isLoading,
 }: MetadataCardProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { register, watch } = form;
   const titleRu = watch("title_ru");
   const titleKk = watch("title_kk");
@@ -53,6 +60,34 @@ export function MetadataCard({
             isLoading={isLoading}
           />
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <ReferenceSelect
+            label={t("doc.documentType")}
+            value={form.watch("document_type_id")}
+            onChange={(v) => form.setValue("document_type_id", v)}
+            options={documentTypes}
+            locale={locale}
+            isLoading={isLoading}
+          />
+          <ReferenceSelect
+            label={t("doc.priority")}
+            value={form.watch("priority_id")}
+            onChange={(v) => form.setValue("priority_id", v)}
+            options={priorities}
+            locale={locale}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <ReferenceSelect
+          label={t("doc.correspondent")}
+          value={form.watch("correspondent_id")}
+          onChange={(v) => form.setValue("correspondent_id", v)}
+          options={correspondents}
+          locale={locale}
+          isLoading={isLoading}
+        />
 
         {showManualFields ? (
           <>

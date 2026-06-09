@@ -20,7 +20,7 @@ export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
 
   id: n.id,
 
-  type: "default",
+  type: "workflowNode",
 
   position: n.position,
 
@@ -130,20 +130,27 @@ export const toDomainNode = (n: FlowNode): WorkflowNode => {
 
     sla_working_hours_only: n.data.sla_working_hours_only,
 
-    config: cfg,
-
-    data: {
-
-      assignee_mode: n.data.assignee_type,
-
-      assignee_ref: n.data.assignee_id ?? null,
-
-      sla_hours: n.data.sla_hours,
-
-      config: cfg,
-
+    config: {
+      ...cfg,
+      parallel_mode:
+        (n.data.config as { parallel_mode?: string } | undefined)?.parallel_mode ?? "all",
+      signature_provider:
+        (n.data.config as { signature_provider?: string } | undefined)?.signature_provider ??
+        "ncalayer",
     },
 
+    data: {
+      assignee_mode: n.data.assignee_type,
+      assignee_ref: n.data.assignee_id ?? null,
+      sla_hours: n.data.sla_hours,
+      sla_unit: n.data.sla_unit,
+      sla_working_hours_only: n.data.sla_working_hours_only,
+      config: {
+        ...cfg,
+        parallel_mode:
+          (n.data.config as { parallel_mode?: string } | undefined)?.parallel_mode ?? "all",
+      },
+    },
   } as WorkflowNode & { data?: Record<string, unknown> };
 
 };
@@ -153,6 +160,15 @@ export const toDomainNode = (n: FlowNode): WorkflowNode => {
 
 
 
+
+export const toDomainDefinition = (
+  nodes: FlowNode[],
+  edges: FlowEdge[],
+): { nodes: WorkflowNode[]; edges: WorkflowEdge[]; schema_version: number } => ({
+  nodes: nodes.map(toDomainNode),
+  edges: edges.map(toDomainEdge),
+  schema_version: 2,
+});
 
 export const toDomainEdge = (e: FlowEdge): WorkflowEdge => ({
 
@@ -200,7 +216,7 @@ export const createNewNode = (
 
   id: `node_${Date.now()}_${Math.random()}`,
 
-  type: "default",
+  type: "workflowNode",
 
   position,
 

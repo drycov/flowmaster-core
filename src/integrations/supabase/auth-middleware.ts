@@ -6,8 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 
 import { getSupabaseEnv } from "@/lib/env.server";
 
-import { getJwtSecret, verifyAccessToken } from "@/lib/auth/session.server";
-
 import type { Database } from "./types";
 
 
@@ -15,6 +13,7 @@ import type { Database } from "./types";
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
 
   async ({ next }) => {
+    const { getJwtSecret, verifyAccessToken } = await import("@/lib/auth/session.server");
 
     const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } =
 

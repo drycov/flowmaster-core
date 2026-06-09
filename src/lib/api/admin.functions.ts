@@ -10,7 +10,12 @@ import {
   registerUser,
   setUserRole as setUserRoleDb,
 } from "@/lib/auth/server";
-import { fetchUserPermissions, requireAnyPermission, requirePermission } from "./_helpers";
+import {
+  enforceLicense,
+  fetchUserPermissions,
+  requireAnyPermission,
+  requirePermission,
+} from "./_helpers";
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 
 function adminPermissions(): Record<Permission, boolean> {
@@ -63,7 +68,7 @@ export const listUsers = createServerFn({ method: "GET" })
     await requirePermission(supabaseAdmin, context.userId, "manage_users");
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name_ru, full_name_kk, position_ru, position_kk, department_id, created_at")
+      .select("id, email, full_name_ru, full_name_kk, iin, auth_method, position_ru, position_kk, department_id, created_at")
       .order("full_name_ru", { ascending: true });
     if (error) throw new Error(error.message);
     const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
@@ -87,6 +92,7 @@ export const setUserRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(supabaseAdmin, context.userId, "manage_users");
+    await enforceLicense(supabaseAdmin, { writable: true });
     await setUserRoleDb(data.user_id, data.role, data.enabled);
     return { ok: true };
   });
@@ -119,6 +125,7 @@ export const upsertDepartment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_org");
+    await enforceLicense(context.supabase, { writable: true });
     const { supabase } = context;
     if (data.id) {
       const { error } = await supabase.from("departments").update(data as never).eq("id", data.id);
@@ -177,6 +184,7 @@ export const listAuditLogs = createServerFn({ method: "POST" })
   .inputValidator(z.object({ entity_type: z.string().optional(), entity_id: z.string().optional(), limit: z.number().max(500).default(100) }).optional())
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "view_audit");
+    await enforceLicense(context.supabase, { featureRead: "audit" });
     let q = context.supabase
       .from("audit_logs")
       .select("*")
@@ -291,6 +299,7 @@ export const upsertRoleV2 = createServerFn({ method: "POST" })
       "manage_users",
       "manage_roles",
     ]);
+    await enforceLicense(context.supabase, { writable: true });
     const { id, ...patch } = data;
     if (id) {
       const { error } = await context.supabase.from("roles").update(patch as never).eq("id", id);
@@ -319,6 +328,7 @@ export const setRolePermissions = createServerFn({ method: "POST" })
       "manage_users",
       "manage_roles",
     ]);
+    await enforceLicense(context.supabase, { writable: true });
     const { supabase } = context;
     const { error: delErr } = await supabase
       .from("role_permissions")
@@ -378,6 +388,7 @@ export const grantRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_users");
+    await enforceLicense(context.supabase, { writable: true });
     const { data: row, error } = await context.supabase
       .from("user_role_grants")
       .insert({
@@ -399,6 +410,7 @@ export const revokeRoleGrant = createServerFn({ method: "POST" })
   .inputValidator(z.object({ grant_id: z.string().uuid(), reason: z.string().max(500).optional() }))
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_users");
+    await enforceLicense(context.supabase, { writable: true });
     const { error } = await context.supabase
       .from("user_role_grants")
       .update({
@@ -416,21 +428,25 @@ export const createUser = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       email: z.string().email(),
-      full_name_ru: z.string().min(1),
-      full_name_kk: z.string().min(1),
+      full_name_ru: z.string().optional().default(""),
+      full_name_kk: z.string().optional().default(""),
       password: z.string().min(8).optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     await requirePermission(supabaseAdmin, context.userId, "manage_users");
+    await enforceLicense(supabaseAdmin, { writable: true, seats: true });
 
     const password = data.password ?? `${crypto.randomUUID()}Aa1!`;
+    const fallbackName = data.email.split("@")[0] || data.email;
+    const full_name_ru = data.full_name_ru.trim() || fallbackName;
+    const full_name_kk = data.full_name_kk.trim() || fallbackName;
 
     const newUserId = await registerUser({
       email: data.email,
       password,
-      full_name_ru: data.full_name_ru,
-      full_name_kk: data.full_name_kk,
+      full_name_ru,
+      full_name_kk,
       locale: "ru",
       auth_method: "email",
     });

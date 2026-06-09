@@ -205,3 +205,23 @@
   padding-left: 1rem;
   color: #6b7280;
 }
+
+/* DOCX preview — watermarks / background images (docx-preview skips behindDoc) */
+.docx-preview-wrapper .docx-wrapper,
+.docx-preview-wrapper section.docx-wrapper {
+  overflow: hidden;
+}
+
+.docx-bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: contain;
+}
+
+.docx-preview-wrapper img {
+  max-width: 100%;
+}

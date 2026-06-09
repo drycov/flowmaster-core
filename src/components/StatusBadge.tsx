@@ -9,6 +9,8 @@ const styles: Record<string, string> = {
   rejected: "bg-[oklch(0.95_0.06_27)] text-[oklch(0.4_0.18_27)] border-[oklch(0.55_0.21_27)]",
   archived: "bg-muted text-muted-foreground border-border",
   cancelled: "bg-muted text-muted-foreground border-border line-through",
+  returned: "bg-[oklch(0.95_0.05_75)] text-[oklch(0.4_0.15_75)] border-[oklch(0.72_0.13_75)]",
+  returned_for_revision: "bg-[oklch(0.95_0.05_75)] text-[oklch(0.4_0.15_75)] border-[oklch(0.72_0.13_75)]",
   pending: "bg-[oklch(0.95_0.05_75)] text-[oklch(0.4_0.15_75)] border-[oklch(0.72_0.13_75)]",
   in_progress: "bg-[oklch(0.93_0.06_250)] text-[oklch(0.32_0.13_250)] border-[oklch(0.78_0.08_250)]",
   completed: "bg-[oklch(0.94_0.08_145)] text-[oklch(0.32_0.14_145)] border-[oklch(0.7_0.12_145)]",

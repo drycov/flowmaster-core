@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeyRound, LockKeyhole, Loader2 } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { enableEmailLogin } from "@/lib/api/auth.functions";
-import { useEdsLink } from "../hooks/useEdsLink";
 import type { UserProfile } from "../types";
 
 function isEdsPlaceholderEmail(email: string) {
@@ -22,11 +21,6 @@ interface AuthMethodsCardProps {
 export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
-  const { loading: edsLoading, linkEds } = useEdsLink(() => {
-    queryClient.invalidateQueries({ queryKey: ["me"] });
-    queryClient.invalidateQueries({ queryKey: ["user-profile", "me"] });
-    onUpdated?.();
-  });
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,11 +46,10 @@ export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
     },
   });
 
-  const showLinkEds = !profile.has_eds;
   const showEnableEmail =
     !profile.has_password || isEdsPlaceholderEmail(profile.email);
 
-  if (!showLinkEds && !showEnableEmail) {
+  if (!showEnableEmail) {
     return (
       <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
         {t("profile.authMethodsConfigured")}
@@ -71,26 +64,6 @@ export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
 
   return (
     <div className="space-y-6">
-      {showLinkEds && (
-        <div className="rounded-lg border p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <LockKeyhole className="h-5 w-5 mt-0.5 text-muted-foreground" />
-            <div className="flex-1 space-y-1">
-              <h4 className="font-medium">{t("profile.linkEdsTitle")}</h4>
-              <p className="text-sm text-muted-foreground">{t("profile.linkEdsDescription")}</p>
-            </div>
-          </div>
-          <Button onClick={() => linkEds()} disabled={edsLoading} variant="outline">
-            {edsLoading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <LockKeyhole className="w-4 h-4 mr-2" />
-            )}
-            {t("profile.linkEdsAction")}
-          </Button>
-        </div>
-      )}
-
       {showEnableEmail && (
         <div className="rounded-lg border p-4 space-y-4">
           <div className="flex items-start gap-3">

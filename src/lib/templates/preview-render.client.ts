@@ -32,7 +32,13 @@ export async function renderDocxTemplateClient(
     delimiters: { start: "{{", end: "}}" },
     nullGetter: () => "",
   });
-  doc.render(values);
+  try {
+    doc.render(values);
+  } catch (e) {
+    const err = e as { properties?: { errors?: Array<{ message?: string }> } };
+    const details = err.properties?.errors?.map((x) => x.message).filter(Boolean).join("; ");
+    throw new Error(details || (e instanceof Error ? e.message : "Ошибка подстановки в DOCX"));
+  }
   return doc.getZip().generate({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

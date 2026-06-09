@@ -28,6 +28,12 @@ import { WorkflowCard } from "@/components/document-detail/components/WorkflowCa
 import { fmtDate, fmtDateShort } from "@/lib/format";
 import { localized, useI18n } from "@/i18n";
 import {
+  correspondentLabel,
+  documentTypeLabel,
+  priorityLabel,
+} from "@/lib/documents/reference-display";
+import { findMyPendingTask } from "@/lib/workflow/task-match";
+import {
   Archive,
   FileEdit,
   FileSearch,
@@ -61,9 +67,7 @@ function DocumentDetail() {
     startWorkflow,
     isStartingWorkflow,
     // archiveDocument, 
-    archive: archiveDocument, // Маппим archive в archiveDocument
-    sign: handleSign,         // Маппим sign в handleSign
-    // handleSign,
+    archive: archiveDocument,
   } = useDocumentActions(id);
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
@@ -78,7 +82,13 @@ function DocumentDetail() {
 
   const doc = data.document;
 
+  const currentVersion =
+    data.versions.find((v) => v.version_no === doc.current_version) ?? data.versions[0] ?? null;
+
   const hasActiveRun = (data?.runs ?? []).some((r) => r.status === "running");
+  const myPendingTask = findMyPendingTask(data.tasks ?? [], me?.profile?.id, {
+    isAdmin: me?.roles?.includes("admin"),
+  });
 
   const handleStartWorkflow = () => {
     startWorkflow(chosenWf || undefined, {
@@ -146,12 +156,6 @@ function DocumentDetail() {
               </Dialog>
             )}
 
-            {/* Кнопка подписания через ЭЦП (NCALayer) */}
-            <Button size="sm" onClick={() => handleSign(doc.body)}>
-              <Shield className="w-4 h-4 mr-1" />
-              {t("ncalayer.sign")}
-            </Button>
-
             {/* Кнопка архивации */}
             <Button size="sm" variant="outline" onClick={() => archiveDocument()}>
               <Archive className="w-4 h-4 mr-1" />
@@ -176,8 +180,9 @@ function DocumentDetail() {
             {/* Вкладка 1: Скомпилированное содержание документа (решает проблему тегов) */}
             <TabsContent value="content">
               <ContentTab
-                bodyTemplate={data.compiledBodyTemplate}
+                body={doc.body}
                 fieldValues={data.documentFields}
+                currentVersion={currentVersion}
                 summary={doc.summary}
                 isEditable={doc.status === "draft"}
               />
@@ -243,15 +248,15 @@ function DocumentDetail() {
 
         {/* Правая сторона: Боковая панель (Задачи, Метаданные, Маршруты, Подписи) */}
         <div className="space-y-4">
-          <WorkflowActions
-            documentId={id}
-            tasks={data.tasks ?? []}
-            currentUserId={me?.profile?.id}
-            roleCodes={me?.roles ?? []}
-            departmentId={(me?.profile as { department_id?: string | null })?.department_id}
-            isAdmin={me?.roles?.includes("admin")}
-            signPayload={doc.body ?? doc.title_ru ?? id}
-          />
+          {myPendingTask && (
+            <WorkflowActions
+              documentId={id}
+              tasks={data.tasks ?? []}
+              currentUserId={me?.profile?.id}
+              isAdmin={me?.roles?.includes("admin")}
+              signPayload={doc.body ?? doc.title_ru ?? id}
+            />
+          )}
 
           {/* Карточка системных метаданных документа */}
           <Card className="rounded-sm">
@@ -259,14 +264,22 @@ function DocumentDetail() {
             <CardContent className="space-y-2 text-sm">
               <Field label={t("common.status")}><StatusBadge status={doc.status} /></Field>
               <Field label="SLA"><SlaBadgeSafe sla={doc.sla_status} /></Field>
-              <Field label={t("common.type")}>{doc.doc_type}</Field>
+              <Field label={t("doc.documentType")}>{documentTypeLabel(doc, locale)}</Field>
+              <Field label={t("doc.priority")}>{priorityLabel(doc, locale)}</Field>
+              <Field label={t("doc.correspondent")}>{correspondentLabel(doc, locale)}</Field>
               <Field label={t("common.deadline")}>{doc.due_at ? fmtDateShort(doc.due_at, locale) : "—"}</Field>
               <Field label={t("common.version")}>v{doc.current_version}</Field>
             </CardContent>
           </Card>
 
           {/* Вынесенный компонент активных маршрутов согласования */}
-          <WorkflowCard runs={data.runs} />
+          <WorkflowCard
+            runs={data.runs}
+            tasks={data.tasks ?? []}
+            customRoute={doc.custom_route}
+            workflowDefinition={doc.workflows?.definition}
+            workflowName={doc.workflows ? localized(doc.workflows, locale, "name") : null}
+          />
 
           {/* Вынесенный компонент цифровых подписей (CMS/ЭЦП) */}
           <SignaturesCard signatures={data.signatures} />

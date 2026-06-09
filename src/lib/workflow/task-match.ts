@@ -2,8 +2,6 @@ export interface WorkflowTaskRow {
   id: string;
   status: string;
   assignee_id?: string | null;
-  role_code?: string | null;
-  department_id?: string | null;
   title?: string;
   node_id?: string;
   node_type?: string;
@@ -14,7 +12,7 @@ export interface WorkflowTaskRow {
 export function findMyPendingTask(
   tasks: WorkflowTaskRow[],
   userId?: string,
-  ctx?: { roleCodes?: string[]; deptId?: string | null; isAdmin?: boolean },
+  ctx?: { isAdmin?: boolean },
 ): WorkflowTaskRow | undefined {
   if (!userId || !tasks?.length) return undefined;
 
@@ -22,21 +20,19 @@ export function findMyPendingTask(
   const direct = pending.find((t) => t.assignee_id === userId);
   if (direct) return direct;
 
-  if (ctx?.roleCodes?.length) {
-    const roleTask = pending.find(
-      (t) => !t.assignee_id && t.role_code && ctx.roleCodes!.includes(t.role_code),
-    );
-    if (roleTask) return roleTask;
-  }
-
-  if (ctx?.deptId) {
-    const deptTask = pending.find(
-      (t) => !t.assignee_id && t.department_id === ctx.deptId,
-    );
-    if (deptTask) return deptTask;
-  }
-
   if (ctx?.isAdmin && pending.length > 0) return pending[0];
 
   return undefined;
+}
+
+export function hasPendingSignTask(
+  tasks: WorkflowTaskRow[],
+  userId?: string,
+): boolean {
+  const task = findMyPendingTask(tasks, userId);
+  if (!task) return false;
+  return (
+    task.action_required?.toLowerCase() === "sign" ||
+    task.node_type?.toUpperCase() === "SIGNATURE"
+  );
 }

@@ -48,7 +48,7 @@ export function getS3PublicInfo() {
         ? `https://${projectRef}.storage.supabase.co/storage/v1/s3`
         : null),
     region: cfg?.region ?? "auto",
-    buckets: ["avatars", "documents", "templates"] as StorageBucket[],
+    buckets: ["avatars", "documents", "templates", "signatures"] as StorageBucket[],
   };
 }
 

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Button } from "@/components/ui/button";
 
-import { NODE_TYPES, NODE_TYPE_LABEL_KEYS, NODE_TYPE_ICONS } from "../constants";
+import { NODE_PALETTE_GROUPS, NODE_TYPE_LABEL_KEYS, NODE_TYPE_ICONS } from "../constants";
 
 import { useI18n } from "@/i18n";
 
@@ -140,48 +140,34 @@ export function LeftPanel({
 
 
 
-      <div className="border-t pt-4">
-
-        <Label className="text-sm font-semibold mb-2 block">{t("wf.add_node")}</Label>
-
-        <div className="grid grid-cols-2 gap-2">
-
-          {NODE_TYPES.map((tp) => (
-
-            <Button
-
-              key={tp}
-
-              size="sm"
-
-              variant="outline"
-
-              draggable
-
-              onDragStart={(e) => {
-
-                e.dataTransfer.setData("application/workflow-node-type", tp);
-
-                e.dataTransfer.effectAllowed = "move";
-
-              }}
-
-              onClick={() => onAddNode(tp)}
-
-              className="justify-start px-2 cursor-grab active:cursor-grabbing"
-
-            >
-
-              <span className="mr-1">{NODE_TYPE_ICONS[tp]}</span>
-
-              <span className="text-xs">{t(NODE_TYPE_LABEL_KEYS[tp])}</span>
-
-            </Button>
-
-          ))}
-
-        </div>
-
+      <div className="border-t pt-4 space-y-3">
+        <Label className="text-sm font-semibold block">{t("wf.add_node")}</Label>
+        {NODE_PALETTE_GROUPS.map((group) => (
+          <div key={group.key} className="space-y-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(group.labelKey)}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {group.types.map((tp) => (
+                <Button
+                  key={tp}
+                  size="sm"
+                  variant="outline"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/workflow-node-type", tp);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onClick={() => onAddNode(tp)}
+                  className="justify-start px-2 cursor-grab active:cursor-grabbing"
+                >
+                  <span className="mr-1">{NODE_TYPE_ICONS[tp]}</span>
+                  <span className="text-xs">{t(NODE_TYPE_LABEL_KEYS[tp])}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
 

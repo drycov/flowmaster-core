@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requirePermission } from "./_helpers";
+import { enforceLicense, requirePermission } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { STORAGE_BUCKETS, documentVersionPath } from "@/lib/storage/buckets";
 import {
@@ -24,6 +24,7 @@ import {
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { ensureDocumentRegNumber } from "@/lib/documents/registration.server";
+import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
 
 export const listTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -75,6 +76,7 @@ export const upsertTemplate = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_templates");
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
     const { supabase, userId } = context;
     const payload = {
       name_ru: data.name_ru,
@@ -137,6 +139,7 @@ export const scanTemplateFilePlaceholders = createServerFn({ method: "POST" })
   .inputValidator(z.object({ template_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_templates");
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
 
     const { data: tpl, error } = await context.supabase
       .from("document_templates")
@@ -167,6 +170,7 @@ export const syncTemplateFieldsFromFile = createServerFn({ method: "POST" })
   .inputValidator(z.object({ template_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_templates");
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
 
     const { data: tpl, error } = await context.supabase
       .from("document_templates")
@@ -263,11 +267,16 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       title_ru: z.string().min(1),
       title_kk: z.string().optional().nullable(),
       nomenclature_id: z.string().uuid().nullable().optional(),
+      document_type_id: z.string().uuid().nullable().optional(),
+      priority_id: z.string().uuid().nullable().optional(),
+      correspondent_id: z.string().uuid().nullable().optional(),
+      due_at: z.string().nullable().optional(),
       workflow_id: z.string().uuid().nullable().optional(),
       custom_route: customRouteSchema,
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
     const { supabase, userId } = context;
     const tpl = await supabase
       .from("document_templates")
@@ -329,6 +338,13 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     };
     let body = bodyTemplate ? substituteTemplateBody(bodyTemplate, preValues) : "";
 
+    const refs = await resolveDocumentReferences(supabaseAdmin, {
+      document_type_id: data.document_type_id,
+      priority_id: data.priority_id,
+      correspondent_id: data.correspondent_id,
+      due_at: data.due_at,
+    });
+
     const { data: doc, error } = await (supabaseAdmin.from("documents") as any)
       .insert({
         title_ru: titleRu,
@@ -336,6 +352,11 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
         body,
         template_id: data.template_id,
         nomenclature_id: data.nomenclature_id ?? null,
+        doc_type: refs.doc_type,
+        document_type_id: refs.document_type_id,
+        priority_id: refs.priority_id,
+        correspondent_id: refs.correspondent_id,
+        due_at: refs.due_at,
         created_by: userId,
         workflow_id: workflowId,
         custom_route: data.custom_route ?? null,

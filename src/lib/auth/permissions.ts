@@ -1,9 +1,11 @@
 export const ALL_PERMISSIONS = [
   "manage_users",
   "manage_org",
+  "manage_license",
   "manage_workflows",
   "manage_templates",
   "manage_nomenclature",
+  "manage_references",
   "manage_roles",
   "view_audit",
   "register_documents",

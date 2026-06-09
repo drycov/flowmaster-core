@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { requireLicenseModule } from "@/lib/license/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkflows, upsertWorkflow } from "@/lib/api/workflows.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -12,6 +13,7 @@ import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/workflows/")({
+  beforeLoad: () => requireLicenseModule("workflows"),
   component: WorkflowsList,
 });
 
@@ -34,6 +36,7 @@ function WorkflowsList() {
               { id: "end", type: "END", label: ruDictionary["wf.node.end"], position: { x: 400, y: 100 } },
             ],
             edges: [{ id: "e1", source: "start", target: "end" }],
+            schema_version: 2,
           },
         },
       }),

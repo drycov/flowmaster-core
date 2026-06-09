@@ -84,6 +84,7 @@ export function TemplatePreviewCard({
           <div className="flex min-h-0 flex-1 flex-col">
             <TemplatePreviewPane
               status={preview.status}
+              isRefreshing={preview.isRefreshing}
               error={preview.error}
               html={preview.html}
               mode={preview.mode}
@@ -104,6 +105,7 @@ export function TemplatePreviewCard({
             {fullscreen && (
               <TemplatePreviewPane
                 status={preview.status}
+                isRefreshing={preview.isRefreshing}
                 error={preview.error}
                 html={preview.html}
                 mode={preview.mode}

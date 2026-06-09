@@ -73,6 +73,10 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
           ? values.nomenclature_id
           : null;
 
+      const documentTypeId = values.document_type_id?.trim() || null;
+      const priorityId = values.priority_id?.trim() || null;
+      const correspondentId = values.correspondent_id?.trim() || null;
+
       // Resolve workflow / custom_route from route value
       const tpl = template as any;
       let resolvedWorkflowId: string | null = null;
@@ -126,6 +130,9 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             title_ru: titleRu,
             title_kk: titleKk || null,
             nomenclature_id: nomenclatureId,
+            document_type_id: documentTypeId,
+            priority_id: priorityId,
+            correspondent_id: correspondentId,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
           },
@@ -137,8 +144,10 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             title_kk: titleKk || null,
             summary: values.summary || null,
             body: values.body || null,
-            doc_type: "general",
             nomenclature_id: nomenclatureId,
+            document_type_id: documentTypeId,
+            priority_id: priorityId,
+            correspondent_id: correspondentId,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
           },
@@ -159,7 +168,9 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             },
           });
         } catch (workflowErr) {
-          console.error("Workflow start failed:", workflowErr);
+          const message =
+            workflowErr instanceof Error ? workflowErr.message : "Не удалось запустить маршрут";
+          toast.error(message);
         }
       }
 

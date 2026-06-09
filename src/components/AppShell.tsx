@@ -18,12 +18,17 @@ import {
   Languages,
   CheckSquare,
   User,
+  BookMarked,
+  KeyRound,
+  AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, localized } from "@/i18n";
 import { getMyProfile } from "@/lib/api/admin.functions";
+import { useLicenseStatus } from "@/lib/license/hooks";
+import type { LicenseFeature } from "@/lib/license/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -76,26 +81,41 @@ export function AppShell({ children }: { children: ReactNode }) {
     queryFn: () => getMyProfile(),
   });
 
+  const { status: license, isWritable, can: licenseCan, isLoading: licenseLoading } =
+    useLicenseStatus();
+
+  const userId = (me?.profile as { id?: string } | undefined)?.id;
   const [unread, setUnread] = useState(0);
   useEffect(() => {
+    if (!userId) return;
     let mounted = true;
     const load = async () => {
       const { count } = await supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
         .is("read_at", null);
       if (mounted) setUnread(count ?? 0);
     };
     load();
     const ch = supabase
-      .channel("notif-shell")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, load)
+      .channel("notif-shell", { config: { private: true } })
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        load,
+      )
       .subscribe();
     return () => {
       mounted = false;
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [userId]);
 
   const roles = me?.roles ?? [];
   const perms = me?.permissions ?? {};
@@ -109,31 +129,67 @@ export function AppShell({ children }: { children: ReactNode }) {
     badge?: number;
   };
 
+  const licensed = (feature: LicenseFeature) => licenseCan(feature, false);
+  const showArchive = licensed("archive");
+
   const mainNavItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
     { to: "/documents", icon: FileText, label: t("nav.documents") },
     { to: "/tasks", icon: CheckSquare, label: t("nav.tasks") },
     { to: "/approvals", icon: ListChecks, label: t("nav.approvals") },
-    { to: "/archive", icon: Archive, label: t("nav.archive") },
+    ...(showArchive ? [{ to: "/archive", icon: Archive, label: t("nav.archive") }] : []),
     { to: "/search", icon: Search, label: t("nav.search") },
     { to: "/notifications", icon: Bell, label: t("nav.notifications"), badge: unread },
   ];
 
   const referenceNavItems: NavItem[] = [
-    { to: "/nomenclature", icon: Library, label: t("nav.nomenclature") },
-    { to: "/templates", icon: FilePlus2, label: t("nav.templates") },
-    { to: "/workflows", icon: GitBranch, label: t("nav.workflows") },
-  ];
+    { to: "/references", icon: BookMarked, label: t("nav.referencesHub"), show: licensed("references") },
+    { to: "/nomenclature", icon: Library, label: t("nav.nomenclature"), show: licensed("nomenclature") },
+    { to: "/templates", icon: FilePlus2, label: t("nav.templates"), show: licensed("templates") },
+    { to: "/workflows", icon: GitBranch, label: t("nav.workflows"), show: licensed("workflows") },
+  ].filter((item) => item.show !== false) as NavItem[];
 
   const adminItems = [
-    { to: "/audit", icon: ShieldCheck, label: t("nav.audit"), show: can("view_audit") },
+    { to: "/audit", icon: ShieldCheck, label: t("nav.audit"), show: can("view_audit") && licensed("audit") },
     { to: "/admin/users", icon: Users, label: t("nav.users"), show: can("manage_users") },
     { to: "/admin/roles", icon: ShieldCheck, label: t("nav.roles"), show: can("manage_users") || can("manage_roles") },
     { to: "/admin/permissions", icon: ShieldCheck, label: t("nav.permissions"), show: can("manage_roles") },
     { to: "/admin/organization", icon: Building2, label: t("nav.organization"), show: can("manage_org") },
     { to: "/admin/departments", icon: Building2, label: t("nav.departments"), show: can("manage_org") },
     { to: "/admin/positions", icon: Settings, label: t("nav.positions"), show: can("manage_org") },
+    { to: "/admin/license", icon: KeyRound, label: t("nav.license"), show: can("manage_license") },
   ].filter((item) => item.show);
+
+  const licenseBanner = (() => {
+    if (licenseLoading || !license) return null;
+    if (license.status === "suspended") {
+      return { tone: "destructive" as const, text: t("license.banner.suspended") };
+    }
+    if (license.status === "expired") {
+      return { tone: "destructive" as const, text: t("license.banner.expired") };
+    }
+    if (license.status === "grace") {
+      const days = license.grace_days_remaining ?? license.grace_days;
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.grace").replace("{n}", String(days)),
+      };
+    }
+    if (
+      license.status === "active" &&
+      license.days_remaining !== null &&
+      license.days_remaining <= 14
+    ) {
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.expiring").replace("{n}", String(license.days_remaining)),
+      };
+    }
+    return null;
+  })();
+
+  const readOnlyBanner =
+    !licenseLoading && license && !isWritable ? t("license.banner.readOnly") : null;
 
   const profile = me?.profile as { full_name_ru?: string | null; full_name_kk?: string | null; email?: string } | undefined;
   const displayName = profile ? localized(profile, locale, "full_name") || profile.email || "" : "";
@@ -258,6 +314,29 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+        {licenseBanner ? (
+          <div
+            className={cn(
+              "px-4 py-2 text-sm flex items-center gap-2 border-b",
+              licenseBanner.tone === "destructive"
+                ? "bg-destructive/10 text-destructive border-destructive/20"
+                : "bg-amber-500/10 text-amber-900 dark:text-amber-200 border-amber-500/20",
+            )}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span className="flex-1">{licenseBanner.text}</span>
+            {can("manage_license") ? (
+              <Link to="/admin/license" className="underline font-medium shrink-0">
+                {t("license.banner.manage")}
+              </Link>
+            ) : null}
+          </div>
+        ) : readOnlyBanner ? (
+          <div className="px-4 py-2 text-sm flex items-center gap-2 border-b bg-muted/80 text-muted-foreground border-border">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span className="flex-1">{readOnlyBanner}</span>
+          </div>
+        ) : null}
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>

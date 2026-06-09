@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Archive, CheckCircle, Clock } from "lucide-react";
 import { useI18n, localized, interpolate } from "@/i18n";
 import { fmtDateShort } from "@/lib/format";
+import type { ReferenceCodeOption } from "@/components/references/ReferenceCodeSelect";
+import { resolveReferenceLabel } from "@/lib/references/resolve-label";
 
 // Используем любой тип для совместимости с API
 interface TemplateCardProps {
@@ -16,10 +18,14 @@ interface TemplateCardProps {
     version: number;
     updated_at: string;
   };
+  categories?: ReferenceCodeOption[];
 }
 
-export function TemplateCard({ template }: TemplateCardProps) {
+export function TemplateCard({ template, categories = [] }: TemplateCardProps) {
   const { t, locale } = useI18n();
+  const categoryLabel =
+    resolveReferenceLabel(categories, template.category, locale) ??
+    t("tpl.noCategory");
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -51,7 +57,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
               </div>
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {template.category || t("tpl.noCategory")}
+              {categoryLabel}
             </div>
           </div>
           <Badge variant="outline" className={`text-[10px] uppercase ${statusConfig.color}`}>

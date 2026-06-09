@@ -8,8 +8,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-import { getJwtSecret, verifyAccessToken } from "@/lib/auth/session.server";
-
 import {
 
   attachEdsToProfile,
@@ -480,8 +478,7 @@ export const getCurrentSession = createServerFn({ method: "GET" }).handler(async
 
   if (!token) return { user: null };
 
-
-
+  const { getJwtSecret, verifyAccessToken } = await import("@/lib/auth/session.server");
   const claims = verifyAccessToken(token, getJwtSecret());
 
   if (!claims) return { user: null };

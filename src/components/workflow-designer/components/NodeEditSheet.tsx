@@ -163,16 +163,55 @@ export function NodeEditSheet({
                   }
                 />
                 <Label htmlFor="isRequired" className="text-sm font-normal cursor-pointer">
-                  Обязательный этап (нельзя пропустить при модификации маршрута)
+                  {t("wf.requiredStep")}
                 </Label>
               </div>
+
+              <div className="space-y-2">
+                <Label>{t("wf.parallelMode")}</Label>
+                <Select
+                  value={(node.data.config?.parallel_mode as string) || "all"}
+                  onValueChange={(v: "all" | "any") =>
+                    onUpdate({ config: { ...node.data.config, parallel_mode: v } })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("wf.parallel.all")}</SelectItem>
+                    <SelectItem value="any">{t("wf.parallel.any")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">{t("wf.parallelHint")}</p>
+              </div>
             </>
+          )}
+
+          {node.data.type === "SIGNATURE" && (
+            <div className="space-y-2">
+              <Label>{t("wf.signatureProvider")}</Label>
+              <Select
+                value={(node.data.config?.signature_provider as string) || "ncalayer"}
+                onValueChange={(v) =>
+                  onUpdate({ config: { ...node.data.config, signature_provider: v } })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ncalayer">NCALayer (ЭЦП РК)</SelectItem>
+                  <SelectItem value="any">{t("wf.signature.any")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {showSlaBlock && (
             <>
               <div className="space-y-2">
-                <Label>SLA</Label>
+                <Label>{t("wf.slaDuration")}</Label>
                 <div className="flex gap-2">
                   <Input
                     type="number"
@@ -210,12 +249,12 @@ export function NodeEditSheet({
                   onCheckedChange={(c) => onUpdate({ sla_working_hours_only: !!c })}
                 />
                 <Label htmlFor="workingHoursOnly" className="text-sm font-normal cursor-pointer">
-                  Только рабочее время
+                  {t("wf.workingHoursOnly")}
                 </Label>
               </div>
 
               <div className="space-y-2">
-                <Label>Действие при просрочке SLA</Label>
+                <Label>{t("wf.timeoutAction")}</Label>
                 <Select
                   value={(node.data.config?.timeout_action as string) || "notify"}
                   onValueChange={(v) =>
@@ -226,17 +265,17 @@ export function NodeEditSheet({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="notify">Уведомить исполнителя и его руководителя</SelectItem>
-                    <SelectItem value="reassign">Создать дубль на роль эскалации</SelectItem>
-                    <SelectItem value="approve">Авто-одобрить</SelectItem>
-                    <SelectItem value="reject">Авто-отклонить</SelectItem>
+                    <SelectItem value="notify">{t("wf.timeout.notify")}</SelectItem>
+                    <SelectItem value="reassign">{t("wf.timeout.reassign")}</SelectItem>
+                    <SelectItem value="approve">{t("wf.timeout.approve")}</SelectItem>
+                    <SelectItem value="reject">{t("wf.timeout.reject")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {((node.data.config?.timeout_action as string) === "reassign") && (
                 <div className="space-y-2">
-                  <Label>Роль эскалации (code)</Label>
+                  <Label>{t("wf.escalationRole")}</Label>
                   <Combobox
                     options={(roles || []).map((r) => ({
                       value: (r as unknown as { code?: string }).code || r.id,
@@ -248,15 +287,13 @@ export function NodeEditSheet({
                     }
                     placeholder={t("wf.selectRole")}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Задача будет продублирована на всех пользователей с активным грантом этой роли.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("wf.escalationRoleHint")}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
-                  <Label>Макс. эскалаций</Label>
+                  <Label>{t("wf.maxEscalations")}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -269,7 +306,7 @@ export function NodeEditSheet({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Повтор (часы)</Label>
+                  <Label>{t("wf.slaRepeatHours")}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -286,8 +323,7 @@ export function NodeEditSheet({
               {((node.data.config?.timeout_action as string) === "approve" ||
                 (node.data.config?.timeout_action as string) === "reject") && (
                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-sm p-2">
-                  Авто-действие выполняется от имени системы (SLA) с записью в audit_logs и единым
-                  correlation_id. Требуется назначенный исполнитель или корректная орг-логика.
+                  {t("wf.timeout.systemNote")}
                 </p>
               )}
             </>

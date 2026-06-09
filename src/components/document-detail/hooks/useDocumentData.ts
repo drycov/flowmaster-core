@@ -5,6 +5,7 @@ import type { DocumentData, Task } from "../types"; // Если интерфей
 // Локальный интерфейс для случая, если Task еще не импортирован из типов
 interface LocalTask {
   id: string;
+  run_id: string;
   title: string;
   node_id: string;
   node_type: string;
@@ -12,6 +13,8 @@ interface LocalTask {
   assignee_id: string | null;
   action_required: string;
   due_at: string | null;
+  completed_at?: string | null;
+  decision?: string | null;
 }
 
 // Интерфейс для типизации схемы, которая может лежать внутри строки document.body
@@ -55,9 +58,11 @@ export function useDocumentData(id: string) {
       // Сопоставляем ключи токенов из шаблона ({{ключ}}) с реальными полями вашей модели Document
       const fieldValues: Record<string, string> = {
         registration_number: document.reg_number || "",
-        document_title: document.title_ru || document.title_kk || "", // Приоритет русскому, либо казахскому
+        reg_number: document.reg_number || "",
+        document_title: document.title_ru || document.title_kk || "",
         title_ru: document.title_ru || "",
         title_kk: document.title_kk || "",
+        document_date: document.created_at?.slice(0, 10) || "",
         status: document.status || "",
         doc_type: document.doc_type || "",
       };

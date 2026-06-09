@@ -1,4 +1,5 @@
 // src/components/templates-list/components/TemplateGrid.tsx
+import type { ReferenceCodeOption } from "@/components/references/ReferenceCodeSelect";
 import { EmptyState } from "./EmptyState";
 import { TemplateCard } from "./TemplateCard";
 
@@ -13,10 +14,11 @@ interface TemplateGridProps {
     version: number;
     updated_at: string;
   }>;
+  categories?: ReferenceCodeOption[];
   isLoading?: boolean;
 }
 
-export function TemplateGrid({ templates, isLoading }: TemplateGridProps) {
+export function TemplateGrid({ templates, categories = [], isLoading }: TemplateGridProps) {
   if (isLoading) {
     return (
       <div className="grid lg:grid-cols-3 gap-3">
@@ -44,7 +46,11 @@ export function TemplateGrid({ templates, isLoading }: TemplateGridProps) {
   return (
     <div className="grid lg:grid-cols-3 gap-3">
       {templates.map((template) => (
-        <TemplateCard key={template.id} template={template} />
+        <TemplateCard
+          key={template.id}
+          template={template}
+          categories={categories}
+        />
       ))}
     </div>
   );

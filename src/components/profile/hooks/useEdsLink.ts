@@ -33,12 +33,14 @@ export function useEdsLink(onSuccess?: () => void) {
       toast.success(t("ncalayer.edsLinked"));
       onSuccess?.();
     } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        return;
+      }
       if (e instanceof NCALayerError) {
         toast.error(ncalayerErrorMessage(t, e));
       } else {
         toast.error(e instanceof Error ? e.message : t("ncalayer.edsLinkError"));
       }
-      throw e;
     } finally {
       setLoading(false);
     }

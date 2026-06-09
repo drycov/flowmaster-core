@@ -23,15 +23,18 @@ import { Route as AuthenticatedArchiveRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedWorkflowsIndexRouteImport } from './routes/_authenticated/workflows/index'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates/index'
+import { Route as AuthenticatedReferencesIndexRouteImport } from './routes/_authenticated/references/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
 import { Route as AuthenticatedWorkflowsIdRouteImport } from './routes/_authenticated/workflows/$id'
 import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenticated/templates/$id'
+import { Route as AuthenticatedReferencesCatalogRouteImport } from './routes/_authenticated/references/$catalog'
 import { Route as AuthenticatedDocumentsNewRouteImport } from './routes/_authenticated/documents/new'
 import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
 import { Route as AuthenticatedAdminPositionsRouteImport } from './routes/_authenticated/admin/positions'
 import { Route as AuthenticatedAdminPermissionsRouteImport } from './routes/_authenticated/admin/permissions'
 import { Route as AuthenticatedAdminOrganizationRouteImport } from './routes/_authenticated/admin/organization'
+import { Route as AuthenticatedAdminLicenseRouteImport } from './routes/_authenticated/admin/license'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
 import { Route as ApiPublicHooksSlaTickRouteImport } from './routes/api/public/hooks/sla-tick'
@@ -110,6 +113,12 @@ const AuthenticatedTemplatesIndexRoute =
     path: '/templates/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReferencesIndexRoute =
+  AuthenticatedReferencesIndexRouteImport.update({
+    id: '/references/',
+    path: '/references/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDocumentsIndexRoute =
   AuthenticatedDocumentsIndexRouteImport.update({
     id: '/documents/',
@@ -126,6 +135,12 @@ const AuthenticatedTemplatesIdRoute =
   AuthenticatedTemplatesIdRouteImport.update({
     id: '/templates/$id',
     path: '/templates/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReferencesCatalogRoute =
+  AuthenticatedReferencesCatalogRouteImport.update({
+    id: '/references/$catalog',
+    path: '/references/$catalog',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDocumentsNewRoute =
@@ -161,6 +176,12 @@ const AuthenticatedAdminOrganizationRoute =
   AuthenticatedAdminOrganizationRouteImport.update({
     id: '/admin/organization',
     path: '/admin/organization',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminLicenseRoute =
+  AuthenticatedAdminLicenseRouteImport.update({
+    id: '/admin/license',
+    path: '/admin/license',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDepartmentsRoute =
@@ -200,15 +221,18 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/references/': typeof AuthenticatedReferencesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
@@ -228,15 +252,18 @@ export interface FileRoutesByTo {
   '/search': typeof AuthenticatedSearchRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
+  '/references': typeof AuthenticatedReferencesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflows': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
@@ -258,15 +285,18 @@ export interface FileRoutesById {
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/_authenticated/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/_authenticated/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/_authenticated/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/_authenticated/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/_authenticated/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/_authenticated/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/_authenticated/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/_authenticated/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/_authenticated/references/': typeof AuthenticatedReferencesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/_authenticated/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
@@ -288,15 +318,18 @@ export interface FileRouteTypes {
     | '/search'
     | '/tasks'
     | '/admin/departments'
+    | '/admin/license'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
     | '/documents/$id'
     | '/documents/new'
+    | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
     | '/documents/'
+    | '/references/'
     | '/templates/'
     | '/workflows/'
     | '/admin/users/$id'
@@ -316,15 +349,18 @@ export interface FileRouteTypes {
     | '/search'
     | '/tasks'
     | '/admin/departments'
+    | '/admin/license'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
     | '/documents/$id'
     | '/documents/new'
+    | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
     | '/documents'
+    | '/references'
     | '/templates'
     | '/workflows'
     | '/admin/users/$id'
@@ -345,15 +381,18 @@ export interface FileRouteTypes {
     | '/_authenticated/search'
     | '/_authenticated/tasks'
     | '/_authenticated/admin/departments'
+    | '/_authenticated/admin/license'
     | '/_authenticated/admin/organization'
     | '/_authenticated/admin/permissions'
     | '/_authenticated/admin/positions'
     | '/_authenticated/admin/roles'
     | '/_authenticated/documents/$id'
     | '/_authenticated/documents/new'
+    | '/_authenticated/references/$catalog'
     | '/_authenticated/templates/$id'
     | '/_authenticated/workflows/$id'
     | '/_authenticated/documents/'
+    | '/_authenticated/references/'
     | '/_authenticated/templates/'
     | '/_authenticated/workflows/'
     | '/_authenticated/admin/users/$id'
@@ -468,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/references/': {
+      id: '/_authenticated/references/'
+      path: '/references'
+      fullPath: '/references/'
+      preLoaderRoute: typeof AuthenticatedReferencesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/documents/': {
       id: '/_authenticated/documents/'
       path: '/documents'
@@ -487,6 +533,13 @@ declare module '@tanstack/react-router' {
       path: '/templates/$id'
       fullPath: '/templates/$id'
       preLoaderRoute: typeof AuthenticatedTemplatesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/references/$catalog': {
+      id: '/_authenticated/references/$catalog'
+      path: '/references/$catalog'
+      fullPath: '/references/$catalog'
+      preLoaderRoute: typeof AuthenticatedReferencesCatalogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/documents/new': {
@@ -531,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOrganizationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/license': {
+      id: '/_authenticated/admin/license'
+      path: '/admin/license'
+      fullPath: '/admin/license'
+      preLoaderRoute: typeof AuthenticatedAdminLicenseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/departments': {
       id: '/_authenticated/admin/departments'
       path: '/admin/departments'
@@ -573,15 +633,18 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
+  AuthenticatedAdminLicenseRoute: typeof AuthenticatedAdminLicenseRoute
   AuthenticatedAdminOrganizationRoute: typeof AuthenticatedAdminOrganizationRoute
   AuthenticatedAdminPermissionsRoute: typeof AuthenticatedAdminPermissionsRoute
   AuthenticatedAdminPositionsRoute: typeof AuthenticatedAdminPositionsRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
   AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
   AuthenticatedDocumentsNewRoute: typeof AuthenticatedDocumentsNewRoute
+  AuthenticatedReferencesCatalogRoute: typeof AuthenticatedReferencesCatalogRoute
   AuthenticatedTemplatesIdRoute: typeof AuthenticatedTemplatesIdRoute
   AuthenticatedWorkflowsIdRoute: typeof AuthenticatedWorkflowsIdRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
+  AuthenticatedReferencesIndexRoute: typeof AuthenticatedReferencesIndexRoute
   AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
   AuthenticatedWorkflowsIndexRoute: typeof AuthenticatedWorkflowsIndexRoute
   AuthenticatedAdminUsersIdRoute: typeof AuthenticatedAdminUsersIdRoute
@@ -599,15 +662,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
+  AuthenticatedAdminLicenseRoute: AuthenticatedAdminLicenseRoute,
   AuthenticatedAdminOrganizationRoute: AuthenticatedAdminOrganizationRoute,
   AuthenticatedAdminPermissionsRoute: AuthenticatedAdminPermissionsRoute,
   AuthenticatedAdminPositionsRoute: AuthenticatedAdminPositionsRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
   AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
   AuthenticatedDocumentsNewRoute: AuthenticatedDocumentsNewRoute,
+  AuthenticatedReferencesCatalogRoute: AuthenticatedReferencesCatalogRoute,
   AuthenticatedTemplatesIdRoute: AuthenticatedTemplatesIdRoute,
   AuthenticatedWorkflowsIdRoute: AuthenticatedWorkflowsIdRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
+  AuthenticatedReferencesIndexRoute: AuthenticatedReferencesIndexRoute,
   AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
   AuthenticatedWorkflowsIndexRoute: AuthenticatedWorkflowsIndexRoute,
   AuthenticatedAdminUsersIdRoute: AuthenticatedAdminUsersIdRoute,

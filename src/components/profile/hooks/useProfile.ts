@@ -45,6 +45,7 @@ export function useProfile(viewUserId?: string) {
     queryFn: () => loadProfile(viewUserId, t),
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   return {

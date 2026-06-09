@@ -45,7 +45,20 @@ export interface DocumentFormValues {
   summary: string;
   body: string;
   nomenclature_id: string;
+  document_type_id: string;
+  priority_id: string;
+  correspondent_id: string;
   [key: string]: string;
+}
+
+export interface ReferenceBrief {
+  id: string;
+  code: string;
+  name_ru: string;
+  name_kk: string;
+  bin?: string;
+  sla_hours?: number | null;
+  color?: string;
 }
 
 // Вспомогательная функция для получения полей из schema

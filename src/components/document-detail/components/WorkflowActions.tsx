@@ -21,6 +21,7 @@ import { findMyPendingTask, type WorkflowTaskRow } from "@/lib/workflow/task-mat
 import { signCMSFull, NCALayerError } from "@/lib/ncalayer";
 
 import { useI18n } from "@/i18n";
+import { useLicenseStatus } from "@/lib/license/hooks";
 
 import { ncalayerErrorMessage } from "@/i18n/ncalayer-messages";
 
@@ -33,10 +34,6 @@ interface Props {
   tasks: WorkflowTaskRow[];
 
   currentUserId?: string;
-
-  roleCodes?: string[];
-
-  departmentId?: string | null;
 
   isAdmin?: boolean;
 
@@ -68,10 +65,6 @@ export function WorkflowActions({
 
   currentUserId,
 
-  roleCodes = [],
-
-  departmentId,
-
   isAdmin = false,
 
   signPayload,
@@ -79,6 +72,7 @@ export function WorkflowActions({
 }: Props) {
 
   const { t } = useI18n();
+  const { isWritable, can: licenseCan } = useLicenseStatus();
 
   const qc = useQueryClient();
 
@@ -86,15 +80,7 @@ export function WorkflowActions({
 
 
 
-  const myTask = findMyPendingTask(tasks ?? [], currentUserId, {
-
-    roleCodes,
-
-    deptId: departmentId,
-
-    isAdmin,
-
-  });
+  const myTask = findMyPendingTask(tasks ?? [], currentUserId, { isAdmin });
 
 
 
@@ -159,6 +145,8 @@ export function WorkflowActions({
       setComment("");
 
       qc.invalidateQueries({ queryKey: ["document", documentId] });
+      qc.invalidateQueries({ queryKey: ["myTasks"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
 
     },
 
@@ -217,6 +205,8 @@ export function WorkflowActions({
       setComment("");
 
       qc.invalidateQueries({ queryKey: ["document", documentId] });
+      qc.invalidateQueries({ queryKey: ["myTasks"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
 
     },
 
@@ -240,7 +230,9 @@ export function WorkflowActions({
 
   if (!myTask) return null;
 
-
+  const workflowAllowed = isWritable && licenseCan("workflows");
+  const signAllowed = isWritable && licenseCan("eds_signing");
+  const actionBlocked = isSignTask ? !signAllowed : !workflowAllowed;
 
   const isPending = mutation.isPending || signMutation.isPending;
 
@@ -282,13 +274,17 @@ export function WorkflowActions({
 
           </p>
 
+          {actionBlocked ? (
+            <p className="text-xs text-destructive">{t("license.banner.readOnly")}</p>
+          ) : null}
+
           <Button
 
             size="sm"
 
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
 
-            disabled={isPending}
+            disabled={isPending || actionBlocked}
 
             onClick={() => signMutation.mutate()}
 
@@ -362,7 +358,9 @@ export function WorkflowActions({
 
         />
 
-
+        {actionBlocked ? (
+          <p className="text-xs text-destructive">{t("license.banner.readOnly")}</p>
+        ) : null}
 
         <div className="grid grid-cols-3 gap-2">
 
@@ -372,7 +370,7 @@ export function WorkflowActions({
 
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
 
-            disabled={isPending}
+            disabled={isPending || actionBlocked}
 
             onClick={() => mutation.mutate("approve")}
 
@@ -402,7 +400,7 @@ export function WorkflowActions({
 
             className="border-amber-500/50 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 font-medium"
 
-            disabled={isPending || isCommentEmpty}
+            disabled={isPending || actionBlocked || isCommentEmpty}
 
             onClick={() => mutation.mutate("return")}
 
@@ -434,7 +432,7 @@ export function WorkflowActions({
 
             className="font-medium"
 
-            disabled={isPending || isCommentEmpty}
+            disabled={isPending || actionBlocked || isCommentEmpty}
 
             onClick={() => mutation.mutate("reject")}
 

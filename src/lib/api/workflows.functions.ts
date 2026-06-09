@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { enforceLicense, requirePermission } from "./_helpers";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   parseStoredCustomRoute,
   findStartNodeId,
@@ -9,6 +10,7 @@ import {
   type WorkflowDefinition,
 } from "@/lib/workflow/route-builder";
 import { customRouteStepSchema, graphDefinitionSchema } from "@/lib/workflow/custom-route-schema";
+import { workflowDefinitionSchema } from "@/lib/workflow/workflow-schema";
 
 // ============== WORKFLOW DEFINITIONS ==============
 export const listWorkflows = createServerFn({ method: "GET" })
@@ -44,32 +46,35 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
       name_kk: z.string().min(1),
       description: z.string().optional().nullable(),
       status: z.enum(["draft", "published", "archived"]).default("draft"),
-      definition: z.object({
-        nodes: z.array(
-          z.object({
-            id: z.string(),
-            type: z.string(),
-            label: z.string().optional(),
-            assignee_id: z.string().nullable().optional(),
-            assignee_type: z.string().optional(),
-            assignee_mode: z.string().optional(),
-            assignee_ref: z.string().nullable().optional(),
-            sla_hours: z.number().optional(),
-            position: z.object({ x: z.number(), y: z.number() }).optional(),
-            config: z.record(z.string(), z.unknown()).optional(),
-            data: z.record(z.string(), z.unknown()).optional(),
-          }),
-        ),
-        edges: z.array(
-          z.object({ id: z.string(), source: z.string(), target: z.string(), label: z.string().optional() }),
-        ),
-      }),
-
+      definition: workflowDefinitionSchema,
+      bump_version: z.boolean().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_workflows");
+    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
     const { supabase, userId } = context;
+
+    let version = 1;
+    if (data.id) {
+      const { data: existing } = await supabase
+        .from("workflows")
+        .select("version, status")
+        .eq("id", data.id)
+        .maybeSingle();
+      const prevVersion = (existing as { version?: number } | null)?.version ?? 1;
+      const prevStatus = (existing as { status?: string } | null)?.status;
+      const shouldBump =
+        data.bump_version ||
+        (data.status === "published" && prevStatus !== "published");
+      version = shouldBump ? prevVersion + 1 : prevVersion;
+    }
+
+    const definition = {
+      ...data.definition,
+      schema_version: data.definition.schema_version ?? 2,
+    };
+
     if (data.id) {
       const { error } = await supabase
         .from("workflows")
@@ -78,11 +83,12 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
           name_kk: data.name_kk,
           description: data.description ?? null,
           status: data.status,
-          definition: data.definition,
+          definition,
+          version,
         } as never)
         .eq("id", data.id);
       if (error) throw new Error(error.message);
-      return { id: data.id };
+      return { id: data.id, version };
     }
     const { data: row, error } = await supabase
       .from("workflows")
@@ -91,7 +97,8 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
         name_kk: data.name_kk,
         description: data.description ?? null,
         status: data.status,
-        definition: data.definition,
+        definition,
+        version,
         created_by: userId,
       } as never)
       .select("id")
@@ -122,21 +129,14 @@ interface WfDef {
   edges: WfEdge[];
 }
 
-function nextNode(def: WfDef, fromId: string): WfNode | null {
-  const edge = def.edges.find((e) => e.source === fromId);
-  if (!edge) return null;
-  return def.nodes.find((n) => n.id === edge.target) ?? null;
-}
-
 async function advanceFromStart(
-  supabase: any,
   runId: string,
   docId: string,
   def: { nodes: unknown[]; edges: unknown[] },
 ) {
   const start = (def.nodes as WfNode[]).find((n) => n.type === "START");
   if (!start) throw new Error("No START node");
-  const { error } = await supabase.rpc("wf_advance_from_node", {
+  const { error } = await supabaseAdmin.rpc("wf_advance_from_node", {
     _run_id: runId,
     _doc_id: docId,
     _from_node_id: start.id,
@@ -144,100 +144,6 @@ async function advanceFromStart(
     _edges: def.edges,
   });
   if (error) throw new Error(error.message);
-}
-
-function normalizeAssigneeMode(node: WfNode): string {
-  const raw = node.assignee_mode || node.assignee_type || "user";
-  if (raw === "department_manager") return "department_head";
-  return raw;
-}
-
-function buildNodePayload(node: WfNode): Record<string, unknown> {
-  const mode = normalizeAssigneeMode(node);
-  const ref = node.assignee_ref ?? node.assignee_id ?? null;
-  return {
-    id: node.id,
-    type: node.type,
-    label: node.label,
-    assignee_mode: mode,
-    assignee_ref: ref,
-    sla_hours: node.sla_hours,
-    data: {
-      ...(node.data ?? {}),
-      assignee_mode: mode,
-      assignee_ref: ref,
-      sla_hours: node.sla_hours,
-    },
-  };
-}
-
-async function createTaskForNode(
-  supabase: any,
-  runId: string,
-  docId: string,
-  node: WfNode,
-  _initiatorId: string,
-) {
-  if (!["APPROVAL", "SIGNATURE", "TASK", "NOTIFICATION"].includes(node.type)) return;
-
-  const nodePayload = buildNodePayload(node);
-  const { data: assignees, error } = await supabase.rpc("resolve_workflow_assignees", {
-    _node: nodePayload,
-    _document: docId,
-  });
-  if (error) throw new Error(error.message);
-
-  let ids: string[] = (assignees as string[] | null) ?? [];
-  const mode = normalizeAssigneeMode(node);
-  const ref = node.assignee_ref ?? node.assignee_id ?? null;
-
-  if (ids.length === 0 && mode === "user" && node.assignee_id) {
-    ids = [node.assignee_id];
-  }
-
-  const due = node.sla_hours
-    ? new Date(Date.now() + node.sla_hours * 3600_000).toISOString()
-    : null;
-  const actionRequired =
-    node.type === "APPROVAL" ? "approve" : node.type === "SIGNATURE" ? "sign" : "review";
-  const title = node.label || node.type;
-
-  if (ids.length > 0) {
-    for (const assigneeId of ids) {
-      await supabase.from("workflow_tasks").insert({
-        run_id: runId,
-        document_id: docId,
-        node_id: node.id,
-        node_type: node.type,
-        title,
-        assignee_id: assigneeId,
-        action_required: actionRequired,
-        due_at: due,
-      });
-      await supabase.from("notifications").insert({
-        user_id: assigneeId,
-        type: "task",
-        title: `Новая задача: ${title}`,
-        body: null,
-        link: `/documents/${docId}`,
-      });
-    }
-    return;
-  }
-
-  await supabase.from("workflow_tasks").insert({
-    run_id: runId,
-    document_id: docId,
-    node_id: node.id,
-    node_type: node.type,
-    title,
-    assignee_id: null,
-    role_code: mode === "role" ? ref : null,
-    department_id: mode === "department" ? ref : null,
-    is_manager: ["department_head", "parent_department_head", "initiator_manager"].includes(mode),
-    action_required: actionRequired,
-    due_at: due,
-  });
 }
 
 export const startWorkflow = createServerFn({ method: "POST" })
@@ -251,6 +157,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
     const { supabase, userId } = context;
 
     const { data: doc, error: docErr } = await supabase
@@ -259,6 +166,13 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .eq("id", data.document_id)
       .single();
     if (docErr) throw new Error(docErr.message);
+
+    const { data: canManage, error: canErr } = await supabase.rpc(
+      "can_manage_document_workflow" as never,
+      { _doc_id: data.document_id, _user: userId } as never,
+    );
+    if (canErr) throw new Error(canErr.message);
+    if (!canManage) throw new Error("Нет права запускать маршрут для этого документа");
 
     const { data: activeRun } = await supabase
       .from("workflow_runs")
@@ -315,7 +229,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
         payload: opts.payload ?? {},
       } as never);
       await supabase.from("documents").update({ status: "in_review" as never }).eq("id", data.document_id);
-      await advanceFromStart(supabase, run.id, data.document_id, def);
+      await advanceFromStart(run.id, data.document_id, def);
       return run.id as string;
     }
 
@@ -363,14 +277,15 @@ export const completeTask = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       task_id: z.string().uuid(),
-      decision: z.enum(["approve", "reject"]),
-      comment: z.string().optional().nullable(),
+      decision: z.enum(["approve", "reject", "return"]),
+      comment: z.string().max(4000).optional().nullable(),
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
     const { supabase } = context;
-    if (data.decision === "reject" && !data.comment?.trim()) {
-      throw new Error("Комментарий обязателен для отклонения");
+    if (data.decision !== "approve" && !data.comment?.trim()) {
+      throw new Error("Комментарий обязателен для отклонения или возврата");
     }
     const { data: res, error } = await supabase.rpc("app_advance_workflow_task" as never, {
       _task_id: data.task_id,
@@ -409,6 +324,7 @@ export const advanceWorkflowTask = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
     const { supabase } = context;
     if (data.decision !== "approve" && !data.comment?.trim()) {
       throw new Error("Комментарий обязателен для отклонения или возврата");

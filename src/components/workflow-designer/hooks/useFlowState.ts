@@ -2,7 +2,14 @@ import { useState, useCallback } from "react";
 
 import { applyNodeChanges, applyEdgeChanges, type Connection, type EdgeChange, type NodeChange } from "@xyflow/react";
 
-import { createNewNode, createNewEdge, toFlowNode, toFlowEdge, toDomainNode, toDomainEdge } from "../utils/mappers";
+import {
+  createNewNode,
+  createNewEdge,
+  toFlowNode,
+  toFlowEdge,
+  toDomainNode,
+  toDomainDefinition,
+} from "../utils/mappers";
 
 import type { FlowNode, FlowEdge, WorkflowDefinition, NodeType } from "../types";
 
@@ -198,10 +205,7 @@ export function useFlowState(options?: UseFlowStateOptions): UseFlowStateReturn 
 
   const getDefinition = useCallback((): WorkflowDefinition => ({
 
-    nodes: nodes.map(toDomainNode),
-
-    edges: edges.map(toDomainEdge),
-
+    ...toDomainDefinition(nodes, edges),
   }), [nodes, edges]);
 
 

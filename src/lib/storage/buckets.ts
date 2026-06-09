@@ -2,6 +2,7 @@ export const STORAGE_BUCKETS = {
   avatars: "avatars",
   documents: "documents",
   templates: "templates",
+  signatures: "signatures",
 } as const;
 
 export type StorageBucket = (typeof STORAGE_BUCKETS)[keyof typeof STORAGE_BUCKETS];

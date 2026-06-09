@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireLicenseModule } from "@/lib/license/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { listDocuments } from "@/lib/api/documents.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -8,6 +9,7 @@ import { useI18n, localized } from "@/i18n";
 import { fmtDateShort } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/archive")({
+  beforeLoad: () => requireLicenseModule("archive"),
   component: ArchivePage,
 });
 

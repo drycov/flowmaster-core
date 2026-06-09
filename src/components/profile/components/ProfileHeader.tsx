@@ -60,6 +60,11 @@ export function ProfileHeader({
               {t(`roles.${role}`) || role}
             </Badge>
           ))}
+          {profile.has_eds && (
+            <Badge variant="outline" className="border-emerald-600/40 text-emerald-700">
+              {t("profile.edsStatusOn")}
+            </Badge>
+          )}
         </div>
 
         {(profile.department || profile.position) && (

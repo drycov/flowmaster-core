@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { enforceLicense, requirePermission } from "./_helpers";
 import {
   STORAGE_BUCKETS,
   documentVersionPath,
@@ -53,6 +53,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true });
     const { supabase, userId } = context;
 
     const { data: doc, error: docErr } = await supabase
@@ -112,6 +113,7 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await enforceLicense(context.supabase, { writable: true });
     const { supabase, userId } = context;
 
     const docIdFromPath = parseDocumentIdFromPath(data.storage_path);
@@ -162,6 +164,7 @@ export const uploadTemplateFile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_templates");
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
 
     const expectedPrefix = `${data.template_id}/`;
     if (!data.storage_path.startsWith(expectedPrefix)) {
@@ -205,6 +208,7 @@ export const prepareTemplateUpload = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_templates");
+    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
 
     const format = detectTemplateFormat(data.filename);
     if (!format) {

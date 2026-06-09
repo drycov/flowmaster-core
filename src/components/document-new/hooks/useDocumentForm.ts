@@ -41,6 +41,9 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
       summary: "",
       body: "",
       nomenclature_id: "none",
+      document_type_id: "",
+      priority_id: "",
+      correspondent_id: "",
     },
   });
 
@@ -81,8 +84,12 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
     });
 
     const { title_ru, title_kk } = resolveDocumentTitles(template, fieldValues);
-    form.setValue("title_ru", title_ru, { shouldValidate: true });
-    form.setValue("title_kk", title_kk, { shouldValidate: true });
+    if (form.getValues("title_ru") !== title_ru) {
+      form.setValue("title_ru", title_ru, { shouldValidate: true, shouldDirty: false });
+    }
+    if (form.getValues("title_kk") !== title_kk) {
+      form.setValue("title_kk", title_kk, { shouldValidate: true, shouldDirty: false });
+    }
   }, [
     activeTemplateId,
     template,

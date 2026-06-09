@@ -332,12 +332,15 @@ export type Database = {
           created_by: string
           current_version: number
           custom_route: Json | null
+          correspondent_id: string | null
           department_id: string | null
           doc_type: string
+          document_type_id: string | null
           due_at: string | null
           id: string
           legal_hold: boolean
           nomenclature_id: string | null
+          priority_id: string | null
           reg_number: string
           search_tsv: unknown
           sla_status: Database["public"]["Enums"]["sla_status"]
@@ -357,12 +360,15 @@ export type Database = {
           created_by: string
           current_version?: number
           custom_route?: Json | null
+          correspondent_id?: string | null
           department_id?: string | null
           doc_type?: string
+          document_type_id?: string | null
           due_at?: string | null
           id?: string
           legal_hold?: boolean
           nomenclature_id?: string | null
+          priority_id?: string | null
           reg_number: string
           search_tsv?: unknown
           sla_status?: Database["public"]["Enums"]["sla_status"]
@@ -378,16 +384,19 @@ export type Database = {
           archived_at?: string | null
           assigned_to?: string | null
           body?: string | null
+          correspondent_id?: string | null
           created_at?: string
           created_by?: string
           current_version?: number
           custom_route?: Json | null
           department_id?: string | null
           doc_type?: string
+          document_type_id?: string | null
           due_at?: string | null
           id?: string
           legal_hold?: boolean
           nomenclature_id?: string | null
+          priority_id?: string | null
           reg_number?: string
           search_tsv?: unknown
           sla_status?: Database["public"]["Enums"]["sla_status"]
@@ -408,10 +417,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documents_correspondent_id_fkey"
+            columns: ["correspondent_id"]
+            isOneToOne: false
+            referencedRelation: "ref_correspondents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "ref_document_types"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_nomenclature_id_fkey"
             columns: ["nomenclature_id"]
             isOneToOne: false
             referencedRelation: "nomenclature_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_priority_id_fkey"
+            columns: ["priority_id"]
+            isOneToOne: false
+            referencedRelation: "ref_priorities"
             referencedColumns: ["id"]
           },
           {
@@ -1254,6 +1284,7 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "rejected"
+        | "returned"
         | "escalated"
         | "cancelled"
       workflow_status: "draft" | "published" | "archived"

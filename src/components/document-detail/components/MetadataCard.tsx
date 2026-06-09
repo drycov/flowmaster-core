@@ -2,6 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
 import { useI18n } from "@/i18n";
 import { fmtDateShort } from "@/lib/format";
+import {
+  correspondentLabel,
+  documentTypeLabel,
+  priorityLabel,
+} from "@/lib/documents/reference-display";
 import { Field } from "./Field";
 import type { Document } from "../types";
 
@@ -30,8 +35,16 @@ export function MetadataCard({ document }: MetadataCardProps) {
           )}
         </Field>
         
-        <Field label={t("common.type")}>
-          {document.doc_type || "—"}
+        <Field label={t("doc.documentType")}>
+          {documentTypeLabel(document, locale)}
+        </Field>
+
+        <Field label={t("doc.priority")}>
+          {priorityLabel(document, locale)}
+        </Field>
+
+        <Field label={t("doc.correspondent")}>
+          {correspondentLabel(document, locale)}
         </Field>
         
         <Field label={t("common.deadline")}>

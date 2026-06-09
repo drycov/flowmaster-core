@@ -1,8 +1,12 @@
 // entry-server.tsx
 import "./lib/error-capture";
+import { loadEnvFileIntoProcessEnv } from "./lib/env-file-loader.server";
 import { loadServerEnv } from "./lib/env.server";
+import { ensureInstallationEnv } from "./lib/installation.server";
 
+loadEnvFileIntoProcessEnv();
 loadServerEnv();
+ensureInstallationEnv();
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage, renderErrorPageWithDetails } from "./lib/error-page";

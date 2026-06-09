@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -10,6 +10,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { FlowNode, FlowEdge, NodeType } from "../types";
+import { WorkflowCanvasNode } from "./WorkflowCanvasNode";
 
 interface FlowCanvasProps {
   nodes: FlowNode[];
@@ -32,6 +33,8 @@ export function FlowCanvas({
   onEdgeClick,
   onDropNode,
 }: FlowCanvasProps) {
+  const nodeTypes = useMemo(() => ({ workflowNode: WorkflowCanvasNode }), []);
+
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -60,6 +63,7 @@ export function FlowCanvas({
       <ReactFlow
         nodes={nodes as any}
         edges={edges as any}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange as any}
         onEdgesChange={onEdgesChange as any}
         onConnect={onConnect}

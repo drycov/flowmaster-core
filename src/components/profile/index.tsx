@@ -32,6 +32,7 @@ import { ProfileForm } from "./components/ProfileForm";
 
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { AuthMethodsCard } from "./components/AuthMethodsCard";
+import { EdsConnectionCard } from "./components/EdsConnectionCard";
 
 import { AssignmentsCard } from "./components/AssignmentsCard";
 
@@ -372,6 +373,14 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
                 <ProfileInfo profile={profile} />
 
               )}
+
+              <EdsConnectionCard
+                profile={profile}
+                isOwnProfile={isOwnProfile}
+                onUpdated={() => {
+                  void refetch();
+                }}
+              />
 
               <AssignmentsCard userId={profile.id} />
 

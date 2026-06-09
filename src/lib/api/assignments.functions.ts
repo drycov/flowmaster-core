@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { enforceLicense, requirePermission } from "./_helpers";
 
 const REASON = z.enum([
   "hire",
@@ -45,6 +45,7 @@ export const createAssignment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_users");
+    await enforceLicense(context.supabase, { writable: true });
     const { data: row, error } = await (context.supabase.from("profile_assignments" as never) as any)
       .insert({
         user_id: data.user_id,
@@ -78,6 +79,7 @@ export const terminateAssignment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_users");
+    await enforceLicense(context.supabase, { writable: true });
     const { error } = await (context.supabase.from("profile_assignments" as never) as any).insert({
       user_id: data.user_id,
       department_id: null,

@@ -1,7 +1,8 @@
 // src/components/profile/components/ProfileInfo.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Phone, Building2, Briefcase, Mail, Calendar } from "lucide-react";
+import { Phone, Building2, Briefcase, Mail, Calendar, KeyRound } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { format } from "date-fns";
 import { ru, kk } from "date-fns/locale";
@@ -19,6 +20,13 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
     ? format(new Date(profile.last_sign_in_at), "dd MMMM yyyy HH:mm", { locale: dateLocale })
     : "";
 
+  const authMethodLabel =
+    profile.auth_method === "both"
+      ? t("profile.authMethod.both")
+      : profile.auth_method === "eds"
+        ? t("profile.authMethod.eds")
+        : t("profile.authMethod.email");
+
   return (
     <Card>
       <CardHeader>
@@ -33,6 +41,20 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
           <div>
             <Label className="text-muted-foreground">{t("profile.fullNameKk")} (KK)</Label>
             <p className="mt-1">{profile.full_name_kk || "—"}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">{t("profile.email")}</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <span>{profile.email || "—"}</span>
+            </div>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">{t("profile.authMethod")}</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <KeyRound className="w-4 h-4 text-muted-foreground" />
+              <Badge variant="secondary">{authMethodLabel}</Badge>
+            </div>
           </div>
           <div>
             <Label className="text-muted-foreground">{t("profile.phone")}</Label>

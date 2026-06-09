@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { enforceLicense, requirePermission } from "./_helpers";
 
 /* ============ ORGANIZATION ============ */
 
@@ -39,6 +39,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
   .inputValidator(orgSchema)
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_org");
+    await enforceLicense(context.supabase, { writable: true });
     const { id, ...patch } = data;
     const { error } = await context.supabase
       .from("organization")
@@ -77,6 +78,7 @@ export const upsertPosition = createServerFn({ method: "POST" })
   .inputValidator(positionSchema)
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_org");
+    await enforceLicense(context.supabase, { writable: true });
     if (data.id) {
       const { id, ...patch } = data;
       const { error } = await context.supabase.from("positions").update(patch as never).eq("id", id);
@@ -99,6 +101,7 @@ export const deletePosition = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_org");
+    await enforceLicense(context.supabase, { writable: true });
     const { error } = await context.supabase.from("positions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -133,6 +136,7 @@ export const updateRoleDefinition = createServerFn({ method: "POST" })
   .inputValidator(roleDefSchema)
   .handler(async ({ data, context }) => {
     await requirePermission(context.supabase, context.userId, "manage_users");
+    await enforceLicense(context.supabase, { writable: true });
     const { role, ...patch } = data;
     const { error } = await context.supabase
       .from("role_definitions")

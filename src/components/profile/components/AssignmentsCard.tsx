@@ -16,6 +16,8 @@ import {
 
   DialogContent,
 
+  DialogDescription,
+
   DialogFooter,
 
   DialogHeader,
@@ -321,6 +323,8 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
               <DialogHeader>
 
                 <DialogTitle>{t("profile.assignments.new")}</DialogTitle>
+
+                <DialogDescription>{t("profile.assignments.newDescription")}</DialogDescription>
 
               </DialogHeader>
 

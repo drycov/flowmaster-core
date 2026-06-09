@@ -4,49 +4,47 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Save, X } from "lucide-react";
 import { useI18n } from "@/i18n";
-import DOMPurify from "dompurify";
+import { TemplatePreviewPane } from "@/components/shared/TemplatePreviewPane";
+import { useDocumentContentPreview } from "../hooks/useDocumentContentPreview";
+import type { DocumentVersion } from "../types";
 
 interface ContentTabProps {
-  /** Исходная HTML-строка с токенами типа {{registration_number}} */
-  bodyTemplate?: string;
-  /** Объект с реальными значениями для замены токенов */
+  body?: string | null;
   fieldValues?: Record<string, string>;
+  currentVersion?: DocumentVersion | null;
   summary?: string;
   isEditable?: boolean;
   onSave?: (content: string) => Promise<void>;
 }
 
-/**
- * Функция утилиты для замены динамических токенов вида {{key}} на реальные значения
- */
-function compileTemplate(template: string, values: Record<string, string>): string {
-  if (!template) return "";
-  return template.replace(/\{\{\s*([\w\-_\.]+)\s*\}\}/g, (match, key) => {
-    return values[key] !== undefined ? values[key] : "";
-  });
-}
-
 export function ContentTab({
-  bodyTemplate = "",
+  body = "",
   fieldValues = {},
+  currentVersion,
   summary,
   isEditable = false,
   onSave,
 }: ContentTabProps) {
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedBody, setEditedBody] = useState(bodyTemplate);
+  const [editedBody, setEditedBody] = useState(body ?? "");
   const [isSaving, setIsSaving] = useState(false);
 
-  // 1. Компилируем шаблон, подставляя значения полей
-  const compiledHtml = compileTemplate(bodyTemplate, fieldValues);
+  const preview = useDocumentContentPreview({
+    body,
+    fieldValues,
+    currentVersion,
+  });
 
-  // 2. Санитизируем скомпилированный HTML, защищая приложение от XSS-атак
-  const sanitizedHtml = DOMPurify.sanitize(compiledHtml);
+  const labels = {
+    loading: t("doc.preview.loading"),
+    error: t("doc.preview.error"),
+    empty: t("doc.preview.empty"),
+    unsupported: t("tpl.preview.unsupported"),
+  };
 
   const handleSave = async () => {
     if (!onSave) return;
-
     setIsSaving(true);
     try {
       await onSave(editedBody);
@@ -57,12 +55,12 @@ export function ContentTab({
   };
 
   const handleCancel = () => {
-    setEditedBody(bodyTemplate);
+    setEditedBody(body ?? "");
     setIsEditing(false);
   };
 
   const handleStartEditing = () => {
-    setEditedBody(bodyTemplate); // Передаем на редактирование именно сырой шаблон с {{тегами}}
+    setEditedBody(body ?? "");
     setIsEditing(true);
   };
 
@@ -99,23 +97,22 @@ export function ContentTab({
             </div>
           </div>
         ) : (
-          <>
+          <div className="space-y-4">
             {summary && (
-              <p className="text-muted-foreground italic mb-4">{summary}</p>
+              <p className="text-muted-foreground italic">{summary}</p>
             )}
-
-            {/* Зона отображения готового документа */}
-            {compiledHtml ? (
-              <div
-                className="prose prose-sm max-w-none document-view-output"
-                dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+            <div className="min-h-[320px]">
+              <TemplatePreviewPane
+                status={preview.status}
+                error={preview.error}
+                html={preview.html}
+                mode={preview.mode}
+                docxBlob={preview.docxBlob}
+                fill
+                labels={labels}
               />
-            ) : (
-              <div className="prose prose-sm max-w-none text-muted-foreground">
-                <span>{t("common.empty")}</span>
-              </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

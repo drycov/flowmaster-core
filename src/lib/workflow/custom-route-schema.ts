@@ -23,8 +23,10 @@ export const graphDefinitionSchema = z.object({
       source: z.string(),
       target: z.string(),
       label: z.string().optional(),
+      condition: z.string().optional(),
     }),
   ),
+  schema_version: z.number().int().optional(),
 });
 
 export const customRouteSchema = z

@@ -1,16 +1,15 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export async function ensureDocumentRegNumber(documentId: string): Promise<string> {
-  const { data: doc, error: readErr } = await supabaseAdmin
-    .from("documents")
-    .select("reg_number")
-    .eq("id", documentId)
-    .single();
-
-  if (readErr) throw new Error(readErr.message);
-
-  const existing = (doc as { reg_number?: string | null }).reg_number?.trim();
-  if (existing) return existing;
+async function resolvePrefix(journalId?: string | null): Promise<string> {
+  if (journalId) {
+    const { data, error } = await supabaseAdmin.rpc(
+      "resolve_document_reg_prefix" as never,
+      { _journal_id: journalId } as never,
+    );
+    if (!error && typeof data === "string" && data.trim()) {
+      return data.trim();
+    }
+  }
 
   const { data: org } = await supabaseAdmin
     .from("organization")
@@ -18,8 +17,27 @@ export async function ensureDocumentRegNumber(documentId: string): Promise<strin
     .limit(1)
     .maybeSingle();
 
-  const prefix =
-    (org as { reg_number_prefix?: string | null } | null)?.reg_number_prefix?.trim() || "DOC";
+  return (org as { reg_number_prefix?: string | null } | null)?.reg_number_prefix?.trim() || "DOC";
+}
+
+export async function ensureDocumentRegNumber(
+  documentId: string,
+  journalId?: string | null,
+): Promise<string> {
+  const { data: doc, error: readErr } = await supabaseAdmin
+    .from("documents")
+    .select("reg_number, registration_journal_id")
+    .eq("id", documentId)
+    .single();
+
+  if (readErr) throw new Error(readErr.message);
+
+  const row = doc as { reg_number?: string | null; registration_journal_id?: string | null };
+  const existing = row.reg_number?.trim();
+  if (existing) return existing;
+
+  const effectiveJournalId = journalId ?? row.registration_journal_id ?? null;
+  const prefix = await resolvePrefix(effectiveJournalId);
 
   const { data: regNumber, error: rpcErr } = await supabaseAdmin.rpc(
     "next_document_reg_number" as never,
@@ -48,7 +66,5 @@ export async function ensureDocumentRegNumber(documentId: string): Promise<strin
   const retried = (retry as { reg_number?: string | null }).reg_number?.trim();
   if (retried) return retried;
 
-  throw new Error(
-    rpcErr?.message ?? "Не удалось присвоить регистрационный номер документу",
-  );
+  throw new Error(rpcErr?.message ?? "Не удалось присвоить регистрационный номер документу");
 }

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function useRealtimeUpdates(documentId: string, onUpdate: () => void) {
   useEffect(() => {
     const channel = supabase
-      .channel(`doc:${documentId}`)
+      .channel(`doc:${documentId}`, { config: { private: true } })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "documents", filter: `id=eq.${documentId}` },
@@ -18,6 +18,16 @@ export function useRealtimeUpdates(documentId: string, onUpdate: () => void) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "workflow_events", filter: `document_id=eq.${documentId}` },
+        () => onUpdate()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "workflow_tasks", filter: `document_id=eq.${documentId}` },
+        () => onUpdate()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "workflow_runs", filter: `document_id=eq.${documentId}` },
         () => onUpdate()
       )
       .subscribe();

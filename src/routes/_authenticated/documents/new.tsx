@@ -11,6 +11,11 @@ import { PageHeader, PageBody } from "@/components/AppShell";
 import { listTemplates } from "@/lib/api/templates.functions";
 
 import { listNomenclature } from "@/lib/api/nomenclature.functions";
+import {
+  listCorrespondentsBrief,
+  listDocumentTypesBrief,
+  listPrioritiesBrief,
+} from "@/lib/api/references.functions";
 
 
 
@@ -73,11 +78,23 @@ function NewDocument() {
   });
 
   const { data: nomenclatures = [], isLoading: nomenclaturesLoading } = useQuery({
-
     queryKey: ["nom"],
-
     queryFn: () => listNomenclature(),
+  });
 
+  const { data: documentTypes = [], isLoading: documentTypesLoading } = useQuery({
+    queryKey: ["ref-document-types-brief"],
+    queryFn: listDocumentTypesBrief,
+  });
+
+  const { data: priorities = [], isLoading: prioritiesLoading } = useQuery({
+    queryKey: ["ref-priorities-brief"],
+    queryFn: listPrioritiesBrief,
+  });
+
+  const { data: correspondents = [], isLoading: correspondentsLoading } = useQuery({
+    queryKey: ["ref-correspondents-brief"],
+    queryFn: listCorrespondentsBrief,
   });
 
 
@@ -113,18 +130,24 @@ function NewDocument() {
 
 
   useEffect(() => {
-
     if (templateDefaultWf) {
-
       setRoute({ kind: "template_default" });
-
     } else {
-
       setRoute({ kind: "none" });
-
     }
-
   }, [selectedTemplateId, templateDefaultWf]);
+
+  useEffect(() => {
+    if (!priorities.length || form.getValues("priority_id")) return;
+    const normal = priorities.find((p) => p.code === "normal");
+    if (normal) form.setValue("priority_id", normal.id);
+  }, [priorities, form]);
+
+  useEffect(() => {
+    if (!selectedTemplate?.category || !documentTypes.length) return;
+    const match = documentTypes.find((dt) => dt.code === selectedTemplate.category);
+    if (match) form.setValue("document_type_id", match.id);
+  }, [selectedTemplateId, selectedTemplate?.category, documentTypes, form]);
 
 
 
@@ -173,7 +196,12 @@ function NewDocument() {
 
 
 
-  const isLoading = templatesLoading || nomenclaturesLoading;
+  const isLoading =
+    templatesLoading ||
+    nomenclaturesLoading ||
+    documentTypesLoading ||
+    prioritiesLoading ||
+    correspondentsLoading;
 
   const showManualFields = selectedTemplateId === "none";
 
@@ -242,9 +270,10 @@ function NewDocument() {
               showManualFields={showManualFields}
 
               templates={templates}
-
               nomenclatures={nomenclatures}
-
+              documentTypes={documentTypes}
+              priorities={priorities}
+              correspondents={correspondents}
               isLoading={isLoading}
 
             />

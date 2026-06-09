@@ -55,6 +55,7 @@ export interface WorkflowEdge {
 export interface WorkflowDefinition {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  schema_version?: number;
 }
 
 // Для ReactFlow data поле должно быть индексируемым

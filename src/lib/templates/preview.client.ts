@@ -1,6 +1,11 @@
 import ExcelJS from "exceljs";
 import DOMPurify from "dompurify";
 import { renderAsync } from "docx-preview";
+import {
+  applyDocxBackgroundLayers,
+  extractDocxBackgroundImages,
+} from "./docx-background.client";
+import { replaceDocxVectorImages } from "./docx-vector-images.client";
 import { PLACEHOLDER_PATTERN } from "./file-formats";
 
 export type TemplatePreviewMode = "docx" | "html" | "unsupported" | "empty";
@@ -89,14 +94,38 @@ export async function renderDocxPreview(
   bodyContainer.innerHTML = "";
   if (styleContainer) styleContainer.innerHTML = "";
 
-  await renderAsync(blob, bodyContainer, styleContainer ?? undefined, {
-    className: "docx-preview",
-    inWrapper: true,
-    ignoreWidth: false,
-    ignoreHeight: false,
-    renderHeaders: true,
-    renderFooters: true,
-    breakPages: true,
+  const previewBlob = await replaceDocxVectorImages(blob);
+
+  const [backgrounds] = await Promise.all([
+    extractDocxBackgroundImages(previewBlob),
+    renderAsync(previewBlob, bodyContainer, styleContainer ?? undefined, {
+      className: "docx-preview",
+      inWrapper: true,
+      ignoreWidth: false,
+      ignoreHeight: false,
+      ignoreFonts: false,
+      renderHeaders: true,
+      renderFooters: true,
+      renderFootnotes: true,
+      renderEndnotes: true,
+      breakPages: true,
+      useBase64URL: true,
+      experimental: true,
+    }),
+  ]);
+
+  applyDocxBackgroundLayers(bodyContainer, backgrounds);
+  hideBrokenDocxImages(bodyContainer);
+}
+
+function hideBrokenDocxImages(container: HTMLElement): void {
+  container.querySelectorAll("img").forEach((node) => {
+    const img = node as HTMLImageElement;
+    const hide = () => {
+      img.style.display = "none";
+    };
+    img.addEventListener("error", hide, { once: true });
+    if (img.complete && img.naturalWidth === 0) hide();
   });
 }
 

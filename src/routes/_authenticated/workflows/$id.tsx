@@ -43,6 +43,7 @@ import { NodeEditSheet } from "@/components/workflow-designer/components/NodeEdi
 import { EdgeEditSheet } from "@/components/workflow-designer/components/EdgeEditSheet";
 
 import { DeleteConfirmDialog } from "@/components/workflow-designer/components/DeleteConfirmDialog";
+import { EDMS_DOCUMENT_FIELDS } from "@/lib/workflow/document-fields";
 
 
 
@@ -75,6 +76,8 @@ function WorkflowDesignerPage() {
     status,
 
     definition,
+
+    version,
 
     isLoading,
 
@@ -182,7 +185,7 @@ function WorkflowDesignerPage() {
 
   }));
 
-  const documentFields: any[] = [];
+  const documentFields = EDMS_DOCUMENT_FIELDS;
 
 
 
@@ -280,7 +283,7 @@ function WorkflowDesignerPage() {
 
 
 
-  const handleSave = async () => {
+  const handleSave = async (opts?: { publish?: boolean }) => {
 
     const isValid = validate(nodes, edges);
 
@@ -302,25 +305,21 @@ function WorkflowDesignerPage() {
 
       const definition = getDefinition();
 
+      const nextStatus = opts?.publish ? "published" : status;
+
       await upsertWorkflow({
-
         data: {
-
           id,
-
           name_ru: nameRu,
-
           name_kk: nameKk,
-
           description,
-
-          status,
-
+          status: nextStatus,
           definition,
-
+          bump_version: !!opts?.publish,
         },
-
       });
+
+      if (opts?.publish) setStatus("published");
 
 
 
@@ -424,10 +423,12 @@ function WorkflowDesignerPage() {
 
             </Select>
 
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
-
+            <span className="text-xs text-muted-foreground hidden sm:inline">v{version}</span>
+            <Button size="sm" variant="outline" onClick={() => handleSave()} disabled={isSaving}>
               {isSaving ? t("wf.saving") : t("common.save")}
-
+            </Button>
+            <Button size="sm" onClick={() => handleSave({ publish: true })} disabled={isSaving}>
+              {t("wf.publish")}
             </Button>
 
           </div>

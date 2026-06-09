@@ -16,6 +16,30 @@ export const NODE_TYPES: NodeType[] = [
   "END",
 ];
 
+/** EDMS palette groups for the route designer */
+export const NODE_PALETTE_GROUPS: { key: string; labelKey: string; types: NodeType[] }[] = [
+  {
+    key: "control",
+    labelKey: "wf.palette.control",
+    types: ["START", "END", "ARCHIVE"],
+  },
+  {
+    key: "action",
+    labelKey: "wf.palette.action",
+    types: ["APPROVAL", "SIGNATURE", "TASK", "NOTIFICATION"],
+  },
+  {
+    key: "routing",
+    labelKey: "wf.palette.routing",
+    types: ["CONDITION", "FORK", "JOIN"],
+  },
+  {
+    key: "system",
+    labelKey: "wf.palette.system",
+    types: ["TIMER", "ESCALATION"],
+  },
+];
+
 export const NODE_TYPE_LABEL_KEYS: Record<NodeType, string> = {
   START: "wf.node.START",
   APPROVAL: "wf.node.APPROVAL",

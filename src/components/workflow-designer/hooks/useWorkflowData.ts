@@ -10,6 +10,7 @@ interface UseWorkflowDataReturn {
   description: string;
   status: WorkflowStatus;
   definition: WorkflowDefinition | null;
+  version: number;
   isLoading: boolean;
   setNameRu: (value: string) => void;
   setNameKk: (value: string) => void;
@@ -28,6 +29,7 @@ export function useWorkflowData(workflowId: string): UseWorkflowDataReturn {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<WorkflowStatus>("draft");
   const [definition, setDefinition] = useState<WorkflowDefinition | null>(null);
+  const [version, setVersion] = useState(1);
 
   useEffect(() => {
     if (!wf) return;
@@ -36,7 +38,7 @@ export function useWorkflowData(workflowId: string): UseWorkflowDataReturn {
     setNameKk(wf.name_kk);
     setDescription(wf.description || "");
     setStatus(wf.status as WorkflowStatus);
-    // Безопасное преобразование типа
+    setVersion((wf as { version?: number }).version ?? 1);
     const def = wf.definition as unknown;
     setDefinition(def as WorkflowDefinition);
   }, [wf]);
@@ -48,6 +50,7 @@ export function useWorkflowData(workflowId: string): UseWorkflowDataReturn {
     description,
     status,
     definition,
+    version,
     isLoading,
     setNameRu,
     setNameKk,

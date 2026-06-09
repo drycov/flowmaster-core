@@ -74,6 +74,8 @@ interface ApiUser {
   email: string;
   full_name_ru?: string | null;
   full_name_kk?: string | null;
+  iin?: string | null;
+  auth_method?: string | null;
   roles?: string[];
   created_at?: string;
   last_sign_in_at?: string;
@@ -84,6 +86,8 @@ interface User {
   email: string;
   full_name_ru?: string | null;
   full_name_kk?: string | null;
+  iin?: string | null;
+  auth_method?: string | null;
   roles: Role[];
   created_at?: string;
   last_sign_in_at?: string;
@@ -117,10 +121,16 @@ function UserRow({
   updatingRole: Role | null;
   onRowClick: (userId: string) => void;
 }) {
-  const { locale } = useI18n();
-
+  const { t, locale } = useI18n();
   const displayName = localized(user, locale, "full_name") || "—";
   const isUserUpdating = isUpdating && updatingUserId === user.id;
+  const hasEds = !!user.iin;
+  const authLabel =
+    user.auth_method === "both"
+      ? t("profile.authMethod.both")
+      : user.auth_method === "eds"
+        ? t("profile.authMethod.eds")
+        : t("profile.authMethod.email");
 
   const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
     const target = e.target as HTMLElement;
@@ -147,6 +157,19 @@ function UserRow({
         </div>
         <div className="text-xs text-muted-foreground mt-0.5 select-all">
           {user.email}
+        </div>
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+            {authLabel}
+          </Badge>
+          {hasEds && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 font-normal border-emerald-600/40 text-emerald-700"
+            >
+              {t("profile.edsStatusOn")}
+            </Badge>
+          )}
         </div>
       </td>
 
@@ -440,7 +463,7 @@ function UsersAdmin() {
               <table className="w-full data-table">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left px-4 py-2">{t("users.user")}</th>
+                    <th className="text-left px-4 py-2">{t("users.columnUser")}</th>
                     {ROLES.map((r) => (
                       <th
                         key={r}

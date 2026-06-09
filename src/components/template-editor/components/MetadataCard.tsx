@@ -4,12 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
+import {
+  ReferenceCodeSelect,
+  type ReferenceCodeOption,
+} from "@/components/references/ReferenceCodeSelect";
 
 interface MetadataCardProps {
   nameRu: string;
   nameKk: string;
   category: string;
   description: string;
+  categories: ReferenceCodeOption[];
+  categoriesLoading?: boolean;
   onNameRuChange: (value: string) => void;
   onNameKkChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
@@ -21,12 +27,14 @@ export function MetadataCard({
   nameKk = "",
   category = "",
   description = "",
+  categories,
+  categoriesLoading,
   onNameRuChange,
   onNameKkChange,
   onCategoryChange,
   onDescriptionChange,
 }: MetadataCardProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   return (
     <Card className="rounded-sm">
@@ -63,14 +71,15 @@ export function MetadataCard({
           />
         </div>
 
-        <div>
-          <Label>{t("tpl.category")}</Label>
-          <Input
-            value={category}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            placeholder={t("tpl.categoryPlaceholder")}
-          />
-        </div>
+        <ReferenceCodeSelect
+          label={t("tpl.category")}
+          value={category}
+          onChange={onCategoryChange}
+          options={categories}
+          locale={locale}
+          placeholder={t("tpl.categoryPlaceholder")}
+          isLoading={categoriesLoading}
+        />
       </CardContent>
     </Card>
   );

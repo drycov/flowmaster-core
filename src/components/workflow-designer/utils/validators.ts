@@ -1,10 +1,22 @@
 import type { TFunction } from "@/i18n";
-import type { FlowNode, FlowEdge } from "../types";
+import { interpolate } from "@/i18n/helpers";
+import type { FlowNode, FlowEdge, AssigneeType } from "../types";
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
 }
+
+const ACTIONABLE_TYPES = new Set(["APPROVAL", "SIGNATURE", "TASK"]);
+const REF_REQUIRED_MODES = new Set<AssigneeType>([
+  "user",
+  "position",
+  "department",
+  "department_head",
+  "parent_department_head",
+  "role",
+  "group",
+]);
 
 export const validateWorkflow = (
   nodes: FlowNode[],
@@ -20,26 +32,50 @@ export const validateWorkflow = (
   if (!hasEnd) errors.push(t("validation.workflow.noEnd"));
 
   nodes.forEach((node) => {
+    const label = node.data.label || node.id;
     const hasIncoming = edges.some((e) => e.target === node.id);
     const hasOutgoing = edges.some((e) => e.source === node.id);
 
     if (node.data.type !== "START" && !hasIncoming) {
-      errors.push(`Узел "${node.data.label}" не имеет входящих связей`);
+      errors.push(interpolate(t("validation.workflow.noIncoming"), { label }));
     }
-    if (node.data.type !== "END" && !hasOutgoing) {
-      errors.push(`Узел "${node.data.label}" не имеет исходящих связей`);
+    if (!["END", "ARCHIVE"].includes(node.data.type) && !hasOutgoing) {
+      errors.push(interpolate(t("validation.workflow.noOutgoing"), { label }));
+    }
+
+    if (ACTIONABLE_TYPES.has(node.data.type)) {
+      const mode = (node.data.assignee_type || "user") as AssigneeType;
+      if (REF_REQUIRED_MODES.has(mode) && !node.data.assignee_id) {
+        errors.push(interpolate(t("validation.workflow.noAssignee"), { label }));
+      }
     }
 
     if (node.data.type === "FORK") {
       const out = edges.filter((e) => e.source === node.id);
       if (out.length < 2) {
-        errors.push(`Узел разветвления "${node.data.label}" должен иметь минимум 2 исходящие ветки`);
+        errors.push(interpolate(t("validation.workflow.forkMinBranches"), { label }));
       }
     }
+
     if (node.data.type === "JOIN") {
       const inc = edges.filter((e) => e.target === node.id);
       if (inc.length < 2) {
-        errors.push(`Узел слияния "${node.data.label}" должен иметь минимум 2 входящие ветки`);
+        errors.push(interpolate(t("validation.workflow.joinMinBranches"), { label }));
+      }
+    }
+
+    if (node.data.type === "CONDITION") {
+      const out = edges.filter((e) => e.source === node.id);
+      if (out.length < 2) {
+        errors.push(interpolate(t("validation.workflow.conditionMinBranches"), { label }));
+      }
+      const withCondition = out.filter((e) => e.data?.condition?.trim());
+      const withDefault = out.filter((e) => !e.data?.condition?.trim());
+      if (withCondition.length === 0) {
+        errors.push(interpolate(t("validation.workflow.conditionNeedsRules"), { label }));
+      }
+      if (withDefault.length === 0) {
+        errors.push(interpolate(t("validation.workflow.conditionNeedsDefault"), { label }));
       }
     }
   });
@@ -51,15 +87,11 @@ export const validateWorkflow = (
     const dfs = (nodeId: string): boolean => {
       if (recursionStack.has(nodeId)) return true;
       if (visited.has(nodeId)) return false;
-
       visited.add(nodeId);
       recursionStack.add(nodeId);
-
-      const outgoingEdges = edges.filter((e) => e.source === nodeId);
-      for (const edge of outgoingEdges) {
+      for (const edge of edges.filter((e) => e.source === nodeId)) {
         if (dfs(edge.target)) return true;
       }
-
       recursionStack.delete(nodeId);
       return false;
     };
@@ -84,8 +116,7 @@ export const validateWorkflow = (
         edges.filter((e) => e.source === id).forEach((e) => queue.push(e.target));
       }
     }
-    const unreachable = nodes.filter((n) => !reachable.has(n.id));
-    if (unreachable.length > 0) {
+    if (nodes.some((n) => !reachable.has(n.id))) {
       errors.push(t("validation.workflow.unreachable"));
     }
   }
