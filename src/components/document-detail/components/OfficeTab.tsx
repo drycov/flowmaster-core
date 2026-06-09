@@ -93,6 +93,7 @@ export function OfficeTab({
         ooMounted.current = true;
       } catch (e) {
         console.error(e);
+        toast.error(t("office.loadError"));
       }
     })();
 

@@ -565,7 +565,6 @@ export const ruDictionary: Dictionary = {
     // Workflow
     "wf.designer": "Конструктор маршрута",
     "wf.add_node": "Добавить узел",
-    "wf.publish": "Опубликовать",
     "wf.draft": "Черновик",
     "wf.published": "Опубликован",
     "wf.simulate": "Симуляция",
@@ -582,6 +581,7 @@ export const ruDictionary: Dictionary = {
     // Office
     "office.placeholder": "Настройте ONLYOFFICE в Администрирование → Настройки → Интеграции",
     "office.noFileVersion": "Для ONLYOFFICE нужна файловая версия документа (DOCX). Загрузите файл на вкладке «Версии».",
+    "office.loadError": "Не удалось загрузить редактор ONLYOFFICE",
     "doc.versions.diff": "Сравнение версий",
     "doc.versions.diffFrom": "Версия A",
     "doc.versions.diffTo": "Версия B",
@@ -960,8 +960,6 @@ export const ruDictionary: Dictionary = {
 
     // Tasks
     "task.action.approve": "Согласование",
-    "task.action.sign": "Подпись",
-    "task.action.review": "Ознакомление",
 
     // Users
     "users.user": "Пользователи",

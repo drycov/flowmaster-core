@@ -107,7 +107,7 @@ function DocumentsList() {
       <PageHeader
         title={t("nav.documents")}
         actions={
-          <Button onClick={() => navigate({ to: "/documents/new" })} size="sm">
+          <Button onClick={() => navigate({ to: "/documents/new", search: {} })} size="sm">
             <Plus className="w-4 h-4 mr-1" />
             {t("doc.new")}
           </Button>

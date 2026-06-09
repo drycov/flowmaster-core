@@ -29,6 +29,7 @@ export function mapProfileRow(profile: ProfileRow, roles: string[]) {
   return {
     profile: {
       ...safe,
+      id: (safe.id as string | undefined) ?? "",
       auth_method: (safe.auth_method as string | undefined) ?? "email",
       iin: (safe.iin as string | null | undefined) ?? null,
       has_password: !!password_hash,

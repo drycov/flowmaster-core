@@ -115,7 +115,15 @@ const systemSettingsSchema = z.object({
     email_attr: z.string().max(120),
     display_name_attr: z.string().max(120),
     auto_provision: z.boolean(),
-    default_role: z.enum(["admin", "registrar", "approver", "signer", "archivist", "viewer"]),
+    default_role: z.enum([
+      "admin",
+      "platform_admin",
+      "registrar",
+      "approver",
+      "signer",
+      "archivist",
+      "viewer",
+    ]),
     reject_unauthorized: z.boolean(),
   }),
   mail: z.object({

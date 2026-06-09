@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { upsertRow } from "@/lib/api/db.helpers.server";
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -34,29 +35,27 @@ export const saveSearch = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const payload = { name: data.name.trim(), query: data.query };
+
     if (data.id) {
-      const { data: row, error } = await supabase
-        .from("saved_searches")
-        .update({ name: data.name.trim(), query: data.query } as never)
-        .eq("id", data.id)
-        .eq("user_id", userId)
-        .select("id, name, query")
-        .single();
-      if (error) throw new Error(error.message);
-      return row;
+      await upsertRow({
+        supabase,
+        table: "saved_searches",
+        row: payload,
+        id: data.id,
+        updateEq: { user_id: userId },
+      });
+      return { id: data.id, ...payload };
     }
 
-    const { data: row, error } = await supabase
-      .from("saved_searches")
-      .insert({
-        user_id: userId,
-        name: data.name.trim(),
-        query: data.query,
-      } as never)
-      .select("id, name, query")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase,
+      table: "saved_searches",
+      row: payload,
+      insertOnly: { user_id: userId },
+      select: "id, name, query",
+    });
+    return row as { id: string; name: string; query: SavedSearchQuery };
   });
 
 export const deleteSavedSearch = createServerFn({ method: "POST" })

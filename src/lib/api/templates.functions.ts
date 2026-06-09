@@ -4,11 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enforceModuleLicense, requireModuleAccess } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
-import { STORAGE_BUCKETS, documentVersionPath } from "@/lib/storage/buckets";
 import {
   mergeTemplateFieldKeys,
   supportsTemplateProcessing,
-  templateMimeType,
   type TemplateFieldDef,
   type TemplateFileFormat,
 } from "@/lib/templates/file-formats";
@@ -16,11 +14,8 @@ import {
   isDefaultTemplateName,
 } from "@/lib/templates/field-inference";
 import { extractTemplateFileContext } from "@/lib/templates/file-context.server";
-import {
-  downloadTemplateBuffer,
-  renderTemplateFile,
-  scanTemplatePlaceholders,
-} from "@/lib/templates/file-processing.server";
+import { registerInitialFileVersion } from "@/lib/documents/versions.server";
+import { scanTemplatePlaceholders } from "@/lib/templates/file-processing.server";
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
@@ -385,33 +380,13 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
 
     if (hasFileTemplate) {
       try {
-        const templateBuffer = await downloadTemplateBuffer(tplRow.file_path!);
-        const rendered = await renderTemplateFile(templateBuffer, fileFormat!, finalValues);
-        const filename = `document.${fileFormat}`;
-        const storagePath = documentVersionPath(doc.id, 1, filename);
-
-        const { error: uploadErr } = await supabaseAdmin.storage
-          .from(STORAGE_BUCKETS.documents)
-          .upload(storagePath, rendered, {
-            contentType: templateMimeType(fileFormat!),
-            upsert: true,
-          });
-        if (uploadErr) throw new Error(uploadErr.message);
-
-        const { error: versionErr } = await supabaseAdmin.from("document_versions").insert({
-          document_id: doc.id,
-          version_no: 1,
-          file_path: storagePath,
-          file_format: fileFormat,
-          comment: null,
-          created_by: userId,
-        } as never);
-        if (versionErr) throw new Error(versionErr.message);
-
-        await supabaseAdmin
-          .from("documents")
-          .update({ current_version: 1 } as never)
-          .eq("id", doc.id);
+        await registerInitialFileVersion({
+          documentId: doc.id,
+          userId,
+          templateFilePath: tplRow.file_path!,
+          fileFormat: fileFormat!,
+          values: finalValues,
+        });
       } catch (fileErr) {
         console.error("Template file render failed:", fileErr);
       }

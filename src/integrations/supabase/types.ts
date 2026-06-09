@@ -1263,6 +1263,42 @@ export type Database = {
           },
         ]
       }
+      duty_reminder_log: {
+        Row: {
+          created_at: string
+          duty_assignment_id: string
+          reminded_on: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duty_assignment_id: string
+          reminded_on?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duty_assignment_id?: string
+          reminded_on?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duty_reminder_log_duty_assignment_id_fkey"
+            columns: ["duty_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "duty_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duty_reminder_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_outbox: {
         Row: {
           app_link: string | null
@@ -1970,9 +2006,11 @@ export type Database = {
           email: string | null
           head_user_id: string | null
           id: string
+          is_active: boolean
           legal_address_kk: string | null
           legal_address_ru: string | null
           logo_url: string | null
+          max_users: number | null
           name_kk: string
           name_ru: string
           phone: string | null
@@ -1991,9 +2029,11 @@ export type Database = {
           email?: string | null
           head_user_id?: string | null
           id?: string
+          is_active?: boolean
           legal_address_kk?: string | null
           legal_address_ru?: string | null
           logo_url?: string | null
+          max_users?: number | null
           name_kk?: string
           name_ru?: string
           phone?: string | null
@@ -2012,9 +2052,11 @@ export type Database = {
           email?: string | null
           head_user_id?: string | null
           id?: string
+          is_active?: boolean
           legal_address_kk?: string | null
           legal_address_ru?: string | null
           logo_url?: string | null
+          max_users?: number | null
           name_kk?: string
           name_ru?: string
           phone?: string | null
@@ -3279,6 +3321,7 @@ export type Database = {
           message_text: string
           next_retry_at: string
           notification_id: string | null
+          reply_markup: Json | null
           sent_at: string | null
           status: string
           user_id: string | null
@@ -3294,6 +3337,7 @@ export type Database = {
           message_text: string
           next_retry_at?: string
           notification_id?: string | null
+          reply_markup?: Json | null
           sent_at?: string | null
           status?: string
           user_id?: string | null
@@ -3309,6 +3353,7 @@ export type Database = {
           message_text?: string
           next_retry_at?: string
           notification_id?: string | null
+          reply_markup?: Json | null
           sent_at?: string | null
           status?: string
           user_id?: string | null
@@ -3323,6 +3368,44 @@ export type Database = {
           },
           {
             foreignKeyName: "telegram_outbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_pending_actions: {
+        Row: {
+          action: string
+          chat_id: string
+          created_at: string
+          expires_at: string
+          message_id: number | null
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          action: string
+          chat_id: string
+          created_at?: string
+          expires_at: string
+          message_id?: number | null
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          action?: string
+          chat_id?: string
+          created_at?: string
+          expires_at?: string
+          message_id?: number | null
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_pending_actions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -3355,11 +3438,13 @@ export type Database = {
         Row: {
           email_document_returned: boolean
           email_enabled: boolean
+          email_hr_events: boolean
           email_task_assigned: boolean
           email_workflow_events: boolean
           telegram_chat_id: string | null
           telegram_document_returned: boolean
           telegram_enabled: boolean
+          telegram_hr_events: boolean
           telegram_linked_at: string | null
           telegram_task_assigned: boolean
           telegram_username: string | null
@@ -3370,11 +3455,13 @@ export type Database = {
         Insert: {
           email_document_returned?: boolean
           email_enabled?: boolean
+          email_hr_events?: boolean
           email_task_assigned?: boolean
           email_workflow_events?: boolean
           telegram_chat_id?: string | null
           telegram_document_returned?: boolean
           telegram_enabled?: boolean
+          telegram_hr_events?: boolean
           telegram_linked_at?: string | null
           telegram_task_assigned?: boolean
           telegram_username?: string | null
@@ -3385,11 +3472,13 @@ export type Database = {
         Update: {
           email_document_returned?: boolean
           email_enabled?: boolean
+          email_hr_events?: boolean
           email_task_assigned?: boolean
           email_workflow_events?: boolean
           telegram_chat_id?: string | null
           telegram_document_returned?: boolean
           telegram_enabled?: boolean
+          telegram_hr_events?: boolean
           telegram_linked_at?: string | null
           telegram_task_assigned?: boolean
           telegram_username?: string | null
@@ -4060,6 +4149,7 @@ export type Database = {
           message_text: string
           next_retry_at: string
           notification_id: string | null
+          reply_markup: Json | null
           sent_at: string | null
           status: string
           user_id: string | null
@@ -4249,6 +4339,11 @@ export type Database = {
           notify_on_tasks: boolean
         }[]
       }
+      organization_can_add_user: {
+        Args: { p_org_id: string }
+        Returns: boolean
+      }
+      organization_user_count: { Args: { p_org_id: string }; Returns: number }
       queue_webhook_event: {
         Args: { _event: string; _payload: Json }
         Returns: number
@@ -4257,18 +4352,32 @@ export type Database = {
         Args: { _permission?: string; _table: string }
         Returns: undefined
       }
-      register_app_user: {
-        Args: {
-          p_auth_method?: string
-          p_email: string
-          p_full_name_kk: string
-          p_full_name_ru: string
-          p_iin?: string
-          p_locale?: string
-          p_password: string
-        }
-        Returns: string
-      }
+      register_app_user:
+        | {
+            Args: {
+              p_auth_method?: string
+              p_email: string
+              p_full_name_kk: string
+              p_full_name_ru: string
+              p_iin?: string
+              p_locale?: string
+              p_password: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_auth_method?: string
+              p_email: string
+              p_full_name_kk: string
+              p_full_name_ru: string
+              p_iin?: string
+              p_locale?: string
+              p_organization_id?: string
+              p_password: string
+            }
+            Returns: string
+          }
       release_stale_outbox_claims: {
         Args: { _stale_minutes?: number }
         Returns: Json
@@ -4406,6 +4515,7 @@ export type Database = {
         | "signer"
         | "archivist"
         | "viewer"
+        | "platform_admin"
       document_status:
         | "draft"
         | "in_review"
@@ -4565,6 +4675,7 @@ export const Constants = {
         "signer",
         "archivist",
         "viewer",
+        "platform_admin",
       ],
       document_status: [
         "draft",

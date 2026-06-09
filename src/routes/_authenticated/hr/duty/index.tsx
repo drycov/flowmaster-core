@@ -120,7 +120,7 @@ function DutySchedulePage() {
 
 
 
-  const { canModule } = useAccessContext();
+  const { canModule, me } = useAccessContext();
 
   const canManage = canModule("hr", "manage");
 

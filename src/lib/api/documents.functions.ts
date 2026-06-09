@@ -5,8 +5,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enforceModuleLicense, requireModuleAccess, requirePermission } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
+import { registerBodyContentVersion } from "@/lib/documents/versions.server";
 import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
 import { runSignatureVerification } from "@/lib/api/signatures.functions";
+import { assertCanManageDocumentAccessGrants } from "@/lib/api/document-access-grants.server";
 import {
   ALLOWED_DIRECT_STATUS,
   applyDocumentStatusTransition,
@@ -179,6 +181,14 @@ export const getDocument = createServerFn({ method: "POST" })
       document.content_restricted = false;
     }
 
+    let can_manage_access_grants = false;
+    try {
+      await assertCanManageDocumentAccessGrants(supabase, context.userId, data.id);
+      can_manage_access_grants = true;
+    } catch {
+      can_manage_access_grants = false;
+    }
+
     return {
       document,
       versions: canViewContent ? (versions.data ?? []) : [],
@@ -190,6 +200,7 @@ export const getDocument = createServerFn({ method: "POST" })
       contract_details: contract.data ?? null,
       document_correspondents: parties.data ?? [],
       content_restricted: !canViewContent,
+      can_manage_access_grants,
     };
   });
 
@@ -378,26 +389,11 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (patchIn.body !== undefined) {
-      const bodyText = patchIn.body ?? "";
-      const { data: latest } = await supabase
-        .from("document_versions")
-        .select("version_no")
-        .eq("document_id", id)
-        .order("version_no", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const nextNo = (latest?.version_no ?? 0) + 1;
-      const { sha256Hex } = await import("@/lib/documents/content-hash.server");
-      const contentHash = sha256Hex(bodyText);
-      await supabase.from("document_versions").insert({
-        document_id: id,
-        version_no: nextNo,
-        body_snapshot: bodyText,
-        content_hash: contentHash,
-        comment: "Редактирование содержимого",
-        created_by: userId,
-      } as never);
-      await supabase.from("documents").update({ current_version: nextNo } as never).eq("id", id);
+      await registerBodyContentVersion(supabase, {
+        documentId: id,
+        userId,
+        body: patchIn.body ?? "",
+      });
     }
 
     return { ok: true };

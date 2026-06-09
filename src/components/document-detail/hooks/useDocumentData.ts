@@ -30,12 +30,20 @@ export function useDocumentData(id: string) {
     queryFn: async () => {
       try {
         return await getDocument({ data: { id } });
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const isNotFound =
+          /not found|не найден|PGRST116|No rows|permission denied|доступ/i.test(message);
+
+        if (!isNotFound) {
+          throw err;
+        }
+
         const access = await getDocumentAccessState({ data: { document_id: id } });
         if (access.exists && !access.can_view) {
           return { access_denied: true as const, access };
         }
-        throw new Error("Document not found");
+        throw err;
       }
     },
     

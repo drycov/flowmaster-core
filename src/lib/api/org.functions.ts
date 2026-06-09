@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { upsertRow } from "@/lib/api/db.helpers.server";
 import { requireModuleAccess } from "./_helpers";
 
 /* ============ ORGANIZATION ============ */
@@ -77,21 +78,13 @@ export const upsertPosition = createServerFn({ method: "POST" })
   .inputValidator(positionSchema)
   .handler(async ({ data, context }) => {
     await requireModuleAccess(context.supabase, context.userId, "admin_org", { action: "write" });
-    if (data.id) {
-      const { id, ...patch } = data;
-      const { error } = await context.supabase.from("positions").update(patch as never).eq("id", id);
-      if (error) throw new Error(error.message);
-      return { id };
-    }
-    const { id: _omit, ...insert } = data;
-    void _omit;
-    const { data: row, error } = await context.supabase
-      .from("positions")
-      .insert(insert as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase: context.supabase,
+      table: "positions",
+      row: data,
+      id: data.id,
+    });
+    return { id: String(row.id) };
   });
 
 export const deletePosition = createServerFn({ method: "POST" })

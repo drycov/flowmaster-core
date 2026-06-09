@@ -1,7 +1,9 @@
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { useState, useMemo, useCallback } from "react";
+import { useI18n } from "@/i18n";
 
 import { ROLES, Role } from "../domain/roles";
+import type { User } from "../domain/types";
 import { useUsersQuery } from "../hooks/useUsersQuery";
 import { useRoleMutation } from "../hooks/useRoleMutation";
 
@@ -15,7 +17,7 @@ export function UsersAdmin() {
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const { data = [] } = useUsersQuery();
 

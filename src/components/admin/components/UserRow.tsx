@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "../domain/roles";
 import { User } from "../domain/types";
-import { localized } from "@/i18n";
+import { localized, type Locale } from "@/i18n";
 
 export function UserRow({
   user,
@@ -17,7 +17,7 @@ export function UserRow({
 }: {
   user: User;
   roles: readonly Role[];
-  locale: string;
+  locale: Locale;
   isUpdating: boolean;
   updatingUserId: string | null;
   updatingRole: Role | null;

@@ -75,36 +75,21 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
       schema_version: data.definition.schema_version ?? 2,
     };
 
-    if (data.id) {
-      const { error } = await supabase
-        .from("workflows")
-        .update({
-          name_ru: data.name_ru,
-          name_kk: data.name_kk,
-          description: data.description ?? null,
-          status: data.status,
-          definition,
-          version,
-        } as never)
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-      return { id: data.id, version };
-    }
-    const { data: row, error } = await supabase
-      .from("workflows")
-      .insert({
+    const row = await upsertRow({
+      supabase,
+      table: "workflows",
+      row: {
         name_ru: data.name_ru,
         name_kk: data.name_kk,
         description: data.description ?? null,
         status: data.status,
         definition,
         version,
-        created_by: userId,
-      } as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+      },
+      id: data.id,
+      insertOnly: { created_by: userId },
+    });
+    return { id: String(row.id), version };
   });
 
 // ============== START RUN ==============

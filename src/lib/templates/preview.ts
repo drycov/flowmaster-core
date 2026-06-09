@@ -8,28 +8,34 @@ export type TemplateFieldLabel = {
 };
 
 export const buildFilledBodyPreviewHtml = createIsomorphicFn()
-  .server(async () => "")
+  .server(async (_body: string, _values: Record<string, string>) => "")
   .client(async (body: string, values: Record<string, string>) => {
     const { buildFilledBodyPreviewHtml: impl } = await import("./preview.client");
     return impl(body, values);
   });
 
 export const buildBodyPreviewHtml = createIsomorphicFn()
-  .server(async () => "")
+  .server(async (_body: string, _fields: TemplateFieldLabel[]) => "")
   .client(async (body: string, fields: TemplateFieldLabel[]) => {
     const { buildBodyPreviewHtml: impl } = await import("./preview.client");
     return impl(body, fields);
   });
 
 export const xlsxBlobToPreviewHtml = createIsomorphicFn()
-  .server(async () => "")
+  .server(async (_blob: Blob) => "")
   .client(async (blob: Blob) => {
     const { xlsxBlobToPreviewHtml: impl } = await import("./preview.client");
     return impl(blob);
   });
 
 export const renderDocxPreview = createIsomorphicFn()
-  .server(async () => {})
+  .server(
+    async (
+      _blob: Blob,
+      _bodyContainer: HTMLElement,
+      _styleContainer?: HTMLElement | null,
+    ) => {},
+  )
   .client(
     async (
       blob: Blob,

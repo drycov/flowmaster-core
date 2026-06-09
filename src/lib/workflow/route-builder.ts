@@ -1,5 +1,7 @@
 import type { WorkflowDefinition, WorkflowNode, WorkflowEdge, NodeType } from "@/components/workflow-designer/types";
 
+export type { WorkflowDefinition, WorkflowNode, WorkflowEdge };
+
 export type ModifyNodeOverride = {
   id: string;
   enabled: boolean;

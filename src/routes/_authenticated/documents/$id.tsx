@@ -154,8 +154,9 @@ function DocumentDetail() {
 
   const canReviewAccess =
     me?.roles?.includes("admin") ||
-    doc.created_by === me?.profile?.id ||
-    !!me?.permissions?.view_all_documents;
+    doc.created_by === (me?.profile as { id?: string } | undefined)?.id ||
+    !!me?.permissions?.manage_documents ||
+    !!(data as { can_manage_access_grants?: boolean }).can_manage_access_grants;
 
   const docTypeCode =
     (doc as { ref_document_types?: { code?: string } }).ref_document_types?.code ?? doc.doc_type;

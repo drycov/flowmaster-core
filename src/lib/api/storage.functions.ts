@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  registerUploadedFileVersion,
+  resolveNextDocumentVersionNo,
+} from "@/lib/documents/versions.server";
 import { requireModuleAccess } from "./_helpers";
 import {
   STORAGE_BUCKETS,
@@ -64,15 +68,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
 
     if (docErr || !doc) throw new Error("Документ не найден");
 
-    const { data: versions } = await supabase
-      .from("document_versions")
-      .select("version_no")
-      .eq("document_id", data.document_id)
-      .order("version_no", { ascending: false })
-      .limit(1);
-
-    const nextVersion =
-      Math.max(doc.current_version ?? 0, versions?.[0]?.version_no ?? 0) + 1;
+    const nextVersion = await resolveNextDocumentVersionNo(supabase, data.document_id);
 
     const storagePath = documentVersionPath(
       data.document_id,
@@ -138,32 +134,16 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
     if (docErr) throw new Error(docErr.message);
 
     const bodySnapshot = (doc as { body?: string | null } | null)?.body ?? null;
-    const { sha256Hex } = await import("@/lib/documents/content-hash.server");
-    const contentHash = bodySnapshot ? sha256Hex(bodySnapshot) : null;
 
-    const { data: version, error } = await supabase
-      .from("document_versions")
-      .insert({
-        document_id: data.document_id,
-        version_no: data.version_no,
-        file_path: data.storage_path,
-        file_format: data.file_format ?? null,
-        comment: data.comment ?? null,
-        body_snapshot: bodySnapshot,
-        content_hash: contentHash,
-        created_by: userId,
-      } as never)
-      .select("id, version_no, file_path, file_format, created_at")
-      .single();
-
-    if (error) throw new Error(error.message);
-
-    await supabase
-      .from("documents")
-      .update({ current_version: data.version_no } as never)
-      .eq("id", data.document_id);
-
-    return version;
+    return registerUploadedFileVersion(supabase, {
+      documentId: data.document_id,
+      userId,
+      versionNo: data.version_no,
+      storagePath: data.storage_path,
+      fileFormat: data.file_format,
+      comment: data.comment,
+      bodySnapshot,
+    });
   });
 
 /** Upload template file to storage and link to template record. */

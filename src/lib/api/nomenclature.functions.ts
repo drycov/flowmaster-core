@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { upsertRow } from "@/lib/api/db.helpers.server";
 import { requireModuleAccess } from "./_helpers";
 
 export const listNomenclature = createServerFn({ method: "GET" })
@@ -32,23 +33,13 @@ export const upsertNomenclature = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireModuleAccess(context.supabase, context.userId, "nomenclature", { action: "manage" });
     const { supabase } = context;
-    if (data.id) {
-      const { error } = await supabase
-        .from("nomenclature_items")
-        .update(data as never)
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-      return { id: data.id };
-    }
-    const { id: _id, ...insert } = data;
-    void _id;
-    const { data: row, error } = await supabase
-      .from("nomenclature_items")
-      .insert(insert as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase,
+      table: "nomenclature_items",
+      row: data,
+      id: data.id,
+    });
+    return { id: String(row.id) };
   });
 
 export const deleteNomenclature = createServerFn({ method: "POST" })

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { upsertRow } from "@/lib/api/db.helpers.server";
 import { requireModuleAccess, requireAnyPermission } from "./_helpers";
 
 const dutySelect = `
@@ -95,19 +96,17 @@ export const createDutyAssignment = createServerFn({ method: "POST" })
     if (data.substitute_id && data.substitute_id === data.assignee_id) {
       throw new Error("Замещающий не может совпадать с дежурным");
     }
-    const { data: row, error } = await context.supabase
-      .from("duty_assignments" as never)
-      .insert({
+    const row = await upsertRow({
+      supabase: context.supabase,
+      table: "duty_assignments",
+      row: {
         ...data,
         substitute_id: data.substitute_id ?? null,
         note: data.note?.trim() ?? "",
-        created_by: context.userId,
-        status: "scheduled",
-      } as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+      },
+      insertOnly: { created_by: context.userId, status: "scheduled" },
+    });
+    return { id: String(row.id) };
   });
 
 export const cancelDutyAssignment = createServerFn({ method: "POST" })
@@ -179,22 +178,15 @@ export const upsertWorkTimeEntry = createServerFn({ method: "POST" })
       description: data.description?.trim() ?? "",
       status: "draft",
     };
-    if (data.id) {
-      const { error } = await context.supabase
-        .from("work_time_entries" as never)
-        .update(payload as never)
-        .eq("id", data.id)
-        .eq("user_id", context.userId);
-      if (error) throw new Error(error.message);
-      return { id: data.id };
-    }
-    const { data: row, error } = await context.supabase
-      .from("work_time_entries" as never)
-      .insert({ ...payload, user_id: context.userId } as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase: context.supabase,
+      table: "work_time_entries",
+      row: payload,
+      id: data.id,
+      insertOnly: { user_id: context.userId },
+      updateEq: data.id ? { user_id: context.userId } : undefined,
+    });
+    return { id: String(row.id) };
   });
 
 export const submitWorkTimeEntries = createServerFn({ method: "POST" })
@@ -294,21 +286,13 @@ export const upsertSchedulePlanItem = createServerFn({ method: "POST" })
       item_type: data.item_type ?? "task",
       depends_on_id: data.depends_on_id ?? null,
     };
-    if (data.id) {
-      const { error } = await context.supabase
-        .from("schedule_plan_items" as never)
-        .update(payload as never)
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-      return { id: data.id };
-    }
-    const { data: row, error } = await context.supabase
-      .from("schedule_plan_items" as never)
-      .insert(payload as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase: context.supabase,
+      table: "schedule_plan_items",
+      row: payload,
+      id: data.id,
+    });
+    return { id: String(row.id) };
   });
 
 export const createSchedulePlan = createServerFn({ method: "POST" })
@@ -332,15 +316,11 @@ export const createSchedulePlan = createServerFn({ method: "POST" })
       "manage_projects",
       "manage_hr",
     ]);
-    const { data: row, error } = await context.supabase
-      .from("schedule_plans" as never)
-      .insert({
-        ...data,
-        owner_id: context.userId,
-        status: "active",
-      } as never)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase: context.supabase,
+      table: "schedule_plans",
+      row: data,
+      insertOnly: { owner_id: context.userId, status: "active" },
+    });
+    return { id: String(row.id) };
   });

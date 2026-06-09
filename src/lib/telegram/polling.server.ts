@@ -63,7 +63,7 @@ export async function pollTelegramUpdatesOnce(timeoutSec = 25): Promise<number> 
     const result = await callTelegramApi<TelegramUpdate[]>("getUpdates", {
       offset: state.pollOffset,
       timeout: timeoutSec,
-      allowed_updates: ["message"],
+      allowed_updates: ["message", "callback_query"],
     });
 
     if (!result.ok || !result.result?.length) {
