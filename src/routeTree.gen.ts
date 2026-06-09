@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminPermissionsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminOrganizationRouteImport } from './routes/_authenticated/admin/organization'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
+import { Route as ApiPublicHooksSlaTickRouteImport } from './routes/api/public/hooks/sla-tick'
 import { Route as AuthenticatedAdminUsersIdRouteImport } from './routes/_authenticated/admin/users/$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -174,6 +175,11 @@ const AuthenticatedAdminUsersIndexRoute =
     path: '/admin/users/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicHooksSlaTickRoute = ApiPublicHooksSlaTickRouteImport.update({
+  id: '/api/public/hooks/sla-tick',
+  path: '/api/public/hooks/sla-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminUsersIdRoute =
   AuthenticatedAdminUsersIdRouteImport.update({
     id: '/admin/users/$id',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflows': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/_authenticated/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/templates/'
     | '/workflows/'
     | '/admin/users/$id'
+    | '/api/public/hooks/sla-tick'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/workflows'
     | '/admin/users/$id'
+    | '/api/public/hooks/sla-tick'
     | '/admin/users'
   id:
     | '__root__'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/_authenticated/templates/'
     | '/_authenticated/workflows/'
     | '/_authenticated/admin/users/$id'
+    | '/api/public/hooks/sla-tick'
     | '/_authenticated/admin/users/'
   fileRoutesById: FileRoutesById
 }
@@ -353,6 +365,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksSlaTickRoute: typeof ApiPublicHooksSlaTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -532,6 +545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/sla-tick': {
+      id: '/api/public/hooks/sla-tick'
+      path: '/api/public/hooks/sla-tick'
+      fullPath: '/api/public/hooks/sla-tick'
+      preLoaderRoute: typeof ApiPublicHooksSlaTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/users/$id': {
       id: '/_authenticated/admin/users/$id'
       path: '/admin/users/$id'
@@ -601,17 +621,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksSlaTickRoute: ApiPublicHooksSlaTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

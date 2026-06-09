@@ -50,6 +50,10 @@ export const toDomainNode = (n: FlowNode): WorkflowNode => ({
   config: {
     ...(n.data.config ?? {}),
     is_required: (n.data.config as { is_required?: boolean } | undefined)?.is_required ?? true,
+    timeout_action:
+      (n.data.config as { timeout_action?: string } | undefined)?.timeout_action ?? "notify",
+    escalation_role:
+      (n.data.config as { escalation_role?: string } | undefined)?.escalation_role ?? null,
   },
 });
 

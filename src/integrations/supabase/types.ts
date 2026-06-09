@@ -1066,7 +1066,10 @@ export type Database = {
           decision: string | null
           document_id: string
           due_at: string | null
+          escalated_at: string | null
+          escalation_level: number
           id: string
+          last_sla_check: string | null
           node_id: string
           node_type: string
           run_id: string
@@ -1082,7 +1085,10 @@ export type Database = {
           decision?: string | null
           document_id: string
           due_at?: string | null
+          escalated_at?: string | null
+          escalation_level?: number
           id?: string
+          last_sla_check?: string | null
           node_id: string
           node_type: string
           run_id: string
@@ -1098,7 +1104,10 @@ export type Database = {
           decision?: string | null
           document_id?: string
           due_at?: string | null
+          escalated_at?: string | null
+          escalation_level?: number
           id?: string
+          last_sla_check?: string | null
           node_id?: string
           node_type?: string
           run_id?: string
@@ -1170,6 +1179,7 @@ export type Database = {
         Args: { _comment?: string; _decision: string; _task_id: string }
         Returns: Json
       }
+      app_sla_tick: { Args: never; Returns: Json }
       can_view_document: {
         Args: { _doc_id: string; _user: string }
         Returns: boolean
