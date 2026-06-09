@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, XAxis, YAxis, Cell } from "recharts";
@@ -20,7 +20,7 @@ import { downloadCsv, reportsToCsv } from "@/lib/reports/export-csv";
 import { Download, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/reports")({
-  beforeLoad: () => requireAnyPermission("view_all_documents"),
+  beforeLoad: () => requireModule("reports", "read"),
   component: ReportsPage,
 });
 

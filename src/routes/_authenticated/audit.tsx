@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -41,10 +40,7 @@ const ENTITY_TYPES = [
 ];
 
 export const Route = createFileRoute("/_authenticated/audit")({
-  beforeLoad: async () => {
-    await requireAnyPermission("view_audit");
-    await requireLicenseModule("audit");
-  },
+  beforeLoad: () => requireModule("audit"),
   component: AuditPage,
 });
 

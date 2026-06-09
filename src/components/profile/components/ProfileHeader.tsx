@@ -3,6 +3,7 @@ import { Mail, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AvatarUpload } from "./AvatarUpload";
 import { useI18n } from "@/i18n";
+import { roleLabel } from "@/i18n/helpers";
 import { format } from "date-fns";
 import { ru, kk } from "date-fns/locale";
 import type { UserProfile } from "../types";
@@ -57,7 +58,7 @@ export function ProfileHeader({
         <div className="flex flex-wrap gap-2 mt-3">
           {roles.map((role) => (
             <Badge key={role} variant="secondary">
-              {t(`roles.${role}`) || role}
+              {roleLabel(t, role)}
             </Badge>
           ))}
           {profile.has_eds && (

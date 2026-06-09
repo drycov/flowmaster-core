@@ -1,8 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { requireModuleAccess } from "./_helpers";
 import {
   STORAGE_BUCKETS,
   documentVersionPath,
@@ -54,7 +53,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
 
     const { data: doc, error: docErr } = await supabase
@@ -114,7 +113,7 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
 
     const docIdFromPath = parseDocumentIdFromPath(data.storage_path);
@@ -131,8 +130,16 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
       throw new Error("Файл не найден в хранилище. Сначала выполните загрузку.");
     }
 
-    const bodySnapshot = (doc as { body?: string | null }).body ?? null;
-    const contentHash = createHash("sha256").update(data.storage_path).digest("hex");
+    const { data: doc, error: docErr } = await supabase
+      .from("documents")
+      .select("body")
+      .eq("id", data.document_id)
+      .maybeSingle();
+    if (docErr) throw new Error(docErr.message);
+
+    const bodySnapshot = (doc as { body?: string | null } | null)?.body ?? null;
+    const { sha256Hex } = await import("@/lib/documents/content-hash.server");
+    const contentHash = bodySnapshot ? sha256Hex(bodySnapshot) : null;
 
     const { data: version, error } = await supabase
       .from("document_versions")
@@ -169,8 +176,7 @@ export const uploadTemplateFile = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
 
     const expectedPrefix = `${data.template_id}/`;
     if (!data.storage_path.startsWith(expectedPrefix)) {
@@ -213,8 +219,7 @@ export const prepareTemplateUpload = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
 
     const format = detectTemplateFormat(data.filename);
     if (!format) {
@@ -234,6 +239,6 @@ export const prepareTemplateUpload = createServerFn({ method: "POST" })
 export const getStorageS3Info = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "read" });
     return getS3PublicInfo();
   });

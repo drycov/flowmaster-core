@@ -7,6 +7,7 @@ import { setSession } from "@/lib/auth/session-storage";
 import { resetSupabaseClient } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { ncalayerErrorMessage } from "@/i18n/ncalayer-messages";
+import { parseServerValidationError } from "../validation";
 import type { AuthMode } from "../types";
 
 export function useEdsAuth() {
@@ -16,9 +17,11 @@ export function useEdsAuth() {
 
   const signInWithEds = async (
     mode: AuthMode,
-    fullName?: string,
+    fullNameRu?: string,
+    fullNameKk?: string,
     linkEmail?: string,
     linkPassword?: string,
+    tenantSlug?: string,
   ) => {
     setLoading(true);
     try {
@@ -38,14 +41,15 @@ export function useEdsAuth() {
             bin: signed.certInfo.bin,
             cn: signed.certInfo.cn,
           },
-          full_name_ru: fullName,
-          full_name_kk: fullName,
+          full_name_ru: fullNameRu,
+          full_name_kk: fullNameKk || fullNameRu,
           link_email: linkEmail || undefined,
           link_password: linkPassword || undefined,
+          tenant_slug: tenantSlug?.trim() || undefined,
         },
       });
 
-      setSession(result.access_token, result.user);
+      setSession(result.access_token, result.user, result.access_expires_in);
       resetSupabaseClient();
 
       toast.success(
@@ -56,7 +60,12 @@ export function useEdsAuth() {
       if (e instanceof NCALayerError) {
         toast.error(ncalayerErrorMessage(t, e));
       } else {
-        toast.error(e instanceof Error ? e.message : t("auth.toast.edsError"));
+        const fallback = t("auth.toast.edsError");
+        const message =
+          e instanceof Error
+            ? (parseServerValidationError(e.message, t) ?? e.message)
+            : fallback;
+        toast.error(message);
       }
       throw e;
     } finally {

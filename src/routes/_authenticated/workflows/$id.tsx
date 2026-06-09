@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -48,9 +49,8 @@ import { EDMS_DOCUMENT_FIELDS } from "@/lib/workflow/document-fields";
 
 
 export const Route = createFileRoute("/_authenticated/workflows/$id")({
-
+  beforeLoad: () => requireModule("workflows"),
   component: WorkflowDesignerPage,
-
 });
 
 

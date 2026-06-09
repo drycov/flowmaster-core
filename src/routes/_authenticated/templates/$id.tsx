@@ -1,6 +1,7 @@
 // src/routes/_authenticated/templates/$id.tsx
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import type { TemplateSyncResult } from "@/components/template-editor/types";
 import { useTemplateAutoSyncFields } from "@/components/template-editor/hooks/useTemplateAutoSyncFields";
 
 export const Route = createFileRoute("/_authenticated/templates/$id")({
+  beforeLoad: () => requireModule("templates"),
   component: TemplateEditor,
 });
 

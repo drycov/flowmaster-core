@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { getStoredUser } from "@/lib/auth/session-storage";
+import { useAccessContext } from "@/lib/access/hooks";
 
 import { PageHeader, PageBody } from "@/components/AppShell";
 
@@ -30,13 +31,14 @@ import { ProfileInfo } from "./components/ProfileInfo";
 
 import { ProfileForm } from "./components/ProfileForm";
 
-import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
-import { AuthMethodsCard } from "./components/AuthMethodsCard";
 import { EdsConnectionCard } from "./components/EdsConnectionCard";
 
 import { AssignmentsCard } from "./components/AssignmentsCard";
-import { SubstitutionsCard } from "./components/SubstitutionsCard";
-import { NotificationPreferencesCard } from "./components/NotificationPreferencesCard";
+import { ProfileSecurityTab } from "./components/ProfileSecurityTab";
+import { ProfileHrCard } from "./components/ProfileHrCard";
+import { MyAccessLevelCard } from "./components/MyAccessLevelCard";
+import { UserAccessLevelCard } from "./components/UserAccessLevelCard";
+import { AdminResetPasswordCard } from "@/components/admin/users/AdminResetPasswordCard";
 
 import type { ProfileFormData, PasswordFormData } from "./types";
 
@@ -59,8 +61,7 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
   const navigate = useNavigate();
 
   const currentUserId = getStoredUser()?.id ?? null;
-
-
+  const { can } = useAccessContext();
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -100,9 +101,7 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
 
 
 
-  const canEdit =
-
-    isOwnProfile || (currentUserId && profile?.roles?.includes("admin"));
+  const canEdit = isOwnProfile || can("manage_users");
 
 
 
@@ -217,17 +216,9 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
 
 
   const handlePasswordChange = async (data: PasswordFormData) => {
-
     if (isOwnProfile) {
-
       await updatePassword(data.newPassword);
-
-    } else {
-
-      toast.error(t("profile.cannotChangeOtherPassword"));
-
     }
-
   };
 
 
@@ -386,6 +377,23 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
 
               <AssignmentsCard userId={profile.id} />
 
+              {isOwnProfile ? <ProfileHrCard /> : null}
+
+              {isOwnProfile ? (
+                <MyAccessLevelCard accessLevelId={profile.access_level_id} />
+              ) : null}
+
+              {!isOwnProfile ? (
+                <UserAccessLevelCard
+                  userId={profile.id}
+                  accessLevelId={profile.access_level_id}
+                />
+              ) : null}
+
+              {!isOwnProfile && canEdit ? (
+                <AdminResetPasswordCard userId={profile.id} userLabel={displayName} />
+              ) : null}
+
             </TabsContent>
 
 
@@ -393,55 +401,12 @@ export default function ProfilePage({ viewUserId }: ProfilePageProps) {
             {isOwnProfile && (
 
               <TabsContent value="security">
-
-                <div className="bg-card border rounded-lg p-6 space-y-8">
-
-                  <div>
-
-                    <h3 className="text-lg font-medium mb-2">{t("profile.authMethods")}</h3>
-
-                    <p className="text-sm text-muted-foreground mb-4">
-
-                      {t("profile.authMethodsDescription")}
-
-                    </p>
-
-                    <AuthMethodsCard profile={profile} onUpdated={() => refetch()} />
-
-                  </div>
-
-                  <SubstitutionsCard />
-
-                  <NotificationPreferencesCard />
-
-                  {profile.has_password && (
-
-                    <div>
-
-                      <h3 className="text-lg font-medium mb-2">{t("profile.changePassword")}</h3>
-
-                      <p className="text-sm text-muted-foreground mb-4">
-
-                        {t("profile.changePasswordDescription")}
-
-                      </p>
-
-                      <ChangePasswordDialog
-
-                        onChangePassword={handlePasswordChange}
-
-                        isUpdating={isUpdatingPassword}
-
-                        requiresCurrentPassword
-
-                      />
-
-                    </div>
-
-                  )}
-
-                </div>
-
+                <ProfileSecurityTab
+                  profile={profile}
+                  onProfileUpdated={() => refetch()}
+                  onChangePassword={handlePasswordChange}
+                  isUpdatingPassword={isUpdatingPassword}
+                />
               </TabsContent>
 
             )}

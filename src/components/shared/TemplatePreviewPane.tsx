@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Eye, Loader2 } from "lucide-react";
-import { renderDocxPreview, type TemplatePreviewMode } from "@/lib/templates/preview.client";
+import { renderDocxPreview, type TemplatePreviewMode } from "@/lib/templates/preview";
+import type { TemplatePreviewStatus } from "@/lib/templates/preview-types";
 
-export type TemplatePreviewStatus = "idle" | "loading" | "ready" | "error";
+export type { TemplatePreviewStatus } from "@/lib/templates/preview-types";
 
 function DocxPreviewPane({ blob, className }: { blob: Blob; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);

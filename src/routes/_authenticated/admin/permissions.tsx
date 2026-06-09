@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/permissions")({
-  beforeLoad: () => requireAnyPermission("manage_roles"),
+  beforeLoad: () => requireModule("admin_roles", "manage"),
   component: PermissionsPage,
 });
 

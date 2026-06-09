@@ -1,20 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { processEmailOutbox } from "@/lib/email/outbox.server";
+import {
+  unauthorizedHookResponse,
+  verifyInternalHookRequest,
+} from "@/lib/internal-hook-auth.server";
+import { processDutyReminders } from "@/lib/scheduling/duty-reminders.server";
+import { processTelegramOutbox } from "@/lib/telegram/outbox.server";
 
 export const Route = createFileRoute("/api/public/hooks/email-dispatch")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = request.headers.get("apikey");
-        const expected =
-          process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
-        if (!expected || apiKey !== expected) {
-          return new Response("Unauthorized", { status: 401 });
+        if (!verifyInternalHookRequest(request)) {
+          return unauthorizedHookResponse();
         }
 
         try {
-          const result = await processEmailOutbox();
-          return new Response(JSON.stringify({ ok: true, ...result }), {
+          const [email, telegram, dutyReminders] = await Promise.all([
+            processEmailOutbox(),
+            processTelegramOutbox(),
+            processDutyReminders(),
+          ]);
+          return new Response(JSON.stringify({ ok: true, email, telegram, dutyReminders }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
           });

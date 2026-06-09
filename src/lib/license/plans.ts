@@ -7,14 +7,30 @@ export type PlanPreset = {
   trial_days?: number;
 };
 
-const ALL_FEATURES: LicenseFeatures = {
+const CORE_FEATURES: LicenseFeatures = {
   workflows: true,
   templates: true,
   eds_signing: true,
   archive: true,
   references: true,
   nomenclature: true,
+  correspondence: true,
+  substitutions: true,
+  counterparties: true,
+};
+
+const PROFESSIONAL_FEATURES: LicenseFeatures = {
+  ...CORE_FEATURES,
   audit: true,
+  knowledge_base: true,
+  projects: true,
+  contracts: true,
+  hr: true,
+};
+
+const ALL_FEATURES: LicenseFeatures = {
+  ...PROFESSIONAL_FEATURES,
+  integrations: true,
 };
 
 export const PLAN_PRESETS: Record<LicensePlan, PlanPreset> = {
@@ -28,19 +44,19 @@ export const PLAN_PRESETS: Record<LicensePlan, PlanPreset> = {
     plan: "standard",
     max_users: 25,
     features: {
-      workflows: true,
-      templates: true,
-      eds_signing: true,
-      archive: true,
-      references: true,
-      nomenclature: true,
+      ...CORE_FEATURES,
       audit: false,
+      knowledge_base: false,
+      projects: false,
+      contracts: false,
+      hr: false,
+      integrations: false,
     },
   },
   professional: {
     plan: "professional",
     max_users: 100,
-    features: ALL_FEATURES,
+    features: PROFESSIONAL_FEATURES,
   },
   enterprise: {
     plan: "enterprise",
@@ -68,6 +84,14 @@ export function featureLabel(feature: LicenseFeature, locale: "ru" | "kk"): stri
     references: { ru: "Справочники СЭД", kk: "СЭД анықтамалықтары" },
     nomenclature: { ru: "Номенклатура дел", kk: "Іс номенклатурасы" },
     audit: { ru: "Журнал аудита", kk: "Аудит журналы" },
+    knowledge_base: { ru: "База знаний", kk: "Білім базасы" },
+    projects: { ru: "Проекты документов", kk: "Құжат жобалары" },
+    contracts: { ru: "Договоры", kk: "Шарттар" },
+    counterparties: { ru: "Контрагенты", kk: "Контрагенттер" },
+    hr: { ru: "Кадры и отпуска", kk: "Кадрлар және демалыс" },
+    substitutions: { ru: "Замещения", kk: "Ауыстырулар" },
+    correspondence: { ru: "Корреспонденция", kk: "Корреспонденция" },
+    integrations: { ru: "Интеграции и API", kk: "Интеграциялар және API" },
   };
   return labels[feature][locale];
 }

@@ -1,59 +1,94 @@
-# Enhanced Vite React TypeScript Template
+# ЕСЭДО (Flowmaster Core)
 
-This template includes built-in detection for missing CSS variables between your Tailwind config and CSS files.
+Единая система электронного документооборота для организаций Казахстана: документы, маршруты согласования, ЭЦП (NCALayer), архив, грифы доступа, LDAP, Telegram, REST API v1.
 
-## Features
+## Возможности
 
-- **CSS Variable Detection**: Automatically detects if CSS variables referenced in `tailwind.config.cjs` are defined in `src/index.css`
-- **Enhanced Linting**: Includes ESLint, Stylelint, and custom CSS variable validation
-- **Shadcn/ui**: Pre-configured with all Shadcn components
-- **Modern Stack**: Vite + React + TypeScript + Tailwind CSS
+- Жизненный цикл документов: регистрация, версии, workflow, подписи, архив, legal hold
+- Роли и права, грифы доступа, временные grants
+- Шаблоны DOCX/XLSX, ONLYOFFICE, корреспонденция
+- База знаний, проекты, контракты, контрагенты
+- Уведомления: in-app, email, Telegram
+- Интеграции: API keys, webhooks, batch import
+- Лицензирование on-prem (FM1.*)
 
-## Available Scripts
+## Быстрый старт (разработка)
 
 ```bash
-# Run all linting (includes CSS variable check)
-npm run lint
+# 1. Зависимости
+npm ci --legacy-peer-deps
 
-# Check only CSS variables
-npm run check:css-vars
+# 2. Переменные окружения
+cp .env.example .env
+# Заполните SUPABASE_URL, ключи и JWT secret
 
-# Individual linting
-npm run lint:js    # ESLint
-npm run lint:css   # Stylelint
+# 3. Миграции БД (Supabase CLI)
+npx supabase db push
+
+# 4. Запуск
+npm run dev
 ```
 
-## CSS Variable Detection
+Приложение: `http://localhost:3000` (или порт из вывода Vite).
 
-The template includes a custom script that:
+Первый зарегистрированный пользователь получает роль **admin**. Остальные настройки (почта, LDAP, Telegram) — в **Администрирование → Настройки системы**.
 
-1. **Parses `tailwind.config.cjs`** to find all `var(--variable)` references
-2. **Parses `src/index.css`** to find all defined CSS variables (`--variable:`)
-3. **Cross-references** them to find missing definitions
-4. **Reports undefined variables** with clear error messages
+### E2E-тесты
 
-### Example Output
-
-When CSS variables are missing:
-```
-❌ Undefined CSS variables found in tailwind.config.cjs:
-   --sidebar-background
-   --sidebar-foreground
-   --sidebar-primary
-
-Add these variables to src/index.css
+```bash
+npm run test:e2e:install   # один раз: браузер Chromium
+# В .env задайте E2E_EMAIL и E2E_PASSWORD (пользователь с правами создания и согласования)
+npm run test:e2e
 ```
 
-When all variables are defined:
+Smoke-сценарий: вход → создание документа с кастомным маршрутом → согласование задачи. Без `E2E_EMAIL`/`E2E_PASSWORD` выполняются только публичные проверки (страница входа, `/api/health`).
+
+## Production
+
+```bash
+npm run build
+npm run start
 ```
-✅ All CSS variables in tailwind.config.cjs are defined
+
+Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+Docker:
+
+```bash
+docker compose up -d --build
 ```
 
-## How It Works
+## Документация
 
-The detection happens during the `npm run lint` command, which will:
-- Exit with error code 1 if undefined variables are found
-- Show exactly which variables need to be added to your CSS file
-- Integrate seamlessly with your development workflow
+| Документ | Описание |
+|----------|----------|
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Развёртывание, env, cron, backup |
+| [docs/SECURITY.md](docs/SECURITY.md) | Аутентификация, RLS, hardening |
+| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | API v1, webhooks, LDAP, Telegram |
+| [docs/STAGING.md](docs/STAGING.md) | Staging / UAT окружение |
+| [docs/UAT.md](docs/UAT.md) | Чеклист приёмочного тестирования |
+| [docs/api-v1.yaml](docs/api-v1.yaml) | OpenAPI спецификация REST API |
 
-This prevents runtime CSS issues where Tailwind classes reference undefined CSS variables.
+## Скрипты
+
+| Команда | Назначение |
+|---------|------------|
+| `npm run dev` | Dev-сервер |
+| `npm run build` | Production build |
+| `npm run start` | Запуск production (preview) |
+| `npm run test` | Unit-тесты (Vitest) |
+| `npm run test:e2e` | E2E smoke (Playwright) |
+| `npm run compose:staging` | Docker staging (app + cron) |
+| `npm run uat:preflight` | Pre-UAT health/cron checks |
+| `npm run lint` | ESLint |
+| `npm run license:generate` | Генерация лицензионного ключа FM1 |
+
+## Стек
+
+- **Frontend/SSR:** React 19, TanStack Start/Router/Query, Tailwind 4
+- **Backend:** Server Functions + Nitro, PostgreSQL (Supabase)
+- **Auth:** Email, LDAP, ЭЦП, Telegram (custom sessions + RLS)
+
+## Лицензия
+
+Проприетарное ПО. Активация ключа `FM1.*` в разделе **Настройки → Лицензия**.

@@ -2,6 +2,7 @@ import type { TFunction } from "./index";
 
 const ROLE_KEYS: Record<string, string> = {
   admin: "roles.admin",
+  platform_admin: "roles.platformAdmin",
   registrar: "roles.registrar",
   approver: "roles.approver",
   signer: "roles.signer",

@@ -51,11 +51,16 @@ export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
 
   if (!showEnableEmail) {
     return (
-      <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-        {t("profile.authMethodsConfigured")}
+      <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm text-muted-foreground">
+        <p>{t("profile.authMethodsConfigured")}</p>
+        {profile.email && !isEdsPlaceholderEmail(profile.email) && (
+          <p>
+            {t("profile.email")}: <span className="text-foreground">{profile.email}</span>
+          </p>
+        )}
         {profile.iin && (
-          <p className="mt-1">
-            {t("profile.linkedIin")}: <span className="font-mono">{profile.iin}</span>
+          <p>
+            {t("profile.linkedIin")}: <span className="font-mono text-foreground">{profile.iin}</span>
           </p>
         )}
       </div>

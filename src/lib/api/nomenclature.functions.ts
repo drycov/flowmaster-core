@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { requireModuleAccess } from "./_helpers";
 
 export const listNomenclature = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -30,8 +30,7 @@ export const upsertNomenclature = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_nomenclature");
-    await enforceLicense(context.supabase, { writable: true, feature: "nomenclature" });
+    await requireModuleAccess(context.supabase, context.userId, "nomenclature", { action: "manage" });
     const { supabase } = context;
     if (data.id) {
       const { error } = await supabase
@@ -56,8 +55,7 @@ export const deleteNomenclature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_nomenclature");
-    await enforceLicense(context.supabase, { writable: true, feature: "nomenclature" });
+    await requireModuleAccess(context.supabase, context.userId, "nomenclature", { action: "manage" });
     const { error } = await context.supabase.from("nomenclature_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

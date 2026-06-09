@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { listPositions, upsertPosition, deletePosition } from "@/lib/api/org.functions";
@@ -18,7 +18,7 @@ import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/positions")({
-  beforeLoad: () => requireAnyPermission("manage_org"),
+  beforeLoad: () => requireModule("admin_org"),
   component: PositionsPage,
 });
 

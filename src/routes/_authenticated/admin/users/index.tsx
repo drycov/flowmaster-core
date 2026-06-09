@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, useMemo } from "react";
 // Добавляем функцию createUser (убедитесь, что она экспортируется из вашего API)
@@ -25,8 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n, localized } from "@/i18n";
+import { roleLabel } from "@/i18n/helpers";
+import { useAccessContext } from "@/lib/access/hooks";
 import { toast } from "sonner";
 import { Loader2, Filter, UserPlus } from "lucide-react";
+import { AdminResetPasswordDialog } from "@/components/admin/users/AdminResetPasswordDialog";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -42,7 +45,7 @@ import {
 ======================= */
 
 export const Route = createFileRoute("/_authenticated/admin/users/")({
-  beforeLoad: () => requireAnyPermission("manage_users"),
+  beforeLoad: () => requireModule("admin_users"),
   component: UsersAdmin,
 });
 
@@ -59,10 +62,17 @@ const ROLES = [
   "viewer",
 ] as const;
 
+const PLATFORM_ROLE = "platform_admin" as const;
+
 type Role = (typeof ROLES)[number];
+type TableRole = Role | typeof PLATFORM_ROLE;
 
 function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
+}
+
+function isTableRole(value: string): value is TableRole {
+  return isRole(value) || value === PLATFORM_ROLE;
 }
 
 /* =======================
@@ -89,14 +99,17 @@ interface User {
   iin?: string | null;
   auth_method?: string | null;
   roles: Role[];
+  allRoles: string[];
   created_at?: string;
   last_sign_in_at?: string;
 }
 
 function mapUser(user: ApiUser): User {
+  const allRoles = user.roles ?? [];
   return {
     ...user,
-    roles: (user.roles ?? []).filter(isRole),
+    roles: allRoles.filter(isRole),
+    allRoles,
   };
 }
 
@@ -106,7 +119,7 @@ function mapUser(user: ApiUser): User {
 
 function UserRow({
   user,
-  roles,
+  tableRoles,
   onRoleChange,
   isUpdating,
   updatingUserId,
@@ -114,11 +127,11 @@ function UserRow({
   onRowClick,
 }: {
   user: User;
-  roles: readonly Role[];
-  onRoleChange: (userId: string, role: Role, enabled: boolean) => void;
+  tableRoles: readonly TableRole[];
+  onRoleChange: (userId: string, role: TableRole, enabled: boolean) => void;
   isUpdating: boolean;
   updatingUserId: string | null;
-  updatingRole: Role | null;
+  updatingRole: TableRole | null;
   onRowClick: (userId: string) => void;
 }) {
   const { t, locale } = useI18n();
@@ -173,8 +186,8 @@ function UserRow({
         </div>
       </td>
 
-      {roles.map((role) => {
-        const hasRole = user.roles.includes(role);
+      {tableRoles.map((role) => {
+        const hasRole = user.allRoles.includes(role);
         const isThisRoleUpdating = isUserUpdating && updatingRole === role;
 
         return (
@@ -196,6 +209,14 @@ function UserRow({
           </td>
         );
       })}
+      <td className="px-2 py-3 text-center align-middle">
+        <AdminResetPasswordDialog
+          userId={user.id}
+          userLabel={displayName}
+          variant="ghost"
+          size="icon"
+        />
+      </td>
     </tr>
   );
 }
@@ -215,7 +236,7 @@ function UserFilters({
   onSearchChange: (value: string) => void;
   roleFilter: string;
   onRoleFilterChange: (value: string) => void;
-  roles: readonly Role[];
+  roles: readonly TableRole[];
 }) {
   const { t } = useI18n();
 
@@ -238,7 +259,7 @@ function UserFilters({
           <SelectItem value="all">{t("users.allRoles")}</SelectItem>
           {roles.map((role) => (
             <SelectItem key={role} value={role}>
-              {t(`roles.${role}`) || role}
+              {roleLabel(t, role)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -256,28 +277,21 @@ function UsersStats({
   roles,
 }: {
   users: User[];
-  roles: readonly Role[];
+  roles: readonly TableRole[];
 }) {
   const { t } = useI18n();
 
   const roleCounts = useMemo(() => {
-    const counts: Record<Role, number> = {
-      admin: 0,
-      registrar: 0,
-      approver: 0,
-      signer: 0,
-      archivist: 0,
-      viewer: 0,
-    };
+    const counts = Object.fromEntries(roles.map((r) => [r, 0])) as Record<TableRole, number>;
 
     for (const u of users) {
-      for (const r of u.roles) {
-        if (r in counts) counts[r]++;
+      for (const r of u.allRoles) {
+        if (isTableRole(r)) counts[r]++;
       }
     }
 
     return counts;
-  }, [users]);
+  }, [users, roles]);
 
   return (
     <div className="flex flex-wrap gap-2 mb-5 text-sm items-center">
@@ -288,7 +302,7 @@ function UsersStats({
       {roles.map((role) =>
         roleCounts[role] > 0 ? (
           <Badge key={role} variant="outline" className="px-2.5 py-1 font-normal text-muted-foreground">
-            {t(`roles.${role}`) || role}: {roleCounts[role]}
+            {roleLabel(t, role)}: {roleCounts[role]}
           </Badge>
         ) : null
       )}
@@ -302,6 +316,13 @@ function UsersStats({
 
 function UsersAdmin() {
   const { t } = useI18n();
+  const { can } = useAccessContext();
+  const canManagePlatform = can("manage_platform");
+  const tableRoles = useMemo(
+    (): readonly TableRole[] =>
+      canManagePlatform ? [...ROLES, PLATFORM_ROLE] : ROLES,
+    [canManagePlatform],
+  );
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -347,7 +368,7 @@ function UsersAdmin() {
       enabled,
     }: {
       userId: string;
-      role: Role;
+      role: TableRole;
       enabled: boolean;
     }) =>
       setUserRole({
@@ -361,11 +382,13 @@ function UsersAdmin() {
       queryClient.setQueryData<User[]>(["users"], (old) =>
         old?.map((user) => {
           if (user.id !== userId) return user;
+          const allRoles = enabled
+            ? [...new Set([...user.allRoles, role])]
+            : user.allRoles.filter((r) => r !== role);
           return {
             ...user,
-            roles: enabled
-              ? [...user.roles, role]
-              : user.roles.filter((r) => r !== role),
+            allRoles,
+            roles: allRoles.filter(isRole),
           };
         })
       );
@@ -401,14 +424,15 @@ function UsersAdmin() {
         u.full_name_kk?.toLowerCase().includes(normalizedSearch);
 
       const matchRole =
-        roleFilter === "all" || u.roles.includes(roleFilter as Role);
+        roleFilter === "all" ||
+        (isTableRole(roleFilter) && u.allRoles.includes(roleFilter));
 
       return matchSearch && matchRole;
     });
   }, [data, searchTerm, roleFilter]);
 
   const handleRoleChange = useCallback(
-    (userId: string, role: Role, enabled: boolean) => {
+    (userId: string, role: TableRole, enabled: boolean) => {
       roleMutation.mutate({ userId, role, enabled });
     },
     [roleMutation]
@@ -453,10 +477,10 @@ function UsersAdmin() {
             onSearchChange={setSearchTerm}
             roleFilter={roleFilter}
             onRoleFilterChange={setRoleFilter}
-            roles={ROLES}
+            roles={tableRoles}
           />
 
-          <UsersStats users={data ?? []} roles={ROLES} />
+          <UsersStats users={data ?? []} roles={tableRoles} />
 
           <DataTableShell>
             <div className="overflow-x-auto">
@@ -464,14 +488,18 @@ function UsersAdmin() {
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left px-4 py-2">{t("users.columnUser")}</th>
-                    {ROLES.map((r) => (
+                    {tableRoles.map((r) => (
                       <th
                         key={r}
                         className="px-2 py-2 text-center whitespace-nowrap min-w-[110px]"
+                        title={r === PLATFORM_ROLE ? t("admin.users.platformRoleHint") : undefined}
                       >
-                        {t(`roles.${r}`) || r}
+                        {roleLabel(t, r)}
                       </th>
                     ))}
+                    <th className="px-2 py-2 text-center whitespace-nowrap w-12">
+                      {t("admin.users.actions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -480,7 +508,7 @@ function UsersAdmin() {
                       <UserRow
                         key={user.id}
                         user={user}
-                        roles={ROLES}
+                        tableRoles={tableRoles}
                         onRoleChange={handleRoleChange}
                         isUpdating={roleMutation.isPending}
                         updatingUserId={roleMutation.variables?.userId ?? null}
@@ -489,7 +517,7 @@ function UsersAdmin() {
                       />
                     ))
                   ) : (
-                    <TableStatusRow colSpan={ROLES.length + 1}>
+                    <TableStatusRow colSpan={tableRoles.length + 2}>
                       {t("users.noUsers")}
                     </TableStatusRow>
                   )}

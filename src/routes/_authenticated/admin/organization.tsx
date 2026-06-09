@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, useCallback } from "react";
 import { getOrganization, updateOrganization } from "@/lib/api/org.functions";
@@ -15,7 +15,7 @@ import { Loader2, Save, Building2, RefreshCw, Brain, Contact2 } from "lucide-rea
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/organization")({
-  beforeLoad: () => requireAnyPermission("manage_org"),
+  beforeLoad: () => requireModule("admin_org"),
   component: OrganizationPage,
 });
 

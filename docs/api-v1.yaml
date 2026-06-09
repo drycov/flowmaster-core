@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Flowmaster EDMS API v1
+  version: "1.0.0"
+  description: REST API for external integrations. Auth via API key (Bearer or X-Api-Key).
+
+servers:
+  - url: /api/v1
+
+components:
+  securitySchemes:
+    ApiKey:
+      type: http
+      scheme: bearer
+      description: API key with prefix fm_
+
+security:
+  - ApiKey: []
+
+paths:
+  /documents:
+    get:
+      summary: List documents
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200": { description: Paginated document list }
+    post:
+      summary: Create draft document
+      responses:
+        "201": { description: Created }
+
+  /documents/{id}:
+    get:
+      summary: Get document (content may be masked by access level)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Document }
+        "404": { description: Not found }
+    patch:
+      summary: Update document metadata and optional body
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Updated }
+
+  /documents/{id}/status:
+    patch:
+      summary: Update document status (draft, cancelled, archived)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+
+  /documents/{id}/versions:
+    post:
+      summary: Create text content version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+                comment: { type: string }
+      responses:
+        "201": { description: Version created }
+
+  /tasks:
+    get:
+      summary: List tasks for API key owner
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100 }
+
+  /tasks/{id}/complete:
+    post:
+      summary: Complete workflow task (approve/reject/return)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approve, reject, return]
+                comment: { type: string }
+
+  /contracts:
+    get:
+      summary: List contracts visible to API key owner
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+
+  /import/incoming:
+    post:
+      summary: Batch import incoming documents (max 500)
+      responses:
+        "200": { description: Import job result }

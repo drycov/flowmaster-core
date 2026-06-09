@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import {
   FileText,
   Layers,
@@ -45,7 +45,7 @@ const ICONS: Record<string, typeof FileText> = {
 };
 
 export const Route = createFileRoute("/_authenticated/references/")({
-  beforeLoad: () => requireLicenseModule("references"),
+  beforeLoad: () => requireModule("references"),
   component: ReferencesIndexPage,
 });
 

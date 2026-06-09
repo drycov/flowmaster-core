@@ -24,6 +24,7 @@ interface CreateDocumentParams {
   templateFields: TemplateField[];
   authorDefaults?: Record<string, string>;
   route?: RouteValue;
+  projectId?: string | null;
 }
 
 interface UseDocumentCreationOptions {
@@ -47,6 +48,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       templateFields,
       authorDefaults = {},
       route,
+      projectId,
     }: CreateDocumentParams) => {
       let titleRu = values.title_ru?.trim() ?? "";
       let titleKk = values.title_kk?.trim() ?? "";
@@ -155,6 +157,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             ...correspondenceFields,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
+            project_id: projectId ?? null,
           },
         });
       } else {
@@ -171,6 +174,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             ...correspondenceFields,
             workflow_id: graphDefinition || customRouteSteps ? null : resolvedWorkflowId,
             custom_route: (graphDefinition ?? customRouteSteps) as any,
+            project_id: projectId ?? null,
           },
         });
       }

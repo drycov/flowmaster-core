@@ -53,6 +53,15 @@ export function registrationJournalLabel(
   return prefix ? `${name} (${prefix})` : name;
 }
 
+export function accessLevelLabel(
+  doc: { ref_access_levels?: NamedRef | NamedRef[] | null },
+  locale: Locale,
+): string {
+  const joined = unwrapJoin(doc.ref_access_levels);
+  if (joined) return localized(joined as { name_ru: string; name_kk: string }, locale, "name");
+  return "—";
+}
+
 export function deliveryMethodLabel(
   doc: { ref_delivery_methods?: NamedRef | NamedRef[] | null },
   locale: Locale,

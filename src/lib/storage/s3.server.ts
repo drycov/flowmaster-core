@@ -1,11 +1,7 @@
 /**
  * Supabase Storage exposes an S3-compatible API.
- * Configure in project dashboard → Storage → S3 Access Keys:
- *
- *   SUPABASE_S3_ENDPOINT=https://<project-ref>.storage.supabase.co/storage/v1/s3
- *   SUPABASE_S3_REGION=auto
- *   SUPABASE_S3_ACCESS_KEY_ID=...
- *   SUPABASE_S3_SECRET_ACCESS_KEY=...
+ * Keys: Supabase Dashboard → Storage → S3 Access Keys.
+ * Values are stored in organization settings (Администрирование → Настройки → Интеграции).
  *
  * App code uses @supabase/supabase-js (auth-aware). This module is for
  * optional server-side S3 operations when credentials are present.
@@ -13,6 +9,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { loadSystemSettings } from "@/lib/auth/policy";
 import type { Database } from "@/integrations/supabase/types";
 import type { StorageBucket } from "./buckets";
 
@@ -23,22 +20,24 @@ export interface S3Config {
   secretAccessKey: string;
 }
 
-export function getS3Config(): S3Config | null {
-  const endpoint = process.env.SUPABASE_S3_ENDPOINT;
-  const accessKeyId = process.env.SUPABASE_S3_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.SUPABASE_S3_SECRET_ACCESS_KEY;
+export async function getS3Config(): Promise<S3Config | null> {
+  const settings = await loadSystemSettings();
+  const s3 = settings.integrations;
+  const endpoint = s3.s3_endpoint.trim();
+  const accessKeyId = s3.s3_access_key_id.trim();
+  const secretAccessKey = s3.s3_secret_access_key.trim();
   if (!endpoint || !accessKeyId || !secretAccessKey) return null;
   return {
     endpoint,
-    region: process.env.SUPABASE_S3_REGION ?? "auto",
+    region: s3.s3_region || "auto",
     accessKeyId,
     secretAccessKey,
   };
 }
 
 /** S3 endpoint hint for external tools (no secrets). */
-export function getS3PublicInfo() {
-  const cfg = getS3Config();
+export async function getS3PublicInfo() {
+  const cfg = await getS3Config();
   const projectRef = process.env.SUPABASE_PROJECT_REF;
   return {
     configured: Boolean(cfg),

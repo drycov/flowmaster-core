@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "./_helpers";
+import { requireModuleAccess } from "./_helpers";
 
 export type EdmsReports = {
   period_days: number;
@@ -27,7 +27,7 @@ export const getEdmsReports = createServerFn({ method: "POST" })
   .inputValidator(z.object({ days: z.number().int().min(7).max(365).default(30) }).optional())
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await requirePermission(supabase, userId, "view_all_documents");
+    await requireModuleAccess(supabase, userId, "reports", { action: "read" });
 
     const days = data?.days ?? 30;
     const { data: result, error } = await supabase.rpc("get_edms_reports" as never, {

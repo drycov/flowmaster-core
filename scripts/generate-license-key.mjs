@@ -17,16 +17,6 @@ import { resolve } from "node:path";
 
 const KEY_PREFIX = "FM1";
 
-const PLAN_PRESETS = {
-  trial: { max_users: 10, trial_days: 30, features: allFeatures() },
-  standard: {
-    max_users: 25,
-    features: { ...allFeatures(), audit: false },
-  },
-  professional: { max_users: 100, features: allFeatures() },
-  enterprise: { max_users: 9999, features: allFeatures() },
-};
-
 function allFeatures() {
   return {
     workflows: true,
@@ -36,8 +26,55 @@ function allFeatures() {
     references: true,
     nomenclature: true,
     audit: true,
+    knowledge_base: true,
+    projects: true,
+    contracts: true,
+    counterparties: true,
+    hr: true,
+    substitutions: true,
+    correspondence: true,
+    integrations: true,
   };
 }
+
+const CORE_FEATURES = {
+  workflows: true,
+  templates: true,
+  eds_signing: true,
+  archive: true,
+  references: true,
+  nomenclature: true,
+  correspondence: true,
+  substitutions: true,
+  counterparties: true,
+};
+
+const PROFESSIONAL_FEATURES = {
+  ...CORE_FEATURES,
+  audit: true,
+  knowledge_base: true,
+  projects: true,
+  contracts: true,
+  hr: true,
+};
+
+const PLAN_PRESETS = {
+  trial: { max_users: 10, trial_days: 30, features: allFeatures() },
+  standard: {
+    max_users: 25,
+    features: {
+      ...CORE_FEATURES,
+      audit: false,
+      knowledge_base: false,
+      projects: false,
+      contracts: false,
+      hr: false,
+      integrations: false,
+    },
+  },
+  professional: { max_users: 100, features: PROFESSIONAL_FEATURES },
+  enterprise: { max_users: 9999, features: allFeatures() },
+};
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), ".env");

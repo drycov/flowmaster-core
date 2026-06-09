@@ -1,13 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { enforceModuleLicense, requireModuleAccess, requirePermission } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
-import { ensureDocumentRegNumber } from "@/lib/documents/registration.server";
+import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
 import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
 import { runSignatureVerification } from "@/lib/api/signatures.functions";
+import {
+  ALLOWED_DIRECT_STATUS,
+  applyDocumentStatusTransition,
+} from "@/lib/documents/status-transition.server";
 
 const DOCUMENT_SELECT = `
   id, reg_number, doc_type, status, title_ru, title_kk, summary, body,
@@ -26,8 +29,13 @@ const DOCUMENT_SELECT = `
   ref_correspondents!documents_correspondent_id_fkey(id, code, name_ru, name_kk, bin),
   ref_registration_journals!documents_registration_journal_id_fkey(id, code, name_ru, name_kk, prefix),
   ref_delivery_methods!documents_delivery_method_id_fkey(id, code, name_ru, name_kk),
-  workflows!documents_workflow_id_fkey(name_ru, name_kk, definition)
+  ref_access_levels!documents_access_level_id_fkey(id, code, name_ru, name_kk, level_order),
+  workflows!documents_workflow_id_fkey(name_ru, name_kk, definition),
+  project_id,
+  document_projects!documents_project_id_fkey(id, code, name_ru, name_kk)
 `;
+
+const CONTENT_MASK = "[Гриф доступа: содержимое скрыто]";
 
 // ============== LIST ==============
 export const listDocuments = createServerFn({ method: "POST" })
@@ -48,7 +56,7 @@ export const listDocuments = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data?.scope === "archive") {
-      await enforceLicense(supabase, { featureRead: "archive" });
+      await enforceModuleLicense(supabase, "archive", "read");
     }
 
     if (data?.search && data.search.trim().length >= 2) {
@@ -108,7 +116,7 @@ export const getDocument = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const [doc, versions, sigs, comments, runs, events, tasks] = await Promise.all([
+    const [doc, versions, sigs, comments, runs, events, tasks, contract, parties] = await Promise.all([
       supabase
         .from("documents")
         .select(DOCUMENT_SELECT)
@@ -145,16 +153,43 @@ export const getDocument = createServerFn({ method: "POST" })
         .select("*")
         .eq("document_id", data.id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("contract_details")
+        .select("*, ref_correspondents!contract_details_counterparty_id_fkey(id, code, name_ru, name_kk, bin)")
+        .eq("document_id", data.id)
+        .maybeSingle(),
+      supabase
+        .from("document_correspondents")
+        .select("id, role, is_primary, ref_correspondents(id, code, name_ru, name_kk, bin)")
+        .eq("document_id", data.id),
     ]);
     if (doc.error) throw new Error(doc.error.message);
+
+    const { data: canViewContent } = await supabase.rpc(
+      "can_view_document_content" as never,
+      { _doc_id: data.id, _user: context.userId } as never,
+    );
+
+    const document = { ...doc.data } as Record<string, unknown>;
+    if (!canViewContent) {
+      document.body = CONTENT_MASK;
+      document.summary = CONTENT_MASK;
+      document.content_restricted = true;
+    } else {
+      document.content_restricted = false;
+    }
+
     return {
-      document: doc.data,
-      versions: versions.data ?? [],
-      signatures: sigs.data ?? [],
-      comments: comments.data ?? [],
+      document,
+      versions: canViewContent ? (versions.data ?? []) : [],
+      signatures: canViewContent ? (sigs.data ?? []) : [],
+      comments: canViewContent ? (comments.data ?? []) : [],
       runs: runs.data ?? [],
       events: events.data ?? [],
       tasks: tasks.data ?? [],
+      contract_details: contract.data ?? null,
+      document_correspondents: parties.data ?? [],
+      content_restricted: !canViewContent,
     };
   });
 
@@ -174,6 +209,7 @@ export const createDocument = createServerFn({ method: "POST" })
       correspondent_id: z.string().uuid().nullable().optional(),
       registration_journal_id: z.string().uuid().nullable().optional(),
       delivery_method_id: z.string().uuid().nullable().optional(),
+      access_level_id: z.string().uuid().nullable().optional(),
       received_at: z.string().nullable().optional(),
       sent_at: z.string().nullable().optional(),
       pages_count: z.number().int().min(0).nullable().optional(),
@@ -185,10 +221,11 @@ export const createDocument = createServerFn({ method: "POST" })
       due_at: z.string().nullable().optional(),
       workflow_id: z.string().uuid().nullable().optional(),
       custom_route: customRouteSchema,
+      project_id: z.string().uuid().nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { userId } = context;
     const {
       title_ru,
@@ -205,6 +242,7 @@ export const createDocument = createServerFn({ method: "POST" })
       correspondent_id,
       registration_journal_id,
       delivery_method_id,
+      access_level_id,
       received_at,
       sent_at,
       pages_count,
@@ -212,48 +250,35 @@ export const createDocument = createServerFn({ method: "POST" })
       external_reg_number,
       due_at,
       doc_type,
+      project_id,
     } = data;
 
-    const refs = await resolveDocumentReferences(supabaseAdmin, {
+    return insertDocumentWithRegistration({
+      title_ru,
+      title_kk,
+      summary,
+      body,
       document_type_id,
       priority_id,
       correspondent_id,
+      registration_journal_id,
+      delivery_method_id,
+      access_level_id,
+      received_at,
+      sent_at,
+      pages_count,
+      copies_count,
+      external_reg_number,
+      nomenclature_id,
+      template_id,
+      assigned_to,
       due_at,
       doc_type,
+      workflow_id,
+      custom_route,
+      project_id,
+      created_by: userId,
     });
-
-    const { data: row, error } = await (supabaseAdmin.from("documents") as any)
-      .insert({
-        title_ru,
-        title_kk,
-        summary,
-        body,
-        doc_type: refs.doc_type,
-        document_type_id: refs.document_type_id,
-        priority_id: refs.priority_id,
-        correspondent_id: refs.correspondent_id,
-        registration_journal_id: registration_journal_id ?? null,
-        delivery_method_id: delivery_method_id ?? null,
-        received_at: received_at ?? null,
-        sent_at: sent_at ?? null,
-        pages_count: pages_count ?? null,
-        copies_count: copies_count ?? null,
-        external_reg_number: external_reg_number ?? null,
-        nomenclature_id,
-        template_id,
-        assigned_to,
-        due_at: refs.due_at,
-        workflow_id,
-        custom_route,
-        created_by: userId,
-        reg_number: "",
-      })
-      .select("id, reg_number")
-      .single();
-    if (error) throw new Error(error.message);
-
-    const regNumber = await ensureDocumentRegNumber(row.id, registration_journal_id);
-    return { ...row, reg_number: regNumber };
   });
 
 // ============== UPDATE METADATA ==============
@@ -271,6 +296,7 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
       correspondent_id: z.string().uuid().nullable().optional(),
       registration_journal_id: z.string().uuid().nullable().optional(),
       delivery_method_id: z.string().uuid().nullable().optional(),
+      access_level_id: z.string().uuid().nullable().optional(),
       nomenclature_id: z.string().uuid().nullable().optional(),
       due_at: z.string().nullable().optional(),
       received_at: z.string().nullable().optional(),
@@ -285,7 +311,7 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
     const { id, ...patchIn } = data;
 
@@ -323,7 +349,7 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     if (patchIn.legal_hold !== undefined) {
       const canArchive = await (async () => {
         try {
-          await requirePermission(supabase, userId, "archive_documents");
+          await requireModuleAccess(supabase, userId, "archive", { action: "write" });
           return true;
         } catch {
           try {
@@ -361,7 +387,8 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
         .limit(1)
         .maybeSingle();
       const nextNo = (latest?.version_no ?? 0) + 1;
-      const contentHash = createHash("sha256").update(bodyText).digest("hex");
+      const { sha256Hex } = await import("@/lib/documents/content-hash.server");
+      const contentHash = sha256Hex(bodyText);
       await supabase.from("document_versions").insert({
         document_id: id,
         version_no: nextNo,
@@ -381,7 +408,7 @@ export const addComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ document_id: z.string().uuid(), body: z.string().min(1).max(4000) }))
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
     const { error } = await supabase
       .from("document_comments")
@@ -412,7 +439,7 @@ export const addSignature = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "eds_signing" });
+    await enforceModuleLicense(context.supabase, "eds_signing", "write");
     const { supabase, userId } = context;
     const { workflow_task_id, ...signatureData } = data;
 
@@ -548,9 +575,6 @@ export const addSignature = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const ALLOWED_DIRECT_STATUS = ["archived", "cancelled", "draft"] as const;
-type DirectDocumentStatus = (typeof ALLOWED_DIRECT_STATUS)[number];
-
 // ============== UPDATE STATUS ==============
 export const updateDocumentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -562,46 +586,7 @@ export const updateDocumentStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const nextStatus = data.status as DirectDocumentStatus;
-    await enforceLicense(supabase, {
-      writable: true,
-      ...(nextStatus === "archived" ? { feature: "archive" as const } : {}),
-    });
-
-    const { data: doc, error: docErr } = await supabase
-      .from("documents")
-      .select("id, status, created_by, assigned_to, legal_hold")
-      .eq("id", data.id)
-      .single();
-    if (docErr || !doc) throw new Error(docErr?.message ?? "Document not found");
-
-    if (nextStatus === "archived" && doc.legal_hold) {
-      throw new Error("Документ на legal hold — архивация запрещена");
-    }
-
-    if (nextStatus === "archived") {
-      await requirePermission(supabase, userId, "archive_documents");
-    } else if (nextStatus === "cancelled") {
-      if (doc.created_by !== userId) {
-        const { data: isAdmin, error: adminErr } = await supabase.rpc("is_admin" as never, {
-          _user_id: userId,
-        } as never);
-        if (adminErr) throw new Error(adminErr.message);
-        if (!isAdmin) throw new Error("Только автор или администратор может отменить документ");
-      }
-    } else if (nextStatus === "draft") {
-      const allowedFrom = ["returned_for_revision", "rejected", "draft"];
-      const isParticipant =
-        doc.created_by === userId || doc.assigned_to === userId;
-      if (!isParticipant || !allowedFrom.includes(doc.status)) {
-        throw new Error("Нельзя вернуть документ в черновик");
-      }
-    }
-
-    const patch: Record<string, unknown> = { status: nextStatus };
-    if (nextStatus === "archived") patch.archived_at = new Date().toISOString();
-    const { error } = await supabase.from("documents").update(patch as never).eq("id", data.id);
-    if (error) throw new Error(error.message);
+    await applyDocumentStatusTransition(supabase, userId, data.id, data.status);
     return { ok: true };
   });
 

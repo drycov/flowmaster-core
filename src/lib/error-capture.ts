@@ -1,10 +1,13 @@
 // src/lib/error-capture.ts
 
+import { captureServerException } from "@/lib/observability/sentry.server";
+
 let lastCapturedError: { error: unknown; at: number } | undefined;
 const TTL_MS = 5_000;
 
 function record(error: unknown) {
   lastCapturedError = { error, at: Date.now() };
+  captureServerException(error, { source: "global_error_handler" });
 }
 
 if (typeof globalThis.addEventListener === "function") {

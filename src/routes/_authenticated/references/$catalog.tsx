@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 import { ChevronLeft } from "lucide-react";
 import { getCatalogById } from "@/lib/references/catalogs";
 import { ReferenceCatalogPage } from "@/components/references/ReferenceCatalogPage";
@@ -6,6 +7,7 @@ import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/references/$catalog")({
+  beforeLoad: () => requireModule("references"),
   component: ReferenceCatalogRoute,
 });
 

@@ -1,0 +1,50 @@
+# Staging / UAT — app + cron sidecar (Supabase hosted separately)
+name: flowmaster-staging
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        SUPABASE_URL: ${SUPABASE_URL}
+        SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+        SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+        SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+    ports:
+      - "${STAGING_PORT:-3001}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      SENTRY_ENVIRONMENT: staging
+      DISABLE_TELEGRAM_POLLING: ${DISABLE_TELEGRAM_POLLING:-true}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+  cron:
+    image: alpine:3.21
+    env_file:
+      - .env
+    environment:
+      APP_URL: http://app:3000
+      CRON_SECRET: ${CRON_SECRET}
+      CRON_INTERVAL_SEC: ${CRON_INTERVAL_SEC:-60}
+      ENABLE_TELEGRAM_POLL: ${ENABLE_TELEGRAM_POLL:-0}
+      RUN_ONCE: "0"
+    volumes:
+      - ./scripts/cron-runner.sh:/cron-runner.sh:ro
+    entrypoint: ["/bin/sh", "/cron-runner.sh"]
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped

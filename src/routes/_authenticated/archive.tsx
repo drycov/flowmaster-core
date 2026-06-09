@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listDocuments } from "@/lib/api/documents.functions";
@@ -13,7 +13,7 @@ import { fmtDateShort } from "@/lib/format";
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/archive")({
-  beforeLoad: () => requireLicenseModule("archive"),
+  beforeLoad: () => requireModule("archive"),
   component: ArchivePage,
 });
 

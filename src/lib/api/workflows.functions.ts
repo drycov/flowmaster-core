@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { upsertRow } from "@/lib/api/db.helpers.server";
+import { enforceModuleLicense, requireModuleAccess } from "./_helpers";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   parseStoredCustomRoute,
@@ -51,8 +52,7 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_workflows");
-    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    await requireModuleAccess(context.supabase, context.userId, "workflows", { action: "manage" });
     const { supabase, userId } = context;
 
     let version = 1;
@@ -157,7 +157,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    await enforceModuleLicense(context.supabase, "workflows", "write");
     const { supabase, userId } = context;
 
     const { data: doc, error: docErr } = await supabase
@@ -282,7 +282,7 @@ export const completeTask = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    await enforceModuleLicense(context.supabase, "workflows", "write");
     const { supabase } = context;
     if (data.decision !== "approve" && !data.comment?.trim()) {
       throw new Error("Комментарий обязателен для отклонения или возврата");
@@ -324,7 +324,26 @@ export const listMyTasks = createServerFn({ method: "GET" })
       .in("status", ["pending", "in_progress"])
       .order("due_at", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+
+    let principalMap = new Map<string, { id: string; full_name_ru: string; full_name_kk: string; email: string }>();
+    if (principalIds.length > 0) {
+      const { data: profiles, error: pErr } = await supabase
+        .from("profiles")
+        .select("id, full_name_ru, full_name_kk, email")
+        .in("id", principalIds);
+      if (pErr) throw new Error(pErr.message);
+      principalMap = new Map((profiles ?? []).map((p) => [p.id as string, p as never]));
+    }
+
+    return (data ?? []).map((task) => {
+      const assigneeId = task.assignee_id as string;
+      const isSubstitute = assigneeId !== userId;
+      return {
+        ...task,
+        is_substitute: isSubstitute,
+        substitute_principal: isSubstitute ? (principalMap.get(assigneeId) ?? { id: assigneeId }) : null,
+      };
+    });
   });
 
 export const delegateWorkflowTask = createServerFn({ method: "POST" })
@@ -337,7 +356,7 @@ export const delegateWorkflowTask = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    await enforceModuleLicense(context.supabase, "workflows", "write");
     const { data: res, error } = await context.supabase.rpc("delegate_workflow_task" as never, {
       _task_id: data.task_id,
       _to_user: data.to_user_id,
@@ -358,7 +377,7 @@ export const advanceWorkflowTask = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "workflows" });
+    await enforceModuleLicense(context.supabase, "workflows", "write");
     const { supabase } = context;
     if (data.decision !== "approve" && !data.comment?.trim()) {
       throw new Error("Комментарий обязателен для отклонения или возврата");

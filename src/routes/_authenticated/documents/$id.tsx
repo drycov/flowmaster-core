@@ -25,6 +25,10 @@ import { ContentTab } from "@/components/document-detail/components/ContentTab";
 import { DocumentLinksTab } from "@/components/document-detail/components/DocumentLinksTab";
 import { ArchiveRetentionCard } from "@/components/document-detail/components/ArchiveRetentionCard";
 import { SignaturesCard } from "@/components/document-detail/components/SignaturesCard";
+import { DocumentAccessPanel } from "@/components/document-detail/components/DocumentAccessPanel";
+import { DocumentAccessGrantsPanel } from "@/components/document-detail/components/DocumentAccessGrantsPanel";
+import { DocumentAccessDenied } from "@/components/document-detail/components/DocumentAccessDenied";
+import { DocumentQrCard } from "@/components/document-detail/components/DocumentQrCard";
 import { SlaBadgeSafe } from "@/components/document-detail/components/SlaBadgeSafe";
 import { VersionsTab } from "@/components/document-detail/components/VersionsTab";
 import { WorkflowActions } from "@/components/document-detail/components/WorkflowActions";
@@ -34,12 +38,17 @@ import { fmtDate, fmtDateShort } from "@/lib/format";
 import { localized, useI18n } from "@/i18n";
 import {
   correspondentLabel,
+  accessLevelLabel,
   deliveryMethodLabel,
   documentTypeLabel,
   priorityLabel,
   registrationJournalLabel,
 } from "@/lib/documents/reference-display";
 import { findMyPendingTask } from "@/lib/workflow/task-match";
+import { SubstitutionActingBanner } from "@/components/substitution/SubstitutionActingBanner";
+import { ContractDetailsCard } from "@/components/contracts/ContractDetailsCard";
+import { KbPublishCard } from "@/components/kb/KbPublishCard";
+import { Link } from "@tanstack/react-router";
 import {
   Archive,
   FileEdit,
@@ -91,11 +100,27 @@ function DocumentDetail() {
   const [chosenWf, setChosenWf] = useState("");
   const [editOpen, setEditOpen] = useState(false);
 
-  if (isLoading || !data?.document) {
+  if (isLoading) {
     return <PageBody>{t("common.loading")}</PageBody>;
   }
 
+  if ((data as { access_denied?: boolean; access?: unknown } | undefined)?.access_denied) {
+    return (
+      <PageBody>
+        <DocumentAccessDenied
+          documentId={id}
+          access={(data as { access: Parameters<typeof DocumentAccessDenied>[0]["access"] }).access}
+        />
+      </PageBody>
+    );
+  }
+
+  if (!data?.document) {
+    return <PageBody>{t("errors.notFound.description")}</PageBody>;
+  }
+
   const doc = data.document;
+  const contentRestricted = !!(data as { content_restricted?: boolean }).content_restricted;
 
   const currentVersion =
     data.versions.find((v) => v.version_no === doc.current_version) ?? data.versions[0] ?? null;
@@ -103,7 +128,19 @@ function DocumentDetail() {
   const hasActiveRun = (data?.runs ?? []).some((r) => r.status === "running");
   const myPendingTask = findMyPendingTask(data.tasks ?? [], me?.profile?.id, {
     isAdmin: me?.roles?.includes("admin"),
+    substituteFor: subs?.actingFor ?? [],
   });
+
+  const substitutePrincipalName =
+    myPendingTask?.assignee_id &&
+    myPendingTask.assignee_id !== me?.profile?.id
+      ? localized(
+          subs?.actingForDetails?.find((a) => a.principal_id === myPendingTask.assignee_id)
+            ?.principal,
+          locale,
+          "full_name",
+        ) || myPendingTask.assignee_id
+      : undefined;
 
   const canEditMetadata =
     me?.roles?.includes("admin") ||
@@ -114,6 +151,21 @@ function DocumentDetail() {
     me?.roles?.includes("admin") ||
     !!me?.permissions?.archive_documents ||
     !!me?.permissions?.manage_documents;
+
+  const canReviewAccess =
+    me?.roles?.includes("admin") ||
+    doc.created_by === me?.profile?.id ||
+    !!me?.permissions?.view_all_documents;
+
+  const docTypeCode =
+    (doc as { ref_document_types?: { code?: string } }).ref_document_types?.code ?? doc.doc_type;
+  const isContract = docTypeCode === "contract";
+  const contractDetails = (data as { contract_details?: Parameters<typeof ContractDetailsCard>[0]["contract"] }).contract_details ?? null;
+  const canEditContract =
+    canEditMetadata ||
+    !!me?.permissions?.manage_contracts ||
+    !!me?.permissions?.manage_documents;
+  const project = (doc as { document_projects?: { id: string; code: string; name_ru: string; name_kk: string } | null }).document_projects;
 
   const handleStartWorkflow = () => {
     startWorkflow(chosenWf || undefined, {
@@ -297,6 +349,7 @@ function DocumentDetail() {
 
         {/* Правая сторона: Боковая панель (Задачи, Метаданные, Маршруты, Подписи) */}
         <div className="space-y-4">
+          <SubstitutionActingBanner actingFor={subs?.actingForDetails ?? []} />
           {myPendingTask && (
             <WorkflowActions
               documentId={id}
@@ -304,11 +357,26 @@ function DocumentDetail() {
               currentUserId={me?.profile?.id}
               isAdmin={me?.roles?.includes("admin")}
               substituteFor={subs?.actingFor ?? []}
+              substitutePrincipalName={substitutePrincipalName}
               signPayload={doc.body ?? doc.title_ru ?? id}
             />
           )}
 
+          <DocumentAccessPanel documentId={id} contentRestricted={contentRestricted} />
+
+          <DocumentAccessGrantsPanel documentId={id} canReview={canReviewAccess} />
+
           <ArchiveRetentionCard document={doc as never} canManage={canManageArchive} />
+
+          <KbPublishCard documentId={id} documentStatus={doc.status} />
+
+          {isContract && (
+            <ContractDetailsCard
+              documentId={id}
+              contract={contractDetails}
+              canEdit={canEditContract}
+            />
+          )}
 
           {/* Карточка системных метаданных документа */}
           <Card className="rounded-sm">
@@ -317,10 +385,18 @@ function DocumentDetail() {
               <Field label={t("common.status")}><StatusBadge status={doc.status} /></Field>
               <Field label="SLA"><SlaBadgeSafe sla={doc.sla_status} /></Field>
               <Field label={t("doc.documentType")}>{documentTypeLabel(doc, locale)}</Field>
+              {project && (
+                <Field label={t("project.title")}>
+                  <Link to="/projects/$id" params={{ id: project.id }} className="text-primary hover:underline">
+                    {project.code} — {localized(project, locale, "name")}
+                  </Link>
+                </Field>
+              )}
               <Field label={t("doc.priority")}>{priorityLabel(doc, locale)}</Field>
               <Field label={t("doc.correspondent")}>{correspondentLabel(doc, locale)}</Field>
               <Field label={t("doc.registrationJournal")}>{registrationJournalLabel(doc, locale)}</Field>
               <Field label={t("doc.deliveryMethod")}>{deliveryMethodLabel(doc, locale)}</Field>
+              <Field label={t("access.level")}>{accessLevelLabel(doc, locale)}</Field>
               <Field label={t("doc.externalRegNumber")}>{doc.external_reg_number || "—"}</Field>
               <Field label={t("doc.receivedAt")}>
                 {doc.received_at ? fmtDateShort(doc.received_at, locale) : "—"}
@@ -345,6 +421,8 @@ function DocumentDetail() {
 
           {/* Вынесенный компонент цифровых подписей (CMS/ЭЦП) */}
           <SignaturesCard signatures={data.signatures} documentId={id} />
+
+          <DocumentQrCard documentId={id} regNumber={doc.reg_number} />
         </div>
       </PageBody>
 

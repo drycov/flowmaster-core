@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 
 import { Textarea } from "@/components/ui/textarea";
 
-import { Check, X, Undo2, Loader2, MessageSquare, LockKeyhole, UserPlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, X, Undo2, Loader2, MessageSquare, LockKeyhole, UserPlus, UserRoundCog } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,9 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { advanceWorkflowTask, delegateWorkflowTask } from "@/lib/api/workflows.functions";
+import { useWorkflowTaskActions } from "@/components/tasks/useWorkflowTaskActions";
+import { delegateWorkflowTask } from "@/lib/api/workflows.functions";
 import { listUsersBrief } from "@/lib/api/admin.functions";
-import { localized } from "@/i18n";
+import { interpolate, localized } from "@/i18n";
 
 import { toast } from "sonner";
 
@@ -57,6 +59,8 @@ interface Props {
   signPayload?: string;
 
   substituteFor?: string[];
+
+  substitutePrincipalName?: string;
 
 }
 
@@ -90,6 +94,8 @@ export function WorkflowActions({
 
   substituteFor = [],
 
+  substitutePrincipalName,
+
 }: Props) {
 
   const { t, locale } = useI18n();
@@ -116,75 +122,23 @@ export function WorkflowActions({
 
 
 
-  const mutation = useMutation({
+  const mutation = useWorkflowTaskActions({ documentId });
 
-    mutationFn: (decision: DecisionType) => {
-
-      if (!myTask) {
-
-        return Promise.reject(new Error(t("doc.action.noTask")));
-
-      }
-
-
-
-      const cleanComment = comment.trim();
-
-      if ((decision === "reject" || decision === "return") && !cleanComment) {
-
-        return Promise.reject(new Error(t("doc.action.commentRequired")));
-
-      }
-
-
-
-      return advanceWorkflowTask({
-
-        data: {
-
-          task_id: myTask.id,
-
-          decision,
-
-          comment: cleanComment || null,
-
-        },
-
-      });
-
-    },
-
-    onSuccess: (_, decision) => {
-
-      const messages: Record<DecisionType, string> = {
-
-        approve: t("doc.action.approved"),
-
-        return: t("doc.action.returned"),
-
-        reject: t("doc.action.rejected"),
-
-      };
-
-
-
-      toast.success(messages[decision]);
-
-      setComment("");
-
-      qc.invalidateQueries({ queryKey: ["document", documentId] });
-      qc.invalidateQueries({ queryKey: ["myTasks"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-
-    },
-
-    onError: (e) => {
-
-      toast.error(e instanceof Error ? e.message : t("doc.action.error"));
-
-    },
-
-  });
+  const submitDecision = (decision: DecisionType) => {
+    if (!myTask) {
+      toast.error(t("doc.action.noTask"));
+      return;
+    }
+    const cleanComment = comment.trim();
+    if ((decision === "reject" || decision === "return") && !cleanComment) {
+      toast.error(t("doc.action.commentRequired"));
+      return;
+    }
+    mutation.mutate(
+      { task_id: myTask.id, decision, comment: cleanComment || null },
+      { onSuccess: () => setComment("") },
+    );
+  };
 
 
 
@@ -304,6 +258,13 @@ export function WorkflowActions({
 
           </div>
 
+          {substitutePrincipalName ? (
+            <Badge variant="outline" className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300">
+              <UserRoundCog className="w-3 h-3" />
+              {interpolate(t("substitution.forUser"), { name: substitutePrincipalName })}
+            </Badge>
+          ) : null}
+
           <p className="text-xs text-muted-foreground">
 
             {t("ncalayer.title")}
@@ -376,7 +337,12 @@ export function WorkflowActions({
 
         </div>
 
-
+        {substitutePrincipalName ? (
+          <Badge variant="outline" className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300">
+            <UserRoundCog className="w-3 h-3" />
+            {interpolate(t("substitution.forUser"), { name: substitutePrincipalName })}
+          </Badge>
+        ) : null}
 
         <Textarea
 
@@ -408,11 +374,11 @@ export function WorkflowActions({
 
             disabled={isPending || actionBlocked}
 
-            onClick={() => mutation.mutate("approve")}
+            onClick={() => submitDecision("approve")}
 
           >
 
-            {mutation.isPending && mutation.variables === "approve" ? (
+            {mutation.isPending && mutation.variables?.decision === "approve" ? (
 
               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
 
@@ -438,13 +404,13 @@ export function WorkflowActions({
 
             disabled={isPending || actionBlocked || isCommentEmpty}
 
-            onClick={() => mutation.mutate("return")}
+            onClick={() => submitDecision("return")}
 
             title={isCommentEmpty ? t("doc.action.commentRequired") : ""}
 
           >
 
-            {mutation.isPending && mutation.variables === "return" ? (
+            {mutation.isPending && mutation.variables?.decision === "return" ? (
 
               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
 
@@ -470,13 +436,13 @@ export function WorkflowActions({
 
             disabled={isPending || actionBlocked || isCommentEmpty}
 
-            onClick={() => mutation.mutate("reject")}
+            onClick={() => submitDecision("reject")}
 
             title={isCommentEmpty ? t("doc.action.commentRequired") : ""}
 
           >
 
-            {mutation.isPending && mutation.variables === "reject" ? (
+            {mutation.isPending && mutation.variables?.decision === "reject" ? (
 
               <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
 

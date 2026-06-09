@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
 import { listNomenclature, upsertNomenclature, deleteNomenclature } from "@/lib/api/nomenclature.functions";
@@ -44,7 +44,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/nomenclature")({
-  beforeLoad: () => requireLicenseModule("nomenclature"),
+  beforeLoad: () => requireModule("nomenclature"),
   component: NomenclaturePage,
 });
 

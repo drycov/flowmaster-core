@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
 import { Plus } from "lucide-react";
@@ -16,6 +17,7 @@ export function createCorrespondenceRoute(kind: CorrespondenceKind) {
   const path = kind === "incoming" ? "/correspondence/incoming" : "/correspondence/outgoing";
 
   return createFileRoute(`/_authenticated${path}`)({
+    beforeLoad: () => requireModule("correspondence"),
     component: () => <CorrespondenceJournalPage kind={kind} />,
   });
 }

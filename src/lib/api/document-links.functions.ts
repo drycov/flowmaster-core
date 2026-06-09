@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense } from "./_helpers";
+import { requireModuleAccess } from "./_helpers";
 
 const LINK_DOC_SELECT =
   "id, reg_number, title_ru, title_kk, status, doc_type, created_at";
@@ -12,8 +12,15 @@ export const listDocumentLinks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ document_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const docId = data.document_id;
+
+    const { data: canView, error: viewErr } = await supabase.rpc("can_view_document" as never, {
+      _doc_id: docId,
+      _user: userId,
+    } as never);
+    if (viewErr) throw new Error(viewErr.message);
+    if (!canView) throw new Error("Forbidden");
 
     const [outgoing, incoming] = await Promise.all([
       supabase
@@ -56,11 +63,25 @@ export const createDocumentLink = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
 
     if (data.source_document_id === data.target_document_id) {
       throw new Error("Нельзя связать документ с самим собой");
+    }
+
+    const [{ data: canViewSource }, { data: canViewTarget }] = await Promise.all([
+      supabase.rpc("can_view_document" as never, {
+        _doc_id: data.source_document_id,
+        _user: userId,
+      } as never),
+      supabase.rpc("can_view_document" as never, {
+        _doc_id: data.target_document_id,
+        _user: userId,
+      } as never),
+    ]);
+    if (!canViewSource || !canViewTarget) {
+      throw new Error("Forbidden");
     }
 
     const { data: row, error } = await supabase
@@ -83,7 +104,7 @@ export const deleteDocumentLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { error } = await context.supabase
       .from("document_links")
       .delete()

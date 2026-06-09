@@ -1,0 +1,46 @@
+import { createFileRoute } from "@tanstack/react-router";
+import {
+  unauthorizedHookResponse,
+  verifyInternalHookRequest,
+} from "@/lib/internal-hook-auth.server";
+import { licenseServerAvailable, syncLicenseWithServer } from "@/lib/license/server/client.server";
+
+export const Route = createFileRoute("/api/public/hooks/license-sync")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        if (!verifyInternalHookRequest(request)) {
+          return unauthorizedHookResponse();
+        }
+
+        if (!licenseServerAvailable()) {
+          return new Response(
+            JSON.stringify({ ok: true, skipped: true, reason: "license_server_not_configured" }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        try {
+          const status = await syncLicenseWithServer();
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: status.status,
+              last_sync_ok: status.last_sync_ok,
+              server_revoked: status.server_revoked,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        } catch (e) {
+          return new Response(
+            JSON.stringify({
+              ok: false,
+              error: e instanceof Error ? e.message : String(e),
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+      },
+    },
+  },
+});

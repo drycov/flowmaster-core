@@ -16,6 +16,7 @@ export interface UserProfile {
   iin?: string | null;
   has_password?: boolean;
   has_eds?: boolean;
+  access_level_id?: string | null;
 }
 
 export interface ProfileFormData {

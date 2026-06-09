@@ -1,5 +1,6 @@
 export const PREVIEW_FETCH_TIMEOUT_MS = 30_000;
 export const PREVIEW_RENDER_TIMEOUT_MS = 60_000;
+export const PREVIEW_DEBOUNCE_MS = 400;
 
 export async function withTimeout<T>(
   promise: Promise<T>,

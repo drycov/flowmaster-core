@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { requireModuleAccess } from "./_helpers";
 
 const REASON = z.enum([
   "hire",
@@ -17,7 +17,12 @@ export const listUserAssignments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ user_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    const { supabase, userId } = context;
+    if (data.user_id !== userId) {
+      await requireModuleAccess(supabase, userId, "admin_users", { action: "read" });
+    }
+
+    const { data: rows, error } = await supabase
       .from("profile_assignments" as never)
       .select(
         "*, departments(id, name_ru, name_kk, code), positions(id, title_ru, title_kk, code)",
@@ -44,8 +49,7 @@ export const createAssignment = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_users");
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "admin_users", { action: "write" });
     const { data: row, error } = await (context.supabase.from("profile_assignments" as never) as any)
       .insert({
         user_id: data.user_id,
@@ -78,8 +82,7 @@ export const terminateAssignment = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_users");
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "admin_users", { action: "write" });
     const { error } = await (context.supabase.from("profile_assignments" as never) as any).insert({
       user_id: data.user_id,
       department_id: null,

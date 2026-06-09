@@ -12,6 +12,14 @@ export const LICENSE_FEATURES = [
   "references",
   "nomenclature",
   "audit",
+  "knowledge_base",
+  "projects",
+  "contracts",
+  "counterparties",
+  "hr",
+  "substitutions",
+  "correspondence",
+  "integrations",
 ] as const;
 export type LicenseFeature = (typeof LICENSE_FEATURES)[number];
 
@@ -27,6 +35,8 @@ export type LicenseKeyPayload = {
   installation_id?: string | null;
   issued_at: string;
 };
+
+export type LicenseActivationMode = "offline" | "online";
 
 export type LicenseStatusResponse = {
   has_license: boolean;
@@ -45,4 +55,12 @@ export type LicenseStatusResponse = {
   grace_days: number;
   activated_at: string | null;
   issued_at?: string | null;
+  activation_mode?: LicenseActivationMode;
+  last_sync_at?: string | null;
+  last_sync_ok?: boolean;
+  last_sync_error?: string;
+  server_revoked?: boolean;
+  sync_stale?: boolean;
+  offline_grace_hours?: number;
+  sync_interval_hours?: number;
 };

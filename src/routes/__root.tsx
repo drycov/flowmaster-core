@@ -22,7 +22,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 import { I18nProvider } from "@/i18n";
 
@@ -58,14 +57,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    void import("@/lib/observability/report-error-browser").then((m) =>
+      m.reportClientError(error, { boundary: "tanstack_root_error_component" }),
+    );
   }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Что-то пошло не так</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {import.meta.env.DEV
+            ? error.message
+            : "Произошла ошибка. Попробуйте позже или обратитесь к администратору."}
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -144,6 +149,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
       { rel: "stylesheet", href: appCss },
 
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+
+      { rel: "shortcut icon", href: "/favicon.svg" },
+
       { rel: "preconnect", href: "https://rsms.me/" },
 
       { rel: "stylesheet", href: "https://rsms.me/inter/inter.css" },
@@ -220,6 +229,13 @@ function AuthSync() {
 
 
 
+function SentryInit() {
+  useEffect(() => {
+    void import("@/lib/observability/sentry-browser").then((m) => m.initSentryClient());
+  }, []);
+  return null;
+}
+
 function RootComponent() {
 
   const { queryClient } = Route.useRouteContext();
@@ -232,6 +248,7 @@ function RootComponent() {
 
       <I18nProvider>
 
+        <SentryInit />
         <AuthSync />
 
         <Outlet />

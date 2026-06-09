@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDocument } from "@/lib/api/documents.functions";
+import { getDocumentAccessState } from "@/lib/api/access-grants.functions";
 import type { DocumentData, Task } from "../types"; // Если интерфейс Task лежит в types.ts, импортируем его
 
 // Локальный интерфейс для случая, если Task еще не импортирован из типов
@@ -26,12 +27,23 @@ interface ParsedSchema {
 export function useDocumentData(id: string) {
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["document", id],
-    queryFn: () => getDocument({ data: { id } }),
+    queryFn: async () => {
+      try {
+        return await getDocument({ data: { id } });
+      } catch {
+        const access = await getDocumentAccessState({ data: { document_id: id } });
+        if (access.exists && !access.can_view) {
+          return { access_denied: true as const, access };
+        }
+        throw new Error("Document not found");
+      }
+    },
     
     // Трансформируем полученный ответ под нужды интерфейса просмотра
     select: (rawResponse) => {
       // Приводим к any, чтобы безопасно извлечь скрытое в DocumentData поле tasks
       const fullData = rawResponse as any;
+      if (fullData?.access_denied) return fullData;
       if (!fullData || !fullData.document) return undefined;
 
       const { document, tasks } = fullData;

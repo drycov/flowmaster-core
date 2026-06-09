@@ -1,28 +1,19 @@
 // src/routes/_authenticated/templates/index.tsx
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { createFileRoute } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { listTemplates } from "@/lib/api/templates.functions";
-import { getMyProfile } from "@/lib/api/admin.functions";
 import { listTemplateCategoriesBrief } from "@/lib/api/references.functions";
 
 import { useTemplateCreation } from "@/components/templates-list/hooks/useTemplateCreation";
 import { TemplateGrid } from "@/components/templates-list/components/TemplateGrid";
 
 export const Route = createFileRoute("/_authenticated/templates/")({
-  beforeLoad: async () => {
-    await requireLicenseModule("templates");
-    const data = await getMyProfile();
-    const isAdmin = data.roles.includes("admin");
-    const canManage = data.permissions["manage_templates"];
-    if (!isAdmin && !canManage) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
+  beforeLoad: () => requireModule("templates"),
   component: TemplatesList,
 });
 

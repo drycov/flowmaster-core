@@ -21,6 +21,7 @@ function toUserProfile(profile: Record<string, unknown>, roles: string[]): UserP
     iin: (profile.iin as string | null) ?? null,
     has_password: !!(profile.has_password as boolean | undefined),
     has_eds: !!(profile.has_eds as boolean | undefined),
+    access_level_id: (profile.access_level_id as string | null | undefined) ?? null,
   };
 }
 

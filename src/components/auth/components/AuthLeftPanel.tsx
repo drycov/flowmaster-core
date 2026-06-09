@@ -28,36 +28,32 @@ export function AuthLeftPanel() {
   ];
 
   return (
-    <div className="gov-stripe hidden lg:flex flex-col justify-between px-14 py-12 text-white">
-      <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-md bg-white/10 backdrop-blur">
-          <span className="text-xl font-bold">ED</span>
-        </div>
+    <div className="gov-stripe relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-10 xl:px-14 xl:py-12 text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_45%)]" />
 
+      <div className="relative flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-white/20 bg-white/10 backdrop-blur">
+          <span className="text-lg font-bold">{t("shell.brandAbbr")}</span>
+        </div>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t("app.name")}</h1>
+          <h1 className="text-lg font-semibold tracking-tight">{t("app.name")}</h1>
           <p className="text-sm text-white/70">{t("app.tagline")}</p>
         </div>
       </div>
 
-      <div className="max-w-xl">
-        <h2 className="mb-5 text-4xl font-semibold leading-tight">{t("auth.heroTitle")}</h2>
+      <div className="relative max-w-lg">
+        <h2 className="mb-4 text-3xl font-semibold leading-tight xl:text-4xl">{t("auth.heroTitle")}</h2>
+        <p className="mb-8 text-sm leading-relaxed text-white/75 xl:text-base">{t("auth.heroDescription")}</p>
 
-        <p className="mb-8 text-base leading-relaxed text-white/75">{t("auth.heroDescription")}</p>
-
-        <div className="space-y-5">
+        <div className="space-y-4">
           {features.map((item) => {
             const Icon = item.icon;
-
             return (
-              <div key={item.title} className="flex gap-4">
-                <div className="mt-1">
-                  <Icon className="h-5 w-5 text-white/90" />
-                </div>
-
+              <div key={item.title} className="flex gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-white/90" />
                 <div>
-                  <div className="font-medium">{item.title}</div>
-                  <div className="text-sm leading-relaxed text-white/70">{item.description}</div>
+                  <div className="text-sm font-medium">{item.title}</div>
+                  <div className="text-xs leading-relaxed text-white/65">{item.description}</div>
                 </div>
               </div>
             );
@@ -65,10 +61,7 @@ export function AuthLeftPanel() {
         </div>
       </div>
 
-      <div className="space-y-1 text-xs text-white/50">
-        <div>Enterprise Document Management System</div>
-        <div>Audit • Workflow • EDS • Archive</div>
-      </div>
+      <div className="relative text-xs text-white/45">{t("shell.version")}</div>
     </div>
   );
 }

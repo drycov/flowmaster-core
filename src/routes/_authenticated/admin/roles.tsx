@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -40,7 +40,7 @@ import {
 } from "@/lib/api/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/roles")({
-  beforeLoad: () => requireAnyPermission("manage_users", "manage_roles"),
+  beforeLoad: () => requireModule("admin_roles"),
   component: RolesPage,
 });
 

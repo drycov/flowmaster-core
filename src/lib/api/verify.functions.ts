@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission, fetchUserPermissions } from "./_helpers";
+import { fetchUserPermissions, requireModuleAccess } from "./_helpers";
 import { ALL_PERMISSIONS } from "@/lib/auth/permissions";
 
 /**
@@ -11,7 +11,7 @@ export const runEngineVerification = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await requirePermission(supabase, userId, "view_audit");
+    await requireModuleAccess(supabase, userId, "audit", { action: "read" });
 
     const checks: Array<{ name: string; ok: boolean; detail: string }> = [];
 
@@ -59,7 +59,7 @@ export const runEngineVerification = createServerFn({ method: "GET" })
     const hasCorrelation = (recentAudit ?? []).some((r) => r.correlation_id);
     checks.push({
       name: "workflow_audit_entries",
-      ok: hasWorkflowAudit || true,
+      ok: hasWorkflowAudit,
       detail: hasWorkflowAudit
         ? `${recentAudit!.length} recent workflow.* entries, correlation: ${hasCorrelation}`
         : "No workflow audit rows yet — run approve/reject/SLA tick",

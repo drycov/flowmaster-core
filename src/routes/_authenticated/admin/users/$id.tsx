@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ProfilePage from "@/components/profile";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 
 function AdminUserProfilePage() {
   const { id } = Route.useParams();
@@ -8,6 +8,6 @@ function AdminUserProfilePage() {
 }
 
 export const Route = createFileRoute("/_authenticated/admin/users/$id")({
-  beforeLoad: () => requireAnyPermission("manage_users"),
+  beforeLoad: () => requireModule("admin_users"),
   component: AdminUserProfilePage,
 });

@@ -46,7 +46,6 @@ export function OfficeTab({
   onSave,
   isReadOnly = false,
 }: OfficeTabProps) {
-  const officeUrl = (import.meta.env.VITE_OFFICE_URL as string | undefined)?.replace(/\/$/, "") || "";
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -55,9 +54,14 @@ export function OfficeTab({
   const { data: officeConfig, isLoading: officeLoading } = useQuery({
     queryKey: ["office-config", documentId],
     queryFn: () => getOfficeEditorConfig({ data: { document_id: documentId } }),
-    enabled: !!officeUrl,
     staleTime: 5 * 60 * 1000,
   });
+
+  const officeUrl =
+    officeConfig?.office_url ||
+    officeConfig?.document_server_url ||
+    "";
+  const officeConfigured = !!officeUrl;
 
   const editor = useEditor({
     extensions: [
@@ -110,7 +114,7 @@ export function OfficeTab({
     }
   };
 
-  if (officeUrl) {
+  if (officeConfigured) {
     if (officeLoading) {
       return (
         <div className="flex items-center justify-center h-[400px] text-muted-foreground">

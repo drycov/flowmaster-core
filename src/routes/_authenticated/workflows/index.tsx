@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { requireLicenseModule } from "@/lib/license/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkflows, upsertWorkflow } from "@/lib/api/workflows.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
@@ -13,7 +13,7 @@ import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/workflows/")({
-  beforeLoad: () => requireLicenseModule("workflows"),
+  beforeLoad: () => requireModule("workflows"),
   component: WorkflowsList,
 });
 

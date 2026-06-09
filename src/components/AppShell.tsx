@@ -10,29 +10,59 @@ import {
   Search,
   Bell,
   ShieldCheck,
-  Settings,
   Users,
   Building2,
   LogOut,
   ChevronDown,
+  ChevronRight,
   Languages,
   CheckSquare,
   User,
   HelpCircle,
   BookMarked,
-  KeyRound,
   AlertTriangle,
   Inbox,
   SendHorizontal,
   BarChart3,
+  CalendarDays,
+  ClipboardList,
+  UserRoundCog,
+  BookOpen,
+  FolderKanban,
+  ScrollText,
+  Contact,
+  Shield,
+  Clock,
+  ChartGantt,
+  Lock,
+  Briefcase,
+  Network,
+  Settings,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, localized } from "@/i18n";
-import { getMyProfile } from "@/lib/api/admin.functions";
-import { useLicenseStatus } from "@/lib/license/hooks";
-import type { LicenseFeature } from "@/lib/license/types";
+import { useAccessContext } from "@/lib/access/hooks";
+import {
+  ADMIN_NAV_SECTIONS,
+  CORRESPONDENCE_NAV,
+  HR_NAV,
+  REFERENCE_NAV,
+  REGISTRY_NAV,
+  SERVICE_NAV,
+  WORK_NAV,
+  filterAdminSections,
+  filterNavGroup,
+  filterNavItems,
+  type NavItemDef,
+} from "@/lib/access/navigation";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,26 +75,32 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAccessTokenRefresh } from "@/lib/auth/client/useAccessTokenRefresh";
 
-function SidebarNavLink({
-  item,
-  path,
-}: {
-  item: { to: string; icon: typeof LayoutDashboard; label: string; badge?: number };
-  path: string;
-}) {
-  const active = path === item.to || path.startsWith(item.to + "/");
+type NavItem = {
+  to: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  badge?: number;
+};
+
+function isNavActive(path: string, to: string) {
+  return path === to || path.startsWith(to + "/");
+}
+
+function SidebarNavLink({ item, path }: { item: NavItem; path: string }) {
+  const active = isNavActive(path, item.to);
 
   return (
     <Link
       to={item.to}
       className={cn(
-        "flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-sidebar-accent transition-colors",
-        active && "bg-sidebar-accent border-l-2 border-sidebar-primary",
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent",
+        active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
       )}
     >
-      <item.icon className="w-4 h-4 shrink-0" />
-      <span className="flex-1">{item.label}</span>
+      <item.icon className="w-4 h-4 shrink-0 opacity-70" />
+      <span className="flex-1 truncate">{item.label}</span>
       {item.badge ? (
         <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
           {item.badge}
@@ -74,19 +110,68 @@ function SidebarNavLink({
   );
 }
 
+function SidebarNavSection({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="px-2 space-y-0.5">
+      <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SidebarNavSubheading({ label }: { label: string }) {
+  return (
+    <div className="px-2 pt-2 pb-0.5 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/45">
+      {label}
+    </div>
+  );
+}
+
+function SidebarNavGroup({
+  label,
+  active,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(active);
+
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="px-2">
+      <CollapsibleTrigger className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 hover:bg-sidebar-accent/50 transition-colors">
+        <ChevronRight
+          className={cn("w-3 h-3 shrink-0 transition-transform duration-200", open && "rotate-90")}
+        />
+        <span className="flex-1 text-left">{label}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-0.5 space-y-0.5 pl-1">{children}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const navigate = useNavigate();
   const router = useRouterState();
   const path = router.location.pathname;
 
-  const { data: me } = useQuery({
-    queryKey: ["me"],
-    queryFn: () => getMyProfile(),
-  });
-
-  const { status: license, isWritable, can: licenseCan, isLoading: licenseLoading } =
-    useLicenseStatus();
+  const {
+    me,
+    license,
+    canModule,
+    can,
+    isWritable,
+    isLoading: accessLoading,
+  } = useAccessContext();
+  useAccessTokenRefresh();
 
   const userId = (me?.profile as { id?: string } | undefined)?.id;
   const [unread, setUnread] = useState(0);
@@ -122,53 +207,106 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const roles = me?.roles ?? [];
-  const perms = me?.permissions ?? {};
-  const isAdmin = roles.includes("admin");
-  const can = (p: string) => isAdmin || !!perms[p as keyof typeof perms];
 
-  type NavItem = {
-    to: string;
-    icon: typeof LayoutDashboard;
-    label: string;
-    badge?: number;
+  const NAV_ICONS: Record<string, LucideIcon> = {
+    dashboard: LayoutDashboard,
+    documents: FileText,
+    tasks: CheckSquare,
+    substitutions: UserRoundCog,
+    approvals: ListChecks,
+    "hr-leave": CalendarDays,
+    "hr-leave-schedule": CalendarDays,
+    "hr-duty": Shield,
+    "hr-timesheet": Clock,
+    "hr-gantt": ChartGantt,
+    "hr-directory": Contact,
+    "hr-admin": ClipboardList,
+    incoming: Inbox,
+    outgoing: SendHorizontal,
+    knowledge: BookOpen,
+    projects: FolderKanban,
+    contracts: ScrollText,
+    counterparties: Building2,
+    search: Search,
+    notifications: Bell,
+    archive: Archive,
+    references: BookMarked,
+    nomenclature: Library,
+    templates: FilePlus2,
+    workflows: GitBranch,
+    reports: BarChart3,
+    users: Users,
+    roles: Shield,
+    permissions: Lock,
+    organization: Building2,
+    departments: Network,
+    positions: Briefcase,
+    calendar: CalendarDays,
+    audit: ShieldCheck,
+    settings: Settings,
+    integrations: Network,
   };
 
-  const licensed = (feature: LicenseFeature) => licenseCan(feature, false);
-  const showArchive = licensed("archive");
+  const toNavItem = (def: NavItemDef): NavItem => ({
+    to: def.to,
+    icon: NAV_ICONS[def.id] ?? FileText,
+    label: t(def.labelKey),
+    badge: def.id === "notifications" ? unread : undefined,
+  });
 
-  const mainNavItems: NavItem[] = [
-    { to: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
-    { to: "/documents", icon: FileText, label: t("nav.documents") },
-    { to: "/correspondence/incoming", icon: Inbox, label: t("nav.incoming") },
-    { to: "/correspondence/outgoing", icon: SendHorizontal, label: t("nav.outgoing") },
-    { to: "/tasks", icon: CheckSquare, label: t("nav.tasks") },
-    { to: "/approvals", icon: ListChecks, label: t("nav.approvals") },
-    ...(showArchive ? [{ to: "/archive", icon: Archive, label: t("nav.archive") }] : []),
-    { to: "/search", icon: Search, label: t("nav.search") },
-    { to: "/notifications", icon: Bell, label: t("nav.notifications"), badge: unread },
-  ];
+  const {
+    workNavItems,
+    hrNavItems,
+    correspondenceNavItems,
+    registryNavItems,
+    serviceNavItems,
+    referenceNavItems,
+    adminSections,
+  } = useMemo(() => {
+    const work = filterNavItems(WORK_NAV, canModule).map(toNavItem);
+    const hr = filterNavGroup(HR_NAV, canModule).map(toNavItem);
+    const correspondence = filterNavGroup(CORRESPONDENCE_NAV, canModule).map(toNavItem);
+    const registry = filterNavItems(REGISTRY_NAV, canModule).map(toNavItem);
+    const service = filterNavItems(SERVICE_NAV, canModule).map(toNavItem);
+    const reference = filterNavItems(REFERENCE_NAV, canModule).map(toNavItem);
+    const admin = filterAdminSections(ADMIN_NAV_SECTIONS, canModule).map((section) => ({
+      key: section.key,
+      label: t(section.labelKey),
+      items: section.items.map(toNavItem),
+    }));
+    return {
+      workNavItems: work,
+      hrNavItems: hr,
+      correspondenceNavItems: correspondence,
+      registryNavItems: registry,
+      serviceNavItems: service,
+      referenceNavItems: reference,
+      adminSections: admin,
+    };
+  }, [canModule, t, unread]);
 
-  const referenceNavItems: NavItem[] = [
-    { to: "/references", icon: BookMarked, label: t("nav.referencesHub"), show: licensed("references") },
-    { to: "/nomenclature", icon: Library, label: t("nav.nomenclature"), show: licensed("nomenclature") },
-    { to: "/templates", icon: FilePlus2, label: t("nav.templates"), show: licensed("templates") },
-    { to: "/workflows", icon: GitBranch, label: t("nav.workflows"), show: licensed("workflows") },
-  ].filter((item) => item.show !== false) as NavItem[];
-
-  const adminItems = [
-    { to: "/reports", icon: BarChart3, label: t("nav.reports"), show: can("view_all_documents") },
-    { to: "/audit", icon: ShieldCheck, label: t("nav.audit"), show: can("view_audit") && licensed("audit") },
-    { to: "/admin/users", icon: Users, label: t("nav.users"), show: can("manage_users") },
-    { to: "/admin/roles", icon: ShieldCheck, label: t("nav.roles"), show: can("manage_users") || can("manage_roles") },
-    { to: "/admin/permissions", icon: ShieldCheck, label: t("nav.permissions"), show: can("manage_roles") },
-    { to: "/admin/organization", icon: Building2, label: t("nav.organization"), show: can("manage_org") },
-    { to: "/admin/departments", icon: Building2, label: t("nav.departments"), show: can("manage_org") },
-    { to: "/admin/positions", icon: Settings, label: t("nav.positions"), show: can("manage_org") },
-    { to: "/admin/license", icon: KeyRound, label: t("nav.license"), show: can("manage_license") },
-  ].filter((item) => item.show);
+  const isHrActive = hrNavItems.some((item) => isNavActive(path, item.to));
+  const isCorrespondenceActive = correspondenceNavItems.some((item) => isNavActive(path, item.to));
+  const isRegistryActive = registryNavItems.some((item) => isNavActive(path, item.to));
+  const isServiceActive = serviceNavItems.some((item) => isNavActive(path, item.to));
+  const isReferencesActive = referenceNavItems.some((item) => isNavActive(path, item.to));
+  const isAdminActive =
+    adminSections.some((section) => section.items.some((item) => isNavActive(path, item.to)));
 
   const licenseBanner = (() => {
-    if (licenseLoading || !license) return null;
+    if (accessLoading || !license) return null;
+    if (license.server_revoked) {
+      return { tone: "destructive" as const, text: t("license.banner.serverRevoked") };
+    }
+    if (license.sync_stale && license.activation_mode === "online") {
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.syncStale").replace(
+          "{h}",
+          String(license.offline_grace_hours ?? 72),
+        ),
+      };
+    }
     if (license.status === "suspended") {
       return { tone: "destructive" as const, text: t("license.banner.suspended") };
     }
@@ -192,11 +330,37 @@ export function AppShell({ children }: { children: ReactNode }) {
         text: t("license.banner.expiring").replace("{n}", String(license.days_remaining)),
       };
     }
+    if (can("manage_license") && license.max_users > 0 && license.seats_available <= 0) {
+      return { tone: "destructive" as const, text: t("license.banner.seatsFull") };
+    }
+    if (
+      can("manage_license") &&
+      license.max_users > 0 &&
+      license.active_users / license.max_users >= 0.8 &&
+      license.seats_available > 0
+    ) {
+      const pct = Math.round((license.active_users / license.max_users) * 100);
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.seatsWarning").replace("{n}", String(pct)),
+      };
+    }
+    if (
+      can("manage_license") &&
+      license.plan === "trial" &&
+      license.days_remaining !== null &&
+      license.days_remaining <= 7
+    ) {
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.trialExpiring").replace("{n}", String(license.days_remaining)),
+      };
+    }
     return null;
   })();
 
   const readOnlyBanner =
-    !licenseLoading && license && !isWritable ? t("license.banner.readOnly") : null;
+    !accessLoading && license && !isWritable ? t("license.banner.readOnly") : null;
 
   const profile = me?.profile as { full_name_ru?: string | null; full_name_kk?: string | null; email?: string } | undefined;
   const displayName = profile ? localized(profile, locale, "full_name") || profile.email || "" : "";
@@ -239,27 +403,62 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto py-2">
-          {mainNavItems.map((item) => (
-            <SidebarNavLink key={item.to} item={item} path={path} />
-          ))}
+        <nav className="flex-1 overflow-y-auto py-2 space-y-3">
+          <SidebarNavSection label={t("nav.work")}>
+            {workNavItems.map((item) => (
+              <SidebarNavLink key={item.to} item={item} path={path} />
+            ))}
+          </SidebarNavSection>
 
-          <div className="px-4 mt-4 mb-1 text-[10px] uppercase tracking-wider text-sidebar-foreground/40">
-            {t("nav.references")}
-          </div>
-          {referenceNavItems.map((item) => (
-            <SidebarNavLink key={item.to} item={item} path={path} />
-          ))}
-
-          {adminItems.length > 0 && (
-            <>
-              <div className="px-4 mt-4 mb-1 text-[10px] uppercase tracking-wider text-sidebar-foreground/40">
-                {t("nav.admin")}
-              </div>
-              {adminItems.map((item) => (
+          {hrNavItems.length > 0 && (
+            <SidebarNavGroup label={t("nav.sectionHr")} active={isHrActive}>
+              {hrNavItems.map((item) => (
                 <SidebarNavLink key={item.to} item={item} path={path} />
               ))}
-            </>
+            </SidebarNavGroup>
+          )}
+
+          {correspondenceNavItems.length > 0 && (
+            <SidebarNavGroup label={t("nav.correspondence")} active={isCorrespondenceActive}>
+              {correspondenceNavItems.map((item) => (
+                <SidebarNavLink key={item.to} item={item} path={path} />
+              ))}
+            </SidebarNavGroup>
+          )}
+
+          {registryNavItems.length > 0 && (
+            <SidebarNavGroup label={t("nav.registry")} active={isRegistryActive}>
+              {registryNavItems.map((item) => (
+                <SidebarNavLink key={item.to} item={item} path={path} />
+              ))}
+            </SidebarNavGroup>
+          )}
+
+          <SidebarNavGroup label={t("nav.tools")} active={isServiceActive}>
+            {serviceNavItems.map((item) => (
+              <SidebarNavLink key={item.to} item={item} path={path} />
+            ))}
+          </SidebarNavGroup>
+
+          {referenceNavItems.length > 0 && (
+            <SidebarNavGroup label={t("nav.references")} active={isReferencesActive}>
+              {referenceNavItems.map((item) => (
+                <SidebarNavLink key={item.to} item={item} path={path} />
+              ))}
+            </SidebarNavGroup>
+          )}
+
+          {adminSections.length > 0 && (
+            <SidebarNavGroup label={t("nav.admin")} active={isAdminActive}>
+              {adminSections.map((section) => (
+                <div key={section.key}>
+                  <SidebarNavSubheading label={section.label} />
+                  {section.items.map((item) => (
+                    <SidebarNavLink key={item.to} item={item} path={path} />
+                  ))}
+                </div>
+              ))}
+            </SidebarNavGroup>
           )}
         </nav>
         <div className="px-4 py-3 border-t border-sidebar-border text-[11px] text-sidebar-foreground/50">
@@ -337,7 +536,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span className="flex-1">{licenseBanner.text}</span>
             {can("manage_license") ? (
-              <Link to="/admin/license" className="underline font-medium shrink-0">
+              <Link to="/admin/settings" search={{ tab: "license" }} className="underline font-medium shrink-0">
                 {t("license.banner.manage")}
               </Link>
             ) : null}
@@ -378,5 +577,3 @@ export function PageBody({ children, className }: { children: ReactNode; classNa
   return <div className={cn("p-6", className)}>{children}</div>;
 }
 
-// Settings icon re-export for callers
-export { Settings };

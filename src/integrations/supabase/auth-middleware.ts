@@ -91,6 +91,14 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
     }
 
+    if (claims.sid) {
+      const { validateActiveSession } = await import("@/lib/auth/server/sessions");
+      const active = await validateActiveSession(claims.sid);
+      if (!active) {
+        throw new Error("Unauthorized: Session revoked or expired");
+      }
+    }
+
 
 
     const supabase = createClient<Database>(
@@ -128,17 +136,12 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
 
     return next({
-
       context: {
-
         supabase,
-
         userId: claims.sub,
-
+        organizationId: claims.org_id ?? null,
         claims,
-
       },
-
     });
 
   },

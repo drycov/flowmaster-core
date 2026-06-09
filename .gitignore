@@ -32,3 +32,9 @@ dist-ssr
 *.sw?
 .env
 .flowmaster/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

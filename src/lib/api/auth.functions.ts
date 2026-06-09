@@ -36,6 +36,42 @@ import {
 
 } from "@/lib/auth/server";
 
+import {
+  assertEdsRegistrationAllowed,
+  assertEmailRegistrationAllowed,
+  loadSystemSettings,
+  validatePassword,
+} from "@/lib/auth/policy";
+import {
+  assertUserBelongsToOrganization,
+  resolveAuthOrganizationFromRequest,
+} from "@/lib/access/tenant-auth.server";
+import { updateBootstrapOrganization } from "@/lib/access/tenant-public.server";
+import {
+  clearAuthCookies,
+  publishAuthSession,
+} from "@/lib/auth/server/publish-session.server";
+import { getRefreshSessionCookie } from "@/lib/auth/server/refresh-cookie.server";
+import { refreshAccessTokenFromOpaque } from "@/lib/auth/server/sessions";
+
+async function issueSessionForUser(userId: string, email: string) {
+  const settings = await loadSystemSettings();
+  const session = await issueAppSession(userId, email, settings.auth.session_ttl_hours);
+  return publishAuthSession(session);
+}
+
+function readRequestHost(): string | null {
+  const request = getRequest();
+  return request?.headers?.get("host") ?? null;
+}
+
+async function resolveAuthOrganizationId(tenantSlug?: string | null): Promise<string | null> {
+  return resolveAuthOrganizationFromRequest({
+    tenantSlug,
+    hostHeader: readRequestHost(),
+  });
+}
+
 
 
 const certInfoSchema = z.object({
@@ -76,30 +112,49 @@ export const registerWithEmail = createServerFn({ method: "POST" })
 
       locale: z.enum(["ru", "kk"]).default("ru"),
 
+      tenant_slug: z.string().optional(),
+
+      org_name_ru: z.string().optional(),
+
+      org_name_kk: z.string().optional(),
+
     }),
 
   )
 
   .handler(async ({ data }) => {
+    const { settings: authPolicy, bootstrap } = await assertEmailRegistrationAllowed(data.email);
+    const pwdErr = validatePassword(data.password, authPolicy);
+    if (pwdErr) throw new Error(pwdErr);
+
+    let organizationId: string | null = null;
+
+    if (bootstrap) {
+      const slug = data.tenant_slug?.trim();
+      const orgNameRu = data.org_name_ru?.trim() || data.full_name_ru;
+      const orgNameKk = data.org_name_kk?.trim() || data.full_name_kk;
+      if (slug) {
+        await updateBootstrapOrganization({
+          slug,
+          name_ru: orgNameRu,
+          name_kk: orgNameKk,
+        });
+      }
+    } else {
+      organizationId = await resolveAuthOrganizationId(data.tenant_slug);
+    }
 
     const userId = await registerUser({
-
       email: data.email,
-
       password: data.password,
-
       full_name_ru: data.full_name_ru,
-
       full_name_kk: data.full_name_kk,
-
       locale: data.locale,
-
       auth_method: "email",
-
+      organization_id: organizationId,
     });
 
-    return issueAppSession(userId, data.email.toLowerCase());
-
+    return issueSessionForUser(userId, data.email.toLowerCase());
   });
 
 
@@ -110,9 +165,11 @@ export const loginWithEmail = createServerFn({ method: "POST" })
 
     z.object({
 
-      email: z.string().email(),
+      email: z.string().trim().email(),
 
       password: z.string().min(1),
+
+      tenant_slug: z.string().optional(),
 
     }),
 
@@ -120,13 +177,49 @@ export const loginWithEmail = createServerFn({ method: "POST" })
 
   .handler(async ({ data }) => {
 
+    const organizationId = await resolveAuthOrganizationId(data.tenant_slug);
+
     const row = await authenticateUser(data.email, data.password);
 
-    return issueAppSession(row.user_id, row.email);
+    await assertUserBelongsToOrganization(row.user_id, organizationId);
 
+    return issueSessionForUser(row.user_id, row.email);
   });
 
+export const loginWithLdap = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      username: z.string().min(1).max(255),
+      password: z.string().min(1),
+      tenant_slug: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const settings = await loadSystemSettings();
+    if (!settings.ldap.enabled) {
+      throw new Error("Вход через Active Directory отключён.");
+    }
 
+    const organizationId = await resolveAuthOrganizationId(data.tenant_slug);
+
+    const { authenticateLdapUser, buildLdapRuntimeConfig } = await import("@/lib/auth/ldap.server");
+    const { resolveLdapLogin } = await import("@/lib/auth/server/ldap-users.server");
+
+    const config = buildLdapRuntimeConfig(settings.ldap);
+    if (!config) {
+      throw new Error(
+        "LDAP не настроен. Укажите параметры подключения и пароль сервисной учётной записи в настройках системы.",
+      );
+    }
+
+    const ldapUser = await authenticateLdapUser(data.username, data.password, config);
+    if (!ldapUser) {
+      throw new Error("Неверное имя пользователя или пароль Active Directory.");
+    }
+
+    const { userId, email } = await resolveLdapLogin(ldapUser, settings, { organizationId });
+    return issueSessionForUser(userId, email);
+  });
 
 // ─── EDS auth ───────────────────────────────────────────────────────────────
 
@@ -192,25 +285,30 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
       full_name_kk: z.string().optional(),
 
-      link_email: z.string().email().optional(),
+      link_email: z.preprocess(
+        (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+        z.string().trim().email().optional(),
+      ),
 
-      link_password: z.string().min(1).optional(),
+      link_password: z.preprocess(
+        (val) => (typeof val === "string" && val === "" ? undefined : val),
+        z.string().min(1).optional(),
+      ),
+
+      tenant_slug: z.string().optional(),
 
     }),
 
   )
 
   .handler(async ({ data }) => {
-
-    const iin = extractIin(data.cert_info);
-
-    if (!iin) throw new Error("Не удалось определить ИИН из сертификата ЭЦП");
-
-
+    const settings = await loadSystemSettings();
+    const { verifyEdsAuthSignature } = await import("@/lib/auth/server/eds-auth-verify");
+    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds);
 
     const ch = await consumeAuthChallenge(data.challenge_id);
 
-    const displayName = displayNameFromCert(data.cert_info, data.full_name_ru);
+    const displayName = displayNameFromCert(certInfo, data.full_name_ru);
 
 
 
@@ -272,7 +370,7 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
         }
 
-        await attachEdsToProfile(row.user_id, iin, data.cert_info, displayName);
+        await attachEdsToProfile(row.user_id, iin, certInfo, displayName);
 
         userId = row.user_id;
 
@@ -294,21 +392,20 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
 
 
-      await attachEdsToProfile(userId, iin, data.cert_info, displayName);
+      await attachEdsToProfile(userId, iin, certInfo, displayName);
 
       const refreshed = await findProfileByIin(iin);
 
       profileEmail = refreshed?.email ?? profileEmail;
 
     } else if (ch.purpose === "register") {
-
       if (userId) {
-
         throw new Error("Пользователь с данным ИИН уже зарегистрирован. Войдите по ЭЦП.");
-
       }
 
-
+      if (!linkCreds) {
+        await assertEdsRegistrationAllowed();
+      }
 
       if (linkCreds) {
 
@@ -322,7 +419,7 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
         }
 
-        await attachEdsToProfile(row.user_id, iin, data.cert_info, displayName);
+        await attachEdsToProfile(row.user_id, iin, certInfo, displayName);
 
         userId = row.user_id;
 
@@ -350,7 +447,7 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
         await ensureAdminRole(userId, "eds_first_user");
 
-        await attachEdsToProfile(userId, iin, data.cert_info, displayName);
+        await attachEdsToProfile(userId, iin, certInfo, displayName);
 
         profileEmail = edsEmail(iin);
 
@@ -364,9 +461,12 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
     }
 
+    if (ch.purpose === "login" || (ch.purpose === "register" && linkCreds)) {
+      const organizationId = await resolveAuthOrganizationId(data.tenant_slug);
+      await assertUserBelongsToOrganization(userId!, organizationId);
+    }
 
-
-    const session = await issueAppSession(userId!, profileEmail!);
+    const session = await issueSessionForUser(userId!, profileEmail!);
 
     return { ...session, iin, is_new_user: isNewUser };
 
@@ -393,16 +493,11 @@ export const linkEdsToProfile = createServerFn({ method: "POST" })
   )
 
   .handler(async ({ data, context }) => {
-
-    const iin = extractIin(data.cert_info);
-
-    if (!iin) throw new Error("Не удалось определить ИИН из сертификата ЭЦП");
-
-
+    const settings = await loadSystemSettings();
+    const { verifyEdsAuthSignature } = await import("@/lib/auth/server/eds-auth-verify");
+    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds);
 
     await consumeAuthChallenge(data.challenge_id, "link");
-
-
 
     const profile = await fetchProfileById(context.userId);
 
@@ -416,7 +511,7 @@ export const linkEdsToProfile = createServerFn({ method: "POST" })
 
 
 
-    await attachEdsToProfile(context.userId, iin, data.cert_info, undefined, { verifyCn: true });
+    await attachEdsToProfile(context.userId, iin, certInfo, undefined, { verifyCn: true });
 
     return { ok: true, iin };
 
@@ -459,12 +554,26 @@ export const logout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
 
   .handler(async ({ context }) => {
+    const { revokeAppSession, revokeAllUserSessions } = await import("@/lib/auth/server/sessions");
+    const sid = context.claims?.sid;
+    if (sid) {
+      await revokeAppSession(sid);
+    } else {
+      await revokeAllUserSessions(context.userId);
+    }
 
-    await supabaseAdmin.from("app_sessions" as never).delete().eq("user_id", context.userId);
-
+    clearAuthCookies();
     return { ok: true };
 
   });
+
+export const refreshAccessToken = createServerFn({ method: "POST" }).handler(async () => {
+  const refreshToken = getRefreshSessionCookie();
+  if (!refreshToken) {
+    throw new Error("No refresh session");
+  }
+  return refreshAccessTokenFromOpaque(refreshToken);
+});
 
 
 
@@ -482,6 +591,12 @@ export const getCurrentSession = createServerFn({ method: "GET" }).handler(async
   const claims = verifyAccessToken(token, getJwtSecret());
 
   if (!claims) return { user: null };
+
+  if (claims.sid) {
+    const { validateActiveSession } = await import("@/lib/auth/server/sessions");
+    const active = await validateActiveSession(claims.sid);
+    if (!active) return { user: null };
+  }
 
 
 
@@ -562,19 +677,16 @@ export const changeMyPassword = createServerFn({ method: "POST" })
   .inputValidator(z.object({ password: z.string().min(8) }))
 
   .handler(async ({ data, context }) => {
+    const authPolicy = (await loadSystemSettings()).auth;
+    const pwdErr = validatePassword(data.password, authPolicy);
+    if (pwdErr) throw new Error(pwdErr);
 
     const { error } = await supabaseAdmin.rpc("change_app_user_password" as never, {
-
       p_user_id: context.userId,
-
       p_new_password: data.password,
-
     } as never);
-
     if (error) throw new Error(error.message);
-
     return { ok: true };
-
   });
 
 

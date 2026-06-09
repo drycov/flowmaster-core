@@ -20,6 +20,7 @@ import {
 import { updateDocumentMetadata } from "@/lib/api/documents.functions";
 import {
   listCorrespondentsBrief,
+  listAccessLevelsBrief,
   listDeliveryMethodsBrief,
   listDocumentTypesBrief,
   listPrioritiesBrief,
@@ -41,6 +42,7 @@ type DocumentRow = {
   correspondent_id?: string | null;
   registration_journal_id?: string | null;
   delivery_method_id?: string | null;
+  access_level_id?: string | null;
   received_at?: string | null;
   sent_at?: string | null;
   pages_count?: number | null;
@@ -59,6 +61,7 @@ interface EditFormValues {
   correspondent_id: string;
   registration_journal_id: string;
   delivery_method_id: string;
+  access_level_id: string;
   received_at: string;
   sent_at: string;
   pages_count: string;
@@ -108,6 +111,11 @@ export function DocumentEditSheet({
     queryFn: listDeliveryMethodsBrief,
     enabled: open,
   });
+  const { data: accessLevels = [] } = useQuery({
+    queryKey: ["ref-access-levels-brief"],
+    queryFn: listAccessLevelsBrief,
+    enabled: open,
+  });
 
   const form = useForm<EditFormValues>({
     defaultValues: {
@@ -120,6 +128,7 @@ export function DocumentEditSheet({
       correspondent_id: "",
       registration_journal_id: "",
       delivery_method_id: "",
+      access_level_id: "",
       received_at: "",
       sent_at: "",
       pages_count: "",
@@ -141,6 +150,7 @@ export function DocumentEditSheet({
       correspondent_id: document.correspondent_id ?? "",
       registration_journal_id: document.registration_journal_id ?? "",
       delivery_method_id: document.delivery_method_id ?? "",
+      access_level_id: document.access_level_id ?? "",
       received_at: toDatetimeLocal(document.received_at),
       sent_at: toDatetimeLocal(document.sent_at),
       pages_count: document.pages_count != null ? String(document.pages_count) : "",
@@ -166,6 +176,7 @@ export function DocumentEditSheet({
           correspondent_id: values.correspondent_id || null,
           registration_journal_id: values.registration_journal_id || null,
           delivery_method_id: values.delivery_method_id || null,
+          access_level_id: values.access_level_id || null,
           received_at: fromDatetimeLocal(values.received_at),
           sent_at: fromDatetimeLocal(values.sent_at),
           due_at: fromDatetimeLocal(values.due_at),
@@ -256,6 +267,14 @@ export function DocumentEditSheet({
               locale={locale}
             />
           </div>
+
+          <ReferenceSelect
+            label={t("access.level")}
+            value={form.watch("access_level_id")}
+            onChange={(v) => form.setValue("access_level_id", v)}
+            options={accessLevels as ReferenceOption[]}
+            locale={locale}
+          />
 
           <div>
             <Label>{t("doc.externalRegNumber")}</Label>

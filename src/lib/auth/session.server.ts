@@ -39,10 +39,12 @@ export function signAccessToken(
   email: string,
   jwtSecret: string,
   ttlSec = 7 * 24 * 3600,
+  sessionId?: string,
+  organizationId?: string | null,
 ): string {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "HS256", typ: "JWT" };
-  const payload = {
+  const payload: Record<string, unknown> = {
     aud: "authenticated",
     exp: now + ttlSec,
     iat: now,
@@ -51,6 +53,12 @@ export function signAccessToken(
     email,
     role: "authenticated",
   };
+  if (sessionId) {
+    payload.sid = sessionId;
+  }
+  if (organizationId) {
+    payload.org_id = organizationId;
+  }
 
   const encodedHeader = base64urlJson(header);
   const encodedPayload = base64urlJson(payload);
@@ -61,10 +69,17 @@ export function signAccessToken(
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
+export type AccessTokenClaims = {
+  sub: string;
+  email?: string;
+  sid?: string;
+  org_id?: string;
+};
+
 export function verifyAccessToken(
   token: string,
   jwtSecret: string,
-): { sub: string; email?: string } | null {
+): AccessTokenClaims | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
 
@@ -78,13 +93,18 @@ export function verifyAccessToken(
   try {
     const payload = JSON.parse(
       Buffer.from(encodedPayload, "base64url").toString("utf8"),
-    ) as { sub?: string; email?: string; exp?: number };
+    ) as { sub?: string; email?: string; exp?: number; sid?: string; org_id?: string };
 
     if (!payload.sub || !payload.exp || payload.exp * 1000 < Date.now()) {
       return null;
     }
 
-    return { sub: payload.sub, email: payload.email };
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      sid: typeof payload.sid === "string" ? payload.sid : undefined,
+      org_id: typeof payload.org_id === "string" ? payload.org_id : undefined,
+    };
   } catch {
     return null;
   }

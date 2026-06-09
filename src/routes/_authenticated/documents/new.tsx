@@ -50,9 +50,13 @@ import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/_authenticated/documents/new")({
-
+  validateSearch: (search: Record<string, unknown>) => ({
+    projectId: (search.projectId as string) || undefined,
+    templateId: (search.templateId as string) || undefined,
+    nomenclatureId: (search.nomenclatureId as string) || undefined,
+    departmentId: (search.departmentId as string) || undefined,
+  }),
   component: NewDocument,
-
 });
 
 
@@ -68,8 +72,8 @@ type TemplateWithWorkflow = Template & {
 
 
 function NewDocument() {
-
   const { t } = useI18n();
+  const { projectId, templateId, nomenclatureId } = Route.useSearch();
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
 
@@ -111,7 +115,11 @@ function NewDocument() {
 
 
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState("none");
+  const [selectedTemplateId, setSelectedTemplateId] = useState(templateId ?? "none");
+
+  useEffect(() => {
+    if (templateId) setSelectedTemplateId(templateId);
+  }, [templateId]);
 
   const selectedTemplate = templates.find((tp) => tp.id === selectedTemplateId) as
 
@@ -129,7 +137,9 @@ function NewDocument() {
 
   });
 
-
+  useEffect(() => {
+    if (nomenclatureId) form.setValue("nomenclature_id", nomenclatureId);
+  }, [nomenclatureId, form]);
 
   const templateDefaultWf = selectedTemplate?.default_workflow_id ?? null;
 
@@ -199,6 +209,7 @@ function NewDocument() {
         templateFields,
         authorDefaults,
         route,
+        projectId: projectId ?? null,
       });
     },
     (errors) => {

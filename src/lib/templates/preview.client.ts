@@ -7,13 +7,9 @@ import {
 } from "./docx-background.client";
 import { replaceDocxVectorImages } from "./docx-vector-images.client";
 import { PLACEHOLDER_PATTERN } from "./file-formats";
+import type { TemplateFieldLabel } from "./preview";
 
-export type TemplatePreviewMode = "docx" | "html" | "unsupported" | "empty";
-
-export type TemplateFieldLabel = {
-  key: string;
-  label_ru: string;
-};
+export type { TemplatePreviewMode, TemplateFieldLabel } from "./preview";
 
 function escapeHtml(text: string): string {
   return text
@@ -129,14 +125,3 @@ function hideBrokenDocxImages(container: HTMLElement): void {
   });
 }
 
-export function previewModeForFormat(
-  fileFormat: string | null | undefined,
-  filePath: string | null | undefined,
-  body: string,
-): TemplatePreviewMode {
-  if (filePath && fileFormat === "docx") return "docx";
-  if (filePath && fileFormat === "xlsx") return "html";
-  if (filePath && fileFormat) return "unsupported";
-  if (body.trim()) return "html";
-  return "empty";
-}

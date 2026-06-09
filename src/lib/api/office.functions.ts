@@ -1,17 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceLicense } from "./_helpers";
+import { resolveAppOrigin, resolveOfficeUrl } from "@/lib/app-origin.server";
+import { requireModuleAccess } from "./_helpers";
 import { createSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
-
-function resolveAppOrigin(): string {
-  return (
-    process.env.VITE_APP_URL ??
-    process.env.APP_URL ??
-    "http://localhost:4000"
-  ).replace(/\/$/, "");
-}
 
 export const getOfficeEditorConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -19,12 +12,9 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { officeDocumentKey } = await import("@/lib/office/office.server");
 
-    await enforceLicense(context.supabase, { writable: true });
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
-    const officeUrl = (process.env.VITE_OFFICE_URL ?? process.env.OFFICE_URL ?? "").replace(
-      /\/$/,
-      "",
-    );
+    const officeUrl = await resolveOfficeUrl();
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
@@ -32,6 +22,14 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
       .eq("id", data.document_id)
       .single();
     if (docErr || !doc) throw new Error("Документ не найден");
+
+    if (!officeUrl) {
+      return {
+        available: false as const,
+        office_url: null,
+        reason: "office_not_configured",
+      };
+    }
 
     const { data: version } = await supabase
       .from("document_versions")
@@ -43,7 +41,7 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
     if (!version?.file_path) {
       return {
         available: false as const,
-        office_url: officeUrl || null,
+        office_url: officeUrl,
         reason: "no_file_version",
       };
     }
@@ -68,11 +66,12 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
     const readOnly = !["draft", "returned_for_revision"].includes(doc.status);
 
     const key = officeDocumentKey(doc.id, version.version_no, doc.updated_at);
-    const callbackUrl = `${resolveAppOrigin()}/api/public/hooks/office-callback`;
+    const appOrigin = await resolveAppOrigin();
+    const callbackUrl = appOrigin ? `${appOrigin}/api/public/hooks/office-callback` : "";
 
     return {
       available: true as const,
-      office_url: officeUrl || null,
+      office_url: officeUrl,
       document_server_url: officeUrl,
       config: {
         document: {

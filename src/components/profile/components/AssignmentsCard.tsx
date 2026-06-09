@@ -64,7 +64,7 @@ import { listDepartments, listUsersBrief } from "@/lib/api/admin.functions";
 
 import { listPositions } from "@/lib/api/org.functions";
 
-import { useRole } from "@/hooks/use-role";
+import { useAccessContext } from "@/lib/access/hooks";
 
 import { useI18n, localized } from "@/i18n";
 
@@ -104,9 +104,9 @@ export function AssignmentsCard({ userId }: AssignmentsCardProps) {
 
   const qc = useQueryClient();
 
-  const { can } = useRole();
+  const { canModule } = useAccessContext();
 
-  const canManage = can("manage_users");
+  const canManage = canModule("admin_users", "write");
 
   const [open, setOpen] = useState(false);
 

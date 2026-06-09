@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedSubstitutionsRouteImport } from './routes/_authenticated/substitutions'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -26,26 +28,66 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedWorkflowsIndexRouteImport } from './routes/_authenticated/workflows/index'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates/index'
 import { Route as AuthenticatedReferencesIndexRouteImport } from './routes/_authenticated/references/index'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects/index'
+import { Route as AuthenticatedKnowledgeIndexRouteImport } from './routes/_authenticated/knowledge/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
+import { Route as AuthenticatedCounterpartiesIndexRouteImport } from './routes/_authenticated/counterparties/index'
+import { Route as AuthenticatedContractsIndexRouteImport } from './routes/_authenticated/contracts/index'
+import { Route as ApiV1TasksRouteImport } from './routes/api/v1/tasks'
+import { Route as ApiV1DocumentsRouteImport } from './routes/api/v1/documents'
+import { Route as ApiV1ContractsRouteImport } from './routes/api/v1/contracts'
 import { Route as AuthenticatedWorkflowsIdRouteImport } from './routes/_authenticated/workflows/$id'
 import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenticated/templates/$id'
 import { Route as AuthenticatedReferencesCatalogRouteImport } from './routes/_authenticated/references/$catalog'
+import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects/$id'
+import { Route as AuthenticatedKnowledgeNewRouteImport } from './routes/_authenticated/knowledge/new'
+import { Route as AuthenticatedKnowledgeManageRouteImport } from './routes/_authenticated/knowledge/manage'
+import { Route as AuthenticatedKnowledgeIdRouteImport } from './routes/_authenticated/knowledge/$id'
 import { Route as AuthenticatedDocumentsNewRouteImport } from './routes/_authenticated/documents/new'
 import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents/$id'
+import { Route as AuthenticatedCounterpartiesIdRouteImport } from './routes/_authenticated/counterparties/$id'
 import { Route as AuthenticatedCorrespondenceOutgoingRouteImport } from './routes/_authenticated/correspondence/outgoing'
 import { Route as AuthenticatedCorrespondenceIncomingRouteImport } from './routes/_authenticated/correspondence/incoming'
+import { Route as AuthenticatedContractsDocumentIdRouteImport } from './routes/_authenticated/contracts/$documentId'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
 import { Route as AuthenticatedAdminPositionsRouteImport } from './routes/_authenticated/admin/positions'
 import { Route as AuthenticatedAdminPermissionsRouteImport } from './routes/_authenticated/admin/permissions'
 import { Route as AuthenticatedAdminOrganizationRouteImport } from './routes/_authenticated/admin/organization'
 import { Route as AuthenticatedAdminLicenseRouteImport } from './routes/_authenticated/admin/license'
+import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated/admin/integrations'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
+import { Route as AuthenticatedAdminCalendarRouteImport } from './routes/_authenticated/admin/calendar'
+import { Route as AuthenticatedHrTimesheetIndexRouteImport } from './routes/_authenticated/hr/timesheet/index'
+import { Route as AuthenticatedHrLeaveIndexRouteImport } from './routes/_authenticated/hr/leave/index'
+import { Route as AuthenticatedHrGanttIndexRouteImport } from './routes/_authenticated/hr/gantt/index'
+import { Route as AuthenticatedHrDutyIndexRouteImport } from './routes/_authenticated/hr/duty/index'
+import { Route as AuthenticatedHrDirectoryIndexRouteImport } from './routes/_authenticated/hr/directory/index'
+import { Route as AuthenticatedHrAdminIndexRouteImport } from './routes/_authenticated/hr/admin/index'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
+import { Route as ApiV1LicenseRevokeRouteImport } from './routes/api/v1/license/revoke'
+import { Route as ApiV1LicenseRegisterKeyRouteImport } from './routes/api/v1/license/register-key'
+import { Route as ApiV1LicenseHeartbeatRouteImport } from './routes/api/v1/license/heartbeat'
+import { Route as ApiV1LicenseActivateRouteImport } from './routes/api/v1/license/activate'
+import { Route as ApiV1ImportIncomingRouteImport } from './routes/api/v1/import/incoming'
+import { Route as ApiV1DocumentsIdRouteImport } from './routes/api/v1/documents.$id'
+import { Route as ApiPublicHooksWebhookDispatchRouteImport } from './routes/api/public/hooks/webhook-dispatch'
+import { Route as ApiPublicHooksTelegramWebhookRouteImport } from './routes/api/public/hooks/telegram-webhook'
+import { Route as ApiPublicHooksTelegramPollRouteImport } from './routes/api/public/hooks/telegram-poll'
+import { Route as ApiPublicHooksTelegramDispatchRouteImport } from './routes/api/public/hooks/telegram-dispatch'
 import { Route as ApiPublicHooksSlaTickRouteImport } from './routes/api/public/hooks/sla-tick'
 import { Route as ApiPublicHooksRetentionTickRouteImport } from './routes/api/public/hooks/retention-tick'
 import { Route as ApiPublicHooksOfficeCallbackRouteImport } from './routes/api/public/hooks/office-callback'
+import { Route as ApiPublicHooksLicenseSyncRouteImport } from './routes/api/public/hooks/license-sync'
 import { Route as ApiPublicHooksEmailDispatchRouteImport } from './routes/api/public/hooks/email-dispatch'
+import { Route as AuthenticatedKnowledgeIdEditRouteImport } from './routes/_authenticated/knowledge/$id.edit'
+import { Route as AuthenticatedHrLeaveScheduleRouteImport } from './routes/_authenticated/hr/leave/schedule'
+import { Route as AuthenticatedHrLeaveApprovalsRouteImport } from './routes/_authenticated/hr/leave/approvals'
+import { Route as AuthenticatedHrGanttIdRouteImport } from './routes/_authenticated/hr/gantt/$id'
 import { Route as AuthenticatedAdminUsersIdRouteImport } from './routes/_authenticated/admin/users/$id'
+import { Route as ApiV1TasksIdCompleteRouteImport } from './routes/api/v1/tasks.$id.complete'
+import { Route as ApiV1DocumentsIdVersionsRouteImport } from './routes/api/v1/documents.$id.versions'
+import { Route as ApiV1DocumentsIdStatusRouteImport } from './routes/api/v1/documents.$id.status'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -61,11 +103,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSubstitutionsRoute =
+  AuthenticatedSubstitutionsRouteImport.update({
+    id: '/substitutions',
+    path: '/substitutions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -136,12 +189,51 @@ const AuthenticatedReferencesIndexRoute =
     path: '/references/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/projects/',
+    path: '/projects/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKnowledgeIndexRoute =
+  AuthenticatedKnowledgeIndexRouteImport.update({
+    id: '/knowledge/',
+    path: '/knowledge/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDocumentsIndexRoute =
   AuthenticatedDocumentsIndexRouteImport.update({
     id: '/documents/',
     path: '/documents/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCounterpartiesIndexRoute =
+  AuthenticatedCounterpartiesIndexRouteImport.update({
+    id: '/counterparties/',
+    path: '/counterparties/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContractsIndexRoute =
+  AuthenticatedContractsIndexRouteImport.update({
+    id: '/contracts/',
+    path: '/contracts/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiV1TasksRoute = ApiV1TasksRouteImport.update({
+  id: '/api/v1/tasks',
+  path: '/api/v1/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DocumentsRoute = ApiV1DocumentsRouteImport.update({
+  id: '/api/v1/documents',
+  path: '/api/v1/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ContractsRoute = ApiV1ContractsRouteImport.update({
+  id: '/api/v1/contracts',
+  path: '/api/v1/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedWorkflowsIdRoute =
   AuthenticatedWorkflowsIdRouteImport.update({
     id: '/workflows/$id',
@@ -160,6 +252,29 @@ const AuthenticatedReferencesCatalogRoute =
     path: '/references/$catalog',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProjectsIdRoute = AuthenticatedProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKnowledgeNewRoute =
+  AuthenticatedKnowledgeNewRouteImport.update({
+    id: '/knowledge/new',
+    path: '/knowledge/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKnowledgeManageRoute =
+  AuthenticatedKnowledgeManageRouteImport.update({
+    id: '/knowledge/manage',
+    path: '/knowledge/manage',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKnowledgeIdRoute =
+  AuthenticatedKnowledgeIdRouteImport.update({
+    id: '/knowledge/$id',
+    path: '/knowledge/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDocumentsNewRoute =
   AuthenticatedDocumentsNewRouteImport.update({
     id: '/documents/new',
@@ -172,6 +287,12 @@ const AuthenticatedDocumentsIdRoute =
     path: '/documents/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCounterpartiesIdRoute =
+  AuthenticatedCounterpartiesIdRouteImport.update({
+    id: '/counterparties/$id',
+    path: '/counterparties/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCorrespondenceOutgoingRoute =
   AuthenticatedCorrespondenceOutgoingRouteImport.update({
     id: '/correspondence/outgoing',
@@ -182,6 +303,18 @@ const AuthenticatedCorrespondenceIncomingRoute =
   AuthenticatedCorrespondenceIncomingRouteImport.update({
     id: '/correspondence/incoming',
     path: '/correspondence/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContractsDocumentIdRoute =
+  AuthenticatedContractsDocumentIdRouteImport.update({
+    id: '/contracts/$documentId',
+    path: '/contracts/$documentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminRolesRoute = AuthenticatedAdminRolesRouteImport.update({
@@ -213,10 +346,58 @@ const AuthenticatedAdminLicenseRoute =
     path: '/admin/license',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIntegrationsRoute =
+  AuthenticatedAdminIntegrationsRouteImport.update({
+    id: '/admin/integrations',
+    path: '/admin/integrations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDepartmentsRoute =
   AuthenticatedAdminDepartmentsRouteImport.update({
     id: '/admin/departments',
     path: '/admin/departments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCalendarRoute =
+  AuthenticatedAdminCalendarRouteImport.update({
+    id: '/admin/calendar',
+    path: '/admin/calendar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrTimesheetIndexRoute =
+  AuthenticatedHrTimesheetIndexRouteImport.update({
+    id: '/hr/timesheet/',
+    path: '/hr/timesheet/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrLeaveIndexRoute =
+  AuthenticatedHrLeaveIndexRouteImport.update({
+    id: '/hr/leave/',
+    path: '/hr/leave/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrGanttIndexRoute =
+  AuthenticatedHrGanttIndexRouteImport.update({
+    id: '/hr/gantt/',
+    path: '/hr/gantt/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrDutyIndexRoute =
+  AuthenticatedHrDutyIndexRouteImport.update({
+    id: '/hr/duty/',
+    path: '/hr/duty/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrDirectoryIndexRoute =
+  AuthenticatedHrDirectoryIndexRouteImport.update({
+    id: '/hr/directory/',
+    path: '/hr/directory/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrAdminIndexRoute =
+  AuthenticatedHrAdminIndexRouteImport.update({
+    id: '/hr/admin/',
+    path: '/hr/admin/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminUsersIndexRoute =
@@ -224,6 +405,60 @@ const AuthenticatedAdminUsersIndexRoute =
     id: '/admin/users/',
     path: '/admin/users/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiV1LicenseRevokeRoute = ApiV1LicenseRevokeRouteImport.update({
+  id: '/api/v1/license/revoke',
+  path: '/api/v1/license/revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicenseRegisterKeyRoute = ApiV1LicenseRegisterKeyRouteImport.update({
+  id: '/api/v1/license/register-key',
+  path: '/api/v1/license/register-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicenseHeartbeatRoute = ApiV1LicenseHeartbeatRouteImport.update({
+  id: '/api/v1/license/heartbeat',
+  path: '/api/v1/license/heartbeat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicenseActivateRoute = ApiV1LicenseActivateRouteImport.update({
+  id: '/api/v1/license/activate',
+  path: '/api/v1/license/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ImportIncomingRoute = ApiV1ImportIncomingRouteImport.update({
+  id: '/api/v1/import/incoming',
+  path: '/api/v1/import/incoming',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DocumentsIdRoute = ApiV1DocumentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1DocumentsRoute,
+} as any)
+const ApiPublicHooksWebhookDispatchRoute =
+  ApiPublicHooksWebhookDispatchRouteImport.update({
+    id: '/api/public/hooks/webhook-dispatch',
+    path: '/api/public/hooks/webhook-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksTelegramWebhookRoute =
+  ApiPublicHooksTelegramWebhookRouteImport.update({
+    id: '/api/public/hooks/telegram-webhook',
+    path: '/api/public/hooks/telegram-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksTelegramPollRoute =
+  ApiPublicHooksTelegramPollRouteImport.update({
+    id: '/api/public/hooks/telegram-poll',
+    path: '/api/public/hooks/telegram-poll',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksTelegramDispatchRoute =
+  ApiPublicHooksTelegramDispatchRouteImport.update({
+    id: '/api/public/hooks/telegram-dispatch',
+    path: '/api/public/hooks/telegram-dispatch',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksSlaTickRoute = ApiPublicHooksSlaTickRouteImport.update({
   id: '/api/public/hooks/sla-tick',
@@ -242,18 +477,63 @@ const ApiPublicHooksOfficeCallbackRoute =
     path: '/api/public/hooks/office-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksLicenseSyncRoute =
+  ApiPublicHooksLicenseSyncRouteImport.update({
+    id: '/api/public/hooks/license-sync',
+    path: '/api/public/hooks/license-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksEmailDispatchRoute =
   ApiPublicHooksEmailDispatchRouteImport.update({
     id: '/api/public/hooks/email-dispatch',
     path: '/api/public/hooks/email-dispatch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedKnowledgeIdEditRoute =
+  AuthenticatedKnowledgeIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedKnowledgeIdRoute,
+  } as any)
+const AuthenticatedHrLeaveScheduleRoute =
+  AuthenticatedHrLeaveScheduleRouteImport.update({
+    id: '/hr/leave/schedule',
+    path: '/hr/leave/schedule',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrLeaveApprovalsRoute =
+  AuthenticatedHrLeaveApprovalsRouteImport.update({
+    id: '/hr/leave/approvals',
+    path: '/hr/leave/approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrGanttIdRoute = AuthenticatedHrGanttIdRouteImport.update({
+  id: '/hr/gantt/$id',
+  path: '/hr/gantt/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminUsersIdRoute =
   AuthenticatedAdminUsersIdRouteImport.update({
     id: '/admin/users/$id',
     path: '/admin/users/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiV1TasksIdCompleteRoute = ApiV1TasksIdCompleteRouteImport.update({
+  id: '/$id/complete',
+  path: '/$id/complete',
+  getParentRoute: () => ApiV1TasksRoute,
+} as any)
+const ApiV1DocumentsIdVersionsRoute =
+  ApiV1DocumentsIdVersionsRouteImport.update({
+    id: '/versions',
+    path: '/versions',
+    getParentRoute: () => ApiV1DocumentsIdRoute,
+  } as any)
+const ApiV1DocumentsIdStatusRoute = ApiV1DocumentsIdStatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => ApiV1DocumentsIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -268,30 +548,72 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/api/health': typeof ApiHealthRoute
+  '/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/contracts/$documentId': typeof AuthenticatedContractsDocumentIdRoute
   '/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
   '/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
+  '/counterparties/$id': typeof AuthenticatedCounterpartiesIdRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/knowledge/$id': typeof AuthenticatedKnowledgeIdRouteWithChildren
+  '/knowledge/manage': typeof AuthenticatedKnowledgeManageRoute
+  '/knowledge/new': typeof AuthenticatedKnowledgeNewRoute
+  '/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRoute
+  '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
+  '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/contracts/': typeof AuthenticatedContractsIndexRoute
+  '/counterparties/': typeof AuthenticatedCounterpartiesIndexRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/knowledge/': typeof AuthenticatedKnowledgeIndexRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
   '/references/': typeof AuthenticatedReferencesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
+  '/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
+  '/hr/leave/schedule': typeof AuthenticatedHrLeaveScheduleRoute
+  '/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
+  '/api/public/hooks/telegram-dispatch': typeof ApiPublicHooksTelegramDispatchRoute
+  '/api/public/hooks/telegram-poll': typeof ApiPublicHooksTelegramPollRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
+  '/api/public/hooks/webhook-dispatch': typeof ApiPublicHooksWebhookDispatchRoute
+  '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
+  '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
+  '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
+  '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
+  '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
+  '/hr/admin/': typeof AuthenticatedHrAdminIndexRoute
+  '/hr/directory/': typeof AuthenticatedHrDirectoryIndexRoute
+  '/hr/duty/': typeof AuthenticatedHrDutyIndexRoute
+  '/hr/gantt/': typeof AuthenticatedHrGanttIndexRoute
+  '/hr/leave/': typeof AuthenticatedHrLeaveIndexRoute
+  '/hr/timesheet/': typeof AuthenticatedHrTimesheetIndexRoute
+  '/api/v1/documents/$id/status': typeof ApiV1DocumentsIdStatusRoute
+  '/api/v1/documents/$id/versions': typeof ApiV1DocumentsIdVersionsRoute
+  '/api/v1/tasks/$id/complete': typeof ApiV1TasksIdCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -306,30 +628,72 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/api/health': typeof ApiHealthRoute
+  '/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/contracts/$documentId': typeof AuthenticatedContractsDocumentIdRoute
   '/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
   '/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
+  '/counterparties/$id': typeof AuthenticatedCounterpartiesIdRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/knowledge/$id': typeof AuthenticatedKnowledgeIdRouteWithChildren
+  '/knowledge/manage': typeof AuthenticatedKnowledgeManageRoute
+  '/knowledge/new': typeof AuthenticatedKnowledgeNewRoute
+  '/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRoute
+  '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
+  '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/contracts': typeof AuthenticatedContractsIndexRoute
+  '/counterparties': typeof AuthenticatedCounterpartiesIndexRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
+  '/knowledge': typeof AuthenticatedKnowledgeIndexRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
   '/references': typeof AuthenticatedReferencesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflows': typeof AuthenticatedWorkflowsIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
+  '/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
+  '/hr/leave/schedule': typeof AuthenticatedHrLeaveScheduleRoute
+  '/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
+  '/api/public/hooks/telegram-dispatch': typeof ApiPublicHooksTelegramDispatchRoute
+  '/api/public/hooks/telegram-poll': typeof ApiPublicHooksTelegramPollRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
+  '/api/public/hooks/webhook-dispatch': typeof ApiPublicHooksWebhookDispatchRoute
+  '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
+  '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
+  '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
+  '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
+  '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
+  '/hr/admin': typeof AuthenticatedHrAdminIndexRoute
+  '/hr/directory': typeof AuthenticatedHrDirectoryIndexRoute
+  '/hr/duty': typeof AuthenticatedHrDutyIndexRoute
+  '/hr/gantt': typeof AuthenticatedHrGanttIndexRoute
+  '/hr/leave': typeof AuthenticatedHrLeaveIndexRoute
+  '/hr/timesheet': typeof AuthenticatedHrTimesheetIndexRoute
+  '/api/v1/documents/$id/status': typeof ApiV1DocumentsIdStatusRoute
+  '/api/v1/documents/$id/versions': typeof ApiV1DocumentsIdVersionsRoute
+  '/api/v1/tasks/$id/complete': typeof ApiV1TasksIdCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -346,30 +710,72 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/api/health': typeof ApiHealthRoute
+  '/_authenticated/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
+  '/_authenticated/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/_authenticated/admin/license': typeof AuthenticatedAdminLicenseRoute
   '/_authenticated/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/_authenticated/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/_authenticated/admin/positions': typeof AuthenticatedAdminPositionsRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/contracts/$documentId': typeof AuthenticatedContractsDocumentIdRoute
   '/_authenticated/correspondence/incoming': typeof AuthenticatedCorrespondenceIncomingRoute
   '/_authenticated/correspondence/outgoing': typeof AuthenticatedCorrespondenceOutgoingRoute
+  '/_authenticated/counterparties/$id': typeof AuthenticatedCounterpartiesIdRoute
   '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
   '/_authenticated/documents/new': typeof AuthenticatedDocumentsNewRoute
+  '/_authenticated/knowledge/$id': typeof AuthenticatedKnowledgeIdRouteWithChildren
+  '/_authenticated/knowledge/manage': typeof AuthenticatedKnowledgeManageRoute
+  '/_authenticated/knowledge/new': typeof AuthenticatedKnowledgeNewRoute
+  '/_authenticated/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/_authenticated/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/_authenticated/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/_authenticated/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/v1/contracts': typeof ApiV1ContractsRoute
+  '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
+  '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/_authenticated/contracts/': typeof AuthenticatedContractsIndexRoute
+  '/_authenticated/counterparties/': typeof AuthenticatedCounterpartiesIndexRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/_authenticated/knowledge/': typeof AuthenticatedKnowledgeIndexRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/references/': typeof AuthenticatedReferencesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
   '/_authenticated/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
+  '/_authenticated/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
+  '/_authenticated/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
+  '/_authenticated/hr/leave/schedule': typeof AuthenticatedHrLeaveScheduleRoute
+  '/_authenticated/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
+  '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
+  '/api/public/hooks/telegram-dispatch': typeof ApiPublicHooksTelegramDispatchRoute
+  '/api/public/hooks/telegram-poll': typeof ApiPublicHooksTelegramPollRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
+  '/api/public/hooks/webhook-dispatch': typeof ApiPublicHooksWebhookDispatchRoute
+  '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
+  '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
+  '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
+  '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
+  '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
+  '/_authenticated/hr/admin/': typeof AuthenticatedHrAdminIndexRoute
+  '/_authenticated/hr/directory/': typeof AuthenticatedHrDirectoryIndexRoute
+  '/_authenticated/hr/duty/': typeof AuthenticatedHrDutyIndexRoute
+  '/_authenticated/hr/gantt/': typeof AuthenticatedHrGanttIndexRoute
+  '/_authenticated/hr/leave/': typeof AuthenticatedHrLeaveIndexRoute
+  '/_authenticated/hr/timesheet/': typeof AuthenticatedHrTimesheetIndexRoute
+  '/api/v1/documents/$id/status': typeof ApiV1DocumentsIdStatusRoute
+  '/api/v1/documents/$id/versions': typeof ApiV1DocumentsIdVersionsRoute
+  '/api/v1/tasks/$id/complete': typeof ApiV1TasksIdCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -386,30 +792,72 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reports'
     | '/search'
+    | '/substitutions'
     | '/tasks'
+    | '/api/health'
+    | '/admin/calendar'
     | '/admin/departments'
+    | '/admin/integrations'
     | '/admin/license'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
+    | '/admin/settings'
+    | '/contracts/$documentId'
     | '/correspondence/incoming'
     | '/correspondence/outgoing'
+    | '/counterparties/$id'
     | '/documents/$id'
     | '/documents/new'
+    | '/knowledge/$id'
+    | '/knowledge/manage'
+    | '/knowledge/new'
+    | '/projects/$id'
     | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
+    | '/api/v1/contracts'
+    | '/api/v1/documents'
+    | '/api/v1/tasks'
+    | '/contracts/'
+    | '/counterparties/'
     | '/documents/'
+    | '/knowledge/'
+    | '/projects/'
     | '/references/'
     | '/templates/'
     | '/workflows/'
     | '/admin/users/$id'
+    | '/hr/gantt/$id'
+    | '/hr/leave/approvals'
+    | '/hr/leave/schedule'
+    | '/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/license-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
+    | '/api/public/hooks/telegram-dispatch'
+    | '/api/public/hooks/telegram-poll'
+    | '/api/public/hooks/telegram-webhook'
+    | '/api/public/hooks/webhook-dispatch'
+    | '/api/v1/documents/$id'
+    | '/api/v1/import/incoming'
+    | '/api/v1/license/activate'
+    | '/api/v1/license/heartbeat'
+    | '/api/v1/license/register-key'
+    | '/api/v1/license/revoke'
     | '/admin/users/'
+    | '/hr/admin/'
+    | '/hr/directory/'
+    | '/hr/duty/'
+    | '/hr/gantt/'
+    | '/hr/leave/'
+    | '/hr/timesheet/'
+    | '/api/v1/documents/$id/status'
+    | '/api/v1/documents/$id/versions'
+    | '/api/v1/tasks/$id/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -424,30 +872,72 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reports'
     | '/search'
+    | '/substitutions'
     | '/tasks'
+    | '/api/health'
+    | '/admin/calendar'
     | '/admin/departments'
+    | '/admin/integrations'
     | '/admin/license'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
     | '/admin/roles'
+    | '/admin/settings'
+    | '/contracts/$documentId'
     | '/correspondence/incoming'
     | '/correspondence/outgoing'
+    | '/counterparties/$id'
     | '/documents/$id'
     | '/documents/new'
+    | '/knowledge/$id'
+    | '/knowledge/manage'
+    | '/knowledge/new'
+    | '/projects/$id'
     | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
+    | '/api/v1/contracts'
+    | '/api/v1/documents'
+    | '/api/v1/tasks'
+    | '/contracts'
+    | '/counterparties'
     | '/documents'
+    | '/knowledge'
+    | '/projects'
     | '/references'
     | '/templates'
     | '/workflows'
     | '/admin/users/$id'
+    | '/hr/gantt/$id'
+    | '/hr/leave/approvals'
+    | '/hr/leave/schedule'
+    | '/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/license-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
+    | '/api/public/hooks/telegram-dispatch'
+    | '/api/public/hooks/telegram-poll'
+    | '/api/public/hooks/telegram-webhook'
+    | '/api/public/hooks/webhook-dispatch'
+    | '/api/v1/documents/$id'
+    | '/api/v1/import/incoming'
+    | '/api/v1/license/activate'
+    | '/api/v1/license/heartbeat'
+    | '/api/v1/license/register-key'
+    | '/api/v1/license/revoke'
     | '/admin/users'
+    | '/hr/admin'
+    | '/hr/directory'
+    | '/hr/duty'
+    | '/hr/gantt'
+    | '/hr/leave'
+    | '/hr/timesheet'
+    | '/api/v1/documents/$id/status'
+    | '/api/v1/documents/$id/versions'
+    | '/api/v1/tasks/$id/complete'
   id:
     | '__root__'
     | '/'
@@ -463,40 +953,96 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/reports'
     | '/_authenticated/search'
+    | '/_authenticated/substitutions'
     | '/_authenticated/tasks'
+    | '/api/health'
+    | '/_authenticated/admin/calendar'
     | '/_authenticated/admin/departments'
+    | '/_authenticated/admin/integrations'
     | '/_authenticated/admin/license'
     | '/_authenticated/admin/organization'
     | '/_authenticated/admin/permissions'
     | '/_authenticated/admin/positions'
     | '/_authenticated/admin/roles'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/contracts/$documentId'
     | '/_authenticated/correspondence/incoming'
     | '/_authenticated/correspondence/outgoing'
+    | '/_authenticated/counterparties/$id'
     | '/_authenticated/documents/$id'
     | '/_authenticated/documents/new'
+    | '/_authenticated/knowledge/$id'
+    | '/_authenticated/knowledge/manage'
+    | '/_authenticated/knowledge/new'
+    | '/_authenticated/projects/$id'
     | '/_authenticated/references/$catalog'
     | '/_authenticated/templates/$id'
     | '/_authenticated/workflows/$id'
+    | '/api/v1/contracts'
+    | '/api/v1/documents'
+    | '/api/v1/tasks'
+    | '/_authenticated/contracts/'
+    | '/_authenticated/counterparties/'
     | '/_authenticated/documents/'
+    | '/_authenticated/knowledge/'
+    | '/_authenticated/projects/'
     | '/_authenticated/references/'
     | '/_authenticated/templates/'
     | '/_authenticated/workflows/'
     | '/_authenticated/admin/users/$id'
+    | '/_authenticated/hr/gantt/$id'
+    | '/_authenticated/hr/leave/approvals'
+    | '/_authenticated/hr/leave/schedule'
+    | '/_authenticated/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
+    | '/api/public/hooks/license-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
+    | '/api/public/hooks/telegram-dispatch'
+    | '/api/public/hooks/telegram-poll'
+    | '/api/public/hooks/telegram-webhook'
+    | '/api/public/hooks/webhook-dispatch'
+    | '/api/v1/documents/$id'
+    | '/api/v1/import/incoming'
+    | '/api/v1/license/activate'
+    | '/api/v1/license/heartbeat'
+    | '/api/v1/license/register-key'
+    | '/api/v1/license/revoke'
     | '/_authenticated/admin/users/'
+    | '/_authenticated/hr/admin/'
+    | '/_authenticated/hr/directory/'
+    | '/_authenticated/hr/duty/'
+    | '/_authenticated/hr/gantt/'
+    | '/_authenticated/hr/leave/'
+    | '/_authenticated/hr/timesheet/'
+    | '/api/v1/documents/$id/status'
+    | '/api/v1/documents/$id/versions'
+    | '/api/v1/tasks/$id/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiV1ContractsRoute: typeof ApiV1ContractsRoute
+  ApiV1DocumentsRoute: typeof ApiV1DocumentsRouteWithChildren
+  ApiV1TasksRoute: typeof ApiV1TasksRouteWithChildren
   ApiPublicHooksEmailDispatchRoute: typeof ApiPublicHooksEmailDispatchRoute
+  ApiPublicHooksLicenseSyncRoute: typeof ApiPublicHooksLicenseSyncRoute
   ApiPublicHooksOfficeCallbackRoute: typeof ApiPublicHooksOfficeCallbackRoute
   ApiPublicHooksRetentionTickRoute: typeof ApiPublicHooksRetentionTickRoute
   ApiPublicHooksSlaTickRoute: typeof ApiPublicHooksSlaTickRoute
+  ApiPublicHooksTelegramDispatchRoute: typeof ApiPublicHooksTelegramDispatchRoute
+  ApiPublicHooksTelegramPollRoute: typeof ApiPublicHooksTelegramPollRoute
+  ApiPublicHooksTelegramWebhookRoute: typeof ApiPublicHooksTelegramWebhookRoute
+  ApiPublicHooksWebhookDispatchRoute: typeof ApiPublicHooksWebhookDispatchRoute
+  ApiV1ImportIncomingRoute: typeof ApiV1ImportIncomingRoute
+  ApiV1LicenseActivateRoute: typeof ApiV1LicenseActivateRoute
+  ApiV1LicenseHeartbeatRoute: typeof ApiV1LicenseHeartbeatRoute
+  ApiV1LicenseRegisterKeyRoute: typeof ApiV1LicenseRegisterKeyRoute
+  ApiV1LicenseRevokeRoute: typeof ApiV1LicenseRevokeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -522,11 +1068,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/tasks': {
       id: '/_authenticated/tasks'
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/substitutions': {
+      id: '/_authenticated/substitutions'
+      path: '/substitutions'
+      fullPath: '/substitutions'
+      preLoaderRoute: typeof AuthenticatedSubstitutionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/search': {
@@ -620,12 +1180,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReferencesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge/': {
+      id: '/_authenticated/knowledge/'
+      path: '/knowledge'
+      fullPath: '/knowledge/'
+      preLoaderRoute: typeof AuthenticatedKnowledgeIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/documents/': {
       id: '/_authenticated/documents/'
       path: '/documents'
       fullPath: '/documents/'
       preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/counterparties/': {
+      id: '/_authenticated/counterparties/'
+      path: '/counterparties'
+      fullPath: '/counterparties/'
+      preLoaderRoute: typeof AuthenticatedCounterpartiesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contracts/': {
+      id: '/_authenticated/contracts/'
+      path: '/contracts'
+      fullPath: '/contracts/'
+      preLoaderRoute: typeof AuthenticatedContractsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/v1/tasks': {
+      id: '/api/v1/tasks'
+      path: '/api/v1/tasks'
+      fullPath: '/api/v1/tasks'
+      preLoaderRoute: typeof ApiV1TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/documents': {
+      id: '/api/v1/documents'
+      path: '/api/v1/documents'
+      fullPath: '/api/v1/documents'
+      preLoaderRoute: typeof ApiV1DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/contracts': {
+      id: '/api/v1/contracts'
+      path: '/api/v1/contracts'
+      fullPath: '/api/v1/contracts'
+      preLoaderRoute: typeof ApiV1ContractsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/workflows/$id': {
       id: '/_authenticated/workflows/$id'
@@ -648,6 +1257,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReferencesCatalogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects/$id': {
+      id: '/_authenticated/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof AuthenticatedProjectsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge/new': {
+      id: '/_authenticated/knowledge/new'
+      path: '/knowledge/new'
+      fullPath: '/knowledge/new'
+      preLoaderRoute: typeof AuthenticatedKnowledgeNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge/manage': {
+      id: '/_authenticated/knowledge/manage'
+      path: '/knowledge/manage'
+      fullPath: '/knowledge/manage'
+      preLoaderRoute: typeof AuthenticatedKnowledgeManageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge/$id': {
+      id: '/_authenticated/knowledge/$id'
+      path: '/knowledge/$id'
+      fullPath: '/knowledge/$id'
+      preLoaderRoute: typeof AuthenticatedKnowledgeIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/documents/new': {
       id: '/_authenticated/documents/new'
       path: '/documents/new'
@@ -662,6 +1299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/counterparties/$id': {
+      id: '/_authenticated/counterparties/$id'
+      path: '/counterparties/$id'
+      fullPath: '/counterparties/$id'
+      preLoaderRoute: typeof AuthenticatedCounterpartiesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/correspondence/outgoing': {
       id: '/_authenticated/correspondence/outgoing'
       path: '/correspondence/outgoing'
@@ -674,6 +1318,20 @@ declare module '@tanstack/react-router' {
       path: '/correspondence/incoming'
       fullPath: '/correspondence/incoming'
       preLoaderRoute: typeof AuthenticatedCorrespondenceIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contracts/$documentId': {
+      id: '/_authenticated/contracts/$documentId'
+      path: '/contracts/$documentId'
+      fullPath: '/contracts/$documentId'
+      preLoaderRoute: typeof AuthenticatedContractsDocumentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/roles': {
@@ -711,11 +1369,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLicenseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/integrations': {
+      id: '/_authenticated/admin/integrations'
+      path: '/admin/integrations'
+      fullPath: '/admin/integrations'
+      preLoaderRoute: typeof AuthenticatedAdminIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/departments': {
       id: '/_authenticated/admin/departments'
       path: '/admin/departments'
       fullPath: '/admin/departments'
       preLoaderRoute: typeof AuthenticatedAdminDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/calendar': {
+      id: '/_authenticated/admin/calendar'
+      path: '/admin/calendar'
+      fullPath: '/admin/calendar'
+      preLoaderRoute: typeof AuthenticatedAdminCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/timesheet/': {
+      id: '/_authenticated/hr/timesheet/'
+      path: '/hr/timesheet'
+      fullPath: '/hr/timesheet/'
+      preLoaderRoute: typeof AuthenticatedHrTimesheetIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/leave/': {
+      id: '/_authenticated/hr/leave/'
+      path: '/hr/leave'
+      fullPath: '/hr/leave/'
+      preLoaderRoute: typeof AuthenticatedHrLeaveIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/gantt/': {
+      id: '/_authenticated/hr/gantt/'
+      path: '/hr/gantt'
+      fullPath: '/hr/gantt/'
+      preLoaderRoute: typeof AuthenticatedHrGanttIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/duty/': {
+      id: '/_authenticated/hr/duty/'
+      path: '/hr/duty'
+      fullPath: '/hr/duty/'
+      preLoaderRoute: typeof AuthenticatedHrDutyIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/directory/': {
+      id: '/_authenticated/hr/directory/'
+      path: '/hr/directory'
+      fullPath: '/hr/directory/'
+      preLoaderRoute: typeof AuthenticatedHrDirectoryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/admin/': {
+      id: '/_authenticated/hr/admin/'
+      path: '/hr/admin'
+      fullPath: '/hr/admin/'
+      preLoaderRoute: typeof AuthenticatedHrAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/users/': {
@@ -724,6 +1438,76 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/users/'
       preLoaderRoute: typeof AuthenticatedAdminUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/v1/license/revoke': {
+      id: '/api/v1/license/revoke'
+      path: '/api/v1/license/revoke'
+      fullPath: '/api/v1/license/revoke'
+      preLoaderRoute: typeof ApiV1LicenseRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/license/register-key': {
+      id: '/api/v1/license/register-key'
+      path: '/api/v1/license/register-key'
+      fullPath: '/api/v1/license/register-key'
+      preLoaderRoute: typeof ApiV1LicenseRegisterKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/license/heartbeat': {
+      id: '/api/v1/license/heartbeat'
+      path: '/api/v1/license/heartbeat'
+      fullPath: '/api/v1/license/heartbeat'
+      preLoaderRoute: typeof ApiV1LicenseHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/license/activate': {
+      id: '/api/v1/license/activate'
+      path: '/api/v1/license/activate'
+      fullPath: '/api/v1/license/activate'
+      preLoaderRoute: typeof ApiV1LicenseActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/import/incoming': {
+      id: '/api/v1/import/incoming'
+      path: '/api/v1/import/incoming'
+      fullPath: '/api/v1/import/incoming'
+      preLoaderRoute: typeof ApiV1ImportIncomingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/documents/$id': {
+      id: '/api/v1/documents/$id'
+      path: '/$id'
+      fullPath: '/api/v1/documents/$id'
+      preLoaderRoute: typeof ApiV1DocumentsIdRouteImport
+      parentRoute: typeof ApiV1DocumentsRoute
+    }
+    '/api/public/hooks/webhook-dispatch': {
+      id: '/api/public/hooks/webhook-dispatch'
+      path: '/api/public/hooks/webhook-dispatch'
+      fullPath: '/api/public/hooks/webhook-dispatch'
+      preLoaderRoute: typeof ApiPublicHooksWebhookDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/telegram-webhook': {
+      id: '/api/public/hooks/telegram-webhook'
+      path: '/api/public/hooks/telegram-webhook'
+      fullPath: '/api/public/hooks/telegram-webhook'
+      preLoaderRoute: typeof ApiPublicHooksTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/telegram-poll': {
+      id: '/api/public/hooks/telegram-poll'
+      path: '/api/public/hooks/telegram-poll'
+      fullPath: '/api/public/hooks/telegram-poll'
+      preLoaderRoute: typeof ApiPublicHooksTelegramPollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/telegram-dispatch': {
+      id: '/api/public/hooks/telegram-dispatch'
+      path: '/api/public/hooks/telegram-dispatch'
+      fullPath: '/api/public/hooks/telegram-dispatch'
+      preLoaderRoute: typeof ApiPublicHooksTelegramDispatchRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/sla-tick': {
       id: '/api/public/hooks/sla-tick'
@@ -746,12 +1530,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksOfficeCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/license-sync': {
+      id: '/api/public/hooks/license-sync'
+      path: '/api/public/hooks/license-sync'
+      fullPath: '/api/public/hooks/license-sync'
+      preLoaderRoute: typeof ApiPublicHooksLicenseSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/email-dispatch': {
       id: '/api/public/hooks/email-dispatch'
       path: '/api/public/hooks/email-dispatch'
       fullPath: '/api/public/hooks/email-dispatch'
       preLoaderRoute: typeof ApiPublicHooksEmailDispatchRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/knowledge/$id/edit': {
+      id: '/_authenticated/knowledge/$id/edit'
+      path: '/edit'
+      fullPath: '/knowledge/$id/edit'
+      preLoaderRoute: typeof AuthenticatedKnowledgeIdEditRouteImport
+      parentRoute: typeof AuthenticatedKnowledgeIdRoute
+    }
+    '/_authenticated/hr/leave/schedule': {
+      id: '/_authenticated/hr/leave/schedule'
+      path: '/hr/leave/schedule'
+      fullPath: '/hr/leave/schedule'
+      preLoaderRoute: typeof AuthenticatedHrLeaveScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/leave/approvals': {
+      id: '/_authenticated/hr/leave/approvals'
+      path: '/hr/leave/approvals'
+      fullPath: '/hr/leave/approvals'
+      preLoaderRoute: typeof AuthenticatedHrLeaveApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/gantt/$id': {
+      id: '/_authenticated/hr/gantt/$id'
+      path: '/hr/gantt/$id'
+      fullPath: '/hr/gantt/$id'
+      preLoaderRoute: typeof AuthenticatedHrGanttIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/users/$id': {
       id: '/_authenticated/admin/users/$id'
@@ -760,8 +1579,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/v1/tasks/$id/complete': {
+      id: '/api/v1/tasks/$id/complete'
+      path: '/$id/complete'
+      fullPath: '/api/v1/tasks/$id/complete'
+      preLoaderRoute: typeof ApiV1TasksIdCompleteRouteImport
+      parentRoute: typeof ApiV1TasksRoute
+    }
+    '/api/v1/documents/$id/versions': {
+      id: '/api/v1/documents/$id/versions'
+      path: '/versions'
+      fullPath: '/api/v1/documents/$id/versions'
+      preLoaderRoute: typeof ApiV1DocumentsIdVersionsRouteImport
+      parentRoute: typeof ApiV1DocumentsIdRoute
+    }
+    '/api/v1/documents/$id/status': {
+      id: '/api/v1/documents/$id/status'
+      path: '/status'
+      fullPath: '/api/v1/documents/$id/status'
+      preLoaderRoute: typeof ApiV1DocumentsIdStatusRouteImport
+      parentRoute: typeof ApiV1DocumentsIdRoute
+    }
   }
 }
+
+interface AuthenticatedKnowledgeIdRouteChildren {
+  AuthenticatedKnowledgeIdEditRoute: typeof AuthenticatedKnowledgeIdEditRoute
+}
+
+const AuthenticatedKnowledgeIdRouteChildren: AuthenticatedKnowledgeIdRouteChildren =
+  {
+    AuthenticatedKnowledgeIdEditRoute: AuthenticatedKnowledgeIdEditRoute,
+  }
+
+const AuthenticatedKnowledgeIdRouteWithChildren =
+  AuthenticatedKnowledgeIdRoute._addFileChildren(
+    AuthenticatedKnowledgeIdRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
@@ -774,26 +1628,49 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedSubstitutionsRoute: typeof AuthenticatedSubstitutionsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedAdminCalendarRoute: typeof AuthenticatedAdminCalendarRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
+  AuthenticatedAdminIntegrationsRoute: typeof AuthenticatedAdminIntegrationsRoute
   AuthenticatedAdminLicenseRoute: typeof AuthenticatedAdminLicenseRoute
   AuthenticatedAdminOrganizationRoute: typeof AuthenticatedAdminOrganizationRoute
   AuthenticatedAdminPermissionsRoute: typeof AuthenticatedAdminPermissionsRoute
   AuthenticatedAdminPositionsRoute: typeof AuthenticatedAdminPositionsRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedContractsDocumentIdRoute: typeof AuthenticatedContractsDocumentIdRoute
   AuthenticatedCorrespondenceIncomingRoute: typeof AuthenticatedCorrespondenceIncomingRoute
   AuthenticatedCorrespondenceOutgoingRoute: typeof AuthenticatedCorrespondenceOutgoingRoute
+  AuthenticatedCounterpartiesIdRoute: typeof AuthenticatedCounterpartiesIdRoute
   AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
   AuthenticatedDocumentsNewRoute: typeof AuthenticatedDocumentsNewRoute
+  AuthenticatedKnowledgeIdRoute: typeof AuthenticatedKnowledgeIdRouteWithChildren
+  AuthenticatedKnowledgeManageRoute: typeof AuthenticatedKnowledgeManageRoute
+  AuthenticatedKnowledgeNewRoute: typeof AuthenticatedKnowledgeNewRoute
+  AuthenticatedProjectsIdRoute: typeof AuthenticatedProjectsIdRoute
   AuthenticatedReferencesCatalogRoute: typeof AuthenticatedReferencesCatalogRoute
   AuthenticatedTemplatesIdRoute: typeof AuthenticatedTemplatesIdRoute
   AuthenticatedWorkflowsIdRoute: typeof AuthenticatedWorkflowsIdRoute
+  AuthenticatedContractsIndexRoute: typeof AuthenticatedContractsIndexRoute
+  AuthenticatedCounterpartiesIndexRoute: typeof AuthenticatedCounterpartiesIndexRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
+  AuthenticatedKnowledgeIndexRoute: typeof AuthenticatedKnowledgeIndexRoute
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
   AuthenticatedReferencesIndexRoute: typeof AuthenticatedReferencesIndexRoute
   AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
   AuthenticatedWorkflowsIndexRoute: typeof AuthenticatedWorkflowsIndexRoute
   AuthenticatedAdminUsersIdRoute: typeof AuthenticatedAdminUsersIdRoute
+  AuthenticatedHrGanttIdRoute: typeof AuthenticatedHrGanttIdRoute
+  AuthenticatedHrLeaveApprovalsRoute: typeof AuthenticatedHrLeaveApprovalsRoute
+  AuthenticatedHrLeaveScheduleRoute: typeof AuthenticatedHrLeaveScheduleRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
+  AuthenticatedHrAdminIndexRoute: typeof AuthenticatedHrAdminIndexRoute
+  AuthenticatedHrDirectoryIndexRoute: typeof AuthenticatedHrDirectoryIndexRoute
+  AuthenticatedHrDutyIndexRoute: typeof AuthenticatedHrDutyIndexRoute
+  AuthenticatedHrGanttIndexRoute: typeof AuthenticatedHrGanttIndexRoute
+  AuthenticatedHrLeaveIndexRoute: typeof AuthenticatedHrLeaveIndexRoute
+  AuthenticatedHrTimesheetIndexRoute: typeof AuthenticatedHrTimesheetIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -807,41 +1684,115 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedSubstitutionsRoute: AuthenticatedSubstitutionsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedAdminCalendarRoute: AuthenticatedAdminCalendarRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
+  AuthenticatedAdminIntegrationsRoute: AuthenticatedAdminIntegrationsRoute,
   AuthenticatedAdminLicenseRoute: AuthenticatedAdminLicenseRoute,
   AuthenticatedAdminOrganizationRoute: AuthenticatedAdminOrganizationRoute,
   AuthenticatedAdminPermissionsRoute: AuthenticatedAdminPermissionsRoute,
   AuthenticatedAdminPositionsRoute: AuthenticatedAdminPositionsRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedContractsDocumentIdRoute: AuthenticatedContractsDocumentIdRoute,
   AuthenticatedCorrespondenceIncomingRoute:
     AuthenticatedCorrespondenceIncomingRoute,
   AuthenticatedCorrespondenceOutgoingRoute:
     AuthenticatedCorrespondenceOutgoingRoute,
+  AuthenticatedCounterpartiesIdRoute: AuthenticatedCounterpartiesIdRoute,
   AuthenticatedDocumentsIdRoute: AuthenticatedDocumentsIdRoute,
   AuthenticatedDocumentsNewRoute: AuthenticatedDocumentsNewRoute,
+  AuthenticatedKnowledgeIdRoute: AuthenticatedKnowledgeIdRouteWithChildren,
+  AuthenticatedKnowledgeManageRoute: AuthenticatedKnowledgeManageRoute,
+  AuthenticatedKnowledgeNewRoute: AuthenticatedKnowledgeNewRoute,
+  AuthenticatedProjectsIdRoute: AuthenticatedProjectsIdRoute,
   AuthenticatedReferencesCatalogRoute: AuthenticatedReferencesCatalogRoute,
   AuthenticatedTemplatesIdRoute: AuthenticatedTemplatesIdRoute,
   AuthenticatedWorkflowsIdRoute: AuthenticatedWorkflowsIdRoute,
+  AuthenticatedContractsIndexRoute: AuthenticatedContractsIndexRoute,
+  AuthenticatedCounterpartiesIndexRoute: AuthenticatedCounterpartiesIndexRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
+  AuthenticatedKnowledgeIndexRoute: AuthenticatedKnowledgeIndexRoute,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
   AuthenticatedReferencesIndexRoute: AuthenticatedReferencesIndexRoute,
   AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
   AuthenticatedWorkflowsIndexRoute: AuthenticatedWorkflowsIndexRoute,
   AuthenticatedAdminUsersIdRoute: AuthenticatedAdminUsersIdRoute,
+  AuthenticatedHrGanttIdRoute: AuthenticatedHrGanttIdRoute,
+  AuthenticatedHrLeaveApprovalsRoute: AuthenticatedHrLeaveApprovalsRoute,
+  AuthenticatedHrLeaveScheduleRoute: AuthenticatedHrLeaveScheduleRoute,
   AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
+  AuthenticatedHrAdminIndexRoute: AuthenticatedHrAdminIndexRoute,
+  AuthenticatedHrDirectoryIndexRoute: AuthenticatedHrDirectoryIndexRoute,
+  AuthenticatedHrDutyIndexRoute: AuthenticatedHrDutyIndexRoute,
+  AuthenticatedHrGanttIndexRoute: AuthenticatedHrGanttIndexRoute,
+  AuthenticatedHrLeaveIndexRoute: AuthenticatedHrLeaveIndexRoute,
+  AuthenticatedHrTimesheetIndexRoute: AuthenticatedHrTimesheetIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiV1DocumentsIdRouteChildren {
+  ApiV1DocumentsIdStatusRoute: typeof ApiV1DocumentsIdStatusRoute
+  ApiV1DocumentsIdVersionsRoute: typeof ApiV1DocumentsIdVersionsRoute
+}
+
+const ApiV1DocumentsIdRouteChildren: ApiV1DocumentsIdRouteChildren = {
+  ApiV1DocumentsIdStatusRoute: ApiV1DocumentsIdStatusRoute,
+  ApiV1DocumentsIdVersionsRoute: ApiV1DocumentsIdVersionsRoute,
+}
+
+const ApiV1DocumentsIdRouteWithChildren =
+  ApiV1DocumentsIdRoute._addFileChildren(ApiV1DocumentsIdRouteChildren)
+
+interface ApiV1DocumentsRouteChildren {
+  ApiV1DocumentsIdRoute: typeof ApiV1DocumentsIdRouteWithChildren
+}
+
+const ApiV1DocumentsRouteChildren: ApiV1DocumentsRouteChildren = {
+  ApiV1DocumentsIdRoute: ApiV1DocumentsIdRouteWithChildren,
+}
+
+const ApiV1DocumentsRouteWithChildren = ApiV1DocumentsRoute._addFileChildren(
+  ApiV1DocumentsRouteChildren,
+)
+
+interface ApiV1TasksRouteChildren {
+  ApiV1TasksIdCompleteRoute: typeof ApiV1TasksIdCompleteRoute
+}
+
+const ApiV1TasksRouteChildren: ApiV1TasksRouteChildren = {
+  ApiV1TasksIdCompleteRoute: ApiV1TasksIdCompleteRoute,
+}
+
+const ApiV1TasksRouteWithChildren = ApiV1TasksRoute._addFileChildren(
+  ApiV1TasksRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiV1ContractsRoute: ApiV1ContractsRoute,
+  ApiV1DocumentsRoute: ApiV1DocumentsRouteWithChildren,
+  ApiV1TasksRoute: ApiV1TasksRouteWithChildren,
   ApiPublicHooksEmailDispatchRoute: ApiPublicHooksEmailDispatchRoute,
+  ApiPublicHooksLicenseSyncRoute: ApiPublicHooksLicenseSyncRoute,
   ApiPublicHooksOfficeCallbackRoute: ApiPublicHooksOfficeCallbackRoute,
   ApiPublicHooksRetentionTickRoute: ApiPublicHooksRetentionTickRoute,
   ApiPublicHooksSlaTickRoute: ApiPublicHooksSlaTickRoute,
+  ApiPublicHooksTelegramDispatchRoute: ApiPublicHooksTelegramDispatchRoute,
+  ApiPublicHooksTelegramPollRoute: ApiPublicHooksTelegramPollRoute,
+  ApiPublicHooksTelegramWebhookRoute: ApiPublicHooksTelegramWebhookRoute,
+  ApiPublicHooksWebhookDispatchRoute: ApiPublicHooksWebhookDispatchRoute,
+  ApiV1ImportIncomingRoute: ApiV1ImportIncomingRoute,
+  ApiV1LicenseActivateRoute: ApiV1LicenseActivateRoute,
+  ApiV1LicenseHeartbeatRoute: ApiV1LicenseHeartbeatRoute,
+  ApiV1LicenseRegisterKeyRoute: ApiV1LicenseRegisterKeyRoute,
+  ApiV1LicenseRevokeRoute: ApiV1LicenseRevokeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

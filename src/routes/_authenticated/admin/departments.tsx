@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/auth/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { listDepartments, upsertDepartment, listUsers } from "@/lib/api/admin.functions";
@@ -15,7 +15,7 @@ import { Plus, Pencil, Building2, ChevronRight, Loader2, X } from "lucide-react"
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({
-  beforeLoad: () => requireAnyPermission("manage_org"),
+  beforeLoad: () => requireModule("admin_org"),
   component: DepartmentsPage,
 });
 

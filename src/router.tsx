@@ -6,10 +6,15 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
+        refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
           if (error instanceof Error && error.name === "AbortError") return false;
+          if (error instanceof Error && /aborted/i.test(error.message)) return false;
           return failureCount < 2;
         },
+      },
+      mutations: {
+        retry: false,
       },
     },
   });

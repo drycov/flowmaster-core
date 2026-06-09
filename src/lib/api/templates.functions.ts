@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { enforceLicense, requirePermission } from "./_helpers";
+import { enforceModuleLicense, requireModuleAccess } from "./_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { STORAGE_BUCKETS, documentVersionPath } from "@/lib/storage/buckets";
 import {
@@ -23,8 +23,8 @@ import {
 } from "@/lib/templates/file-processing.server";
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
-import { ensureDocumentRegNumber } from "@/lib/documents/registration.server";
-import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
+import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
+import { upsertRow } from "@/lib/api/db.helpers.server";
 
 export const listTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -75,8 +75,7 @@ export const upsertTemplate = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
     const { supabase, userId } = context;
     const payload = {
       name_ru: data.name_ru,
@@ -88,19 +87,14 @@ export const upsertTemplate = createServerFn({ method: "POST" })
       default_workflow_id: data.default_workflow_id ?? null,
       allow_custom_route: data.allow_custom_route,
     };
-    if (data.id) {
-      const { error } = await (supabase.from("document_templates") as any)
-        .update(payload)
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-      return { id: data.id };
-    }
-    const { data: row, error } = await (supabase.from("document_templates") as any)
-      .insert({ ...payload, created_by: userId })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const row = await upsertRow({
+      supabase,
+      table: "document_templates",
+      row: payload,
+      id: data.id,
+      insertOnly: { created_by: userId },
+    });
+    return { id: String(row.id) };
   });
 
 function substituteTemplateBody(
@@ -138,8 +132,7 @@ export const scanTemplateFilePlaceholders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ template_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
 
     const { data: tpl, error } = await context.supabase
       .from("document_templates")
@@ -169,8 +162,7 @@ export const syncTemplateFieldsFromFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ template_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requirePermission(context.supabase, context.userId, "manage_templates");
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
 
     const { data: tpl, error } = await context.supabase
       .from("document_templates")
@@ -280,10 +272,11 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       due_at: z.string().nullable().optional(),
       workflow_id: z.string().uuid().nullable().optional(),
       custom_route: customRouteSchema,
+      project_id: z.string().uuid().nullable().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
-    await enforceLicense(context.supabase, { writable: true, feature: "templates" });
+    await enforceModuleLicense(context.supabase, "templates", "write");
     const { supabase, userId } = context;
     const tpl = await supabase
       .from("document_templates")
@@ -345,42 +338,30 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     };
     let body = bodyTemplate ? substituteTemplateBody(bodyTemplate, preValues) : "";
 
-    const refs = await resolveDocumentReferences(supabaseAdmin, {
+    const doc = await insertDocumentWithRegistration({
+      title_ru: titleRu,
+      title_kk: titleKk,
+      body,
+      template_id: data.template_id,
+      nomenclature_id: data.nomenclature_id ?? null,
       document_type_id: data.document_type_id,
       priority_id: data.priority_id,
       correspondent_id: data.correspondent_id,
+      registration_journal_id: data.registration_journal_id ?? null,
+      delivery_method_id: data.delivery_method_id ?? null,
+      received_at: data.received_at ?? null,
+      sent_at: data.sent_at ?? null,
+      pages_count: data.pages_count ?? null,
+      copies_count: data.copies_count ?? null,
+      external_reg_number: data.external_reg_number ?? null,
       due_at: data.due_at,
+      created_by: userId,
+      workflow_id: workflowId,
+      custom_route: data.custom_route ?? null,
+      project_id: data.project_id ?? null,
     });
 
-    const { data: doc, error } = await (supabaseAdmin.from("documents") as any)
-      .insert({
-        title_ru: titleRu,
-        title_kk: titleKk,
-        body,
-        template_id: data.template_id,
-        nomenclature_id: data.nomenclature_id ?? null,
-        doc_type: refs.doc_type,
-        document_type_id: refs.document_type_id,
-        priority_id: refs.priority_id,
-        correspondent_id: refs.correspondent_id,
-        registration_journal_id: data.registration_journal_id ?? null,
-        delivery_method_id: data.delivery_method_id ?? null,
-        received_at: data.received_at ?? null,
-        sent_at: data.sent_at ?? null,
-        pages_count: data.pages_count ?? null,
-        copies_count: data.copies_count ?? null,
-        external_reg_number: data.external_reg_number ?? null,
-        due_at: refs.due_at,
-        created_by: userId,
-        workflow_id: workflowId,
-        custom_route: data.custom_route ?? null,
-        reg_number: "",
-      })
-      .select("id, reg_number")
-      .single();
-    if (error) throw new Error(error.message);
-
-    const regNumber = await ensureDocumentRegNumber(doc.id, data.registration_journal_id);
+    const regNumber = doc.reg_number;
     const finalValues = {
       ...preValues,
       ...buildSystemTemplateValues({
@@ -395,7 +376,7 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       (bodyTemplate.includes("{{registration_number}}") || bodyTemplate.includes("{{reg_number}}"))
     ) {
       body = substituteTemplateBody(bodyTemplate, finalValues);
-      await supabaseAdmin.from("documents").update({ body }).eq("id", doc.id);
+      await supabaseAdmin.from("documents").update({ body } as never).eq("id", doc.id);
     }
 
     const fileFormat = tplRow.file_format as TemplateFileFormat | null;
@@ -436,5 +417,5 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       }
     }
 
-    return { ...doc, reg_number: regNumber, body };
+    return { id: doc.id, reg_number: regNumber, body };
   });

@@ -9,7 +9,8 @@ export type RegisterUserInput = {
   full_name_kk: string;
   locale?: string;
   iin?: string | null;
-  auth_method?: "email" | "eds" | "both";
+  auth_method?: "email" | "eds" | "both" | "ldap";
+  organization_id?: string | null;
 };
 
 export async function enableEmailLoginForUser(
@@ -65,6 +66,7 @@ export async function registerUser(input: RegisterUserInput): Promise<string> {
     p_locale: input.locale ?? "ru",
     p_iin: input.iin ?? null,
     p_auth_method: input.auth_method ?? "email",
+    p_organization_id: input.organization_id ?? null,
   } as never);
 
   if (error) throw new Error(error.message);
