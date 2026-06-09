@@ -63,9 +63,15 @@ export function useDocumentActions(documentId: string) {
     isAddingComment: addCommentMutation.isPending,
     startWorkflow: startWorkflowMutation.mutate,
     isStartingWorkflow: startWorkflowMutation.isPending,
+    
+    // Метод архивации (экспортируем оба варианта имени для совместимости)
     archive: archiveMutation.mutate,
+    archiveDocument: archiveMutation.mutate, 
     isArchiving: archiveMutation.isPending,
+    
+    // Метод подписания через NCALayer (экспортируем оба варианта имени для совместимости)
     sign: handleSign,
+    handleSign: handleSign, 
     isSigning: signMutation.isPending,
   };
 }
