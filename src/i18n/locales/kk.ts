@@ -242,4 +242,7 @@ export const kkDictionary: Dictionary = {
     "profile.passwordUpdateError": "Құпиясөзді өзгерту кезінде қате орын алды",
     "profile.avatarUpdated": "Аватар сәтті жаңартылды",
     "profile.avatarUpdateError": "Аватарды жаңарту кезінде қате орын алды",
+
+    "users.totalUsers": "Барлық пайдаланушылар: ",
+
 };

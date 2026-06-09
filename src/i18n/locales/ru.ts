@@ -244,5 +244,7 @@ export const ruDictionary: Dictionary = {
     "profile.avatarUpdated": "Аватар успешно обновлен",
     "profile.avatarUpdateError": "Ошибка при обновлении аватара",
 
-    "profile.joined": "Присоединился "
+    "profile.joined": "Присоединился ",
+
+    "users.totalUsers": "Всего пользователей:",
 };
