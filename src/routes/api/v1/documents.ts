@@ -60,13 +60,9 @@ export const Route = createFileRoute("/api/v1/documents")({
             summary: typeof body.summary === "string" ? body.summary : null,
             body: typeof body.body === "string" ? body.body : null,
             document_type_code:
-              typeof body.document_type_code === "string"
-                ? body.document_type_code
-                : undefined,
+              typeof body.document_type_code === "string" ? body.document_type_code : undefined,
             external_reg_number:
-              typeof body.external_reg_number === "string"
-                ? body.external_reg_number
-                : null,
+              typeof body.external_reg_number === "string" ? body.external_reg_number : null,
             received_at: typeof body.received_at === "string" ? body.received_at : null,
           });
           return jsonResponse(doc, 201);

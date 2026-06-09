@@ -54,9 +54,7 @@ export function ReferenceCodeSelect({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">{placeholder}</SelectItem>
-          {showOrphan ? (
-            <SelectItem value={value}>{value}</SelectItem>
-          ) : null}
+          {showOrphan ? <SelectItem value={value}>{value}</SelectItem> : null}
           {options.map((opt) => (
             <SelectItem key={opt.code} value={opt.code}>
               {localized(opt, locale, "name")}

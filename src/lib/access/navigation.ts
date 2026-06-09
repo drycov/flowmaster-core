@@ -30,7 +30,12 @@ export const WORK_NAV: NavItemDef[] = [
   { id: "dashboard", to: "/dashboard", labelKey: "nav.dashboard", core: true },
   { id: "documents", to: "/documents", labelKey: "nav.documents", core: true },
   { id: "tasks", to: "/tasks", labelKey: "nav.tasks", core: true },
-  { id: "substitutions", to: "/substitutions", labelKey: "nav.substitutions", moduleId: "substitutions" },
+  {
+    id: "substitutions",
+    to: "/substitutions",
+    labelKey: "nav.substitutions",
+    moduleId: "substitutions",
+  },
   { id: "approvals", to: "/approvals", labelKey: "nav.approvals", core: true },
 ];
 
@@ -41,7 +46,12 @@ export const HR_NAV: NavGroupDef = {
   moduleId: "hr",
   items: [
     { id: "hr-leave", to: "/hr/leave", labelKey: "nav.hrLeave", moduleId: "hr" },
-    { id: "hr-leave-schedule", to: "/hr/leave/schedule", labelKey: "nav.hrLeaveSchedule", moduleId: "hr" },
+    {
+      id: "hr-leave-schedule",
+      to: "/hr/leave/schedule",
+      labelKey: "nav.hrLeaveSchedule",
+      moduleId: "hr",
+    },
     { id: "hr-duty", to: "/hr/duty", labelKey: "nav.hrDuty", moduleId: "hr" },
     { id: "hr-timesheet", to: "/hr/timesheet", labelKey: "nav.hrTimesheet", moduleId: "hr" },
     { id: "hr-gantt", to: "/hr/gantt", labelKey: "nav.hrGantt", moduleId: "hr" },
@@ -56,8 +66,18 @@ export const CORRESPONDENCE_NAV: NavGroupDef = {
   collapsible: true,
   moduleId: "correspondence",
   items: [
-    { id: "incoming", to: "/correspondence/incoming", labelKey: "nav.incoming", moduleId: "correspondence" },
-    { id: "outgoing", to: "/correspondence/outgoing", labelKey: "nav.outgoing", moduleId: "correspondence" },
+    {
+      id: "incoming",
+      to: "/correspondence/incoming",
+      labelKey: "nav.incoming",
+      moduleId: "correspondence",
+    },
+    {
+      id: "outgoing",
+      to: "/correspondence/outgoing",
+      labelKey: "nav.outgoing",
+      moduleId: "correspondence",
+    },
   ],
 };
 
@@ -65,7 +85,12 @@ export const REGISTRY_NAV: NavItemDef[] = [
   { id: "knowledge", to: "/knowledge", labelKey: "nav.knowledge", moduleId: "knowledge_base" },
   { id: "projects", to: "/projects", labelKey: "nav.projects", moduleId: "projects" },
   { id: "contracts", to: "/contracts", labelKey: "nav.contracts", moduleId: "contracts" },
-  { id: "counterparties", to: "/counterparties", labelKey: "nav.counterparties", moduleId: "counterparties" },
+  {
+    id: "counterparties",
+    to: "/counterparties",
+    labelKey: "nav.counterparties",
+    moduleId: "counterparties",
+  },
 ];
 
 export const SERVICE_NAV: NavItemDef[] = [
@@ -76,7 +101,12 @@ export const SERVICE_NAV: NavItemDef[] = [
 
 export const REFERENCE_NAV: NavItemDef[] = [
   { id: "references", to: "/references", labelKey: "nav.referencesHub", moduleId: "references" },
-  { id: "nomenclature", to: "/nomenclature", labelKey: "nav.nomenclature", moduleId: "nomenclature" },
+  {
+    id: "nomenclature",
+    to: "/nomenclature",
+    labelKey: "nav.nomenclature",
+    moduleId: "nomenclature",
+  },
   { id: "templates", to: "/templates", labelKey: "nav.templates", moduleId: "templates" },
   { id: "workflows", to: "/workflows", labelKey: "nav.workflows", moduleId: "workflows" },
 ];
@@ -86,7 +116,13 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     key: "analytics",
     labelKey: "nav.sectionAnalytics",
     items: [
-      { id: "reports", to: "/reports", labelKey: "nav.reports", moduleId: "reports", action: "read" },
+      {
+        id: "reports",
+        to: "/reports",
+        labelKey: "nav.reports",
+        moduleId: "reports",
+        action: "read",
+      },
     ],
   },
   {
@@ -108,8 +144,18 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     key: "structure",
     labelKey: "nav.sectionStructure",
     items: [
-      { id: "organization", to: "/admin/organization", labelKey: "nav.organization", moduleId: "admin_org" },
-      { id: "departments", to: "/admin/departments", labelKey: "nav.departments", moduleId: "admin_org" },
+      {
+        id: "organization",
+        to: "/admin/organization",
+        labelKey: "nav.organization",
+        moduleId: "admin_org",
+      },
+      {
+        id: "departments",
+        to: "/admin/departments",
+        labelKey: "nav.departments",
+        moduleId: "admin_org",
+      },
       { id: "positions", to: "/admin/positions", labelKey: "nav.positions", moduleId: "admin_org" },
       { id: "calendar", to: "/admin/calendar", labelKey: "nav.calendar", moduleId: "admin_org" },
     ],
@@ -120,7 +166,12 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     items: [
       { id: "audit", to: "/audit", labelKey: "nav.audit", moduleId: "audit" },
       { id: "settings", to: "/admin/settings", labelKey: "nav.settings", moduleId: "admin_system" },
-      { id: "integrations", to: "/admin/integrations", labelKey: "nav.integrations", moduleId: "integrations" },
+      {
+        id: "integrations",
+        to: "/admin/integrations",
+        labelKey: "nav.integrations",
+        moduleId: "integrations",
+      },
     ],
   },
 ];

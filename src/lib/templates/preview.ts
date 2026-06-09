@@ -30,22 +30,12 @@ export const xlsxBlobToPreviewHtml = createIsomorphicFn()
 
 export const renderDocxPreview = createIsomorphicFn()
   .server(
-    async (
-      _blob: Blob,
-      _bodyContainer: HTMLElement,
-      _styleContainer?: HTMLElement | null,
-    ) => {},
+    async (_blob: Blob, _bodyContainer: HTMLElement, _styleContainer?: HTMLElement | null) => {},
   )
-  .client(
-    async (
-      blob: Blob,
-      bodyContainer: HTMLElement,
-      styleContainer?: HTMLElement | null,
-    ) => {
-      const { renderDocxPreview: impl } = await import("./preview.client");
-      return impl(blob, bodyContainer, styleContainer);
-    },
-  );
+  .client(async (blob: Blob, bodyContainer: HTMLElement, styleContainer?: HTMLElement | null) => {
+    const { renderDocxPreview: impl } = await import("./preview.client");
+    return impl(blob, bodyContainer, styleContainer);
+  });
 
 export function previewModeForFormat(
   fileFormat: string | null | undefined,

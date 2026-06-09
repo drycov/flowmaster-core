@@ -30,14 +30,14 @@ export function CommentsTab({ comments, onAddComment, isAdding }: CommentsTabPro
         {comments.length === 0 && (
           <div className="text-sm text-muted-foreground">{t("common.empty")}</div>
         )}
-        
+
         {comments.map((c) => (
           <div key={c.id} className="border-l-2 border-primary/50 pl-3 py-1">
             <div className="text-xs text-muted-foreground">{fmtDate(c.created_at, locale)}</div>
             <div className="text-sm whitespace-pre-wrap">{c.body}</div>
           </div>
         ))}
-        
+
         <div className="pt-3 border-t border-border space-y-2">
           <Textarea
             rows={3}

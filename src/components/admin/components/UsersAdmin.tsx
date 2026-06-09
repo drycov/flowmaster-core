@@ -28,10 +28,8 @@ export function UsersAdmin() {
       const s = search.toLowerCase();
 
       return (
-        (!s ||
-          u.email.toLowerCase().includes(s)) &&
-        (roleFilter === "all" ||
-          u.roles.includes(roleFilter as Role))
+        (!s || u.email.toLowerCase().includes(s)) &&
+        (roleFilter === "all" || u.roles.includes(roleFilter as Role))
       );
     });
   }, [data, search, roleFilter]);
@@ -40,7 +38,7 @@ export function UsersAdmin() {
     (userId: string, role: Role, enabled: boolean) => {
       mutation.mutate({ userId, role, enabled });
     },
-    [mutation]
+    [mutation],
   );
 
   return (

@@ -26,9 +26,7 @@ export function getJwtSecret(): string {
     process.env.APP_SESSION_SECRET ||
     process.env.VITE_SUPABASE_JWT_SECRET;
   if (!secret) {
-    throw new Error(
-      "Задайте SUPABASE_JWT_SECRET в .env (Supabase → Settings → API → JWT Secret)",
-    );
+    throw new Error("Задайте SUPABASE_JWT_SECRET в .env (Supabase → Settings → API → JWT Secret)");
   }
   return secret;
 }
@@ -76,10 +74,7 @@ export type AccessTokenClaims = {
   org_id?: string;
 };
 
-export function verifyAccessToken(
-  token: string,
-  jwtSecret: string,
-): AccessTokenClaims | null {
+export function verifyAccessToken(token: string, jwtSecret: string): AccessTokenClaims | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
 
@@ -91,9 +86,13 @@ export function verifyAccessToken(
   if (signature !== expected) return null;
 
   try {
-    const payload = JSON.parse(
-      Buffer.from(encodedPayload, "base64url").toString("utf8"),
-    ) as { sub?: string; email?: string; exp?: number; sid?: string; org_id?: string };
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8")) as {
+      sub?: string;
+      email?: string;
+      exp?: number;
+      sid?: string;
+      org_id?: string;
+    };
 
     if (!payload.sub || !payload.exp || payload.exp * 1000 < Date.now()) {
       return null;

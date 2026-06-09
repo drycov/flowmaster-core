@@ -46,11 +46,7 @@ export function TemplateGrid({ templates, categories = [], isLoading }: Template
   return (
     <div className="grid lg:grid-cols-3 gap-3">
       {templates.map((template) => (
-        <TemplateCard
-          key={template.id}
-          template={template}
-          categories={categories}
-        />
+        <TemplateCard key={template.id} template={template} categories={categories} />
       ))}
     </div>
   );

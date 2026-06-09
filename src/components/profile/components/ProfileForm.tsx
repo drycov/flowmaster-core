@@ -79,7 +79,7 @@ export function ProfileForm({ profile, onSave, onCancel, isSaving }: ProfileForm
               />
             </div>
           </div>
-          
+
           <div className="flex gap-2 justify-end pt-4">
             <Button type="button" variant="outline" onClick={onCancel}>
               <X className="w-4 h-4 mr-1" />

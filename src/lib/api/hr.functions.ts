@@ -19,7 +19,12 @@ function parseLeaveBalance(
 ) {
   const entitled = data?.entitled_days ?? 24;
   const used = data?.used_days ?? 0;
-  return { year, entitled_days: entitled, used_days: used, remaining_days: Math.max(entitled - used, 0) };
+  return {
+    year,
+    entitled_days: entitled,
+    used_days: used,
+    remaining_days: Math.max(entitled - used, 0),
+  };
 }
 
 export const listAbsenceTypes = createServerFn({ method: "GET" })
@@ -74,14 +79,18 @@ export const getMyHrSummary = createServerFn({ method: "GET" })
       .eq("status", "pending");
     if (pendingErr) throw new Error(pendingErr.message);
 
-    const { data: managerId, error: mgrRpcErr } = await context.supabase.rpc(
+    const { data: managerId, error: mgrRpcErr } = await supabaseAdmin.rpc(
       "user_manager" as never,
       { _user: context.userId } as never,
     );
     if (mgrRpcErr) throw new Error(mgrRpcErr.message);
 
-    let manager: { id: string; full_name_ru?: string; full_name_kk?: string; email?: string } | null =
-      null;
+    let manager: {
+      id: string;
+      full_name_ru?: string;
+      full_name_kk?: string;
+      email?: string;
+    } | null = null;
     if (managerId) {
       const mgr = await fetchProfileById(managerId as string);
       if (mgr) {
@@ -189,7 +198,7 @@ export const createLeaveRequest = createServerFn({ method: "POST" })
       throw new Error("Дата окончания не может быть раньше даты начала");
     }
 
-    const { data: bizDays, error: rpcErr } = await context.supabase.rpc(
+    const { data: bizDays, error: rpcErr } = await supabaseAdmin.rpc(
       "count_business_days_between" as never,
       { _from: data.date_from, _to: data.date_to } as never,
     );
@@ -338,10 +347,20 @@ export const listDepartmentLeaveCalendar = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+export type StaffDirectoryRow = {
+  id: string;
+  email: string;
+  full_name_ru: string | null;
+  full_name_kk: string | null;
+  department_id: string | null;
+  position_id: string | null;
+  manager: { id: string; full_name_ru: string | null; full_name_kk: string | null } | null;
+};
+
 export const listStaffDirectory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ department_id: z.string().uuid().optional() }).optional())
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<StaffDirectoryRow[]> => {
     await requireModuleAccess(supabaseAdmin, context.userId, "hr", { action: "read" });
 
     let q = supabaseAdmin
@@ -401,14 +420,24 @@ export const listStaffDirectory = createServerFn({ method: "GET" })
 
     return (rows ?? []).map((profile) => {
       const p = profile as Record<string, unknown>;
-      const a = assignmentMap.get(p.id as string) as { manager_user_id?: string | null } | undefined;
+      const a = assignmentMap.get(p.id as string) as
+        | { manager_user_id?: string | null }
+        | undefined;
       const dept = p.departments as { head_user_id?: string | null } | null;
       const managerId =
         a?.manager_user_id ??
         (dept?.head_user_id && dept.head_user_id !== p.id ? dept.head_user_id : null);
+      const manager = managerId
+        ? (managerMap.get(managerId) as StaffDirectoryRow["manager"] | undefined) ?? null
+        : null;
       return {
-        ...p,
-        manager: managerId ? (managerMap.get(managerId) ?? null) : null,
+        id: String(p.id),
+        email: String(p.email ?? ""),
+        full_name_ru: (p.full_name_ru as string | null) ?? null,
+        full_name_kk: (p.full_name_kk as string | null) ?? null,
+        department_id: (p.department_id as string | null) ?? null,
+        position_id: (p.position_id as string | null) ?? null,
+        manager,
       };
     });
   });

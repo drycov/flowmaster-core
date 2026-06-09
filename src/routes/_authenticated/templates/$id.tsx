@@ -8,11 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import {
   Select,
@@ -33,6 +29,7 @@ import { TemplatePreviewCard } from "@/components/template-editor/components/Tem
 import { EditorPreviewLayout } from "@/components/shared/EditorPreviewLayout";
 import { listWorkflows } from "@/lib/api/workflows.functions";
 import { listTemplateCategoriesBrief } from "@/lib/api/references.functions";
+import type { ReferenceCodeOption } from "@/components/references/ReferenceCodeSelect";
 import { supportsTemplateProcessing } from "@/lib/templates/file-formats";
 import type { TemplateSyncResult } from "@/components/template-editor/types";
 import { useTemplateAutoSyncFields } from "@/components/template-editor/hooks/useTemplateAutoSyncFields";
@@ -88,9 +85,9 @@ function TemplateEditor() {
     queryFn: () => listWorkflows(),
   });
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<ReferenceCodeOption[]>({
     queryKey: ["ref-template-categories"],
-    queryFn: () => listTemplateCategoriesBrief(),
+    queryFn: () => listTemplateCategoriesBrief() as Promise<ReferenceCodeOption[]>,
   });
 
   const addField = () => {
@@ -106,7 +103,7 @@ function TemplateEditor() {
     ]);
   };
 
-  const updateField = (index: number, patch: Partial<typeof fields[0]>) => {
+  const updateField = (index: number, patch: Partial<(typeof fields)[0]>) => {
     setFields((prev) => prev.map((field, i) => (i === index ? { ...field, ...patch } : field)));
   };
 
@@ -234,9 +231,7 @@ function TemplateEditor() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("tpl.workflowHint")}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t("tpl.workflowHint")}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
@@ -244,9 +239,7 @@ function TemplateEditor() {
                   checked={allowCustomRoute}
                   onCheckedChange={setAllowCustomRoute}
                 />
-                <Label htmlFor="allow-custom">
-                  {t("tpl.allowCustomRoute")}
-                </Label>
+                <Label htmlFor="allow-custom">{t("tpl.allowCustomRoute")}</Label>
               </div>
             </CardContent>
           </Card>

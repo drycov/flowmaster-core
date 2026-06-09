@@ -25,7 +25,13 @@ export function DocumentQrCard({ documentId, regNumber }: DocumentQrCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-2 text-center">
-        <img src={qrSrc} alt={t("doc.qrCode")} width={160} height={160} className="rounded-sm border" />
+        <img
+          src={qrSrc}
+          alt={t("doc.qrCode")}
+          width={160}
+          height={160}
+          className="rounded-sm border"
+        />
         <p className="text-xs text-muted-foreground font-mono">{regNumber}</p>
         <p className="text-[10px] text-muted-foreground break-all max-w-full">{url}</p>
       </CardContent>

@@ -25,7 +25,10 @@ function toUserProfile(profile: Record<string, unknown>, roles: string[]): UserP
   };
 }
 
-async function loadProfile(viewUserId: string | undefined, t: (key: string) => string): Promise<UserProfile> {
+async function loadProfile(
+  viewUserId: string | undefined,
+  t: (key: string) => string,
+): Promise<UserProfile> {
   if (!viewUserId) {
     const me = await getMyProfile();
     const profile = me.profile as Record<string, unknown> | null;

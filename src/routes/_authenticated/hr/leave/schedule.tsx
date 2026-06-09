@@ -2,7 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ClipboardList, Download, Loader2, User, Users } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Download,
+  Loader2,
+  User,
+  Users,
+} from "lucide-react";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +27,7 @@ import { LeaveDayList } from "@/components/hr/LeaveDayList";
 import { PersonalLeaveView } from "@/components/hr/PersonalLeaveView";
 import { useI18n, localized } from "@/i18n";
 import { getMyProfile, listDepartments } from "@/lib/api/admin.functions";
-import {
-  listDepartmentLeaveCalendar,
-  listMyLeaveCalendar,
-} from "@/lib/api/hr.functions";
+import { listDepartmentLeaveCalendar, listMyLeaveCalendar } from "@/lib/api/hr.functions";
 import { exportLeaveScheduleCsv } from "@/lib/hr/export-leave-schedule";
 import { monthRange } from "@/lib/scheduling/date-range";
 import { cn } from "@/lib/utils";
@@ -72,8 +77,7 @@ function LeaveSchedulePage() {
     [departments],
   );
 
-  const deptFilterId =
-    departmentFilter === "all" ? undefined : departmentFilter;
+  const deptFilterId = departmentFilter === "all" ? undefined : departmentFilter;
 
   const { data: myLeaves = [], isLoading: myLoading } = useQuery({
     queryKey: ["my-leave-calendar", range.from, range.to],
@@ -153,10 +157,7 @@ function LeaveSchedulePage() {
         }
       />
       <PageBody className="max-w-5xl space-y-6">
-        <Tabs
-          value={viewMode}
-          onValueChange={(v) => setViewMode(v as "personal" | "organization")}
-        >
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "personal" | "organization")}>
           <TabsList>
             <TabsTrigger value="personal" className="gap-1.5">
               <User className="h-4 w-4" />
@@ -227,9 +228,10 @@ function LeaveSchedulePage() {
                           from: r.date_from,
                           to: r.date_to,
                           days: String(r.business_days ?? ""),
-                          status: t(`hr.leave.status.${r.status}`) !== `hr.leave.status.${r.status}`
-                            ? t(`hr.leave.status.${r.status}`)
-                            : r.status,
+                          status:
+                            t(`hr.leave.status.${r.status}`) !== `hr.leave.status.${r.status}`
+                              ? t(`hr.leave.status.${r.status}`)
+                              : r.status,
                         };
                       },
                     )

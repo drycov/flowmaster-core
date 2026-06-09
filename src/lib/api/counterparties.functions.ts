@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  assertCanEditDocument,
+  assertCanViewDocument,
+} from "@/lib/api/document-access.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
+import { requireModuleAccess } from "./_helpers";
 
 export const listCounterparties = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -53,7 +58,9 @@ export const getCounterparty = createServerFn({ method: "POST" })
     const [docsRes, contractsRes, partiesRes] = await Promise.all([
       supabase
         .from("documents")
-        .select("id, reg_number, title_ru, title_kk, status, created_at, ref_document_types(code, name_ru)")
+        .select(
+          "id, reg_number, title_ru, title_kk, status, created_at, ref_document_types(code, name_ru)",
+        )
         .eq("correspondent_id", data.id)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -90,13 +97,20 @@ export const upsertDocumentCorrespondent = createServerFn({ method: "POST" })
     z.object({
       document_id: z.string().uuid(),
       correspondent_id: z.string().uuid(),
-      role: z.enum(["sender", "recipient", "counterparty", "witness", "other"]).default("counterparty"),
+      role: z
+        .enum(["sender", "recipient", "counterparty", "witness", "other"])
+        .default("counterparty"),
       is_primary: z.boolean().optional(),
     }),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireModuleAccess(supabase, userId, "documents", { action: "write" });
+    await assertCanViewDocument(supabase, userId, data.document_id);
+    await assertCanEditDocument(supabase, userId, data.document_id);
+
     await upsertRow({
-      supabase: context.supabase,
+      supabase,
       table: "document_correspondents",
       row: {
         document_id: data.document_id,
@@ -108,7 +122,7 @@ export const upsertDocumentCorrespondent = createServerFn({ method: "POST" })
     });
 
     if (data.is_primary) {
-      await context.supabase
+      await supabase
         .from("documents")
         .update({ correspondent_id: data.correspondent_id } as never)
         .eq("id", data.document_id);

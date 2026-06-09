@@ -1,4 +1,3 @@
-
 // src/routes/_authenticated/profile.tsx (свой профиль)
 import ProfilePage from "@/components/profile";
 import { createFileRoute } from "@tanstack/react-router";

@@ -8,8 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +43,7 @@ import {
 } from "@/lib/api/references.functions";
 import { listDepartments } from "@/lib/api/admin.functions";
 import { getMyProfile } from "@/lib/api/admin.functions";
+import { userHasPermission } from "@/lib/access/rbac";
 
 type Row = Record<string, unknown>;
 
@@ -66,7 +79,9 @@ function fieldLabel(t: (k: string) => string, field: RefFieldDef): string {
     case "name":
       return field.key.endsWith("_kk") ? `${t("ref.name")} (KK)` : `${t("ref.name")} (RU)`;
     case "description":
-      return field.key.endsWith("_kk") ? `${t("ref.description")} (KK)` : `${t("ref.description")} (RU)`;
+      return field.key.endsWith("_kk")
+        ? `${t("ref.description")} (KK)`
+        : `${t("ref.description")} (RU)`;
     case "sort_order":
       return t("ref.sortOrder");
     case "is_active":
@@ -131,9 +146,8 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
   const qc = useQueryClient();
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
-  const roles = me?.roles ?? [];
   const perms = me?.permissions ?? {};
-  const canManage = roles.includes("admin") || !!perms.manage_references;
+  const canManage = userHasPermission({ permissions: perms }, "manage_references");
 
   const listFields = catalog.fields.filter((f) => f.list);
 
@@ -169,14 +183,7 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
     const q = search.trim().toLowerCase();
     if (!q) return rows as Row[];
     return (rows as Row[]).filter((row) => {
-      const hay = [
-        row.code,
-        row.name_ru,
-        row.name_kk,
-        row.bin,
-        row.contact_person,
-        row.prefix,
-      ]
+      const hay = [row.code, row.name_ru, row.name_kk, row.bin, row.contact_person, row.prefix]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -185,8 +192,7 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
   }, [rows, search]);
 
   const saveMutation = useMutation({
-    mutationFn: (data: Row) =>
-      upsertReferenceRow({ data: { catalogId: catalog.id, row: data } }),
+    mutationFn: (data: Row) => upsertReferenceRow({ data: { catalogId: catalog.id, row: data } }),
     onSuccess: () => {
       toast.success(t("common.success"));
       handleClose();
@@ -332,7 +338,9 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
           <Input
             type="number"
             value={value === null || value === undefined ? "" : String(value)}
-            onChange={(e) => updateField(field.key, e.target.value === "" ? null : Number(e.target.value))}
+            onChange={(e) =>
+              updateField(field.key, e.target.value === "" ? null : Number(e.target.value))
+            }
           />
         </div>
       );
@@ -415,7 +423,12 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
                     ))}
                     {canManage && (
                       <td className="px-4 py-2 text-right space-x-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(row)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => openEdit(row)}
+                        >
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
@@ -436,7 +449,12 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
         </DataTableShell>
       </PageBody>
 
-      <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) handleClose();
+        }}
+      >
         <DialogContent className="w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{form.id ? t("common.edit") : t("common.create")}</DialogTitle>

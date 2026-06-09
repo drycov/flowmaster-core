@@ -15,10 +15,10 @@ export const Route = createFileRoute("/api/public/hooks/sla-tick")({
 
         const { data, error } = await supabaseAdmin.rpc("app_sla_tick" as never);
         if (error) {
-          return new Response(
-            JSON.stringify({ ok: false, error: error.message }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ ok: false, error: error.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         }
         return new Response(JSON.stringify({ ok: true, result: data }), {
           status: 200,

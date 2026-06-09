@@ -12,12 +12,12 @@ interface AvatarUploadProps {
   canEdit?: boolean;
 }
 
-export function AvatarUpload({ 
-  avatarUrl, 
-  initials, 
-  onUpload, 
-  isUploading, 
-  canEdit = true 
+export function AvatarUpload({
+  avatarUrl,
+  initials,
+  onUpload,
+  isUploading,
+  canEdit = true,
 }: AvatarUploadProps) {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,7 +27,7 @@ export function AvatarUpload({
     const file = e.target.files?.[0];
     if (file) {
       // Проверка типа файла
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         alert(t("profile.invalidImageType"));
         return;
       }
@@ -55,7 +55,7 @@ export function AvatarUpload({
           {initials}
         </AvatarFallback>
       </Avatar>
-      
+
       {canEdit && isHovered && !isUploading && (
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -64,13 +64,13 @@ export function AvatarUpload({
           <Camera className="w-6 h-6 text-white" />
         </button>
       )}
-      
+
       {isUploading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
           <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
       )}
-      
+
       <input
         ref={fileInputRef}
         type="file"

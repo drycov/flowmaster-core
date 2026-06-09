@@ -91,9 +91,7 @@ function ArchivePage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <TableStatusRow colSpan={5}>{t("common.loading")}</TableStatusRow>
-              )}
+              {isLoading && <TableStatusRow colSpan={5}>{t("common.loading")}</TableStatusRow>}
               {!isLoading && rows.length === 0 && (
                 <TableStatusRow colSpan={5}>{t("common.empty")}</TableStatusRow>
               )}

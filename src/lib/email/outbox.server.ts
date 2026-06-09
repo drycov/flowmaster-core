@@ -99,7 +99,10 @@ export async function processEmailOutbox() {
         claimed_at: null,
       };
       if (!exhausted) failPatch.next_retry_at = computeNextRetryAt(attempts);
-      await supabaseAdmin.from("email_outbox").update(failPatch as never).eq("id", row.id);
+      await supabaseAdmin
+        .from("email_outbox")
+        .update(failPatch as never)
+        .eq("id", row.id);
       if (exhausted) failed++;
       else retried++;
     }

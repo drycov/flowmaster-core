@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/StatusBadge";
+import type { ReferenceBriefRow } from "@/lib/api/reference-types";
 import { Plus, Trash2, Link2 } from "lucide-react";
 import { useI18n, localized } from "@/i18n";
 import { listDocuments } from "@/lib/api/documents.functions";
@@ -69,7 +70,7 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
     queryFn: () => listDocumentLinks({ data: { document_id: documentId } }),
   });
 
-  const { data: linkTypes = [] } = useQuery({
+  const { data: linkTypes = [] } = useQuery<ReferenceBriefRow[]>({
     queryKey: ["ref-document-link-types"],
     queryFn: listDocumentLinkTypesBrief,
     enabled: dialogOpen,
@@ -100,8 +101,7 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
       setNote("");
       setLinkTypeId("");
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : t("doc.links.error")),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("doc.links.error")),
   });
 
   const deleteMutation = useMutation({
@@ -109,8 +109,7 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["document-links", documentId] });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : t("doc.links.error")),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("doc.links.error")),
   });
 
   const unwrap = <T,>(v: T | T[] | null | undefined): T | null =>
@@ -164,7 +163,10 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
                 <div className="space-y-4">
                   <div>
                     <Label>{t("doc.links.type")}</Label>
-                    <Select value={linkTypeId || "none"} onValueChange={(v) => setLinkTypeId(v === "none" ? "" : v)}>
+                    <Select
+                      value={linkTypeId || "none"}
+                      onValueChange={(v) => setLinkTypeId(v === "none" ? "" : v)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
@@ -190,7 +192,9 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
                     {search.trim().length >= 2 && (
                       <div className="mt-2 max-h-40 overflow-y-auto border border-border rounded-sm">
                         {candidates.length === 0 ? (
-                          <p className="p-2 text-xs text-muted-foreground">{t("search.noResults")}</p>
+                          <p className="p-2 text-xs text-muted-foreground">
+                            {t("search.noResults")}
+                          </p>
                         ) : (
                           candidates.map((d) => (
                             <button
@@ -201,7 +205,9 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
                               }`}
                               onClick={() => setTargetId(d.id)}
                             >
-                              <span className="font-mono text-xs text-muted-foreground">{d.reg_number}</span>
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {d.reg_number}
+                              </span>
                               <span className="ml-2">{localized(d, locale, "title")}</span>
                             </button>
                           ))

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
+import { requireModule } from "@/lib/access/route-guards";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -19,8 +20,6 @@ import {
   listRegistrationJournalsBrief,
 } from "@/lib/api/references.functions";
 
-
-
 import { useDocumentForm } from "@/components/document-new/hooks/useDocumentForm";
 
 import { useDocumentCreation } from "@/components/document-new/hooks/useDocumentCreation";
@@ -34,11 +33,8 @@ import { EditorPreviewLayout } from "@/components/shared/EditorPreviewLayout";
 import { FormActions } from "@/components/document-new/components/FormActions";
 
 import {
-
   RoutePickerCard,
-
   type RouteValue,
-
 } from "@/components/document-new/components/RoutePickerCard";
 
 import type { Template } from "@/components/document-new/types";
@@ -47,9 +43,8 @@ import { useI18n } from "@/i18n";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { toast } from "sonner";
 
-
-
 export const Route = createFileRoute("/_authenticated/documents/new")({
+  beforeLoad: () => requireModule("documents", "write"),
   validateSearch: (search: Record<string, unknown>) => ({
     projectId: (search.projectId as string) || undefined,
     templateId: (search.templateId as string) || undefined,
@@ -59,28 +54,20 @@ export const Route = createFileRoute("/_authenticated/documents/new")({
   component: NewDocument,
 });
 
-
-
 type TemplateWithWorkflow = Template & {
-
   default_workflow_id?: string | null;
 
   allow_custom_route?: boolean;
-
 };
-
-
 
 function NewDocument() {
   const { t } = useI18n();
   const { projectId, templateId, nomenclatureId } = Route.useSearch();
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
-
     queryKey: ["tpls"],
 
     queryFn: () => listTemplates(),
-
   });
 
   const { data: nomenclatures = [], isLoading: nomenclaturesLoading } = useQuery({
@@ -113,8 +100,6 @@ function NewDocument() {
     queryFn: listDeliveryMethodsBrief,
   });
 
-
-
   const [selectedTemplateId, setSelectedTemplateId] = useState(templateId ?? "none");
 
   useEffect(() => {
@@ -122,19 +107,13 @@ function NewDocument() {
   }, [templateId]);
 
   const selectedTemplate = templates.find((tp) => tp.id === selectedTemplateId) as
-
     | TemplateWithWorkflow
-
     | undefined;
 
-
-
   const { form, templateFields, authorDefaults } = useDocumentForm({
-
     templateId: selectedTemplateId,
 
     template: selectedTemplate,
-
   });
 
   useEffect(() => {
@@ -145,11 +124,7 @@ function NewDocument() {
 
   const templateAllowCustom = selectedTemplate?.allow_custom_route ?? true;
 
-
-
   const [route, setRoute] = useState<RouteValue>({ kind: "none" });
-
-
 
   useEffect(() => {
     if (templateDefaultWf) {
@@ -179,11 +154,7 @@ function NewDocument() {
     if (journal) form.setValue("registration_journal_id", journal.id);
   }, [documentTypeId, registrationJournals, form]);
 
-
-
   const { createDocument, isCreating } = useDocumentCreation();
-
-
 
   const handleSubmit = form.handleSubmit(
     (values) => {
@@ -217,15 +188,11 @@ function NewDocument() {
       const first = entries[0]?.[1];
       const fieldName = entries[0]?.[0];
       const message =
-        (first && typeof first === "object" && "message" in first
-          ? String(first.message)
-          : null) ||
+        (first && typeof first === "object" && "message" in first ? String(first.message) : null) ||
         (fieldName ? `${t("doc.formInvalid")}: ${fieldName}` : t("doc.formInvalid"));
       toast.error(message);
     },
   );
-
-
 
   const isLoading =
     templatesLoading ||
@@ -242,42 +209,25 @@ function NewDocument() {
 
   const showDocumentPreview = selectedTemplateId !== "none" && !!selectedTemplate;
 
-
-
   if (isLoading) {
-
     return (
-
       <>
-
         <PageHeader title={t("doc.creating")} />
 
         <PageBody>
-
           <div className="flex items-center justify-center h-64">
-
             <div className="text-muted-foreground">{t("doc.creatingLoading")}</div>
-
           </div>
-
         </PageBody>
-
       </>
-
     );
-
   }
 
-
-
   return (
-
     <>
-
       <PageHeader title={t("doc.creating")} />
 
       <PageBody>
-
         <form onSubmit={handleSubmit}>
           <EditorPreviewLayout
             showPreview={showDocumentPreview}
@@ -293,15 +243,10 @@ function NewDocument() {
             }
           >
             <MetadataCard
-
               form={form}
-
               templateId={selectedTemplateId}
-
               onTemplateChange={setSelectedTemplateId}
-
               showManualFields={showManualFields}
-
               templates={templates}
               nomenclatures={nomenclatures}
               documentTypes={documentTypes}
@@ -310,39 +255,21 @@ function NewDocument() {
               registrationJournals={registrationJournals}
               deliveryMethods={deliveryMethods}
               isLoading={isLoading}
-
             />
-
-
 
             {showTemplateFields && <TemplateFieldsCard form={form} fields={templateFields} />}
 
-
-
             <RoutePickerCard
-
               templateDefaultWorkflowId={templateDefaultWf}
-
               templateAllowCustom={templateAllowCustom}
-
               value={route}
-
               onChange={setRoute}
-
             />
 
-
-
             <FormActions isSubmitting={isCreating} />
-
           </EditorPreviewLayout>
         </form>
-
       </PageBody>
-
     </>
-
   );
-
 }
-

@@ -92,7 +92,10 @@ export async function processTelegramOutbox() {
         claimed_at: null,
       };
       if (!exhausted) failPatch.next_retry_at = computeNextRetryAt(attempts);
-      await supabaseAdmin.from("telegram_outbox").update(failPatch as never).eq("id", row.id);
+      await supabaseAdmin
+        .from("telegram_outbox")
+        .update(failPatch as never)
+        .eq("id", row.id);
       if (exhausted) failed++;
       else retried++;
     }

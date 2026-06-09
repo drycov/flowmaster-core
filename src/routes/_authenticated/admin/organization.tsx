@@ -9,7 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n, localized } from "@/i18n";
 import { Loader2, Save, Building2, RefreshCw, Brain, Contact2 } from "lucide-react";
 import { toast } from "sonner";
@@ -160,9 +166,7 @@ function OrganizationPage() {
 
       <PageBody>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
           <div className="space-y-6">
-
             {/* Identity Section */}
             <Section title={t("org.identity")} icon={<Building2 className="w-4 h-4" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,7 +220,10 @@ function OrganizationPage() {
             <Section title={t("org.contacts")} icon={<Contact2 className="w-4 h-4" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label={t("org.phone")}>
-                  <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} />
+                  <Input
+                    value={form.phone}
+                    onChange={(e) => updateField("phone", e.target.value)}
+                  />
                 </Field>
                 <Field label={t("org.email")}>
                   <Input
@@ -226,10 +233,16 @@ function OrganizationPage() {
                   />
                 </Field>
                 <Field label={t("org.website")}>
-                  <Input value={form.website} onChange={(e) => updateField("website", e.target.value)} />
+                  <Input
+                    value={form.website}
+                    onChange={(e) => updateField("website", e.target.value)}
+                  />
                 </Field>
                 <Field label={t("org.logoUrl")}>
-                  <Input value={form.logo_url} onChange={(e) => updateField("logo_url", e.target.value)} />
+                  <Input
+                    value={form.logo_url}
+                    onChange={(e) => updateField("logo_url", e.target.value)}
+                  />
                 </Field>
               </div>
 
@@ -252,7 +265,6 @@ function OrganizationPage() {
             </Section>
           </div>
           <div className="space-y-6">
-
             {/* Management Section */}
             <Section title={t("org.management")} icon={<Brain className="w-4 h-4" />}>
               <Field label={t("org.head")}>
@@ -276,7 +288,6 @@ function OrganizationPage() {
             </Section>
           </div>
         </div>
-
       </PageBody>
     </>
   );

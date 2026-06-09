@@ -14,9 +14,9 @@ interface ProfileInfoProps {
 
 export function ProfileInfo({ profile }: ProfileInfoProps) {
   const { t, locale } = useI18n();
-  
+
   const dateLocale = locale === "ru" ? ru : kk;
-  const lastLogin = profile.last_sign_in_at 
+  const lastLogin = profile.last_sign_in_at
     ? format(new Date(profile.last_sign_in_at), "dd MMMM yyyy HH:mm", { locale: dateLocale })
     : "";
 

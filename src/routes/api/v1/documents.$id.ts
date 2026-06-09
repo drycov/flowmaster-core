@@ -5,10 +5,7 @@ import {
   jsonResponse,
   requireScope,
 } from "@/lib/integrations/api-key-auth.server";
-import {
-  v1GetDocument,
-  v1UpdateDocument,
-} from "@/lib/integrations/v1/handlers.server";
+import { v1GetDocument, v1UpdateDocument } from "@/lib/integrations/v1/handlers.server";
 
 export const Route = createFileRoute("/api/v1/documents/$id")({
   server: {
@@ -49,9 +46,7 @@ export const Route = createFileRoute("/api/v1/documents/$id")({
             summary: typeof body.summary === "string" ? body.summary : undefined,
             body: typeof body.body === "string" ? body.body : undefined,
             external_reg_number:
-              typeof body.external_reg_number === "string"
-                ? body.external_reg_number
-                : undefined,
+              typeof body.external_reg_number === "string" ? body.external_reg_number : undefined,
             due_at: typeof body.due_at === "string" ? body.due_at : undefined,
           });
           if (!doc) return apiError("Not found", 404);

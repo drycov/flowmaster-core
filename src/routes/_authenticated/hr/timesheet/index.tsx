@@ -157,7 +157,10 @@ function TimesheetPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>{t("scheduling.timesheet.type")}</Label>
-                <Select value={entryType} onValueChange={(v) => setEntryType(v as typeof entryType)}>
+                <Select
+                  value={entryType}
+                  onValueChange={(v) => setEntryType(v as typeof entryType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -172,14 +175,22 @@ function TimesheetPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>{t("scheduling.timesheet.project")}</Label>
-                <Select value={projectId || "__none"} onValueChange={(v) => setProjectId(v === "__none" ? "" : v)}>
+                <Select
+                  value={projectId || "__none"}
+                  onValueChange={(v) => setProjectId(v === "__none" ? "" : v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none">—</SelectItem>
                     {projects.map((p) => {
-                      const row = p as { id: string; code: string; name_ru: string; name_kk: string };
+                      const row = p as {
+                        id: string;
+                        code: string;
+                        name_ru: string;
+                        name_kk: string;
+                      };
                       return (
                         <SelectItem key={row.id} value={row.id}>
                           {row.code} — {localized(row, locale, "name")}
@@ -215,7 +226,8 @@ function TimesheetPage() {
             <div>
               <CardTitle className="text-base capitalize">{monthLabel}</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                {t("scheduling.timesheet.total")}: {minutesToHours(totalMinutes)} {t("scheduling.timesheet.hoursShort")}
+                {t("scheduling.timesheet.total")}: {minutesToHours(totalMinutes)}{" "}
+                {t("scheduling.timesheet.hoursShort")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -290,13 +302,19 @@ function TimesheetPage() {
                         entry_type: string;
                         status: string;
                         description?: string;
-                        document_projects?: { code: string; name_ru: string; name_kk: string } | null;
+                        document_projects?: {
+                          code: string;
+                          name_ru: string;
+                          name_kk: string;
+                        } | null;
                       };
                       return (
                         <tr key={row.id} className="border-b last:border-b-0">
                           <td className="px-2 py-2">{fmtDateShort(row.work_date)}</td>
                           <td className="px-2 py-2">
-                            {t(`scheduling.timesheet.entryType.${row.entry_type}` as "scheduling.timesheet.entryType.work")}
+                            {t(
+                              `scheduling.timesheet.entryType.${row.entry_type}` as "scheduling.timesheet.entryType.work",
+                            )}
                           </td>
                           <td className="px-2 py-2">{minutesToHours(row.duration_minutes)}</td>
                           <td className="px-2 py-2 text-muted-foreground">
@@ -306,7 +324,9 @@ function TimesheetPage() {
                           </td>
                           <td className="px-2 py-2">
                             <Badge variant={row.status === "draft" ? "secondary" : "outline"}>
-                              {t(`scheduling.timesheet.status.${row.status}` as "scheduling.timesheet.status.draft")}
+                              {t(
+                                `scheduling.timesheet.status.${row.status}` as "scheduling.timesheet.status.draft",
+                              )}
                             </Badge>
                           </td>
                         </tr>

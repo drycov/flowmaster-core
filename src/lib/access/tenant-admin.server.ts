@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export async function actorHasPlatformAccess(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userId: string,
 ): Promise<boolean> {
-  const { data, error } = await supabase.rpc("user_has_permission" as never, {
-    _user: userId,
-    _permission: "manage_platform",
-  } as never);
+  const { data, error } = await supabaseAdmin.rpc(
+    "user_has_permission" as never,
+    {
+      _user: userId,
+      _permission: "manage_platform",
+    } as never,
+  );
   if (error) throw new Error(error.message);
   return !!data;
 }

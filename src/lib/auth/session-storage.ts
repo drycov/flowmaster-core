@@ -27,10 +27,7 @@ export function setSession(accessToken: string, user: StoredUser, accessExpiresI
   localStorage.setItem(APP_ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(APP_USER_STORAGE_KEY, JSON.stringify(user));
   if (accessExpiresInSec && accessExpiresInSec > 0) {
-    localStorage.setItem(
-      APP_ACCESS_EXPIRES_KEY,
-      String(Date.now() + accessExpiresInSec * 1000),
-    );
+    localStorage.setItem(APP_ACCESS_EXPIRES_KEY, String(Date.now() + accessExpiresInSec * 1000));
   }
   window.dispatchEvent(new Event("app-auth-changed"));
 }

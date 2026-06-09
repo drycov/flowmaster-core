@@ -6,9 +6,7 @@ export const customRouteStepSchema = z.object({
   assignee_user_id: z.string().uuid().nullable().optional(),
   assignee_position_id: z.string().uuid().nullable().optional(),
   assignee_department_id: z.string().uuid().nullable().optional(),
-  assignee_mode: z
-    .enum(["user", "position", "department_head", "role"])
-    .default("user"),
+  assignee_mode: z.enum(["user", "position", "department_head", "role"]).default("user"),
   assignee_role: z.string().max(64).nullable().optional(),
   sla_hours: z.number().int().min(0).max(8760).default(72),
   action: z.enum(["approve", "sign", "review"]).default("approve"),

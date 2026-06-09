@@ -50,8 +50,7 @@ function ProjectsPage() {
   });
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMyProfile });
-  const canManage =
-    !!me?.permissions?.manage_projects || !!me?.permissions?.manage_documents;
+  const canManage = !!me?.permissions?.manage_projects || !!me?.permissions?.manage_documents;
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["document-projects", search],
@@ -163,11 +162,18 @@ function ProjectsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">—</SelectItem>
-                          {nomenclature.map((n: { id: string; code: string; title_ru: string; title_kk: string }) => (
-                            <SelectItem key={n.id} value={n.id}>
-                              {n.code} — {localized(n, locale, "title")}
-                            </SelectItem>
-                          ))}
+                          {nomenclature.map(
+                            (n: {
+                              id: string;
+                              code: string;
+                              title_ru: string;
+                              title_kk: string;
+                            }) => (
+                              <SelectItem key={n.id} value={n.id}>
+                                {n.code} — {localized(n, locale, "title")}
+                              </SelectItem>
+                            ),
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -187,38 +193,40 @@ function ProjectsPage() {
 
           {isLoading && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
           <div className="space-y-2">
-            {projects.map((p: {
-              id: string;
-              code: string;
-              name_ru: string;
-              name_kk: string;
-              status: string;
-              departments?: { name_ru: string; name_kk: string } | null;
-              nomenclature_items?: { code: string; title_ru: string; title_kk: string } | null;
-            }) => (
-              <Card key={p.id}>
-                <CardContent className="py-3 flex items-center justify-between gap-4">
-                  <div>
-                    <Link
-                      to="/projects/$id"
-                      params={{ id: p.id }}
-                      className="font-medium hover:underline flex items-center gap-2"
-                    >
-                      <FolderKanban className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
-                      {localized(p, locale, "name")}
-                    </Link>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {p.departments ? localized(p.departments, locale, "name") : null}
-                      {p.nomenclature_items
-                        ? ` · ${p.nomenclature_items.code} ${localized(p.nomenclature_items, locale, "title")}`
-                        : null}
+            {projects.map(
+              (p: {
+                id: string;
+                code: string;
+                name_ru: string;
+                name_kk: string;
+                status: string;
+                departments?: { name_ru: string; name_kk: string } | null;
+                nomenclature_items?: { code: string; title_ru: string; title_kk: string } | null;
+              }) => (
+                <Card key={p.id}>
+                  <CardContent className="py-3 flex items-center justify-between gap-4">
+                    <div>
+                      <Link
+                        to="/projects/$id"
+                        params={{ id: p.id }}
+                        className="font-medium hover:underline flex items-center gap-2"
+                      >
+                        <FolderKanban className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
+                        {localized(p, locale, "name")}
+                      </Link>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {p.departments ? localized(p.departments, locale, "name") : null}
+                        {p.nomenclature_items
+                          ? ` · ${p.nomenclature_items.code} ${localized(p.nomenclature_items, locale, "title")}`
+                          : null}
+                      </div>
                     </div>
-                  </div>
-                  <StatusBadge status={p.status} kind="status" />
-                </CardContent>
-              </Card>
-            ))}
+                    <StatusBadge status={p.status} kind="status" />
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </div>
         </div>
       </PageBody>

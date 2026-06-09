@@ -1,6 +1,12 @@
 import { useState, useCallback } from "react";
 
-import { applyNodeChanges, applyEdgeChanges, type Connection, type EdgeChange, type NodeChange } from "@xyflow/react";
+import {
+  applyNodeChanges,
+  applyEdgeChanges,
+  type Connection,
+  type EdgeChange,
+  type NodeChange,
+} from "@xyflow/react";
 
 import {
   createNewNode,
@@ -15,18 +21,11 @@ import type { FlowNode, FlowEdge, WorkflowDefinition, NodeType } from "../types"
 
 import type { TFunction } from "@/i18n";
 
-
-
 interface UseFlowStateOptions {
-
   t?: TFunction;
-
 }
 
-
-
 interface UseFlowStateReturn {
-
   nodes: FlowNode[];
 
   edges: FlowEdge[];
@@ -64,13 +63,9 @@ interface UseFlowStateReturn {
   loadDefinition: (definition: WorkflowDefinition) => void;
 
   getDefinition: () => WorkflowDefinition;
-
 }
 
-
-
 export function useFlowState(options?: UseFlowStateOptions): UseFlowStateReturn {
-
   const t = options?.t;
 
   const [nodes, setNodes] = useState<FlowNode[]>([]);
@@ -81,137 +76,93 @@ export function useFlowState(options?: UseFlowStateOptions): UseFlowStateReturn 
 
   const [selectedEdge, setSelectedEdge] = useState<FlowEdge | null>(null);
 
-
-
   const onNodesChange = useCallback((changes: NodeChange<FlowNode>[]) => {
-
     setNodes((prev) => applyNodeChanges(changes, prev));
-
   }, []);
-
-
 
   const onEdgesChange = useCallback((changes: EdgeChange<FlowEdge>[]) => {
-
     setEdges((prev) => applyEdgeChanges(changes, prev));
-
   }, []);
-
-
 
   const onConnect = useCallback((connection: Connection) => {
-
     if (connection.source && connection.target) {
-
-      setEdges((prev) => [...prev, createNewEdge(connection as { source: string; target: string })]);
-
+      setEdges((prev) => [
+        ...prev,
+        createNewEdge(connection as { source: string; target: string }),
+      ]);
     }
-
   }, []);
 
-
-
   const addNode = useCallback(
-
     (type: NodeType) => {
-
       const center = { x: 250, y: 100 + nodes.length * 80 };
 
       setNodes((prev) => [...prev, createNewNode(type, center, t)]);
-
     },
 
     [nodes.length, t],
-
   );
 
-
-
   const addNodeAtPosition = useCallback(
-
     (type: NodeType, position: { x: number; y: number }) => {
-
       setNodes((prev) => [...prev, createNewNode(type, position, t)]);
-
     },
 
     [t],
-
   );
 
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      const connectedEdges = edges.filter((e) => e.source === nodeId || e.target === nodeId);
 
+      setEdges((prev) => prev.filter((e) => e.source !== nodeId && e.target !== nodeId));
 
-  const deleteNode = useCallback((nodeId: string) => {
+      setNodes((prev) => prev.filter((n) => n.id !== nodeId));
 
-    const connectedEdges = edges.filter((e) => e.source === nodeId || e.target === nodeId);
-
-    setEdges((prev) => prev.filter((e) => e.source !== nodeId && e.target !== nodeId));
-
-    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-
-    return { deletedEdgesCount: connectedEdges.length };
-
-  }, [edges]);
-
-
+      return { deletedEdgesCount: connectedEdges.length };
+    },
+    [edges],
+  );
 
   const deleteEdge = useCallback((edgeId: string) => {
-
     setEdges((prev) => prev.filter((e) => e.id !== edgeId));
-
   }, []);
-
-
 
   const updateNodeData = useCallback((nodeId: string, updates: Partial<FlowNode["data"]>) => {
-
-    setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n)));
-
-  }, []);
-
-
-
-  const updateEdgeData = useCallback((edgeId: string, updates: { label?: string; condition?: string }) => {
-
-    setEdges((prev) =>
-
-      prev.map((e) =>
-
-        e.id === edgeId ? { ...e, ...updates, data: { ...e.data, ...updates } } : e
-
-      )
-
+    setNodes((prev) =>
+      prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n)),
     );
-
   }, []);
 
-
+  const updateEdgeData = useCallback(
+    (edgeId: string, updates: { label?: string; condition?: string }) => {
+      setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId ? { ...e, ...updates, data: { ...e.data, ...updates } } : e,
+        ),
+      );
+    },
+    [],
+  );
 
   const loadDefinition = useCallback(
-
     (definition: WorkflowDefinition) => {
-
       setNodes((definition.nodes ?? []).map((n) => toFlowNode(n, t)));
 
       setEdges((definition.edges ?? []).map(toFlowEdge));
-
     },
 
     [t],
-
   );
 
-
-
-  const getDefinition = useCallback((): WorkflowDefinition => ({
-
-    ...toDomainDefinition(nodes, edges),
-  }), [nodes, edges]);
-
-
+  const getDefinition = useCallback(
+    (): WorkflowDefinition => ({
+      ...toDomainDefinition(nodes, edges),
+    }),
+    [nodes, edges],
+  );
 
   return {
-
     nodes,
 
     edges,
@@ -249,8 +200,5 @@ export function useFlowState(options?: UseFlowStateOptions): UseFlowStateReturn 
     loadDefinition,
 
     getDefinition,
-
   };
-
 }
-

@@ -10,6 +10,7 @@ import {
 import { Shield } from "lucide-react";
 import { useI18n, localized } from "@/i18n";
 import { listAccessLevelsBrief } from "@/lib/api/references.functions";
+import type { ReferenceBriefRow } from "@/lib/api/reference-types";
 import { setUserAccessLevel } from "@/lib/api/admin.functions";
 import { toast } from "sonner";
 
@@ -22,7 +23,7 @@ export function UserAccessLevelCard({ userId, accessLevelId }: UserAccessLevelCa
   const { t, locale } = useI18n();
   const qc = useQueryClient();
 
-  const { data: levels = [] } = useQuery({
+  const { data: levels = [] } = useQuery<ReferenceBriefRow[]>({
     queryKey: ["ref-access-levels-brief"],
     queryFn: listAccessLevelsBrief,
   });

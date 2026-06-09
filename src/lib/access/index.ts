@@ -25,11 +25,7 @@ export {
   MODULE_REGISTRY,
 } from "./modules/registry";
 
-export {
-  evaluateModuleAccess,
-  canAccessModule,
-  canAccessModuleFeature,
-} from "./evaluate";
+export { evaluateModuleAccess, canAccessModule, canAccessModuleFeature } from "./evaluate";
 
 export {
   requirePermission,
@@ -86,4 +82,8 @@ export {
 export { useAccessContext, useLicenseStatus, useModuleNav } from "./hooks";
 
 export { resolveTenantContext, tenantScopeKey, type TenantContext } from "./tenant";
-export { resolveTenantFromOrganization, resolveTenantFromOrganizationId, resolveTenantFromSlug } from "./tenant.server";
+export {
+  resolveTenantFromOrganization,
+  resolveTenantFromOrganizationId,
+  resolveTenantFromSlug,
+} from "./tenant.server";

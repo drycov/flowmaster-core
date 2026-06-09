@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveAppOrigin, resolveOfficeUrl } from "@/lib/app-origin.server";
+import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
 import { createSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
@@ -14,6 +15,7 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
 
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
+    await assertCanViewDocumentContent(supabase, userId, data.document_id);
     const officeUrl = await resolveOfficeUrl();
 
     const { data: doc, error: docErr } = await supabase
@@ -47,7 +49,8 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
     }
 
     const ext = (version.file_format ?? "docx").toLowerCase();
-    const fileType = ext === "doc" ? "doc" : ext === "xlsx" ? "xlsx" : ext === "xls" ? "xls" : "docx";
+    const fileType =
+      ext === "doc" ? "doc" : ext === "xlsx" ? "xlsx" : ext === "xls" ? "xls" : "docx";
     const documentType = fileType.startsWith("xls") ? "cell" : "word";
 
     const signedUrl = await createSignedDownloadUrl(

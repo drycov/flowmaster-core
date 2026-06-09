@@ -1,9 +1,21 @@
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -62,7 +74,11 @@ export function NodeEditSheet({
   const getAssigneeOptions = () => {
     switch (assigneeType) {
       case "user":
-        return (users || []).map((u) => ({ value: u.id, label: `${u.name} (${u.role})`, metadata: u }));
+        return (users || []).map((u) => ({
+          value: u.id,
+          label: `${u.name} (${u.role})`,
+          metadata: u,
+        }));
       case "role":
         return (roles || []).map((r) => ({ value: r.id, label: r.name, metadata: r }));
       case "department":
@@ -86,26 +102,36 @@ export function NodeEditSheet({
 
   return (
     <Sheet open={open} onOpenChange={onClose} modal={false}>
-      <SheetContent className="w-[450px] sm:w-[540px] overflow-y-auto shadow-xl border-l" style={{ zIndex: 40 }}>
+      <SheetContent
+        className="w-[450px] sm:w-[540px] overflow-y-auto shadow-xl border-l"
+        style={{ zIndex: 40 }}
+      >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <span>{NODE_TYPE_ICONS[node.data.type]}</span>
             <span>{t("wf.editNode")}</span>
           </SheetTitle>
-          <SheetDescription>{t("common.type")}: {t(NODE_TYPE_LABEL_KEYS[node.data.type])}</SheetDescription>
+          <SheetDescription>
+            {t("common.type")}: {t(NODE_TYPE_LABEL_KEYS[node.data.type])}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 mt-6">
           <div className="space-y-2">
             <Label>{t("wf.nodeNameRu")}</Label>
-            <Input value={node.data.label || ""} onChange={(e) => onUpdate({ label: e.target.value })} />
+            <Input
+              value={node.data.label || ""}
+              onChange={(e) => onUpdate({ label: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>{t("wf.nodeNameKk")}</Label>
             <Input
               value={(node.data.config?.label_kk as string) || ""}
-              onChange={(e) => onUpdate({ config: { ...node.data.config, label_kk: e.target.value } })}
+              onChange={(e) =>
+                onUpdate({ config: { ...node.data.config, label_kk: e.target.value } })
+              }
             />
           </div>
 
@@ -124,7 +150,9 @@ export function NodeEditSheet({
                 <Label>{t("wf.assigneeBlock")}</Label>
                 <Select
                   value={assigneeType}
-                  onValueChange={(v: AssigneeType) => onUpdate({ assignee_type: v, assignee_id: null })}
+                  onValueChange={(v: AssigneeType) =>
+                    onUpdate({ assignee_type: v, assignee_id: null })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -137,9 +165,7 @@ export function NodeEditSheet({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  {t("wf.assigneeHint")}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("wf.assigneeHint")}</p>
               </div>
 
               {modeMeta?.needsRef && (
@@ -273,7 +299,7 @@ export function NodeEditSheet({
                 </Select>
               </div>
 
-              {((node.data.config?.timeout_action as string) === "reassign") && (
+              {(node.data.config?.timeout_action as string) === "reassign" && (
                 <div className="space-y-2">
                   <Label>{t("wf.escalationRole")}</Label>
                   <Combobox

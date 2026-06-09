@@ -3,12 +3,7 @@ import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, PageBody } from "@/components/AppShell";
-import {
-  DataTableShell,
-  ListEmpty,
-  PageLoading,
-  SectionTitle,
-} from "@/components/PageLayout";
+import { DataTableShell, ListEmpty, PageLoading, SectionTitle } from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 

@@ -7,10 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import {
-  Bold, Italic, List, ListOrdered, Code, Undo, Redo,
-  Eye, EyeOff, Maximize2, Minimize2, HelpCircle, Plus,
-  User, Calendar, Building2, Hash, FileText, Briefcase,
-  Signature, File,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Code,
+  Undo,
+  Redo,
+  Eye,
+  EyeOff,
+  Maximize2,
+  Minimize2,
+  HelpCircle,
+  Plus,
+  User,
+  Calendar,
+  Building2,
+  Hash,
+  FileText,
+  Briefcase,
+  Signature,
+  File,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -20,12 +37,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SchemaField = { key: string; label_ru: string; label_kk?: string };
 
@@ -61,7 +73,8 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
       StarterKit.configure({
         code: {
           HTMLAttributes: {
-            class: "bg-yellow-50 text-amber-700 px-1 py-0.5 rounded font-mono text-xs border border-yellow-300",
+            class:
+              "bg-yellow-50 text-amber-700 px-1 py-0.5 rounded font-mono text-xs border border-yellow-300",
           },
         },
       }),
@@ -90,20 +103,23 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
   // Обработка Escape для выхода из полноэкранного режима
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
+      if (e.key === "Escape" && isFullscreen) {
         setIsFullscreen(false);
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [isFullscreen]);
 
-  const insertPlaceholder = useCallback((key: string) => {
-    if (editor) {
-      editor.commands.insertContent(`{{${key}}}`);
-      editor.commands.focus();
-    }
-  }, [editor]);
+  const insertPlaceholder = useCallback(
+    (key: string) => {
+      if (editor) {
+        editor.commands.insertContent(`{{${key}}}`);
+        editor.commands.focus();
+      }
+    },
+    [editor],
+  );
 
   const insertCustomPlaceholder = useCallback(() => {
     const key = prompt(t("tpl.fieldKeyPrompt"));
@@ -116,9 +132,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
     return null;
   }
 
-  const fullscreenClass = isFullscreen
-    ? "fixed inset-0 z-50 m-0 rounded-none"
-    : "h-full";
+  const fullscreenClass = isFullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : "h-full";
 
   return (
     <TooltipProvider>
@@ -135,11 +149,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     {t("tpl.insertField")}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  className="min-w-[auto] w-auto"
-                  sideOffset={5}
-                >
+                <DropdownMenuContent align="end" className="min-w-[auto] w-auto" sideOffset={5}>
                   <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
                     {t("tpl.presetFields")}
                   </div>
@@ -159,8 +169,8 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     );
                   })}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={insertCustomPlaceholder} 
+                  <DropdownMenuItem
+                    onClick={insertCustomPlaceholder}
                     className="cursor-pointer whitespace-nowrap"
                   >
                     <Code className="w-3 h-3 mr-2" />
@@ -193,7 +203,11 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     onClick={() => setShowPlaceholders(!showPlaceholders)}
                     className="text-xs h-8"
                   >
-                    {showPlaceholders ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {showPlaceholders ? (
+                      <EyeOff className="w-3 h-3" />
+                    ) : (
+                      <Eye className="w-3 h-3" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -209,7 +223,11 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     onClick={() => setIsFullscreen(!isFullscreen)}
                     className="text-xs h-8"
                   >
-                    {isFullscreen ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                    {isFullscreen ? (
+                      <Minimize2 className="w-3 h-3" />
+                    ) : (
+                      <Maximize2 className="w-3 h-3" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -218,7 +236,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
               </Tooltip>
             </div>
           </CardHeader>
-          
+
           <CardContent className="flex-1 flex flex-col min-h-0 p-4 pt-0">
             {/* Панель инструментов */}
             <div className="flex gap-1 border rounded-md p-1 bg-muted/30 flex-wrap mb-3 shrink-0">
@@ -314,14 +332,19 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
               <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 p-2 rounded-md mb-3 shrink-0">
                 <p className="font-medium text-blue-800 mb-1">📌 {t("tpl.fieldsHelpTitle")}</p>
                 <p className="mb-1">
-                  <span className="font-mono text-primary bg-yellow-50 px-1 rounded">{"{{ключ_поля}}"}</span> — {t("tpl.fieldsHelp")}
+                  <span className="font-mono text-primary bg-yellow-50 px-1 rounded">
+                    {"{{ключ_поля}}"}
+                  </span>{" "}
+                  — {t("tpl.fieldsHelp")}
                 </p>
                 <p className="text-xs">{t("tpl.fieldsHelpAction")}</p>
               </div>
             )}
 
             {/* WYSIWYG редактор */}
-            <div className={`flex-1 border rounded-md bg-white overflow-auto ${!showPlaceholders ? "opacity-70" : ""}`}>
+            <div
+              className={`flex-1 border rounded-md bg-white overflow-auto ${!showPlaceholders ? "opacity-70" : ""}`}
+            >
               <EditorContent editor={editor} className="h-full" />
             </div>
 

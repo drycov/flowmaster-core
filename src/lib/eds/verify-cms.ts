@@ -1,12 +1,7 @@
 import forge from "node-forge";
-import { extractIIN, parseCertDerBase64 } from "@/lib/iin-parser";
+import { extractIIN, parseCertDerBase64, type CertDerInfo } from "@/lib/iin-parser";
 
-export type VerificationStatus =
-  | "unverified"
-  | "valid"
-  | "expired"
-  | "invalid"
-  | "content_changed";
+export type VerificationStatus = "unverified" | "valid" | "expired" | "invalid" | "content_changed";
 
 export interface CmsCertInfo {
   subject?: string;
@@ -52,15 +47,15 @@ function certFromForge(cert: forge.pki.Certificate): CmsCertInfo {
   const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
   const certBase64 = forge.util.encode64(certDer);
   const certPem = forge.pki.certificateToPem(cert);
-  const parsed = parseCertDerBase64(certBase64) ?? extractIIN(certPem);
+  const parsed = (parseCertDerBase64(certBase64) ?? extractIIN(certPem)) as CertDerInfo | null;
 
   return {
-    subject: parsed.subject ?? formatDn(cert.subject.attributes),
-    issuer: parsed.issuer ?? formatDn(cert.issuer.attributes),
-    serial: parsed.serial ?? cert.serialNumber,
-    iin: parsed.iin,
-    bin: parsed.bin,
-    cn: parsed.cn,
+    subject: parsed?.subject ?? formatDn(cert.subject.attributes),
+    issuer: parsed?.issuer ?? formatDn(cert.issuer.attributes),
+    serial: parsed?.serial ?? cert.serialNumber,
+    iin: parsed?.iin,
+    bin: parsed?.bin,
+    cn: parsed?.cn,
     validFrom: cert.validity.notBefore,
     validTo: cert.validity.notAfter,
   };

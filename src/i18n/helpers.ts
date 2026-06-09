@@ -60,9 +60,7 @@ export function auditActionLabel(t: TFunction, action: string): string {
 }
 
 export function workflowNodeLabel(t: TFunction, nodeType: string): string {
-  return t(`wf.node.${nodeType}`) !== `wf.node.${nodeType}`
-    ? t(`wf.node.${nodeType}`)
-    : nodeType;
+  return t(`wf.node.${nodeType}`) !== `wf.node.${nodeType}` ? t(`wf.node.${nodeType}`) : nodeType;
 }
 
 export function interpolate(template: string, vars: Record<string, string | number>): string {

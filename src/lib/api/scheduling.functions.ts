@@ -305,8 +305,16 @@ export const createSchedulePlan = createServerFn({ method: "POST" })
       plan_type: z.enum(["project", "department", "general"]).default("general"),
       project_id: z.string().uuid().nullable().optional(),
       department_id: z.string().uuid().nullable().optional(),
-      planned_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-      planned_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+      planned_start: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable()
+        .optional(),
+      planned_end: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable()
+        .optional(),
     }),
   )
   .handler(async ({ data, context }) => {

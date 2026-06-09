@@ -1,10 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  hashSignPayloadBase64,
-  toSignPayloadBase64,
-} from "@/lib/eds/sign-payload";
+import { hashSignPayloadBase64, toSignPayloadBase64 } from "@/lib/eds/sign-payload";
 import { verifyCmsSignature, type VerificationStatus } from "@/lib/eds/verify-cms";
 
 type SignatureRow = {

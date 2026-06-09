@@ -6,8 +6,9 @@ async function resolvePrefix(journalId?: string | null): Promise<string> {
       "resolve_document_reg_prefix" as never,
       { _journal_id: journalId } as never,
     );
-    if (!error && typeof data === "string" && data.trim()) {
-      return data.trim();
+    const prefix = data as string | null | undefined;
+    if (!error && typeof prefix === "string" && prefix.trim()) {
+      return prefix.trim();
     }
   }
 

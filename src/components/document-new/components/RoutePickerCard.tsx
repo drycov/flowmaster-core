@@ -33,11 +33,7 @@ import {
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { listWorkflows, getWorkflow } from "@/lib/api/workflows.functions";
-import {
-  listUsersBrief,
-  listDepartmentsBrief,
-  listRolesBrief,
-} from "@/lib/api/admin.functions";
+import { listUsersBrief, listDepartmentsBrief, listRolesBrief } from "@/lib/api/admin.functions";
 import { listPositions } from "@/lib/api/org.functions";
 import {
   buildModifiedDefinition,
@@ -115,7 +111,9 @@ function SortableStep({
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <Badge variant="secondary">{t("doc.routeStep")} {idx + 1}</Badge>
+          <Badge variant="secondary">
+            {t("doc.routeStep")} {idx + 1}
+          </Badge>
         </div>
         <Button size="icon" variant="ghost" onClick={onRemove} type="button">
           <Trash2 className="h-4 w-4" />
@@ -261,18 +259,25 @@ export function RoutePickerCard({
     queryKey: ["wfs"],
     queryFn: () => listWorkflows(),
   });
-  const { data: users = [] } = useQuery({ queryKey: ["wf-users"], queryFn: () => listUsersBrief() });
+  const { data: users = [] } = useQuery({
+    queryKey: ["wf-users"],
+    queryFn: () => listUsersBrief(),
+  });
   const { data: departments = [] } = useQuery({
     queryKey: ["wf-departments"],
     queryFn: () => listDepartmentsBrief(),
   });
-  const { data: positions = [] } = useQuery({ queryKey: ["positions"], queryFn: () => listPositions() });
-  const { data: roles = [] } = useQuery({ queryKey: ["wf-roles"], queryFn: () => listRolesBrief() });
+  const { data: positions = [] } = useQuery({
+    queryKey: ["positions"],
+    queryFn: () => listPositions(),
+  });
+  const { data: roles = [] } = useQuery({
+    queryKey: ["wf-roles"],
+    queryFn: () => listRolesBrief(),
+  });
 
   const modifyWorkflowId =
-    value.kind === "modify"
-      ? value.workflow_id
-      : templateDefaultWorkflowId ?? null;
+    value.kind === "modify" ? value.workflow_id : (templateDefaultWorkflowId ?? null);
 
   const { data: baseWorkflow } = useQuery({
     queryKey: ["wf-modify", modifyWorkflowId],
@@ -318,7 +323,7 @@ export function RoutePickerCard({
 
   useEffect(() => {
     if (value.kind === "modify" && baseWorkflow && value.overrides.length === 0) {
-      const def = (baseWorkflow as { definition: WorkflowDefinition }).definition;
+      const def = (baseWorkflow as unknown as { definition: WorkflowDefinition }).definition;
       onChange({
         kind: "modify",
         workflow_id: value.workflow_id,
@@ -354,7 +359,7 @@ export function RoutePickerCard({
   const modifyDef =
     value.kind === "modify" && baseWorkflow
       ? buildModifiedDefinition(
-          (baseWorkflow as { definition: WorkflowDefinition }).definition,
+          (baseWorkflow as unknown as { definition: WorkflowDefinition }).definition,
           value.overrides,
         )
       : null;
@@ -410,9 +415,7 @@ export function RoutePickerCard({
 
         {value.kind === "modify" && (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              {t("doc.routeWillBeUsed")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("doc.routeWillBeUsed")}</p>
             {!baseWorkflow ? (
               <p className="text-sm text-muted-foreground">{t("tpl.loading")}</p>
             ) : value.overrides.length === 0 ? (
@@ -451,7 +454,9 @@ export function RoutePickerCard({
                           <SelectContent>
                             <SelectItem value="user">{t("audit.entity.user")}</SelectItem>
                             <SelectItem value="position">{t("audit.entity.position")}</SelectItem>
-                            <SelectItem value="department_head">{t("wf.assignee.deptHead")}</SelectItem>
+                            <SelectItem value="department_head">
+                              {t("wf.assignee.deptHead")}
+                            </SelectItem>
                             <SelectItem value="role">{t("wf.assignee.role")}</SelectItem>
                           </SelectContent>
                         </Select>
@@ -472,9 +477,11 @@ export function RoutePickerCard({
             )}
             {modifyDef && (
               <p className="text-xs text-muted-foreground">
-                {t("wf.nodesCount")} {modifyDef.nodes.filter((n) =>
-                  ["APPROVAL", "SIGNATURE", "TASK"].includes(n.type),
-                ).length}
+                {t("wf.nodesCount")}{" "}
+                {
+                  modifyDef.nodes.filter((n) => ["APPROVAL", "SIGNATURE", "TASK"].includes(n.type))
+                    .length
+                }
                 , {t("wf.edgesCount")} {modifyDef.edges.length}
               </p>
             )}
@@ -483,7 +490,11 @@ export function RoutePickerCard({
 
         {value.kind === "custom" && (
           <div className="space-y-2">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
               <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
                 {steps.length === 0 && (
                   <p className="text-sm text-muted-foreground">{t("common.empty")}</p>

@@ -10,7 +10,12 @@ type ModuleGateProps = {
 };
 
 /** Renders children only when the user passes module RBAC + license gate. */
-export function ModuleGate({ moduleId, action = "read", children, fallback = null }: ModuleGateProps) {
+export function ModuleGate({
+  moduleId,
+  action = "read",
+  children,
+  fallback = null,
+}: ModuleGateProps) {
   const { canModule, isLoading } = useAccessContext();
   if (isLoading) return null;
   if (!canModule(moduleId, action)) return <>{fallback}</>;

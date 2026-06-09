@@ -1,5 +1,11 @@
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { localized } from "@/i18n";
 
 export type ReferenceOption = {
@@ -7,7 +13,7 @@ export type ReferenceOption = {
   code: string;
   name_ru: string;
   name_kk: string;
-  bin?: string;
+  bin?: string | null;
 };
 
 interface ReferenceSelectProps {

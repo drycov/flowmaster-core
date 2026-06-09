@@ -1,4 +1,4 @@
-export type FieldType = "text" | "textarea" | "number" | "date";
+export type FieldType = "text" | "textarea" | "number" | "date" | "select" | "user";
 export type TemplateStatus = "draft" | "published" | "archived";
 
 export interface Field {

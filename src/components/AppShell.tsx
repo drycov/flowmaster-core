@@ -40,11 +40,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, localized } from "@/i18n";
@@ -163,14 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouterState();
   const path = router.location.pathname;
 
-  const {
-    me,
-    license,
-    canModule,
-    can,
-    isWritable,
-    isLoading: accessLoading,
-  } = useAccessContext();
+  const { me, license, canModule, can, isWritable, isLoading: accessLoading } = useAccessContext();
   useAccessTokenRefresh();
 
   const userId = (me?.profile as { id?: string } | undefined)?.id;
@@ -290,8 +279,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isRegistryActive = registryNavItems.some((item) => isNavActive(path, item.to));
   const isServiceActive = serviceNavItems.some((item) => isNavActive(path, item.to));
   const isReferencesActive = referenceNavItems.some((item) => isNavActive(path, item.to));
-  const isAdminActive =
-    adminSections.some((section) => section.items.some((item) => isNavActive(path, item.to)));
+  const isAdminActive = adminSections.some((section) =>
+    section.items.some((item) => isNavActive(path, item.to)),
+  );
 
   const licenseBanner = (() => {
     if (accessLoading || !license) return null;
@@ -362,7 +352,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const readOnlyBanner =
     !accessLoading && license && !isWritable ? t("license.banner.readOnly") : null;
 
-  const profile = me?.profile as { full_name_ru?: string | null; full_name_kk?: string | null; email?: string } | undefined;
+  const profile = me?.profile as
+    | { full_name_ru?: string | null; full_name_kk?: string | null; email?: string }
+    | undefined;
   const displayName = profile ? localized(profile, locale, "full_name") || profile.email || "" : "";
   const initials = displayName
     .split(" ")
@@ -536,7 +528,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span className="flex-1">{licenseBanner.text}</span>
             {can("manage_license") ? (
-              <Link to="/admin/settings" search={{ tab: "license" }} className="underline font-medium shrink-0">
+              <Link
+                to="/admin/settings"
+                search={{ tab: "license" }}
+                className="underline font-medium shrink-0"
+              >
                 {t("license.banner.manage")}
               </Link>
             ) : null}
@@ -576,4 +572,3 @@ export function PageHeader({
 export function PageBody({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cn("p-6", className)}>{children}</div>;
 }
-

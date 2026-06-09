@@ -43,7 +43,10 @@ function LeavePage() {
   const [reason, setReason] = useState("");
 
   const { data: types = [] } = useQuery({ queryKey: ["absence-types"], queryFn: listAbsenceTypes });
-  const { data: balance } = useQuery({ queryKey: ["my-leave-balance"], queryFn: getMyLeaveBalance });
+  const { data: balance } = useQuery({
+    queryKey: ["my-leave-balance"],
+    queryFn: getMyLeaveBalance,
+  });
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["my-leave-requests"],
     queryFn: listMyLeaveRequests,
@@ -168,11 +171,21 @@ function LeavePage() {
               </div>
               <div className="space-y-1.5">
                 <Label>{t("hr.leave.dateFrom")}</Label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} required />
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>{t("hr.leave.dateTo")}</Label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} required />
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>{t("hr.leave.reason")}</Label>
@@ -223,8 +236,11 @@ function LeavePage() {
                           {type ? localized(type, locale, "name") : "—"}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {fmtDateShort(String(row.date_from))} — {fmtDateShort(String(row.date_to))}
-                          {row.business_days ? ` · ${row.business_days} ${t("hr.leave.businessDays")}` : ""}
+                          {fmtDateShort(String(row.date_from))} —{" "}
+                          {fmtDateShort(String(row.date_to))}
+                          {row.business_days
+                            ? ` · ${row.business_days} ${t("hr.leave.businessDays")}`
+                            : ""}
                         </div>
                         {row.reason ? (
                           <p className="text-sm text-muted-foreground">{String(row.reason)}</p>

@@ -24,13 +24,16 @@ interface TemplateCardProps {
 export function TemplateCard({ template, categories = [] }: TemplateCardProps) {
   const { t, locale } = useI18n();
   const categoryLabel =
-    resolveReferenceLabel(categories, template.category, locale) ??
-    t("tpl.noCategory");
+    resolveReferenceLabel(categories, template.category, locale) ?? t("tpl.noCategory");
 
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "published":
-        return { icon: CheckCircle, label: t("tpl.published"), color: "bg-green-100 text-green-800" };
+        return {
+          icon: CheckCircle,
+          label: t("tpl.published"),
+          color: "bg-green-100 text-green-800",
+        };
       case "archived":
         return { icon: Archive, label: t("tpl.archived"), color: "bg-gray-100 text-gray-800" };
       default:
@@ -56,16 +59,14 @@ export function TemplateCard({ template, categories = [] }: TemplateCardProps) {
                 {localized(template, locale, "name")}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {categoryLabel}
-            </div>
+            <div className="text-xs text-muted-foreground mt-1">{categoryLabel}</div>
           </div>
           <Badge variant="outline" className={`text-[10px] uppercase ${statusConfig.color}`}>
             <StatusIcon className="w-3 h-3 mr-1" />
             {statusConfig.label}
           </Badge>
         </div>
-        
+
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>{interpolate(t("tpl.version"), { n: template.version })}</span>
           <span>{fmtDateShort(template.updated_at, locale)}</span>

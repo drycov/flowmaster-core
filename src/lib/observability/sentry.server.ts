@@ -49,10 +49,7 @@ export function captureServerException(
   });
 }
 
-export function captureServerMessage(
-  message: string,
-  context: Record<string, unknown> = {},
-): void {
+export function captureServerMessage(message: string, context: Record<string, unknown> = {}): void {
   if (!initialized) return;
   Sentry.withScope((scope) => {
     for (const [key, value] of Object.entries(context)) {

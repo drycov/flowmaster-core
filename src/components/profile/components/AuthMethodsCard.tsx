@@ -46,8 +46,7 @@ export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
     },
   });
 
-  const showEnableEmail =
-    !profile.has_password || isEdsPlaceholderEmail(profile.email);
+  const showEnableEmail = !profile.has_password || isEdsPlaceholderEmail(profile.email);
 
   if (!showEnableEmail) {
     return (
@@ -60,7 +59,8 @@ export function AuthMethodsCard({ profile, onUpdated }: AuthMethodsCardProps) {
         )}
         {profile.iin && (
           <p>
-            {t("profile.linkedIin")}: <span className="font-mono text-foreground">{profile.iin}</span>
+            {t("profile.linkedIin")}:{" "}
+            <span className="font-mono text-foreground">{profile.iin}</span>
           </p>
         )}
       </div>

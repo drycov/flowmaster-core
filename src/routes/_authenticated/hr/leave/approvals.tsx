@@ -30,13 +30,7 @@ function LeaveApprovalsPage() {
   });
 
   const decideMut = useMutation({
-    mutationFn: ({
-      id,
-      decision,
-    }: {
-      id: string;
-      decision: "approved" | "rejected";
-    }) =>
+    mutationFn: ({ id, decision }: { id: string; decision: "approved" | "rejected" }) =>
       decideLeaveRequest({
         data: {
           id,
@@ -45,9 +39,7 @@ function LeaveApprovalsPage() {
         },
       }),
     onSuccess: (_, vars) => {
-      toast.success(
-        vars.decision === "approved" ? t("hr.leave.approved") : t("hr.leave.rejected"),
-      );
+      toast.success(vars.decision === "approved" ? t("hr.leave.approved") : t("hr.leave.rejected"));
       qc.invalidateQueries({ queryKey: ["pending-leave-approvals"] });
       qc.invalidateQueries({ queryKey: ["my-leave-requests"] });
     },
@@ -96,14 +88,13 @@ function LeaveApprovalsPage() {
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {type ? localized(type, locale, "name") : "—"} ·{" "}
-                            {fmtDateShort(String(row.date_from))} — {fmtDateShort(String(row.date_to))}
+                            {fmtDateShort(String(row.date_from))} —{" "}
+                            {fmtDateShort(String(row.date_to))}
                             {row.business_days
                               ? ` · ${row.business_days} ${t("hr.leave.businessDays")}`
                               : ""}
                           </div>
-                          {row.reason ? (
-                            <p className="mt-1 text-sm">{String(row.reason)}</p>
-                          ) : null}
+                          {row.reason ? <p className="mt-1 text-sm">{String(row.reason)}</p> : null}
                         </div>
                         <LeaveStatusBadge status={String(row.status)} />
                       </div>

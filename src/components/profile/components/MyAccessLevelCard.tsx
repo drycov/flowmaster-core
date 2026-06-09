@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield } from "lucide-react";
 import { useI18n, localized } from "@/i18n";
 import { listAccessLevelsBrief } from "@/lib/api/references.functions";
+import type { ReferenceBriefRow } from "@/lib/api/reference-types";
 
 interface Props {
   accessLevelId?: string | null;
@@ -12,7 +13,7 @@ interface Props {
 export function MyAccessLevelCard({ accessLevelId }: Props) {
   const { t, locale } = useI18n();
 
-  const { data: levels = [] } = useQuery({
+  const { data: levels = [] } = useQuery<ReferenceBriefRow[]>({
     queryKey: ["ref-access-levels-brief"],
     queryFn: listAccessLevelsBrief,
   });

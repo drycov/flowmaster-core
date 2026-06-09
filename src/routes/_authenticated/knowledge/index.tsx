@@ -104,43 +104,45 @@ function KnowledgePage() {
           )}
 
           <div className="grid gap-3">
-            {articles.map((a: {
-              id: string;
-              title_ru: string;
-              title_kk: string;
-              summary_ru: string;
-              summary_kk: string;
-              tags: string[];
-              source_document_id: string | null;
-            }) => (
-              <Card key={a.id} className="hover:border-primary/40 transition-colors">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
-                    <Link to="/knowledge/$id" params={{ id: a.id }} className="hover:underline">
-                      {localized(a, locale, "title")}
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-2">
-                  <p className="text-muted-foreground line-clamp-2">
-                    {localized(a, locale, "summary")}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {a.source_document_id && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        <BookOpen className="w-3 h-3 mr-1" />
-                        {t("kb.fromDocument")}
-                      </Badge>
-                    )}
-                    {(a.tags ?? []).map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-[10px]">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {articles.map(
+              (a: {
+                id: string;
+                title_ru: string;
+                title_kk: string;
+                summary_ru: string;
+                summary_kk: string;
+                tags: string[];
+                source_document_id: string | null;
+              }) => (
+                <Card key={a.id} className="hover:border-primary/40 transition-colors">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">
+                      <Link to="/knowledge/$id" params={{ id: a.id }} className="hover:underline">
+                        {localized(a, locale, "title")}
+                      </Link>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-2">
+                    <p className="text-muted-foreground line-clamp-2">
+                      {localized(a, locale, "summary")}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {a.source_document_id && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          {t("kb.fromDocument")}
+                        </Badge>
+                      )}
+                      {(a.tags ?? []).map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-[10px]">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </div>
         </div>
       </PageBody>

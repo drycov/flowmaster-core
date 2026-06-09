@@ -25,7 +25,7 @@ import {
 import { fmtDate } from "@/lib/format";
 import { FailedDeliveriesPanel } from "./FailedDeliveriesPanel";
 
-export function IntegrationsSettingsPanel() {
+export function IntegrationsSettingsPanel({ canManage = true }: { canManage?: boolean }) {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
 
@@ -39,7 +39,10 @@ export function IntegrationsSettingsPanel() {
   const [newWhSecret, setNewWhSecret] = useState<string | null>(null);
 
   const { data: keys = [] } = useQuery({ queryKey: ["api-keys"], queryFn: listApiKeys });
-  const { data: webhooks = [] } = useQuery({ queryKey: ["webhook-subs"], queryFn: listWebhookSubscriptions });
+  const { data: webhooks = [] } = useQuery({
+    queryKey: ["webhook-subs"],
+    queryFn: listWebhookSubscriptions,
+  });
   const { data: imports = [] } = useQuery({ queryKey: ["import-jobs"], queryFn: listImportJobs });
 
   const createKeyMutation = useMutation({
@@ -125,7 +128,9 @@ export function IntegrationsSettingsPanel() {
           <div>GET {baseUrl}/api/v1/contracts</div>
           <div>POST {baseUrl}/api/v1/import/incoming</div>
           <p className="pt-2 font-sans text-foreground">{t("integrations.authHint")}</p>
-          <p className="pt-1 font-sans text-xs text-muted-foreground">{t("integrations.docsHint")}</p>
+          <p className="pt-1 font-sans text-xs text-muted-foreground">
+            {t("integrations.docsHint")}
+          </p>
         </CardContent>
       </Card>
 
@@ -139,7 +144,9 @@ export function IntegrationsSettingsPanel() {
         <CardContent className="space-y-4">
           {newSecret ? (
             <div className="space-y-2 rounded-sm border border-amber-500/50 bg-amber-50/50 p-3 dark:bg-amber-950/20">
-              <p className="text-xs text-amber-800 dark:text-amber-300">{t("integrations.copySecretNow")}</p>
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                {t("integrations.copySecretNow")}
+              </p>
               <div className="flex gap-2">
                 <code className="flex-1 break-all text-xs">{newSecret}</code>
                 <Button
@@ -159,36 +166,45 @@ export function IntegrationsSettingsPanel() {
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>{t("integrations.keyName")}</Label>
-              <Input value={keyName} onChange={(e) => setKeyName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("integrations.scopes")}</Label>
-              {API_KEY_SCOPES.map((scope) => (
-                <label key={scope} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={keyScopes.includes(scope)}
-                    onCheckedChange={(c) => toggleScope(scope, c === true)}
-                  />
-                  {scope}
-                </label>
-              ))}
-            </div>
-          </div>
-          <Button
-            size="sm"
-            disabled={!keyName.trim() || keyScopes.length === 0 || createKeyMutation.isPending}
-            onClick={() => createKeyMutation.mutate()}
-          >
-            {createKeyMutation.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
-            {t("integrations.createKey")}
-          </Button>
+          {canManage && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label>{t("integrations.keyName")}</Label>
+                  <Input value={keyName} onChange={(e) => setKeyName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("integrations.scopes")}</Label>
+                  {API_KEY_SCOPES.map((scope) => (
+                    <label key={scope} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={keyScopes.includes(scope)}
+                        onCheckedChange={(c) => toggleScope(scope, c === true)}
+                      />
+                      {scope}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                disabled={!keyName.trim() || keyScopes.length === 0 || createKeyMutation.isPending}
+                onClick={() => createKeyMutation.mutate()}
+              >
+                {createKeyMutation.isPending ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : null}
+                {t("integrations.createKey")}
+              </Button>
+            </>
+          )}
 
           <div className="space-y-2 pt-2">
             {keys.map((k) => (
-              <div key={k.id} className="flex items-center justify-between rounded-sm border p-2 text-sm">
+              <div
+                key={k.id}
+                className="flex items-center justify-between rounded-sm border p-2 text-sm"
+              >
                 <div>
                   <div className="font-medium">{k.name}</div>
                   <div className="font-mono text-xs text-muted-foreground">
@@ -204,7 +220,7 @@ export function IntegrationsSettingsPanel() {
                   <Badge variant={k.is_active ? "default" : "secondary"}>
                     {k.is_active ? t("integrations.active") : t("integrations.revoked")}
                   </Badge>
-                  {k.is_active ? (
+                  {canManage && k.is_active ? (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -233,41 +249,54 @@ export function IntegrationsSettingsPanel() {
             <div className="rounded-sm border bg-muted/30 p-3 text-xs">
               <p>{t("integrations.webhookSecret")}:</p>
               <code className="break-all">{newWhSecret}</code>
-              <Button size="sm" variant="ghost" className="mt-2" onClick={() => setNewWhSecret(null)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-2"
+                onClick={() => setNewWhSecret(null)}
+              >
                 {t("common.cancel")}
               </Button>
             </div>
           ) : null}
 
-          <div className="grid gap-3">
-            <div>
-              <Label>{t("integrations.webhookName")}</Label>
-              <Input value={whName} onChange={(e) => setWhName(e.target.value)} />
-            </div>
-            <div>
-              <Label>URL</Label>
-              <Input value={whUrl} onChange={(e) => setWhUrl(e.target.value)} placeholder="https://..." />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("integrations.events")}</Label>
-              {WEBHOOK_EVENTS_ACTIVE.map((ev) => (
-                <label key={ev} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={whEvents.includes(ev)}
-                    onCheckedChange={(c) => toggleEvent(ev, c === true)}
+          {canManage && (
+            <>
+              <div className="grid gap-3">
+                <div>
+                  <Label>{t("integrations.webhookName")}</Label>
+                  <Input value={whName} onChange={(e) => setWhName(e.target.value)} />
+                </div>
+                <div>
+                  <Label>URL</Label>
+                  <Input
+                    value={whUrl}
+                    onChange={(e) => setWhUrl(e.target.value)}
+                    placeholder="https://..."
                   />
-                  {ev}
-                </label>
-              ))}
-            </div>
-          </div>
-          <Button
-            size="sm"
-            disabled={!whName.trim() || !whUrl.trim() || whEvents.length === 0}
-            onClick={() => createWhMutation.mutate()}
-          >
-            {t("integrations.createWebhook")}
-          </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("integrations.events")}</Label>
+                  {WEBHOOK_EVENTS_ACTIVE.map((ev) => (
+                    <label key={ev} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={whEvents.includes(ev)}
+                        onCheckedChange={(c) => toggleEvent(ev, c === true)}
+                      />
+                      {ev}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                disabled={!whName.trim() || !whUrl.trim() || whEvents.length === 0}
+                onClick={() => createWhMutation.mutate()}
+              >
+                {t("integrations.createWebhook")}
+              </Button>
+            </>
+          )}
 
           <div className="space-y-2">
             {webhooks.map((w) => (
@@ -276,23 +305,25 @@ export function IntegrationsSettingsPanel() {
                   <div className="font-medium">{w.name}</div>
                   <div className="max-w-md truncate text-xs text-muted-foreground">{w.url}</div>
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={!w.is_active || testWhMutation.isPending}
-                    onClick={() => testWhMutation.mutate(w.id)}
-                  >
-                    {t("integrations.webhookTest")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleWhMutation.mutate({ id: w.id, is_active: !w.is_active })}
-                  >
-                    {w.is_active ? t("integrations.disable") : t("integrations.enable")}
-                  </Button>
-                </div>
+                {canManage ? (
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={!w.is_active || testWhMutation.isPending}
+                      onClick={() => testWhMutation.mutate(w.id)}
+                    >
+                      {t("integrations.webhookTest")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleWhMutation.mutate({ id: w.id, is_active: !w.is_active })}
+                    >
+                      {w.is_active ? t("integrations.disable") : t("integrations.enable")}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

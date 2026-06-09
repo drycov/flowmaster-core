@@ -124,7 +124,9 @@ function RolesPage() {
       <PageHeader
         title={t("nav.roles")}
         description={t("roles.description")}
-        actions={<NewRoleDialog onCreated={() => qc.invalidateQueries({ queryKey: ["roles-v2"] })} />}
+        actions={
+          <NewRoleDialog onCreated={() => qc.invalidateQueries({ queryKey: ["roles-v2"] })} />
+        }
       />
       <PageBody>
         <div className="grid grid-cols-12 gap-4">
@@ -206,34 +208,36 @@ function RolesPage() {
                           {cat}
                         </div>
                         <div className="grid grid-cols-2 gap-1.5">
-                          {(perms as Array<{ code: string; description_ru: string }>).map(
-                            (p) => (
-                              <label
-                                key={p.code}
-                                className="flex items-start gap-2 p-2 rounded hover:bg-muted/40 cursor-pointer"
-                              >
-                                <Checkbox
-                                  checked={draftPerms.has(p.code)}
-                                  onCheckedChange={(c) => togglePerm(p.code, !!c)}
-                                />
-                                <div className="text-sm">
-                                  <div className="font-mono text-xs">{p.code}</div>
-                                  {p.description_ru && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {p.description_ru}
-                                    </div>
-                                  )}
-                                </div>
-                              </label>
-                            ),
-                          )}
+                          {(perms as Array<{ code: string; description_ru: string }>).map((p) => (
+                            <label
+                              key={p.code}
+                              className="flex items-start gap-2 p-2 rounded hover:bg-muted/40 cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={draftPerms.has(p.code)}
+                                onCheckedChange={(c) => togglePerm(p.code, !!c)}
+                              />
+                              <div className="text-sm">
+                                <div className="font-mono text-xs">{p.code}</div>
+                                {p.description_ru && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {p.description_ru}
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          ))}
                         </div>
                       </div>
                     ))}
                   </CardContent>
                 </Card>
 
-                <GrantsCard roleId={selected.id} roleName={selected.name_ru} users={users as never} />
+                <GrantsCard
+                  roleId={selected.id}
+                  roleName={selected.name_ru}
+                  users={users as never}
+                />
               </>
             )}
           </div>
@@ -278,10 +282,7 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
         <div className="space-y-2">
           <div>
             <Label>{t("admin.roles.codeLabel")}</Label>
-            <Input
-              value={form.code}
-              onChange={(e) => setForm({ ...form, code: e.target.value })}
-            />
+            <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
           </div>
           <div>
             <Label>{t("wf.nameRu")}</Label>
@@ -299,10 +300,7 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <div>
             <Label>{t("admin.departments.type")}</Label>
-            <Select
-              value={form.kind}
-              onValueChange={(v) => setForm({ ...form, kind: v as never })}
-            >
+            <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v as never })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -342,9 +340,11 @@ function GrantsCard({
   });
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ user_id: string; expires_at: string; reason: string }>(
-    { user_id: "", expires_at: "", reason: "" },
-  );
+  const [form, setForm] = useState<{ user_id: string; expires_at: string; reason: string }>({
+    user_id: "",
+    expires_at: "",
+    reason: "",
+  });
 
   const grantMut = useMutation({
     mutationFn: () =>
@@ -352,9 +352,7 @@ function GrantsCard({
         data: {
           user_id: form.user_id,
           role_id: roleId,
-          expires_at: form.expires_at
-            ? new Date(form.expires_at).toISOString()
-            : null,
+          expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
           reason: form.reason,
         },
       }),
@@ -452,15 +450,17 @@ function GrantsCard({
             </tr>
           </thead>
           <tbody>
-            {(grants as Array<{
-              id: string;
-              user_id: string;
-              granted_at: string;
-              expires_at: string | null;
-              revoked_at: string | null;
-              reason: string | null;
-              profile?: { full_name_ru: string | null; email: string } | null;
-            }>).map((g) => (
+            {(
+              grants as Array<{
+                id: string;
+                user_id: string;
+                granted_at: string;
+                expires_at: string | null;
+                revoked_at: string | null;
+                reason: string | null;
+                profile?: { full_name_ru: string | null; email: string } | null;
+              }>
+            ).map((g) => (
               <tr key={g.id} className="border-b">
                 <td className="px-3 py-2">
                   {g.profile?.full_name_ru || g.profile?.email || g.user_id.slice(0, 8)}

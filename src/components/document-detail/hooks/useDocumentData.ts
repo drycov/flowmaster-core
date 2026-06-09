@@ -32,8 +32,9 @@ export function useDocumentData(id: string) {
         return await getDocument({ data: { id } });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        const isNotFound =
-          /not found|не найден|PGRST116|No rows|permission denied|доступ/i.test(message);
+        const isNotFound = /not found|не найден|PGRST116|No rows|permission denied|доступ/i.test(
+          message,
+        );
 
         if (!isNotFound) {
           throw err;
@@ -46,7 +47,7 @@ export function useDocumentData(id: string) {
         throw err;
       }
     },
-    
+
     // Трансформируем полученный ответ под нужды интерфейса просмотра
     select: (rawResponse) => {
       // Приводим к any, чтобы безопасно извлечь скрытое в DocumentData поле tasks
@@ -57,7 +58,7 @@ export function useDocumentData(id: string) {
       const { document, tasks } = fullData;
 
       let finalTemplate = "";
-      
+
       // Проверяем, что лежит в document.body
       if (document.body) {
         // Если в body записана JSON-строка (из конструктора шаблонов)
@@ -92,7 +93,7 @@ export function useDocumentData(id: string) {
         ...(fullData as DocumentData),
         tasks: (tasks || []) as LocalTask[], // Гарантируем наличие массива задач для компонента
         compiledBodyTemplate: finalTemplate, // Готовый шаблон текста
-        documentFields: fieldValues,         // Плоский объект значений для компиляции
+        documentFields: fieldValues, // Плоский объект значений для компиляции
       };
     },
   });

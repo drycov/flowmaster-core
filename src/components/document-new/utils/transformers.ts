@@ -5,7 +5,7 @@ import type { Template, TemplateField } from "../types";
 // Функция для безопасного получения полей из Json
 export function extractTemplateFields(schema: Json | null | undefined): TemplateField[] {
   if (!schema) return [];
-  
+
   try {
     // Проверяем, что schema - это объект с полем fields
     const schemaObj = schema as Record<string, unknown>;
@@ -15,7 +15,7 @@ export function extractTemplateFields(schema: Json | null | undefined): Template
   } catch (error) {
     console.error("Error extracting template fields:", error);
   }
-  
+
   return [];
 }
 

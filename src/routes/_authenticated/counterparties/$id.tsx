@@ -26,14 +26,14 @@ function CounterpartyDetailPage() {
   if (isLoading) return <PageBody>{t("common.loading")}</PageBody>;
   if (!data) return <PageBody>{t("errors.notFound.description")}</PageBody>;
 
-  const contracts = (data.contracts ?? []) as Array<{
+  const contracts = (data.contracts ?? []) as unknown as Array<{
     document_id: string;
     contract_number: string;
     contract_status: string;
     valid_to: string | null;
     amount: number | null;
     currency: string;
-    documents?: { reg_number: string; title_ru: string; title_kk: string };
+    documents?: { reg_number: string; title_ru: string; title_kk?: string | null };
   }>;
 
   const documents = (data.documents ?? []) as Array<{
@@ -62,11 +62,15 @@ function CounterpartyDetailPage() {
             <CardContent className="grid sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-xs text-muted-foreground">{t("counterparty.type")}</div>
-                <Badge variant="outline">{t(`counterparty.type.${data.correspondent_type ?? "legal"}`)}</Badge>
+                <Badge variant="outline">
+                  {t(`counterparty.type.${data.correspondent_type ?? "legal"}`)}
+                </Badge>
               </div>
               {data.contact_person && (
                 <div>
-                  <div className="text-xs text-muted-foreground">{t("counterparty.contactPerson")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t("counterparty.contactPerson")}
+                  </div>
                   {data.contact_person}
                 </div>
               )}

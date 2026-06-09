@@ -1,17 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-import type {
-  Locale,
-  LocalizableFields,
-  FieldType,
-} from "./types";
+import type { Locale, LocalizableFields, FieldType } from "./types";
 
 export type { Locale, LocalizableFields, FieldType } from "./types";
 
@@ -42,9 +31,7 @@ function getBrowserLocale(): Locale {
     return "ru";
   }
 
-  return navigator.language.startsWith("kk")
-    ? "kk"
-    : "ru";
+  return navigator.language.startsWith("kk") ? "kk" : "ru";
 }
 
 function getStoredLocale(): Locale | null {
@@ -61,14 +48,8 @@ function getStoredLocale(): Locale | null {
   return null;
 }
 
-export function I18nProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const [locale, setLocaleState] = useState<Locale>(
-    () => getStoredLocale() ?? getBrowserLocale(),
-  );
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(() => getStoredLocale() ?? getBrowserLocale());
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -87,9 +68,7 @@ export function I18nProvider({
       const dict = dictionaries[locale];
 
       return (
-        dict[key as keyof typeof dict] ??
-        ruDictionary[key as keyof typeof ruDictionary] ??
-        key
+        dict[key as keyof typeof dict] ?? ruDictionary[key as keyof typeof ruDictionary] ?? key
       );
     },
     [locale],
@@ -112,9 +91,7 @@ export function useI18n(): I18nContextValue {
   const context = useContext(I18nContext);
 
   if (!context) {
-    throw new Error(
-      "useI18n must be used within I18nProvider",
-    );
+    throw new Error("useI18n must be used within I18nProvider");
   }
 
   return context;
@@ -129,23 +106,15 @@ export function localized<T extends LocalizableFields>(
     return "";
   }
 
-  const localizedValue =
-    obj[`${field}_${locale}` as keyof T];
+  const localizedValue = obj[`${field}_${locale}` as keyof T];
 
-  if (
-    typeof localizedValue === "string" &&
-    localizedValue.length > 0
-  ) {
+  if (typeof localizedValue === "string" && localizedValue.length > 0) {
     return localizedValue;
   }
 
-  const fallbackValue =
-    obj[`${field}_ru` as keyof T];
+  const fallbackValue = obj[`${field}_ru` as keyof T];
 
-  if (
-    typeof fallbackValue === "string" &&
-    fallbackValue.length > 0
-  ) {
+  if (typeof fallbackValue === "string" && fallbackValue.length > 0) {
     return fallbackValue;
   }
 
@@ -162,10 +131,7 @@ export {
 export { ncalayerErrorMessage } from "./ncalayer-messages";
 
 export function createLocalizer(locale: Locale) {
-  return <T extends LocalizableFields>(
-    obj: T | null | undefined,
-    field: FieldType,
-  ): string => {
+  return <T extends LocalizableFields>(obj: T | null | undefined, field: FieldType): string => {
     return localized(obj, locale, field);
   };
 }

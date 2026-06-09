@@ -51,7 +51,20 @@ function CorrespondenceJournalPage({ kind }: { kind: CorrespondenceKind }) {
       <PageHeader
         title={t(titleKey)}
         actions={
-          <Button onClick={() => navigate({ to: "/documents/new", search: {} })} size="sm">
+          <Button
+            onClick={() =>
+              navigate({
+                to: "/documents/new",
+                search: {
+                  projectId: undefined,
+                  templateId: undefined,
+                  nomenclatureId: undefined,
+                  departmentId: undefined,
+                },
+              })
+            }
+            size="sm"
+          >
             <Plus className="w-4 h-4 mr-1" />
             {t("doc.new")}
           </Button>
@@ -59,11 +72,7 @@ function CorrespondenceJournalPage({ kind }: { kind: CorrespondenceKind }) {
       />
       <PageBody>
         <PageToolbar>
-          <SearchField
-            value={search}
-            onChange={setSearch}
-            placeholder={t("common.search")}
-          />
+          <SearchField value={search} onChange={setSearch} placeholder={t("common.search")} />
         </PageToolbar>
 
         <DataTableShell>
@@ -79,9 +88,7 @@ function CorrespondenceJournalPage({ kind }: { kind: CorrespondenceKind }) {
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <TableStatusRow colSpan={6}>{t("common.loading")}</TableStatusRow>
-              )}
+              {isLoading && <TableStatusRow colSpan={6}>{t("common.loading")}</TableStatusRow>}
               {!isLoading && rows.length === 0 && (
                 <TableStatusRow colSpan={6}>{t("common.empty")}</TableStatusRow>
               )}

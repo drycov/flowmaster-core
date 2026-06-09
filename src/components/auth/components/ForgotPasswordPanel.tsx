@@ -120,9 +120,7 @@ export function ForgotPasswordPanel({ minPasswordLength, tenantSlug, onBack }: P
           />
         </div>
         <Button type="submit" className="w-full" disabled={confirmMutation.isPending}>
-          {confirmMutation.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : null}
+          {confirmMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {t("auth.telegram.resetSubmit")}
         </Button>
         <Button type="button" variant="ghost" className="w-full" onClick={onBack}>

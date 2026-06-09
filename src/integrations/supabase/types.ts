@@ -2235,6 +2235,7 @@ export type Database = {
         Row: {
           access_level_id: string | null
           auth_method: string
+          avatar_url: string | null
           cert_serial: string | null
           cert_subject: string | null
           created_at: string
@@ -2247,6 +2248,7 @@ export type Database = {
           locale: string
           organization_id: string
           password_hash: string | null
+          phone: string | null
           position_id: string | null
           position_kk: string | null
           position_ru: string | null
@@ -2255,6 +2257,7 @@ export type Database = {
         Insert: {
           access_level_id?: string | null
           auth_method?: string
+          avatar_url?: string | null
           cert_serial?: string | null
           cert_subject?: string | null
           created_at?: string
@@ -2267,6 +2270,7 @@ export type Database = {
           locale?: string
           organization_id: string
           password_hash?: string | null
+          phone?: string | null
           position_id?: string | null
           position_kk?: string | null
           position_ru?: string | null
@@ -2275,6 +2279,7 @@ export type Database = {
         Update: {
           access_level_id?: string | null
           auth_method?: string
+          avatar_url?: string | null
           cert_serial?: string | null
           cert_subject?: string | null
           created_at?: string
@@ -2287,6 +2292,7 @@ export type Database = {
           locale?: string
           organization_id?: string
           password_hash?: string | null
+          phone?: string | null
           position_id?: string | null
           position_kk?: string | null
           position_ru?: string | null
@@ -4230,6 +4236,7 @@ export type Database = {
         Returns: {
           access_level_id: string | null
           auth_method: string
+          avatar_url: string | null
           cert_serial: string | null
           cert_subject: string | null
           created_at: string
@@ -4242,6 +4249,7 @@ export type Database = {
           locale: string
           organization_id: string
           password_hash: string | null
+          phone: string | null
           position_id: string | null
           position_kk: string | null
           position_ru: string | null

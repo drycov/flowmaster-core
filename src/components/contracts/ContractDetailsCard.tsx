@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n, localized } from "@/i18n";
 import { upsertContractDetails, ensureContractFromDocument } from "@/lib/api/contracts.functions";
 import { listCorrespondentsBrief } from "@/lib/api/references.functions";
+import type { ReferenceBriefRow } from "@/lib/api/reference-types";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -64,7 +65,7 @@ export function ContractDetailsCard({
     auto_renew: contract?.auto_renew ?? false,
   });
 
-  const { data: correspondents = [] } = useQuery({
+  const { data: correspondents = [] } = useQuery<ReferenceBriefRow[]>({
     queryKey: ["ref-correspondents-brief"],
     queryFn: listCorrespondentsBrief,
     enabled: editing,

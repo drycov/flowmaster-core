@@ -37,7 +37,7 @@ export function renderErrorPage(): string {
 export function renderErrorPageWithDetails(error: unknown): string {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
-  
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -64,7 +64,7 @@ export function renderErrorPageWithDetails(error: unknown): string {
       <div class="details">
         <strong>Error details:</strong>
         <pre>${escapeHtml(errorMessage)}</pre>
-        ${errorStack ? `<pre style="margin-top: 0.5rem;">${escapeHtml(errorStack)}</pre>` : ''}
+        ${errorStack ? `<pre style="margin-top: 0.5rem;">${escapeHtml(errorStack)}</pre>` : ""}
       </div>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
@@ -76,16 +76,16 @@ export function renderErrorPageWithDetails(error: unknown): string {
 }
 
 function escapeHtml(text: string): string {
-  const div = document?.createElement?.('div');
+  const div = document?.createElement?.("div");
   if (div) {
     div.textContent = text;
     return div.innerHTML;
   }
   // Fallback для сервера
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

@@ -33,9 +33,7 @@ export const createApiKey = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireIntegrationsAccess(supabaseAdmin, context.userId);
-    const { generateApiKeyMaterial } = await import(
-      "@/lib/integrations/api-key-auth.server"
-    );
+    const { generateApiKeyMaterial } = await import("@/lib/integrations/api-key-auth.server");
     const { raw, hash, prefix } = generateApiKeyMaterial();
 
     const { data: row, error } = await supabaseAdmin
@@ -132,7 +130,9 @@ export const listImportJobs = createServerFn({ method: "GET" })
     await requireIntegrationsAccess(supabaseAdmin, context.userId);
     const { data, error } = await supabaseAdmin
       .from("import_jobs")
-      .select("id, kind, status, source, total_count, success_count, error_count, created_at, completed_at")
+      .select(
+        "id, kind, status, source, total_count, success_count, error_count, created_at, completed_at",
+      )
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);

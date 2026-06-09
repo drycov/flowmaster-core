@@ -19,11 +19,7 @@ export function isSentryEnabled(runtime: SentryRuntime): boolean {
 
 export function readSentryEnvironment(runtime: SentryRuntime): string {
   if (runtime === "client") {
-    return (
-      import.meta.env.VITE_SENTRY_ENVIRONMENT?.trim() ||
-      import.meta.env.MODE ||
-      "development"
-    );
+    return import.meta.env.VITE_SENTRY_ENVIRONMENT?.trim() || import.meta.env.MODE || "development";
   }
   return process.env.SENTRY_ENVIRONMENT?.trim() || process.env.NODE_ENV || "development";
 }
@@ -36,7 +32,8 @@ export function readSentryRelease(runtime: SentryRuntime): string | undefined {
 }
 
 export function readTracesSampleRate(): number {
-  const raw = process.env.SENTRY_TRACES_SAMPLE_RATE ?? import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE;
+  const raw =
+    process.env.SENTRY_TRACES_SAMPLE_RATE ?? import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE;
   const value = raw ? Number(raw) : 0;
   if (!Number.isFinite(value) || value < 0) return 0;
   return Math.min(value, 1);

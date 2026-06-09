@@ -70,7 +70,11 @@ export async function testLdapConnection(
   const client = createClient(config);
   try {
     await client.bind(config.bindDn, config.bindPassword);
-    await client.search(config.baseDn, { scope: "base", filter: "(objectClass=*)", attributes: ["dn"] });
+    await client.search(config.baseDn, {
+      scope: "base",
+      filter: "(objectClass=*)",
+      attributes: ["dn"],
+    });
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -87,7 +91,10 @@ export async function authenticateLdapUser(
   const normalizedUsername = username.trim();
   if (!normalizedUsername || !password) return null;
 
-  const filter = config.userFilter.replace(/\{\{username\}\}/g, escapeLdapFilter(normalizedUsername));
+  const filter = config.userFilter.replace(
+    /\{\{username\}\}/g,
+    escapeLdapFilter(normalizedUsername),
+  );
   const client = createClient(config);
 
   let userDn = "";

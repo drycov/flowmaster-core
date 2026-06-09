@@ -57,17 +57,11 @@ export function OfficeTab({
     staleTime: 5 * 60 * 1000,
   });
 
-  const officeUrl =
-    officeConfig?.office_url ||
-    officeConfig?.document_server_url ||
-    "";
+  const officeUrl = officeConfig?.office_url || officeConfig?.document_server_url || "";
   const officeConfigured = !!officeUrl;
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({ placeholder: t("doc.contentPlaceholder") }),
-    ],
+    extensions: [StarterKit, Placeholder.configure({ placeholder: t("doc.contentPlaceholder") })],
     content: initialContent,
     editable: !isReadOnly,
     immediatelyRender: false,
@@ -89,7 +83,7 @@ export function OfficeTab({
         await loadOnlyOfficeScript(officeConfig.document_server_url!);
         if (cancelled || !window.DocsAPI) return;
         editorRef.current!.innerHTML = "";
-        window.DocsAPI.DocEditor(editorRef.current!, officeConfig.config);
+        window.DocsAPI.DocEditor("office-editor", officeConfig.config);
         ooMounted.current = true;
       } catch (e) {
         console.error(e);

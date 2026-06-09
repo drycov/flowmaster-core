@@ -62,9 +62,7 @@ export function useEdsAuth() {
       } else {
         const fallback = t("auth.toast.edsError");
         const message =
-          e instanceof Error
-            ? (parseServerValidationError(e.message, t) ?? e.message)
-            : fallback;
+          e instanceof Error ? (parseServerValidationError(e.message, t) ?? e.message) : fallback;
         toast.error(message);
       }
       throw e;

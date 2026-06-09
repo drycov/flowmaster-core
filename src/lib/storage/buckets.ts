@@ -11,11 +11,7 @@ export function avatarPath(userId: string, filename: string) {
   return `${userId}/${filename}`;
 }
 
-export function documentVersionPath(
-  documentId: string,
-  versionNo: number,
-  filename: string,
-) {
+export function documentVersionPath(documentId: string, versionNo: number, filename: string) {
   const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   return `${documentId}/v${versionNo}/${safe}`;
 }

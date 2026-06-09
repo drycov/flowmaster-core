@@ -179,7 +179,10 @@ export function PersonalDutyView({
                 const isSubstitute =
                   userId && d.substitute_id === userId && d.assignee_id !== userId;
                 return (
-                  <li key={String(d.id)} className="flex flex-wrap items-start justify-between gap-2 py-3">
+                  <li
+                    key={String(d.id)}
+                    className="flex flex-wrap items-start justify-between gap-2 py-3"
+                  >
                     <div>
                       <div className="font-medium">
                         {role ? localized(role, locale, "name") : "—"}

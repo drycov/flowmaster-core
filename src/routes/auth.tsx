@@ -154,8 +154,7 @@ function AuthPage() {
   };
 
   const authTenantSlug =
-    config.resolved_tenant?.slug ??
-    (config.require_tenant_slug ? tenantSlug.trim() : undefined);
+    config.resolved_tenant?.slug ?? (config.require_tenant_slug ? tenantSlug.trim() : undefined);
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[minmax(380px,42%)_1fr]">
@@ -201,9 +200,7 @@ function AuthPage() {
           }}
           edsLoading={edsLoading}
           ldapLoading={ldapLoading}
-          onLdapAuth={(username, password) =>
-            signInWithLdap(username, password, authTenantSlug)
-          }
+          onLdapAuth={(username, password) => signInWithLdap(username, password, authTenantSlug)}
         />
       </div>
     </div>

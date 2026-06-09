@@ -32,9 +32,6 @@ export function parseTenantSlugFromHost(
 }
 
 export function getTenantBaseDomain(): string | null {
-  const raw =
-    process.env.TENANT_BASE_DOMAIN?.trim() ||
-    process.env.APP_BASE_DOMAIN?.trim() ||
-    null;
+  const raw = process.env.TENANT_BASE_DOMAIN?.trim() || process.env.APP_BASE_DOMAIN?.trim() || null;
   return raw || null;
 }

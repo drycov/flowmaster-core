@@ -33,18 +33,14 @@ export type SystemInitStatus = {
 export const getSystemInitStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.rpc(
-      "get_system_init_status" as never,
-    );
+    const { data, error } = await supabaseAdmin.rpc("get_system_init_status" as never);
     if (error) {
       const [{ count: adminCount }, { count: deptCount }] = await Promise.all([
         context.supabase
           .from("user_roles")
           .select("id", { count: "exact", head: true })
           .eq("role", "admin" as never),
-        context.supabase
-          .from("departments")
-          .select("id", { count: "exact", head: true }),
+        context.supabase.from("departments").select("id", { count: "exact", head: true }),
       ]);
       return {
         has_organization: true,
@@ -224,9 +220,8 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
     const { invalidateRuntimeSettingsCache } = await import("@/lib/app-origin.server");
     invalidateRuntimeSettingsCache();
     if (next.telegram.bot_token) {
-      const { ensureTelegramPolling, getTelegramDeliveryMode } = await import(
-        "@/lib/telegram/polling.server"
-      );
+      const { ensureTelegramPolling, getTelegramDeliveryMode } =
+        await import("@/lib/telegram/polling.server");
       if ((await getTelegramDeliveryMode()) === "polling") {
         void ensureTelegramPolling();
       }
@@ -250,14 +245,11 @@ export const testLdapConnection = createServerFn({ method: "POST" })
           enabled: true,
         }
       : full.ldap;
-    const { buildLdapRuntimeConfig, testLdapConnection: testConn } = await import(
-      "@/lib/auth/ldap.server"
-    );
+    const { buildLdapRuntimeConfig, testLdapConnection: testConn } =
+      await import("@/lib/auth/ldap.server");
     const config = buildLdapRuntimeConfig(ldap);
     if (!config) {
-      throw new Error(
-        "Укажите URL, Base DN, Bind DN и пароль сервисной учётной записи LDAP.",
-      );
+      throw new Error("Укажите URL, Base DN, Bind DN и пароль сервисной учётной записи LDAP.");
     }
     const result = await testConn(config);
     if (!result.ok) throw new Error(result.error);

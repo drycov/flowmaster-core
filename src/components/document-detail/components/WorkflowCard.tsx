@@ -2,12 +2,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useI18n, localized, workflowNodeLabel, type TFunction } from "@/i18n";
-import {
-  listDepartmentsBrief,
-  listRolesBrief,
-  listUsersBrief,
-} from "@/lib/api/admin.functions";
+import { useI18n, localized, workflowNodeLabel, type Locale, type TFunction } from "@/i18n";
+import { listDepartmentsBrief, listRolesBrief, listUsersBrief } from "@/lib/api/admin.functions";
 import { listPositions } from "@/lib/api/org.functions";
 import { fmtDateShort } from "@/lib/format";
 import type { AssigneeLookup } from "@/lib/workflow/assignee-display";
@@ -106,7 +102,7 @@ function RouteStepRow({
 }: {
   step: RouteStepView;
   isLast: boolean;
-  locale: string;
+  locale: Locale;
   t: TFunction;
   assigneeLookup: AssigneeLookup;
 }) {
@@ -117,9 +113,7 @@ function RouteStepRow({
       {!isLast && (
         <div
           className={`absolute left-[7px] top-6 h-[calc(100%-4px)] w-px ${
-            step.status === "completed"
-              ? "bg-emerald-300 dark:bg-emerald-800"
-              : "bg-border"
+            step.status === "completed" ? "bg-emerald-300 dark:bg-emerald-800" : "bg-border"
           }`}
         />
       )}
@@ -217,7 +211,7 @@ export function WorkflowCard({
       })),
       users: users.map((u) => ({
         id: u.id,
-        full_name_ru: u.full_name_ru,
+        full_name_ru: u.full_name_ru ?? "",
         full_name_kk: u.full_name_kk,
         position_id: u.position_id,
       })),
@@ -226,8 +220,7 @@ export function WorkflowCard({
     [positions, departments, users, roles],
   );
 
-  const activeRun =
-    runs.find((r) => r.status === "running") ?? runs[0] ?? null;
+  const activeRun = runs.find((r) => r.status === "running") ?? runs[0] ?? null;
 
   const resolvedWorkflowDef =
     workflowDefinition ??
@@ -271,17 +264,18 @@ export function WorkflowCard({
                 {routeTitle && (
                   <span className="text-sm font-medium text-foreground">{routeTitle}</span>
                 )}
-                {runStatus && (() => {
-                  const cfg = getRunStatusConfig(runStatus, t);
-                  return (
-                    <span
-                      className={`inline-flex shrink-0 items-center rounded-sm px-2 py-0.5 text-[10px] font-medium ${cfg.bg}`}
-                    >
-                      {cfg.icon}
-                      {cfg.label}
-                    </span>
-                  );
-                })()}
+                {runStatus &&
+                  (() => {
+                    const cfg = getRunStatusConfig(runStatus, t);
+                    return (
+                      <span
+                        className={`inline-flex shrink-0 items-center rounded-sm px-2 py-0.5 text-[10px] font-medium ${cfg.bg}`}
+                      >
+                        {cfg.icon}
+                        {cfg.label}
+                      </span>
+                    );
+                  })()}
               </div>
             )}
 

@@ -22,12 +22,7 @@ interface Props {
   onSynced?: (result: TemplateSyncResult) => void;
 }
 
-export function TemplateFileCard({
-  templateId,
-  filePath,
-  fileFormat,
-  onSynced,
-}: Props) {
+export function TemplateFileCard({ templateId, filePath, fileFormat, onSynced }: Props) {
   const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const upload = useTemplateFileUpload(templateId, onSynced);
@@ -62,9 +57,7 @@ export function TemplateFileCard({
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">{t("tpl.fileTemplate.hint")}</p>
 
-        {filePath && (
-          <p className="text-xs text-muted-foreground break-all">{filePath}</p>
-        )}
+        {filePath && <p className="text-xs text-muted-foreground break-all">{filePath}</p>}
 
         {isLegacy && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
@@ -108,12 +101,7 @@ export function TemplateFileCard({
           )}
 
           {canScan && (
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={scan.isPending}
-              onClick={handleScan}
-            >
+            <Button size="sm" variant="secondary" disabled={scan.isPending} onClick={handleScan}>
               {scan.isPending ? (
                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
               ) : (

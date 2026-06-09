@@ -33,9 +33,7 @@ export function DutyAssignmentsList({
     return <p className="text-sm text-muted-foreground">{t("scheduling.duty.listEmpty")}</p>;
   }
 
-  const sorted = [...duties].sort((a, b) =>
-    String(a.starts_at).localeCompare(String(b.starts_at)),
-  );
+  const sorted = [...duties].sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
 
   return (
     <ul className="divide-y">
@@ -60,10 +58,7 @@ export function DutyAssignmentsList({
         const cancelled = d.status === "cancelled";
 
         return (
-          <li
-            key={d.id}
-            className="flex flex-wrap items-start justify-between gap-2 py-3"
-          >
+          <li key={d.id} className="flex flex-wrap items-start justify-between gap-2 py-3">
             <div className={cancelled ? "opacity-60" : undefined}>
               <div className="font-medium">
                 {role ? localized(role, locale, "name") : "—"}
@@ -77,19 +72,17 @@ export function DutyAssignmentsList({
               <div className="mt-0.5 text-sm text-muted-foreground">
                 {fmtDateShort(start)}
                 {start !== end ? ` — ${fmtDateShort(end)}` : ""}
-                {dept ? (
-                  <span>
-                    {" "}
-                    · {dept.code ?? localized(dept, locale, "name")}
-                  </span>
-                ) : null}
+                {dept ? <span> · {dept.code ?? localized(dept, locale, "name")}</span> : null}
               </div>
               {substitute ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t("scheduling.duty.substituteLabel")}: {localized(substitute, locale, "full_name")}
+                  {t("scheduling.duty.substituteLabel")}:{" "}
+                  {localized(substitute, locale, "full_name")}
                 </p>
               ) : null}
-              {d.note ? <p className="mt-1 text-xs text-muted-foreground">{String(d.note)}</p> : null}
+              {d.note ? (
+                <p className="mt-1 text-xs text-muted-foreground">{String(d.note)}</p>
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={cancelled ? "outline" : "secondary"}>{d.status}</Badge>

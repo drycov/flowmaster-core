@@ -89,11 +89,7 @@ export async function extractDocxBackgroundImages(blob: Blob): Promise<DocxBackg
     const relsPath = partPath.replace("word/", "word/_rels/") + ".rels";
     const rels = parseRels(zip.file(relsPath)?.asText() ?? "");
 
-    const patterns = [
-      /r:embed="(rId\d+)"/g,
-      /r:id="(rId\d+)"/g,
-      /o:relid="(rId\d+)"/gi,
-    ];
+    const patterns = [/r:embed="(rId\d+)"/g, /r:id="(rId\d+)"/g, /o:relid="(rId\d+)"/gi];
 
     for (const pattern of patterns) {
       let match: RegExpExecArray | null;

@@ -15,8 +15,7 @@ export const messagesRu = {
   "auth.ldapPassword": "Пароль домена",
   "auth.toast.ldapSignInSuccess": "Вход через Active Directory выполнен",
   "auth.toast.ldapSignInError": "Ошибка входа через Active Directory",
-  "auth.edsLinkHint":
-    "Если аккаунт уже создан по email, ЭЦП будет привязан к нему автоматически.",
+  "auth.edsLinkHint": "Если аккаунт уже создан по email, ЭЦП будет привязан к нему автоматически.",
   "auth.createAccount": "Создать учётную запись",
   "auth.haveAccountLink": "Уже есть учётная запись",
   "auth.policyFooter":
@@ -282,8 +281,10 @@ export const messagesRu = {
   "tpl.field.labelRu": "Подпись (RU)",
   "tpl.field.labelKk": "Подпись (KK)",
   "tpl.workflowDefault": "Маршрут по умолчанию",
-  "tpl.workflowHint": "Этот маршрут будет применён автоматически при создании документа из шаблона.",
-  "tpl.bodyPlaceholder": "Напишите текст шаблона... Используйте {{ключ_поля}} для подстановки значений",
+  "tpl.workflowHint":
+    "Этот маршрут будет применён автоматически при создании документа из шаблона.",
+  "tpl.bodyPlaceholder":
+    "Напишите текст шаблона... Используйте {{ключ_поля}} для подстановки значений",
   "tpl.presetFields": "Предустановленные поля",
   "tpl.customKey": "Свой ключ...",
   "tpl.toggleHelp": "Показать/скрыть подсказки",
@@ -297,7 +298,8 @@ export const messagesRu = {
   "tpl.redo": "Повторить",
   "tpl.fieldsHelpTitle": "Как использовать поля:",
   "tpl.fieldsHelp": "{{ключ_поля}} — будут заменены на значения при создании документа",
-  "tpl.fieldsHelpAction": "Вы можете вставить поле через кнопку «Вставить поле» или написать вручную",
+  "tpl.fieldsHelpAction":
+    "Вы можете вставить поле через кнопку «Вставить поле» или написать вручную",
   "tpl.popularFields": "Популярные поля для подстановки:",
 
   // Admin extras
@@ -333,7 +335,8 @@ export const messagesRu = {
   "admin.departments.code": "Код",
   "admin.departments.type": "Тип",
   "admin.positions.deleteTitle": "Удалить должность?",
-  "admin.positions.deleteDesc": "Это действие нельзя отменить. Должность будет удалена из справочника.",
+  "admin.positions.deleteDesc":
+    "Это действие нельзя отменить. Должность будет удалена из справочника.",
   "admin.org.reset": "Сбросить",
   "admin.org.notAssigned": "Не назначен",
   "admin.org.notAssignedFull": "— Не назначен —",
@@ -347,10 +350,13 @@ export const messagesRu = {
   "admin.users.actions": "Действия",
   "admin.users.resetPassword": "Сбросить пароль",
   "admin.users.resetPasswordTitle": "Сброс пароля",
-  "admin.users.resetPasswordDescription": "Задайте новый пароль для пользователя {name}. Все активные сессии будут завершены.",
+  "admin.users.resetPasswordDescription":
+    "Задайте новый пароль для пользователя {name}. Все активные сессии будут завершены.",
   "admin.users.resetPasswordConfirm": "Сбросить",
-  "admin.users.resetPasswordHint": "Минимум 8 символов. Сообщите пароль пользователю по защищённому каналу.",
-  "admin.users.resetPasswordCardHint": "Администратор может задать новый пароль без знания текущего.",
+  "admin.users.resetPasswordHint":
+    "Минимум 8 символов. Сообщите пароль пользователю по защищённому каналу.",
+  "admin.users.resetPasswordCardHint":
+    "Администратор может задать новый пароль без знания текущего.",
   "admin.users.newPassword": "Новый пароль",
   "admin.users.passwordResetSuccess": "Пароль сброшен, сессии пользователя завершены",
 
@@ -366,7 +372,8 @@ export const messagesRu = {
   "nom.sortOrder": "Сортировка",
   "nom.added": "Добавлено",
   "nom.yearsSuffix": "{n} лет",
-  "nom.description": "Иерархия разделов номенклатуры дел: коды, сроки хранения и привязка к подразделениям.",
+  "nom.description":
+    "Иерархия разделов номенклатуры дел: коды, сроки хранения и привязка к подразделениям.",
   "nom.search": "Поиск по коду или названию…",
   "nom.total": "Всего разделов: {n}",
   "nom.empty": "Номенклатура пуста. Добавьте первый раздел.",
@@ -435,8 +442,10 @@ export const messagesRu = {
   "validation.workflow.forkMinBranches": "Разветвление «{label}»: минимум 2 исходящие ветки",
   "validation.workflow.joinMinBranches": "Слияние «{label}»: минимум 2 входящие ветки",
   "validation.workflow.conditionMinBranches": "Условие «{label}»: минимум 2 исходящие ветки",
-  "validation.workflow.conditionNeedsRules": "Условие «{label}»: укажите хотя бы одно правило на переходе",
-  "validation.workflow.conditionNeedsDefault": "Условие «{label}»: нужна ветка по умолчанию (без условия)",
+  "validation.workflow.conditionNeedsRules":
+    "Условие «{label}»: укажите хотя бы одно правило на переходе",
+  "validation.workflow.conditionNeedsDefault":
+    "Условие «{label}»: нужна ветка по умолчанию (без условия)",
 
   "wf.palette.control": "Управление",
   "wf.palette.action": "Согласование и задачи",
@@ -508,26 +517,31 @@ export const messagesRu = {
   "tpl.fileUploadError": "Ошибка загрузки шаблона",
   "tpl.fileTemplate.title": "Файл шаблона",
   "tpl.fileTemplate.upload": "Загрузить файл",
-  "tpl.fileTemplate.hint": "Поддерживаются DOC, DOCX, XLS, XLSX. Вставляйте поля в файл как {{ключ_поля}}.",
-  "tpl.fileTemplate.legacyHint": "Формат DOC/XLS — только хранение и скачивание. Для автозаполнения загрузите DOCX или XLSX.",
+  "tpl.fileTemplate.hint":
+    "Поддерживаются DOC, DOCX, XLS, XLSX. Вставляйте поля в файл как {{ключ_поля}}.",
+  "tpl.fileTemplate.legacyHint":
+    "Формат DOC/XLS — только хранение и скачивание. Для автозаполнения загрузите DOCX или XLSX.",
   "tpl.fileTemplate.extractFields": "Извлечь поля из файла",
   "tpl.fileTemplate.scanError": "Не удалось извлечь поля из файла",
   "tpl.fileTemplate.noPlaceholders": "В файле не найдено полей {{ключ}}",
   "tpl.fileTemplate.fieldsFound": "Добавлено полей: {count}",
   "tpl.fileTemplate.invalidFormat": "Неподдерживаемый формат. Допустимы: DOC, DOCX, XLS, XLSX",
   "tpl.fileTemplate.optionalBody": "Текстовое тело (опционально)",
-  "tpl.fileTemplate.bodyHint": "Основной шаблон — загруженный файл. Текстовое тело используется как дополнение.",
+  "tpl.fileTemplate.bodyHint":
+    "Основной шаблон — загруженный файл. Текстовое тело используется как дополнение.",
   "tpl.fileTemplate.parsing": "Разбор файла и извлечение полей…",
   "tpl.fileTemplate.fieldsAlreadySynced": "Все поля из файла уже добавлены",
   "tpl.fileTemplate.metadataFilled": "Название и описание заполнены из файла",
   "tpl.description": "Описание",
   "tpl.descriptionPlaceholder": "Краткое описание назначения шаблона",
   "tpl.preview.title": "Предпросмотр",
-  "tpl.preview.hint": "Обновляется при изменении полей и текста. Для DOCX и XLSX подставляются подписи полей.",
+  "tpl.preview.hint":
+    "Обновляется при изменении полей и текста. Для DOCX и XLSX подставляются подписи полей.",
   "tpl.preview.loading": "Загрузка предпросмотра…",
   "tpl.preview.error": "Не удалось показать предпросмотр",
   "tpl.preview.empty": "Загрузите файл шаблона или заполните текстовое тело",
-  "tpl.preview.unsupported": "Предпросмотр для DOC/XLS недоступен. Скачайте файл или загрузите DOCX/XLSX.",
+  "tpl.preview.unsupported":
+    "Предпросмотр для DOC/XLS недоступен. Скачайте файл или загрузите DOCX/XLSX.",
   "tpl.preview.refresh": "Обновить предпросмотр",
   "tpl.preview.fullscreen": "На весь экран",
   "tpl.saved": "Шаблон сохранён",
@@ -561,12 +575,14 @@ export const messagesRu = {
   "doc.fieldRequired": "Поле «{field}» обязательно для заполнения",
   "doc.titleFromTemplate": "Заголовок формируется автоматически по шаблону",
   "doc.preview.title": "Предпросмотр документа",
-  "doc.preview.hint": "Обновляется при заполнении полей. Для DOCX и XLSX подставляются введённые значения.",
+  "doc.preview.hint":
+    "Обновляется при заполнении полей. Для DOCX и XLSX подставляются введённые значения.",
   "doc.preview.loading": "Формирование предпросмотра…",
   "doc.preview.error": "Не удалось сформировать предпросмотр",
   "doc.preview.empty": "Нет данных для предпросмотра",
   "doc.executorFromAuthor": "Заполняется автоматически из профиля автора",
-  "doc.signatoryAutoFill": "Подписант: автор (если он руководитель) или руководитель подразделения/направления",
+  "doc.signatoryAutoFill":
+    "Подписант: автор (если он руководитель) или руководитель подразделения/направления",
   "doc.routeSavedHint": "Будет использован маршрут, сохранённый при создании документа",
   "doc.routeSelectHint": "Выберите маршрут или оставьте пустым, если он уже задан в документе",
 

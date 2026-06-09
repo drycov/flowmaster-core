@@ -59,9 +59,12 @@ export function useTelegramAuth(tenantSlug?: string) {
         }
       }, 2000);
 
-      setTimeout(() => {
-        stopPolling();
-      }, 5 * 60 * 1000);
+      setTimeout(
+        () => {
+          stopPolling();
+        },
+        5 * 60 * 1000,
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("auth.telegram.loginError"));
     } finally {

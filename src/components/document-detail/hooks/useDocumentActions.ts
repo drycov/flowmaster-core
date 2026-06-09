@@ -7,7 +7,7 @@ import {
 } from "@/lib/api/documents.functions";
 import { listWorkflows, startWorkflow } from "@/lib/api/workflows.functions";
 import { getDocument } from "@/lib/api/documents.functions";
-import { parseStoredCustomRoute } from "@/lib/workflow/route-builder";
+import { parseStoredCustomRoute, toGraphRouteInput } from "@/lib/workflow/route-builder";
 import { signCMSFull } from "@/lib/ncalayer";
 import { buildSignatureInsertData } from "@/lib/eds/build-signature-record";
 import { toast } from "sonner";
@@ -29,13 +29,17 @@ export function useDocumentActions(documentId: string) {
       qc.invalidateQueries({ queryKey: ["document", documentId] });
       toast.success(t("doc.commentAdded"));
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : t("doc.commentError")),
+    onError: (error) => toast.error(error instanceof Error ? error.message : t("doc.commentError")),
   });
 
   const startWorkflowMutation = useMutation({
     mutationFn: async (workflowId?: string) => {
-      const docData = await getDocument({ data: { id: documentId } });
+      const docData = (await getDocument({ data: { id: documentId } })) as {
+        document: {
+          workflow_id?: string | null;
+          custom_route?: unknown;
+        };
+      };
       const doc = docData.document as {
         workflow_id?: string | null;
         custom_route?: unknown;
@@ -45,7 +49,7 @@ export function useDocumentActions(documentId: string) {
         data: {
           document_id: documentId,
           workflow_id: workflowId ?? doc.workflow_id ?? null,
-          graph_definition: parsed.graph,
+          graph_definition: toGraphRouteInput(parsed.graph),
           custom_route: parsed.steps as never,
         },
       });
@@ -64,26 +68,21 @@ export function useDocumentActions(documentId: string) {
       toast.success(t("doc.archived"));
       qc.invalidateQueries({ queryKey: ["document", documentId] });
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : t("doc.archiveError")),
+    onError: (error) => toast.error(error instanceof Error ? error.message : t("doc.archiveError")),
   });
 
   const saveContentMutation = useMutation({
-    mutationFn: (body: string) =>
-      updateDocumentMetadata({ data: { id: documentId, body } }),
+    mutationFn: (body: string) => updateDocumentMetadata({ data: { id: documentId, body } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["document", documentId] });
       toast.success(t("doc.saved"));
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : t("doc.saveError")),
+    onError: (error) => toast.error(error instanceof Error ? error.message : t("doc.saveError")),
   });
 
   const signMutation = useMutation({
     mutationFn: async (signText: string) => {
-      const payload = signText
-        ? btoa(unescape(encodeURIComponent(signText)))
-        : "";
+      const payload = signText ? btoa(unescape(encodeURIComponent(signText))) : "";
       const result = await signCMSFull(payload);
       await addSignature({
         data: buildSignatureInsertData({
@@ -113,7 +112,9 @@ export function useDocumentActions(documentId: string) {
     isStartingWorkflow: startWorkflowMutation.isPending,
     archive: archiveMutation.mutate,
     isArchiving: archiveMutation.isPending,
-    saveContent: saveContentMutation.mutateAsync,
+    saveContent: async (body: string) => {
+      await saveContentMutation.mutateAsync(body);
+    },
     isSavingContent: saveContentMutation.isPending,
     handleSign,
     isSigning: signMutation.isPending,

@@ -170,37 +170,47 @@ function GanttDetailPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="task">{t("scheduling.gantt.itemTypes.task")}</SelectItem>
-                      <SelectItem value="milestone">{t("scheduling.gantt.itemTypes.milestone")}</SelectItem>
+                      <SelectItem value="milestone">
+                        {t("scheduling.gantt.itemTypes.milestone")}
+                      </SelectItem>
                       <SelectItem value="phase">{t("scheduling.gantt.itemTypes.phase")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.assignee")}</Label>
-                  <Select value={assigneeId || "__none"} onValueChange={(v) => setAssigneeId(v === "__none" ? "" : v)}>
+                  <Select
+                    value={assigneeId || "__none"}
+                    onValueChange={(v) => setAssigneeId(v === "__none" ? "" : v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none">—</SelectItem>
-                      {staff.map((u) => {
-                        const row = u as { id: string; full_name_ru: string; full_name_kk: string };
-                        return (
+                      {staff.map((row) => (
                           <SelectItem key={row.id} value={row.id}>
                             {localized(row, locale, "full_name")}
                           </SelectItem>
-                        );
-                      })}
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.dateFrom")}</Label>
-                  <Input type="date" value={plannedStart} onChange={(e) => setPlannedStart(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={plannedStart}
+                    onChange={(e) => setPlannedStart(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.dateTo")}</Label>
-                  <Input type="date" value={plannedEnd} onChange={(e) => setPlannedEnd(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={plannedEnd}
+                    onChange={(e) => setPlannedEnd(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.progress")}</Label>

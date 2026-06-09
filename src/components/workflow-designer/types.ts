@@ -43,7 +43,6 @@ export interface WorkflowNode {
   config?: Record<string, unknown>;
 }
 
-
 export interface WorkflowEdge {
   id: string;
   source: string;

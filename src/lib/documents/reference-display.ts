@@ -43,7 +43,12 @@ export function correspondentLabel(
 }
 
 export function registrationJournalLabel(
-  doc: { ref_registration_journals?: (NamedRef & { prefix?: string }) | (NamedRef & { prefix?: string })[] | null },
+  doc: {
+    ref_registration_journals?:
+      | (NamedRef & { prefix?: string })
+      | (NamedRef & { prefix?: string })[]
+      | null;
+  },
   locale: Locale,
 ): string {
   const joined = unwrapJoin(doc.ref_registration_journals);

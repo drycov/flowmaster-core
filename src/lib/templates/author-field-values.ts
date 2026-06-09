@@ -15,10 +15,7 @@ export const AUTHOR_SIGNATORY_FIELD_KEYS = [
 ] as const;
 
 /** Name-only signature fields (without position prefix). */
-export const AUTHOR_SIGNATURE_NAME_FIELD_KEYS = [
-  "signature_name",
-  "signature",
-] as const;
+export const AUTHOR_SIGNATURE_NAME_FIELD_KEYS = ["signature_name", "signature"] as const;
 
 export type AuthorProfileSource = {
   id?: string;

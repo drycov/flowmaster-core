@@ -14,7 +14,9 @@ export function UsersStats({ users, roles, t }: any) {
     };
 
     for (const u of users) {
-      for (const r of u.roles) c[r]++;
+      for (const r of u.roles) {
+        if (r in c) c[r as Role]++;
+      }
     }
 
     return c;
@@ -22,14 +24,16 @@ export function UsersStats({ users, roles, t }: any) {
 
   return (
     <div className="flex gap-2">
-      <Badge>{t("users.totalUsers")}: {users.length}</Badge>
+      <Badge>
+        {t("users.totalUsers")}: {users.length}
+      </Badge>
 
       {roles.map((r: Role) =>
         counts[r] ? (
           <Badge key={r} variant="outline">
             {r}: {counts[r]}
           </Badge>
-        ) : null
+        ) : null,
       )}
     </div>
   );

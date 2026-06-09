@@ -44,12 +44,15 @@ function StaffDirectoryPage() {
     if (!q) return staff;
     return staff.filter((raw) => {
       const row = raw as Record<string, unknown>;
-      const name = `${row.full_name_ru ?? ""} ${row.full_name_kk ?? ""} ${row.email ?? ""}`.toLowerCase();
+      const name =
+        `${row.full_name_ru ?? ""} ${row.full_name_kk ?? ""} ${row.email ?? ""}`.toLowerCase();
       const dept = row.departments as { name_ru?: string; name_kk?: string } | null;
       const pos = row.positions as { title_ru?: string; title_kk?: string } | null;
       const deptName = dept ? `${dept.name_ru ?? ""} ${dept.name_kk ?? ""}` : "";
       const posName = pos ? `${pos.title_ru ?? ""} ${pos.title_kk ?? ""}` : "";
-      return name.includes(q) || deptName.toLowerCase().includes(q) || posName.toLowerCase().includes(q);
+      return (
+        name.includes(q) || deptName.toLowerCase().includes(q) || posName.toLowerCase().includes(q)
+      );
     });
   }, [staff, search]);
 
@@ -117,10 +120,10 @@ function StaffDirectoryPage() {
                   return (
                     <tr key={String(row.id)} className="border-b last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-medium">
-                          {localized(row, locale, "full_name")}
+                        <div className="font-medium">{localized(row, locale, "full_name")}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {String(row.email ?? "")}
                         </div>
-                        <div className="text-xs text-muted-foreground">{String(row.email ?? "")}</div>
                       </td>
                       <td className="hidden px-4 py-3 md:table-cell">
                         {dept ? localized(dept, locale, "name") : "—"}

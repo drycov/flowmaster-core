@@ -30,8 +30,7 @@ export const Route = createFileRoute("/api/v1/license/heartbeat")({
           const result = await heartbeatOnLicenseServer(supabaseAdmin, {
             token,
             installation_id,
-            active_users:
-              body.active_users !== undefined ? Number(body.active_users) : undefined,
+            active_users: body.active_users !== undefined ? Number(body.active_users) : undefined,
             hostname: body.hostname ? String(body.hostname) : undefined,
             app_version: body.app_version ? String(body.app_version) : undefined,
           });

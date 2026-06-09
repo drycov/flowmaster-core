@@ -8,27 +8,47 @@ export function useRealtimeUpdates(documentId: string, onUpdate: () => void) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "documents", filter: `id=eq.${documentId}` },
-        () => onUpdate()
+        () => onUpdate(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "document_comments", filter: `document_id=eq.${documentId}` },
-        () => onUpdate()
+        {
+          event: "*",
+          schema: "public",
+          table: "document_comments",
+          filter: `document_id=eq.${documentId}`,
+        },
+        () => onUpdate(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workflow_events", filter: `document_id=eq.${documentId}` },
-        () => onUpdate()
+        {
+          event: "*",
+          schema: "public",
+          table: "workflow_events",
+          filter: `document_id=eq.${documentId}`,
+        },
+        () => onUpdate(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workflow_tasks", filter: `document_id=eq.${documentId}` },
-        () => onUpdate()
+        {
+          event: "*",
+          schema: "public",
+          table: "workflow_tasks",
+          filter: `document_id=eq.${documentId}`,
+        },
+        () => onUpdate(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "workflow_runs", filter: `document_id=eq.${documentId}` },
-        () => onUpdate()
+        {
+          event: "*",
+          schema: "public",
+          table: "workflow_runs",
+          filter: `document_id=eq.${documentId}`,
+        },
+        () => onUpdate(),
       )
       .subscribe();
 

@@ -25,14 +25,7 @@ export function exportLeaveScheduleCsv(
   },
   filenamePrefix = "leave-schedule",
 ) {
-  const header = [
-    labels.employee,
-    labels.type,
-    labels.from,
-    labels.to,
-    labels.days,
-    labels.status,
-  ]
+  const header = [labels.employee, labels.type, labels.from, labels.to, labels.days, labels.status]
     .map(csvCell)
     .join(";");
 

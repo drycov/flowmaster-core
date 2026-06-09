@@ -38,7 +38,7 @@ export function ChangePasswordDialog({
 
   const validate = (): boolean => {
     const newErrors: Partial<PasswordFormData> = {};
-    
+
     if (requiresCurrentPassword && !formData.currentPassword) {
       newErrors.currentPassword = t("profile.currentPasswordRequired");
     }
@@ -50,7 +50,7 @@ export function ChangePasswordDialog({
     if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = t("profile.passwordsDoNotMatch");
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,7 +89,7 @@ export function ChangePasswordDialog({
               : t("profile.setPasswordDescription")}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           {requiresCurrentPassword && (
             <div className="space-y-2">
@@ -114,11 +114,9 @@ export function ChangePasswordDialog({
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               placeholder="••••••"
             />
-            {errors.newPassword && (
-              <p className="text-xs text-destructive">{errors.newPassword}</p>
-            )}
+            {errors.newPassword && <p className="text-xs text-destructive">{errors.newPassword}</p>}
           </div>
-          
+
           <div className="space-y-2">
             <Label>{t("profile.confirmPassword")}</Label>
             <Input
@@ -132,7 +130,7 @@ export function ChangePasswordDialog({
             )}
           </div>
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
             {t("common.cancel")}

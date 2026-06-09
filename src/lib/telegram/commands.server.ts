@@ -11,10 +11,7 @@ import {
 const TASK_LIMIT = 8;
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export async function findLinkedUserId(chatId: string): Promise<string | null> {
@@ -82,9 +79,7 @@ export async function listPendingTasksForChat(chatId: string): Promise<string> {
         ? `${doc.reg_number} — ${doc.title_ru}`
         : task.title || doc?.title_ru || "Задача";
     const sub = task.assignee_id !== userId ? " (замещение)" : "";
-    const due = task.due_at
-      ? ` · до ${new Date(task.due_at).toLocaleDateString("ru-RU")}`
-      : "";
+    const due = task.due_at ? ` · до ${new Date(task.due_at).toLocaleDateString("ru-RU")}` : "";
     lines.push(`• <b>${escapeHtml(label)}</b>${sub}${due}`);
   }
 
@@ -180,7 +175,9 @@ export async function listMyDutyForChat(chatId: string): Promise<string> {
   if (error) return "❌ Не удалось загрузить график дежурств.";
 
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = (rows ?? []).filter((r) => String((r as { ends_at: string }).ends_at).slice(0, 10) >= today);
+  const upcoming = (rows ?? []).filter(
+    (r) => String((r as { ends_at: string }).ends_at).slice(0, 10) >= today,
+  );
 
   if (!upcoming.length) {
     const origin = await resolveAppOrigin();
@@ -284,7 +281,10 @@ export async function listMyLeaveForChat(chatId: string): Promise<string> {
   }
 
   if (origin) {
-    lines.push("", `<a href="${origin}/hr/leave">Заявки</a> · <a href="${origin}/hr/leave/schedule">График</a>`);
+    lines.push(
+      "",
+      `<a href="${origin}/hr/leave">Заявки</a> · <a href="${origin}/hr/leave/schedule">График</a>`,
+    );
   }
   return lines.join("\n");
 }
@@ -309,10 +309,13 @@ type LeaveRow = {
 
 async function canDecideLeave(userId: string, leave: LeaveRow): Promise<boolean> {
   if (leave.approver_id === userId) return true;
-  const { data: canHr } = await supabaseAdmin.rpc("user_has_permission" as never, {
-    _user: userId,
-    _permission: "manage_hr",
-  } as never);
+  const { data: canHr } = await supabaseAdmin.rpc(
+    "user_has_permission" as never,
+    {
+      _user: userId,
+      _permission: "manage_hr",
+    } as never,
+  );
   return !!canHr;
 }
 
@@ -347,7 +350,11 @@ export async function handleLeaveApprovalCallback(
   data: string,
 ): Promise<LeaveCallbackResult> {
   const parts = data.split(":");
-  if (parts.length !== 3 || parts[0] !== "leave" || !["approve", "reject"].includes(parts[1] ?? "")) {
+  if (
+    parts.length !== 3 ||
+    parts[0] !== "leave" ||
+    !["approve", "reject"].includes(parts[1] ?? "")
+  ) {
     return {
       ok: false,
       message: "❌ Некорректная команда.",
@@ -401,12 +408,7 @@ export async function handleLeaveApprovalCallback(
     };
   }
 
-  await setLeaveDecisionPending(
-    chatId,
-    userId,
-    { leave_id: leaveId, decision },
-    messageId,
-  );
+  await setLeaveDecisionPending(chatId, userId, { leave_id: leaveId, decision }, messageId);
 
   const typeName = leave.ref_absence_types?.name_ru ?? "Отсутствие";
   const actionLabel = decision === "approve" ? "согласование" : "отклонение";

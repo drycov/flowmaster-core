@@ -11,10 +11,7 @@ import type {
   UserAccessSnapshot,
 } from "./types";
 
-function permissionsForAction(
-  moduleId: ModuleId,
-  action: ModuleAction,
-): readonly Permission[] {
+function permissionsForAction(moduleId: ModuleId, action: ModuleAction): readonly Permission[] {
   const mod = getModule(moduleId);
   const perms = mod.permissions[action];
   if (perms?.length) return perms;
@@ -37,8 +34,7 @@ export function evaluateModuleAccess(
   const mod = getModule(moduleId);
 
   if (mod.licenseFeature) {
-    const requireWritable =
-      action !== "read" && mod.requireWritableForWrite !== false;
+    const requireWritable = action !== "read" && mod.requireWritableForWrite !== false;
     if (!hasLicenseFeature(ctx.license, mod.licenseFeature, { requireWritable })) {
       return {
         allowed: false,

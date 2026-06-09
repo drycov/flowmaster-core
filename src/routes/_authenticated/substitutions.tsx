@@ -102,7 +102,10 @@ function SubstitutionsPage() {
 
   return (
     <>
-      <PageHeader title={t("substitution.pageTitle")} description={t("substitution.pageSubtitle")} />
+      <PageHeader
+        title={t("substitution.pageTitle")}
+        description={t("substitution.pageSubtitle")}
+      />
       <PageBody>
         <div className="max-w-3xl mx-auto space-y-6">
           <SubstitutionActingBanner actingFor={actingFor} />

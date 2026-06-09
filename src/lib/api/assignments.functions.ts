@@ -24,9 +24,7 @@ export const listUserAssignments = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabase
       .from("profile_assignments" as never)
-      .select(
-        "*, departments(id, name_ru, name_kk, code), positions(id, title_ru, title_kk, code)",
-      )
+      .select("*, departments(id, name_ru, name_kk, code), positions(id, title_ru, title_kk, code)")
       .eq("user_id", data.user_id)
       .order("start_date", { ascending: false });
     if (error) throw new Error(error.message);
@@ -50,7 +48,9 @@ export const createAssignment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireModuleAccess(context.supabase, context.userId, "admin_users", { action: "write" });
-    const { data: row, error } = await (context.supabase.from("profile_assignments" as never) as any)
+    const { data: row, error } = await (
+      context.supabase.from("profile_assignments" as never) as any
+    )
       .insert({
         user_id: data.user_id,
         department_id: data.department_id ?? null,

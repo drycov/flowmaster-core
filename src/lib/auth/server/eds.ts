@@ -34,10 +34,7 @@ export function extractIin(cert: CertInfo): string | null {
 
 export function displayNameFromCert(cert: CertInfo, fallback?: string): string {
   return fixUtf8Mojibake(
-    fallback ||
-      cert.cn ||
-      cert.subject?.match(/CN\s*=\s*([^,]+)/i)?.[1]?.trim() ||
-      "Пользователь",
+    fallback || cert.cn || cert.subject?.match(/CN\s*=\s*([^,]+)/i)?.[1]?.trim() || "Пользователь",
   );
 }
 
@@ -158,12 +155,7 @@ async function mergeEdsPlaceholderInto(
   await applyEdsFields(targetUserId, iin, cert, displayName);
 }
 
-async function applyEdsFields(
-  userId: string,
-  iin: string,
-  cert: CertInfo,
-  displayName?: string,
-) {
+async function applyEdsFields(userId: string, iin: string, cert: CertInfo, displayName?: string) {
   const { data: profile, error: loadErr } = await supabaseAdmin
     .from("profiles")
     .select("id, email, password_hash, full_name_ru, full_name_kk")
@@ -235,7 +227,12 @@ export async function attachEdsToProfile(
 
     if (error || !profile) throw new Error("Профиль не найден");
 
-    if (!verifyCnMatchesProfile(cert, profile as { full_name_ru: string | null; full_name_kk: string | null })) {
+    if (
+      !verifyCnMatchesProfile(
+        cert,
+        profile as { full_name_ru: string | null; full_name_kk: string | null },
+      )
+    ) {
       throw new Error(
         `CN сертификата (${displayNameFromCert(cert)}) не совпадает с ФИО в профиле. Обновите ФИО или выберите другой сертификат.`,
       );

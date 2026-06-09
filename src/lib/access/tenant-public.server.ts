@@ -57,8 +57,7 @@ export async function buildPublicTenantAuthContext(
     .maybeSingle();
 
   const multiTenant =
-    organizationCount > 1 ||
-    (modeRow as { tenant_mode?: string } | null)?.tenant_mode === "multi";
+    organizationCount > 1 || (modeRow as { tenant_mode?: string } | null)?.tenant_mode === "multi";
 
   return {
     multi_tenant: multiTenant,

@@ -5,6 +5,8 @@ export type TelegramSendResult = {
   ok: boolean;
   skipped?: boolean;
   error?: string;
+  mode?: "webhook" | "polling";
+  webhook_registered?: boolean;
 };
 
 export async function resolveTelegramConfig() {
@@ -54,7 +56,9 @@ export async function sendTelegramMessage(
   return { ok: true };
 }
 
-export async function testTelegramBot(): Promise<TelegramSendResult & { webhook_registered?: boolean }> {
+export async function testTelegramBot(): Promise<
+  TelegramSendResult & { webhook_registered?: boolean }
+> {
   const config = await resolveTelegramConfig();
   if (!config.bot_token) {
     return { ok: false, error: "Укажите токен бота" };

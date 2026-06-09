@@ -17,9 +17,7 @@ export function useAccessContext() {
     staleTime: Infinity,
   });
 
-  const tenantKey = tenantScopeKey(
-    tenantQuery.data ?? { id: null, name: null, mode: "single" },
-  );
+  const tenantKey = tenantScopeKey(tenantQuery.data ?? { id: null, name: null, mode: "single" });
 
   const meQuery = useQuery({
     queryKey: ["me", tenantKey],

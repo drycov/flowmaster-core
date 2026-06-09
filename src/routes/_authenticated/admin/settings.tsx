@@ -30,10 +30,7 @@ import {
 } from "@/lib/api/system.functions";
 import type { SystemSettings, SystemSettingsMeta } from "@/lib/auth/policy";
 import { normalizeEmailDomains } from "@/lib/auth/policy";
-import {
-  getTelegramWebhookInfo,
-  registerTelegramWebhookFn,
-} from "@/lib/api/telegram.functions";
+import { getTelegramWebhookInfo, registerTelegramWebhookFn } from "@/lib/api/telegram.functions";
 
 const settingsSearchSchema = z.object({
   tab: z
@@ -60,8 +57,10 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 
 function SystemSettingsPage() {
   const { t } = useI18n();
-  const { can } = useAccessContext();
+  const { can, canModule, canAny } = useAccessContext();
   const canManagePlatform = can("manage_platform");
+  const canManageLicense = canModule("admin_license", "manage");
+  const canManageIntegrations = canAny("manage_integrations", "manage_license");
   const qc = useQueryClient();
   const { tab: tabFromUrl } = Route.useSearch();
   const activeTab = tabFromUrl ?? "overview";
@@ -215,7 +214,11 @@ function SystemSettingsPage() {
                 {t("admin.org.reset")}
               </Button>
             )}
-            <Button size="sm" onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending || !isDirty}>
+            <Button
+              size="sm"
+              onClick={() => saveMutation.mutate(form)}
+              disabled={saveMutation.isPending || !isDirty}
+            >
               {saveMutation.isPending ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               ) : (
@@ -231,36 +234,58 @@ function SystemSettingsPage() {
         <Tabs value={activeTab} className="space-y-6">
           <TabsList className="flex h-auto w-full flex-wrap gap-1">
             <TabsTrigger value="overview" asChild>
-              <Link to="/admin/settings" search={{ tab: "overview" }}>{t("settings.tab.overview")}</Link>
+              <Link to="/admin/settings" search={{ tab: "overview" }}>
+                {t("settings.tab.overview")}
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="auth" asChild>
-              <Link to="/admin/settings" search={{ tab: "auth" }}>{t("settings.tab.auth")}</Link>
+              <Link to="/admin/settings" search={{ tab: "auth" }}>
+                {t("settings.tab.auth")}
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="ldap" asChild>
-              <Link to="/admin/settings" search={{ tab: "ldap" }}>{t("settings.tab.ldap")}</Link>
+              <Link to="/admin/settings" search={{ tab: "ldap" }}>
+                {t("settings.tab.ldap")}
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="eds" asChild>
-              <Link to="/admin/settings" search={{ tab: "eds" }}>{t("settings.tab.eds")}</Link>
+              <Link to="/admin/settings" search={{ tab: "eds" }}>
+                {t("settings.tab.eds")}
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="mail" asChild>
-              <Link to="/admin/settings" search={{ tab: "mail" }}>{t("settings.tab.mail")}</Link>
+              <Link to="/admin/settings" search={{ tab: "mail" }}>
+                {t("settings.tab.mail")}
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="telegram" asChild>
-              <Link to="/admin/settings" search={{ tab: "telegram" }}>{t("settings.tab.telegram")}</Link>
+              <Link to="/admin/settings" search={{ tab: "telegram" }}>
+                {t("settings.tab.telegram")}
+              </Link>
             </TabsTrigger>
-            <TabsTrigger value="integrations" asChild>
-              <Link to="/admin/settings" search={{ tab: "integrations" }}>{t("settings.tab.integrations")}</Link>
-            </TabsTrigger>
+            {canManageIntegrations && (
+              <TabsTrigger value="integrations" asChild>
+                <Link to="/admin/settings" search={{ tab: "integrations" }}>
+                  {t("settings.tab.integrations")}
+                </Link>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="license" asChild>
-              <Link to="/admin/settings" search={{ tab: "license" }}>{t("settings.tab.license")}</Link>
+              <Link to="/admin/settings" search={{ tab: "license" }}>
+                {t("settings.tab.license")}
+              </Link>
             </TabsTrigger>
             {canManagePlatform && (
               <TabsTrigger value="tenants" asChild>
-                <Link to="/admin/settings" search={{ tab: "tenants" }}>{t("settings.tab.tenants")}</Link>
+                <Link to="/admin/settings" search={{ tab: "tenants" }}>
+                  {t("settings.tab.tenants")}
+                </Link>
               </TabsTrigger>
             )}
             <TabsTrigger value="general" asChild>
-              <Link to="/admin/settings" search={{ tab: "general" }}>{t("settings.tab.general")}</Link>
+              <Link to="/admin/settings" search={{ tab: "general" }}>
+                {t("settings.tab.general")}
+              </Link>
             </TabsTrigger>
           </TabsList>
 
@@ -315,12 +340,19 @@ function SystemSettingsPage() {
             />
           </TabsContent>
 
-          <TabsContent value="integrations">
-            <ServicesSettingsPanel form={form} meta={meta} patch={patch} />
-          </TabsContent>
+          {canManageIntegrations && (
+            <TabsContent value="integrations">
+              <ServicesSettingsPanel
+                form={form}
+                meta={meta}
+                patch={patch}
+                canManageIntegrations={canManageIntegrations}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="license">
-            <LicenseSettingsPanel />
+            <LicenseSettingsPanel canManage={canManageLicense} />
           </TabsContent>
 
           {canManagePlatform && (

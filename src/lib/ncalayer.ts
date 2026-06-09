@@ -49,16 +49,15 @@ export interface CertificateInfo {
   cn?: string;
 }
 
-
 // =========================================================
 // ДОПОЛНИТЕЛЬНЫЕ ТИПЫ
 // =========================================================
 
 export interface SignatureRecord {
   type: "CMS" | "XML" | "AUTH";
-  signedAt: string;        // ISO 8601
-  raw: string;             // CMS/XML/Auth signature (base64)
-  
+  signedAt: string; // ISO 8601
+  raw: string; // CMS/XML/Auth signature (base64)
+
   signer?: {
     iin?: string;
     bin?: string;
@@ -71,7 +70,7 @@ export interface SignatureRecord {
     validFrom?: string;
     validTo?: string;
     serial?: string;
-    fingerprint?: string;   // SHA-256 thumbprint
+    fingerprint?: string; // SHA-256 thumbprint
   };
 }
 
@@ -80,8 +79,6 @@ export interface FullSignResult extends SignResult {
   timestamp: string;
   fingerprint: string;
 }
-
-
 
 /* =========================================================
    HELPERS
@@ -142,18 +139,9 @@ function mapNcalayerCertResponse(res: any): CertificateInfo {
   const body = unwrapResponseObject(res);
   const ki = body && typeof body === "object" && !Array.isArray(body) ? body : res;
 
-  let subject =
-    ki?.subjectDn ||
-    ki?.subject ||
-    ki?.subjectDN ||
-    ki?.SubjectDN ||
-    "";
+  let subject = ki?.subjectDn || ki?.subject || ki?.subjectDN || ki?.SubjectDN || "";
 
-  const cn =
-    ki?.subjectCn ||
-    ki?.commonName ||
-    ki?.SubjectCn ||
-    extractFromSubject(subject).cn;
+  const cn = ki?.subjectCn || ki?.commonName || ki?.SubjectCn || extractFromSubject(subject).cn;
 
   if (!subject && cn) {
     subject = `CN=${cn}`;
@@ -238,11 +226,7 @@ class NCALayerConnection {
     if (next) next(msg);
   }
 
-  async request<T>(
-    payload: any,
-    signal?: AbortSignal,
-    timeoutMs = 60000
-  ): Promise<T> {
+  async request<T>(payload: any, signal?: AbortSignal, timeoutMs = 60000): Promise<T> {
     const ws = await this.connect();
 
     return new Promise<T>((resolve, reject) => {
@@ -321,7 +305,7 @@ let getCertificateInfoRpcUnavailable = false;
 
 export async function getCertificateInfo(
   certBase64: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<CertificateInfo> {
   const derInfo = parseCertDerBase64(certBase64);
   if (derInfo && (derInfo.iin || derInfo.subject || derInfo.cn)) {
@@ -340,7 +324,7 @@ export async function getCertificateInfo(
         method: "getCertificateInfo",
         args: [certBase64],
       },
-      signal
+      signal,
     );
 
     if (isFailedNcalayerResponse(res)) {
@@ -382,10 +366,7 @@ async function createCAdESFromBase64(
   );
 }
 
-export async function signCMS(
-  dataB64: string,
-  signal?: AbortSignal,
-): Promise<SignResult> {
+export async function signCMS(dataB64: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await createCAdESFromBase64(dataB64, "SIGNATURE", signal);
   const signature = extractSignature(res);
 
@@ -397,17 +378,14 @@ export async function signCMS(
   return { signature };
 }
 
-export async function signXML(
-  xml: string,
-  signal?: AbortSignal
-): Promise<SignResult> {
+export async function signXML(xml: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await connection.request<any>(
     {
       module: "kz.gov.pki.knca.commonUtils",
       method: "signXml",
       args: [xml],
     },
-    signal
+    signal,
   );
 
   const signature = extractSignature(res);
@@ -421,10 +399,7 @@ export async function signXML(
  * Аутентификация ЭЦП — открывает диалог выбора сертификата (PKCS12 / токен).
  * Использует createCAdESFromBase64 + AUTHENTICATION (официальный API НУЦ РК).
  */
-export async function auth(
-  dataB64: string,
-  signal?: AbortSignal,
-): Promise<SignResult> {
+export async function auth(dataB64: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await createCAdESFromBase64(dataB64, "AUTHENTICATION", signal);
   const signature = extractSignature(res);
 
@@ -450,11 +425,11 @@ async function getCertFingerprint(certBase64: string): Promise<string> {
   for (let i = 0; i < derString.length; i++) {
     derBytes[i] = derString.charCodeAt(i);
   }
-  
+
   // SHA-256 хеш
   const hashBuffer = await crypto.subtle.digest("SHA-256", derBytes);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function unwrapResponseObject(res: any): any {
@@ -520,7 +495,11 @@ function extractFirstCertBase64FromCms(cmsB64: string): string | null {
     if (!signedDataWrapper || !Array.isArray(signedDataWrapper.value)) return null;
 
     const signedData = (signedDataWrapper.value as forge.asn1.Asn1[])[0];
-    if (!signedData || signedData.type !== forge.asn1.Type.SEQUENCE || !Array.isArray(signedData.value)) {
+    if (
+      !signedData ||
+      signedData.type !== forge.asn1.Type.SEQUENCE ||
+      !Array.isArray(signedData.value)
+    ) {
       return null;
     }
 
@@ -689,10 +668,7 @@ async function resolveCertificateAfterSign(
 /**
  * Подпись CMS с полным сбором данных о подписанте
  */
-export async function signCMSFull(
-  dataB64: string,
-  signal?: AbortSignal,
-): Promise<FullSignResult> {
+export async function signCMSFull(dataB64: string, signal?: AbortSignal): Promise<FullSignResult> {
   const signature = await signCMS(dataB64, signal);
   const activeCert = await resolveCertificateAfterSign("SIGN", signature.signature, signal);
   const fingerprint = await getCertFingerprint(activeCert.certBase64);
@@ -708,10 +684,7 @@ export async function signCMSFull(
 /**
  * Подпись XML с полными данными
  */
-export async function signXMLFull(
-  xml: string,
-  signal?: AbortSignal,
-): Promise<FullSignResult> {
+export async function signXMLFull(xml: string, signal?: AbortSignal): Promise<FullSignResult> {
   const signature = await signXML(xml, signal);
   const activeCert = await resolveCertificateAfterSign("SIGN", signature.signature, signal);
   const fingerprint = await getCertFingerprint(activeCert.certBase64);
@@ -727,10 +700,7 @@ export async function signXMLFull(
 /**
  * Аутентификация с полными данными
  */
-export async function authFull(
-  dataB64: string,
-  signal?: AbortSignal,
-): Promise<FullSignResult> {
+export async function authFull(dataB64: string, signal?: AbortSignal): Promise<FullSignResult> {
   const signature = await auth(dataB64, signal);
   const activeCert = await resolveCertificateAfterSign(
     "AUTHENTICATION",
@@ -744,9 +714,7 @@ export async function authFull(
     );
   }
 
-  const fingerprint = activeCert.certBase64
-    ? await getCertFingerprint(activeCert.certBase64)
-    : "";
+  const fingerprint = activeCert.certBase64 ? await getCertFingerprint(activeCert.certBase64) : "";
 
   return {
     signature: signature.signature,

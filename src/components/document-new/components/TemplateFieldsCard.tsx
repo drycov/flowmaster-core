@@ -26,46 +26,41 @@ export function TemplateFieldsCard({ form, fields }: TemplateFieldsCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {fields.map((field) => {
-          const isAutoField =
-            isAuthorExecutorField(field.key) || isAuthorSignatoryField(field.key);
+          const isAutoField = isAuthorExecutorField(field.key) || isAuthorSignatoryField(field.key);
           const isRequired = field.required && !isAutoField;
 
           return (
-          <div key={field.key}>
-            <Label>
-              {locale === "ru" ? field.label_ru : field.label_kk}
-              {isRequired && " *"}
-            </Label>
-            {isAuthorExecutorField(field.key) && (
-              <p className="mb-1 text-xs text-muted-foreground">{t("doc.executorFromAuthor")}</p>
-            )}
-            {isAuthorSignatoryField(field.key) && (
-              <p className="mb-1 text-xs text-muted-foreground">{t("doc.signatoryAutoFill")}</p>
-            )}
-            {field.type === "textarea" ? (
-              <Textarea
-                rows={4}
-                {...register(field.key, {
-                  required: isRequired ? `${field.label_ru} — обязательное поле` : false,
-                  shouldUnregister: true,
-                })}
-              />
-            ) : (
-              <Input
-                type={
-                  field.type === "number" 
-                    ? "number" 
-                    : field.type === "date" 
-                    ? "date" 
-                    : "text"
-                }
-                {...register(field.key, {
-                  required: isRequired ? `${field.label_ru} — обязательное поле` : false,
-                  shouldUnregister: true,
-                })}
-              />
-            )}
-          </div>
+            <div key={field.key}>
+              <Label>
+                {locale === "ru" ? field.label_ru : field.label_kk}
+                {isRequired && " *"}
+              </Label>
+              {isAuthorExecutorField(field.key) && (
+                <p className="mb-1 text-xs text-muted-foreground">{t("doc.executorFromAuthor")}</p>
+              )}
+              {isAuthorSignatoryField(field.key) && (
+                <p className="mb-1 text-xs text-muted-foreground">{t("doc.signatoryAutoFill")}</p>
+              )}
+              {field.type === "textarea" ? (
+                <Textarea
+                  rows={4}
+                  {...register(field.key, {
+                    required: isRequired ? `${field.label_ru} — обязательное поле` : false,
+                    shouldUnregister: true,
+                  })}
+                />
+              ) : (
+                <Input
+                  type={
+                    field.type === "number" ? "number" : field.type === "date" ? "date" : "text"
+                  }
+                  {...register(field.key, {
+                    required: isRequired ? `${field.label_ru} — обязательное поле` : false,
+                    shouldUnregister: true,
+                  })}
+                />
+              )}
+            </div>
           );
         })}
       </CardContent>

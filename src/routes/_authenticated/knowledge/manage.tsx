@@ -12,11 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useI18n, localized } from "@/i18n";
 import { requireModule } from "@/lib/access/route-guards";
-import {
-  listKbArticles,
-  listKbCategoriesAdmin,
-  upsertKbCategory,
-} from "@/lib/api/kb.functions";
+import { listKbArticles, listKbCategoriesAdmin, upsertKbCategory } from "@/lib/api/kb.functions";
 
 export const Route = createFileRoute("/_authenticated/knowledge/manage")({
   beforeLoad: () => requireModule("knowledge_base", "write"),
@@ -61,7 +57,13 @@ function KbManagePage() {
   });
 
   const toggleCategory = useMutation({
-    mutationFn: (cat: { id: string; code: string; name_ru: string; name_kk: string; is_active: boolean }) =>
+    mutationFn: (cat: {
+      id: string;
+      code: string;
+      name_ru: string;
+      name_kk: string;
+      is_active: boolean;
+    }) =>
       upsertKbCategory({
         data: {
           id: cat.id,
@@ -155,12 +157,7 @@ function KbManagePage() {
                 <p className="text-sm text-muted-foreground">{t("common.empty")}</p>
               ) : (
                 articles.map(
-                  (a: {
-                    id: string;
-                    title_ru: string;
-                    title_kk: string;
-                    status: string;
-                  }) => (
+                  (a: { id: string; title_ru: string; title_kk: string; status: string }) => (
                     <div
                       key={a.id}
                       className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2"

@@ -19,7 +19,10 @@ export async function upsertRow<T extends Record<string, unknown>>(
   if (id) {
     const { id: _omit, ...patch } = row;
     void _omit;
-    let q = supabase.from(table as never).update(patch as never).eq("id", id);
+    let q = supabase
+      .from(table as never)
+      .update(patch as never)
+      .eq("id", id);
     for (const [key, value] of Object.entries(updateEq ?? {})) {
       q = q.eq(key, value);
     }
@@ -37,7 +40,7 @@ export async function upsertRow<T extends Record<string, unknown>>(
       .select(select)
       .single();
     if (error) throw new Error(error.message);
-    return data as Record<string, unknown>;
+    return data as unknown as Record<string, unknown>;
   }
 
   const { id: _omit, ...insertRow } = row;
@@ -49,5 +52,5 @@ export async function upsertRow<T extends Record<string, unknown>>(
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return (data ?? { ...insertRow, ...insertOnly }) as Record<string, unknown>;
+  return (data ?? { ...insertRow, ...insertOnly }) as unknown as Record<string, unknown>;
 }

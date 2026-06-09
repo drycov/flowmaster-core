@@ -10,9 +10,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useI18n, localized } from "@/i18n";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -147,16 +169,12 @@ function PositionsPage() {
                 {positions.map((p) => (
                   <tr key={p.id} className="border-t border-border hover:bg-muted/30">
                     <td className="px-4  font-mono text-xs">{p.code}</td>
-                    <td className="px-4  text-sm font-medium">
-                      {localized(p, locale, "title")}
-                    </td>
+                    <td className="px-4  text-sm font-medium">{localized(p, locale, "title")}</td>
                     <td className="px-4  text-sm text-muted-foreground">
                       {p.departments ? localized(p.departments, locale, "name") : "—"}
                     </td>
                     <td className="px-4  text-center text-sm font-medium">{p.level}</td>
-                    <td className="px-4  text-center text-sm">
-                      {p.is_head ? "✓" : "—"}
-                    </td>
+                    <td className="px-4  text-center text-sm">{p.is_head ? "✓" : "—"}</td>
                     <td className="px-4  text-right space-x-1">
                       <Button
                         variant="ghost"
@@ -184,12 +202,15 @@ function PositionsPage() {
       </PageBody>
 
       {/* Edit / Create Dialog */}
-      <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-            <DialogContent   className="w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) handleClose();
+        }}
+      >
+        <DialogContent className="w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
-            <DialogTitle>
-              {form.id ? t("common.edit") : t("positions.new")}
-            </DialogTitle>
+            <DialogTitle>{form.id ? t("common.edit") : t("positions.new")}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
@@ -278,9 +299,7 @@ function PositionsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("admin.positions.deleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("admin.positions.deleteDesc")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("admin.positions.deleteDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>

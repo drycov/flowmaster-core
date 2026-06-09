@@ -65,7 +65,11 @@ export const listPositions = createServerFn({ method: "GET" })
 
 const positionSchema = z.object({
   id: z.string().uuid().optional(),
-  code: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/),
+  code: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z0-9_-]+$/),
   title_ru: z.string().min(1).max(255),
   title_kk: z.string().min(1).max(255),
   department_id: z.string().uuid().nullable().optional(),
@@ -125,7 +129,9 @@ export const updateRoleDefinition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(roleDefSchema)
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "admin_roles", { action: "manage" });
+    await requireModuleAccess(context.supabase, context.userId, "admin_roles", {
+      action: "manage",
+    });
     const { role, ...patch } = data;
     const { error } = await context.supabase
       .from("role_definitions")

@@ -15,9 +15,7 @@ export function UserSheet({ user, locale, t, onClose }: any) {
         {user && (
           <>
             <SheetHeader>
-              <SheetTitle>
-                {localized(user, locale, "full_name") || "—"}
-              </SheetTitle>
+              <SheetTitle>{localized(user, locale, "full_name") || "—"}</SheetTitle>
               <SheetDescription>ID: {user.id}</SheetDescription>
             </SheetHeader>
 

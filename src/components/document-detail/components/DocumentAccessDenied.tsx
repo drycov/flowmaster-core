@@ -9,9 +9,7 @@ import { requestDocumentAccess } from "@/lib/api/access-grants.functions";
 import { toast } from "sonner";
 import type { getDocumentAccessState } from "@/lib/api/access-grants.functions";
 
-type AccessState = NonNullable<
-  Awaited<ReturnType<typeof getDocumentAccessState>>
->;
+type AccessState = NonNullable<Awaited<ReturnType<typeof getDocumentAccessState>>>;
 
 interface DocumentAccessDeniedProps {
   documentId: string;
@@ -68,9 +66,7 @@ export function DocumentAccessDenied({ documentId, access }: DocumentAccessDenie
               disabled={requestMutation.isPending || reason.trim().length < 3}
               onClick={() => requestMutation.mutate()}
             >
-              {requestMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
+              {requestMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               {t("access.request")}
             </Button>
           </div>

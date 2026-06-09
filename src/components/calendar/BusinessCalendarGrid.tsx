@@ -122,7 +122,9 @@ export function BusinessCalendarGrid({
             >
               <div className="text-xs font-semibold tabular-nums">{date.getDate()}</div>
               {label ? (
-                <div className="text-[9px] leading-tight mt-0.5 line-clamp-2 opacity-90">{label}</div>
+                <div className="text-[9px] leading-tight mt-0.5 line-clamp-2 opacity-90">
+                  {label}
+                </div>
               ) : null}
             </button>
           );

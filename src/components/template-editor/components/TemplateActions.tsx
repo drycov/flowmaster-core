@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/i18n";
 
 interface TemplateActionsProps {
@@ -9,7 +15,12 @@ interface TemplateActionsProps {
   isSaving: boolean;
 }
 
-export function TemplateActions({ status, onStatusChange, onSave, isSaving }: TemplateActionsProps) {
+export function TemplateActions({
+  status,
+  onStatusChange,
+  onSave,
+  isSaving,
+}: TemplateActionsProps) {
   const { t } = useI18n();
 
   return (
@@ -24,7 +35,7 @@ export function TemplateActions({ status, onStatusChange, onSave, isSaving }: Te
           <SelectItem value="archived">{t("status.archived")}</SelectItem>
         </SelectContent>
       </Select>
-      
+
       <Button size="sm" onClick={onSave} disabled={isSaving}>
         {isSaving ? t("tpl.saving") : t("common.save")}
       </Button>

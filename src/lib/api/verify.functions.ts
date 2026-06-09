@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { fetchUserPermissions, requireModuleAccess } from "./_helpers";
 import { ALL_PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -22,10 +23,13 @@ export const runEngineVerification = createServerFn({ method: "GET" })
       detail: `Resolved ${ALL_PERMISSIONS.filter((p) => perms[p]).length}/${ALL_PERMISSIONS.length} for current user`,
     });
 
-    const { data: negGrant } = await supabase.rpc("user_has_permission" as never, {
-      _user: userId,
-      _permission: "nonexistent_permission_xyz",
-    } as never);
+    const { data: negGrant } = await supabaseAdmin.rpc(
+      "user_has_permission" as never,
+      {
+        _user: userId,
+        _permission: "nonexistent_permission_xyz",
+      } as never,
+    );
     checks.push({
       name: "rbac_negative_unknown_permission",
       ok: negGrant === false,

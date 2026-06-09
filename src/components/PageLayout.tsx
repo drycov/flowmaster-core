@@ -21,13 +21,7 @@ export function DataTableShell({
 }
 
 /** Панель фильтров над таблицей */
-export function PageToolbar({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function PageToolbar({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cn("flex flex-wrap items-center gap-2 mb-3", className)}>{children}</div>;
 }
 
@@ -70,13 +64,7 @@ export function SearchField({
   );
 }
 
-export function TableStatusRow({
-  colSpan,
-  children,
-}: {
-  colSpan: number;
-  children: ReactNode;
-}) {
+export function TableStatusRow({ colSpan, children }: { colSpan: number; children: ReactNode }) {
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-8 text-center text-muted-foreground text-sm">
@@ -112,13 +100,7 @@ export function SectionTitle({ children }: { children: ReactNode }) {
 }
 
 /** Боковая / контентная панель (деревья, детали) */
-export function PanelCard({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function PanelCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("bg-card border border-border rounded-sm overflow-hidden", className)}>
       {children}

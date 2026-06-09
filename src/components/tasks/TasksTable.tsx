@@ -42,8 +42,7 @@ type TasksTableProps = {
 
 function isSignTask(task: TaskRow): boolean {
   return (
-    task.action_required?.toLowerCase() === "sign" ||
-    task.node_type?.toUpperCase() === "SIGNATURE"
+    task.action_required?.toLowerCase() === "sign" || task.node_type?.toUpperCase() === "SIGNATURE"
   );
 }
 
@@ -54,7 +53,12 @@ function isReviewTask(task: TaskRow): boolean {
 export function TasksTable({ tasks, isLoading, onDecision, isPending }: TasksTableProps) {
   const { t, locale } = useI18n();
 
-  const renderTaskActions = (task: TaskRow, docId: string | undefined, signTask: boolean, canQuickDecide: boolean) => (
+  const renderTaskActions = (
+    task: TaskRow,
+    docId: string | undefined,
+    signTask: boolean,
+    canQuickDecide: boolean,
+  ) => (
     <div className="flex flex-wrap gap-1 justify-end">
       {docId && (
         <Button size="sm" variant="outline" asChild className="flex-1 sm:flex-none">
@@ -133,10 +137,15 @@ export function TasksTable({ tasks, isLoading, onDecision, isPending }: TasksTab
                 <div className="flex flex-wrap gap-2 text-xs items-center">
                   <StatusBadge status={task.status} kind="status" />
                   {task.is_substitute && task.substitute_principal ? (
-                    <Badge variant="outline" className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300"
+                    >
                       <UserRoundCog className="w-3 h-3" />
                       {interpolate(t("substitution.forUser"), {
-                        name: localized(task.substitute_principal, locale, "full_name") || task.substitute_principal.id,
+                        name:
+                          localized(task.substitute_principal, locale, "full_name") ||
+                          task.substitute_principal.id,
                       })}
                     </Badge>
                   ) : null}
@@ -194,10 +203,15 @@ export function TasksTable({ tasks, isLoading, onDecision, isPending }: TasksTab
                       {doc?.reg_number ?? ""}
                     </div>
                     {task.is_substitute && task.substitute_principal ? (
-                      <Badge variant="outline" className="mt-1 text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300">
+                      <Badge
+                        variant="outline"
+                        className="mt-1 text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300"
+                      >
                         <UserRoundCog className="w-3 h-3" />
                         {interpolate(t("substitution.forUser"), {
-                          name: localized(task.substitute_principal, locale, "full_name") || task.substitute_principal.id,
+                          name:
+                            localized(task.substitute_principal, locale, "full_name") ||
+                            task.substitute_principal.id,
                         })}
                       </Badge>
                     ) : null}

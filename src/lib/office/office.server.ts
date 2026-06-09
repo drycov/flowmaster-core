@@ -11,11 +11,7 @@ export function officeDocumentKey(docId: string, versionNo: number, updatedAt: s
 }
 
 /** Process ONLYOFFICE save callback (status 2 = must save). */
-export async function processOfficeCallback(body: {
-  key?: string;
-  status?: number;
-  url?: string;
-}) {
+export async function processOfficeCallback(body: { key?: string; status?: number; url?: string }) {
   if (body.status !== 2 || !body.url || !body.key) {
     return { ok: true, saved: false };
   }

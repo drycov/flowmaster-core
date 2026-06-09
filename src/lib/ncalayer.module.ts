@@ -134,11 +134,7 @@ class NCALayerConnection {
     if (next) next(msg);
   }
 
-  async request<T>(
-    payload: any,
-    signal?: AbortSignal,
-    timeoutMs = 60000
-  ): Promise<T> {
+  async request<T>(payload: any, signal?: AbortSignal, timeoutMs = 60000): Promise<T> {
     const ws = await this.connect();
 
     return new Promise<T>((resolve, reject) => {
@@ -183,7 +179,7 @@ const connection = new NCALayerConnection();
 
 export async function getCertificateInfo(
   certBase64: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<CertificateInfo> {
   const res = await connection.request<any>(
     {
@@ -191,7 +187,7 @@ export async function getCertificateInfo(
       method: "getCertificateInfo",
       args: [certBase64],
     },
-    signal
+    signal,
   );
 
   const subject = res?.subjectDn || res?.subject || "";
@@ -213,17 +209,14 @@ export async function getCertificateInfo(
    SIGNING API
    ========================================================= */
 
-export async function signCMS(
-  dataB64: string,
-  signal?: AbortSignal
-): Promise<SignResult> {
+export async function signCMS(dataB64: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await connection.request<any>(
     {
       module: "kz.gov.pki.knca.commonUtils",
       method: "createCAdESFromBase64",
       args: ["PKCS12", "SIGNATURE", dataB64, true],
     },
-    signal
+    signal,
   );
 
   const signature = extractSignature(res);
@@ -235,17 +228,14 @@ export async function signCMS(
   return { signature };
 }
 
-export async function signXML(
-  xml: string,
-  signal?: AbortSignal
-): Promise<SignResult> {
+export async function signXML(xml: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await connection.request<any>(
     {
       module: "kz.gov.pki.knca.commonUtils",
       method: "signXml",
       args: [xml],
     },
-    signal
+    signal,
   );
 
   const signature = extractSignature(res);
@@ -257,17 +247,14 @@ export async function signXML(
   return { signature };
 }
 
-export async function auth(
-  dataB64: string,
-  signal?: AbortSignal
-): Promise<SignResult> {
+export async function auth(dataB64: string, signal?: AbortSignal): Promise<SignResult> {
   const res = await connection.request<any>(
     {
       module: "kz.gov.pki.knca.commonUtils",
       method: "signAuth",
       args: [dataB64],
     },
-    signal
+    signal,
   );
 
   const signature = extractSignature(res);

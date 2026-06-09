@@ -36,9 +36,7 @@ export function DocumentAccessGrantsPanel({
     mutationFn: (args: { grant_id: string; decision: "approved" | "rejected" }) =>
       resolveDocumentAccessGrant({ data: args }),
     onSuccess: (_, vars) => {
-      toast.success(
-        vars.decision === "approved" ? t("access.approved") : t("access.denied"),
-      );
+      toast.success(vars.decision === "approved" ? t("access.approved") : t("access.denied"));
       qc.invalidateQueries({ queryKey: ["document-access-grants", documentId] });
       qc.invalidateQueries({ queryKey: ["document", documentId] });
     },
@@ -76,9 +74,7 @@ export function DocumentAccessGrantsPanel({
                   size="sm"
                   className="h-7"
                   disabled={resolveMutation.isPending}
-                  onClick={() =>
-                    resolveMutation.mutate({ grant_id: g.id, decision: "approved" })
-                  }
+                  onClick={() => resolveMutation.mutate({ grant_id: g.id, decision: "approved" })}
                 >
                   {resolveMutation.isPending ? (
                     <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -90,9 +86,7 @@ export function DocumentAccessGrantsPanel({
                   variant="outline"
                   className="h-7"
                   disabled={resolveMutation.isPending}
-                  onClick={() =>
-                    resolveMutation.mutate({ grant_id: g.id, decision: "rejected" })
-                  }
+                  onClick={() => resolveMutation.mutate({ grant_id: g.id, decision: "rejected" })}
                 >
                   {t("access.reject")}
                 </Button>

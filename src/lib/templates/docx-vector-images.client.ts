@@ -77,7 +77,11 @@ async function loadImageElement(url: string): Promise<HTMLImageElement> {
   });
 }
 
-async function svgElementToPngBytes(svg: SVGElement, width: number, height: number): Promise<Uint8Array> {
+async function svgElementToPngBytes(
+  svg: SVGElement,
+  width: number,
+  height: number,
+): Promise<Uint8Array> {
   const w = capDimension(width);
   const h = capDimension(height);
   const svgText = new XMLSerializer().serializeToString(svg);
@@ -175,7 +179,6 @@ export async function replaceDocxVectorImages(blob: Blob): Promise<Blob> {
   return zip.generate({
     type: "blob",
     mimeType:
-      blob.type ||
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      blob.type || "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   }) as Blob;
 }

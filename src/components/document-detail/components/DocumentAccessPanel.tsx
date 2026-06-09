@@ -6,10 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, Loader2 } from "lucide-react";
 import { useI18n, localized } from "@/i18n";
-import {
-  getDocumentAccessState,
-  requestDocumentAccess,
-} from "@/lib/api/access-grants.functions";
+import { getDocumentAccessState, requestDocumentAccess } from "@/lib/api/access-grants.functions";
 import { toast } from "sonner";
 
 interface DocumentAccessPanelProps {
@@ -17,10 +14,7 @@ interface DocumentAccessPanelProps {
   contentRestricted?: boolean;
 }
 
-export function DocumentAccessPanel({
-  documentId,
-  contentRestricted,
-}: DocumentAccessPanelProps) {
+export function DocumentAccessPanel({ documentId, contentRestricted }: DocumentAccessPanelProps) {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
   const [reason, setReason] = useState("");
@@ -92,9 +86,7 @@ export function DocumentAccessPanel({
               disabled={requestMutation.isPending || reason.trim().length < 3}
               onClick={() => requestMutation.mutate()}
             >
-              {requestMutation.isPending ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : null}
+              {requestMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
               {t("access.request")}
             </Button>
           </div>

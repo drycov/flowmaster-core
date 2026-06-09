@@ -36,7 +36,12 @@ function NotificationsPage() {
         title={t("nav.notifications")}
         actions={
           items.length > 0 ? (
-            <Button size="sm" variant="outline" onClick={() => mark.mutate()} disabled={mark.isPending}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => mark.mutate()}
+              disabled={mark.isPending}
+            >
               <Check className="w-4 h-4 mr-1" />
               {t("notifications.markAllRead")}
             </Button>
@@ -58,9 +63,7 @@ function NotificationsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium text-sm">{n.title}</div>
-                    {n.body && (
-                      <div className="text-sm text-muted-foreground mt-0.5">{n.body}</div>
-                    )}
+                    {n.body && <div className="text-sm text-muted-foreground mt-0.5">{n.body}</div>}
                     {n.link && (
                       <a href={n.link} className="text-xs text-primary hover:underline">
                         {t("notifications.goTo")}

@@ -1,5 +1,11 @@
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n, localized } from "@/i18n";
 import type { Nomenclature } from "../types";
 
@@ -10,7 +16,12 @@ interface NomenclatureSelectProps {
   isLoading?: boolean;
 }
 
-export function NomenclatureSelect({ value, onChange, nomenclatures, isLoading }: NomenclatureSelectProps) {
+export function NomenclatureSelect({
+  value,
+  onChange,
+  nomenclatures,
+  isLoading,
+}: NomenclatureSelectProps) {
   const { t, locale } = useI18n();
 
   return (

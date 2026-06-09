@@ -49,8 +49,7 @@ export function AdminResetPasswordDialog({
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
-  const canSubmit =
-    password.length >= 8 && password === confirm && !resetMut.isPending;
+  const canSubmit = password.length >= 8 && password === confirm && !resetMut.isPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -11,7 +11,10 @@ interface UseWorkflowValidationReturn {
 }
 
 export function useWorkflowValidation(t: TFunction): UseWorkflowValidationReturn {
-  const [validationResult, setValidationResult] = useState<ValidationResult>({ isValid: true, errors: [] });
+  const [validationResult, setValidationResult] = useState<ValidationResult>({
+    isValid: true,
+    errors: [],
+  });
 
   const validate = useCallback(
     (nodes: FlowNode[], edges: FlowEdge[]): boolean => {

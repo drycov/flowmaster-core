@@ -24,17 +24,14 @@ export const messagesKk = {
   "auth.heroDescription":
     "Құжаттардың толық өмірлік циклін автоматтандыру — жасаудан келісуге және ЭЦҚ қол қоюға дейін.",
   "auth.feature.documents.title": "Құжаттарды басқару",
-  "auth.feature.documents.desc":
-    "Тіркеу, келісу және орындалуын бақылау үшін бірыңғай кеңістік.",
+  "auth.feature.documents.desc": "Тіркеу, келісу және орындалуын бақылау үшін бірыңғай кеңістік.",
   "auth.feature.workflow.title": "Workflow және келісу",
   "auth.feature.workflow.desc":
     "Икемді келісу бағыттары, SLA, делегирлеу және автоматты эскалация.",
   "auth.feature.eds.title": "Заңды күші бар қолтаңба",
-  "auth.feature.eds.desc":
-    "NCALayer, ҚР ЭЦҚ, журналдау және құжаттардың түпнұсқалығын бақылау.",
+  "auth.feature.eds.desc": "NCALayer, ҚР ЭЦҚ, журналдау және құжаттардың түпнұсқалығын бақылау.",
   "auth.feature.archive.title": "Электрондық мұрағат",
-  "auth.feature.archive.desc":
-    "Өзгерістер мен әрекеттердің толық тарихымен ұзақ мерзімді сақтау.",
+  "auth.feature.archive.desc": "Өзгерістер мен әрекеттердің толық тарихымен ұзақ мерзімді сақтау.",
   "auth.placeholder.fullName": "Иванов Иван Иванович",
   "auth.placeholder.email": "user@example.com",
   "auth.metaTitle": "Кіру — БЭҚА",
@@ -54,8 +51,7 @@ export const messagesKk = {
   "auth.tabSignIn": "Кіру",
   "auth.tabSignUp": "Тіркелу",
   "auth.bootstrapTitle": "Алғашқы баптау",
-  "auth.bootstrapDescription":
-    "Құжат айналымы жүйесін іске қосу үшін әкімші тіркелгісін жасаңыз.",
+  "auth.bootstrapDescription": "Құжат айналымы жүйесін іске қосу үшін әкімші тіркелгісін жасаңыз.",
   "auth.bootstrapAlertTitle": "Жүйенің алғашқы іске қосылуы",
   "auth.bootstrapAlertDescription":
     "Бірінші тіркелген пайдаланушы әкімші рөлі мен ұйымды баптау құқығын алады.",
@@ -201,10 +197,8 @@ export const messagesKk = {
   "doc.action.error": "Әрекет орындалмады",
 
   "ncalayer.unavailable": "NCALayer қолжетімсіз. Іске қосып, қайталаңыз.",
-  "ncalayer.noCert":
-    "Қолтаңба алынбады. NCALayer диалогында сертификатты таңдап, PIN енгізіңіз.",
-  "ncalayer.noIin":
-    "Сертификатта ЖСН табылмады. Жеке тұлға сертификатын таңдаңыз.",
+  "ncalayer.noCert": "Қолтаңба алынбады. NCALayer диалогында сертификатты таңдап, PIN енгізіңіз.",
+  "ncalayer.noIin": "Сертификатта ЖСН табылмады. Жеке тұлға сертификатын таңдаңыз.",
   "ncalayer.cancelled": "Қол қою болдырылмады.",
   "ncalayer.error": "NCALayer қатесі: {message}",
   "ncalayer.edsLinked": "ЭЦҚ аккаунтқа байланды",
@@ -336,7 +330,8 @@ export const messagesKk = {
   "admin.users.actions": "Әрекеттер",
   "admin.users.resetPassword": "Құпиясөзді қалпына келтіру",
   "admin.users.resetPasswordTitle": "Құпиясөзді қалпына келтіру",
-  "admin.users.resetPasswordDescription": "{name} пайдаланушысына жаңа құпиясөз орнатыңыз. Барлық белсенді сессиялар аяқталады.",
+  "admin.users.resetPasswordDescription":
+    "{name} пайдаланушысына жаңа құпиясөз орнатыңыз. Барлық белсенді сессиялар аяқталады.",
   "admin.users.resetPasswordConfirm": "Қалпына келтіру",
   "admin.users.resetPasswordHint": "Кемінде 8 таңба. Құпиясөзді қорғалған арна арқылы хабарлаңыз.",
   "admin.users.resetPasswordCardHint": "Әкімші ағымдағы құпиясөзді білмей жаңасын орната алады.",
@@ -354,7 +349,8 @@ export const messagesKk = {
   "nom.sortOrder": "Сұрыптау",
   "nom.added": "Қосылды",
   "nom.yearsSuffix": "{n} жыл",
-  "nom.description": "Іс номенклатурасы бөлімдерінің иерархиясы: кодтар, сақтау мерзімдері және бөлімдерге байланыс.",
+  "nom.description":
+    "Іс номенклатурасы бөлімдерінің иерархиясы: кодтар, сақтау мерзімдері және бөлімдерге байланыс.",
   "nom.search": "Код немесе атау бойынша іздеу…",
   "nom.total": "Барлық бөлімдер: {n}",
   "nom.empty": "Номенклатура бос. Алғашқы бөлімді қосыңыз.",
@@ -488,22 +484,26 @@ export const messagesKk = {
   "tpl.fileUploadError": "Үлгіні жүктеу қатесі",
   "tpl.fileTemplate.title": "Үлгі файлы",
   "tpl.fileTemplate.upload": "Файл жүктеу",
-  "tpl.fileTemplate.hint": "DOC, DOCX, XLS, XLSX қолдау көрсетіледі. Файлға {{өріс_кілті}} түрінде өрістер қойыңыз.",
-  "tpl.fileTemplate.legacyHint": "DOC/XLS форматы — тек сақтау және жүктеу. Автотолтыру үшін DOCX немесе XLSX жүктеңіз.",
+  "tpl.fileTemplate.hint":
+    "DOC, DOCX, XLS, XLSX қолдау көрсетіледі. Файлға {{өріс_кілті}} түрінде өрістер қойыңыз.",
+  "tpl.fileTemplate.legacyHint":
+    "DOC/XLS форматы — тек сақтау және жүктеу. Автотолтыру үшін DOCX немесе XLSX жүктеңіз.",
   "tpl.fileTemplate.extractFields": "Файлдан өрістерді алу",
   "tpl.fileTemplate.scanError": "Файлдан өрістерді алу мүмкін болмады",
   "tpl.fileTemplate.noPlaceholders": "Файлда {{кілт}} өрістері табылмады",
   "tpl.fileTemplate.fieldsFound": "Қосылған өрістер: {count}",
   "tpl.fileTemplate.invalidFormat": "Қолдау көрсетілмейтін формат. DOC, DOCX, XLS, XLSX ғана",
   "tpl.fileTemplate.optionalBody": "Мәтіндік дене (міндетті емес)",
-  "tpl.fileTemplate.bodyHint": "Негізгі үлгі — жүктелген файл. Мәтіндік дене қосымша ретінде қолданылады.",
+  "tpl.fileTemplate.bodyHint":
+    "Негізгі үлгі — жүктелген файл. Мәтіндік дене қосымша ретінде қолданылады.",
   "tpl.fileTemplate.parsing": "Файлды талдау және өрістерді алу…",
   "tpl.fileTemplate.fieldsAlreadySynced": "Файлдағы барлық өрістер қосылған",
   "tpl.fileTemplate.metadataFilled": "Атау мен сипаттама файлдан толтырылды",
   "tpl.description": "Сипаттама",
   "tpl.descriptionPlaceholder": "Үлгі мақсатының қысқаша сипаттамасы",
   "tpl.preview.title": "Алдын ала қарау",
-  "tpl.preview.hint": "Өрістер мен мәтін өзгерген сайын жаңартылады. DOCX және XLSX үшін өріс атаулары қойылады.",
+  "tpl.preview.hint":
+    "Өрістер мен мәтін өзгерген сайын жаңартылады. DOCX және XLSX үшін өріс атаулары қойылады.",
   "tpl.preview.loading": "Алдын ала қарау жүктелуде…",
   "tpl.preview.error": "Алдын ала қарауды көрсету мүмкін болмады",
   "tpl.preview.empty": "Үлгі файлын жүктеңіз немесе мәтіндік денені толтырыңыз",
@@ -540,7 +540,8 @@ export const messagesKk = {
   "doc.fieldRequired": "«{field}» өрісі міндетті",
   "doc.titleFromTemplate": "Тақырып үлгі бойынша автоматты қалыптасады",
   "doc.preview.title": "Құжатты алдын ала қарау",
-  "doc.preview.hint": "Өрістерді толтырған сайын жаңартылады. DOCX және XLSX үшін енгізілген мәндер қойылады.",
+  "doc.preview.hint":
+    "Өрістерді толтырған сайын жаңартылады. DOCX және XLSX үшін енгізілген мәндер қойылады.",
   "doc.preview.loading": "Алдын ала қарау қалыптасуда…",
   "doc.preview.error": "Алдын ала қарауды қалыптастыру мүмкін болмады",
   "doc.preview.empty": "Алдын ала қарау үшін деректер жоқ",

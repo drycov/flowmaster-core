@@ -32,8 +32,18 @@ function WorkflowsList() {
           status: "draft",
           definition: {
             nodes: [
-              { id: "start", type: "START", label: ruDictionary["wf.node.start"], position: { x: 50, y: 100 } },
-              { id: "end", type: "END", label: ruDictionary["wf.node.end"], position: { x: 400, y: 100 } },
+              {
+                id: "start",
+                type: "START",
+                label: ruDictionary["wf.node.start"],
+                position: { x: 50, y: 100 },
+              },
+              {
+                id: "end",
+                type: "END",
+                label: ruDictionary["wf.node.end"],
+                position: { x: 400, y: 100 },
+              },
             ],
             edges: [{ id: "e1", source: "start", target: "end" }],
             schema_version: 2,
@@ -50,7 +60,12 @@ function WorkflowsList() {
     <>
       <PageHeader
         title={t("nav.workflows")}
-        actions={<Button size="sm" onClick={() => create.mutate()}><Plus className="w-4 h-4 mr-1" />{t("common.create")}</Button>}
+        actions={
+          <Button size="sm" onClick={() => create.mutate()}>
+            <Plus className="w-4 h-4 mr-1" />
+            {t("common.create")}
+          </Button>
+        }
       />
       <PageBody>
         <div className="grid lg:grid-cols-2 gap-3">
@@ -66,7 +81,9 @@ function WorkflowsList() {
                     {w.status === "published" ? t("wf.status.published") : t("wf.status.draft")}
                   </Badge>
                 </div>
-                <div className="text-xs text-muted-foreground mt-3">{fmtDateShort(w.updated_at, locale)} · v{w.version}</div>
+                <div className="text-xs text-muted-foreground mt-3">
+                  {fmtDateShort(w.updated_at, locale)} · v{w.version}
+                </div>
               </div>
             </Link>
           ))}

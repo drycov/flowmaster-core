@@ -13,8 +13,21 @@ import { PageBody, PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -45,6 +58,11 @@ import {
   registrationJournalLabel,
 } from "@/lib/documents/reference-display";
 import { findMyPendingTask } from "@/lib/workflow/task-match";
+import type {
+  DocumentComment,
+  DocumentVersion,
+  WorkflowRun,
+} from "@/components/document-detail/types";
 import { SubstitutionActingBanner } from "@/components/substitution/SubstitutionActingBanner";
 import { ContractDetailsCard } from "@/components/contracts/ContractDetailsCard";
 import { KbPublishCard } from "@/components/kb/KbPublishCard";
@@ -84,7 +102,7 @@ function DocumentDetail() {
     isAddingComment,
     startWorkflow,
     isStartingWorkflow,
-    // archiveDocument, 
+    // archiveDocument,
     archive: archiveDocument,
     saveContent,
   } = useDocumentActions(id);
@@ -123,17 +141,22 @@ function DocumentDetail() {
   const contentRestricted = !!(data as { content_restricted?: boolean }).content_restricted;
 
   const currentVersion =
-    data.versions.find((v) => v.version_no === doc.current_version) ?? data.versions[0] ?? null;
+    data.versions.find((v: DocumentVersion) => v.version_no === doc.current_version) ??
+    data.versions[0] ??
+    null;
 
-  const hasActiveRun = (data?.runs ?? []).some((r) => r.status === "running");
+  const hasActiveRun = (data?.runs ?? []).some((r: WorkflowRun) => r.status === "running");
+  const perms = me?.permissions ?? {};
+  const canManageWorkflows = !!perms.manage_workflows;
+  const canManageDocuments = !!perms.manage_documents;
+
   const myPendingTask = findMyPendingTask(data.tasks ?? [], me?.profile?.id, {
-    isAdmin: me?.roles?.includes("admin"),
+    canManageWorkflows,
     substituteFor: subs?.actingFor ?? [],
   });
 
   const substitutePrincipalName =
-    myPendingTask?.assignee_id &&
-    myPendingTask.assignee_id !== me?.profile?.id
+    myPendingTask?.assignee_id && myPendingTask.assignee_id !== me?.profile?.id
       ? localized(
           subs?.actingForDetails?.find((a) => a.principal_id === myPendingTask.assignee_id)
             ?.principal,
@@ -143,30 +166,30 @@ function DocumentDetail() {
       : undefined;
 
   const canEditMetadata =
-    me?.roles?.includes("admin") ||
+    canManageDocuments ||
     (doc.created_by === me?.profile?.id &&
       (doc.status === "draft" || doc.status === "returned_for_revision"));
 
-  const canManageArchive =
-    me?.roles?.includes("admin") ||
-    !!me?.permissions?.archive_documents ||
-    !!me?.permissions?.manage_documents;
+  const canManageArchive = !!perms.archive_documents || canManageDocuments;
 
   const canReviewAccess =
-    me?.roles?.includes("admin") ||
+    canManageDocuments ||
     doc.created_by === (me?.profile as { id?: string } | undefined)?.id ||
-    !!me?.permissions?.manage_documents ||
+    !!perms.view_all_documents ||
     !!(data as { can_manage_access_grants?: boolean }).can_manage_access_grants;
 
   const docTypeCode =
     (doc as { ref_document_types?: { code?: string } }).ref_document_types?.code ?? doc.doc_type;
   const isContract = docTypeCode === "contract";
-  const contractDetails = (data as { contract_details?: Parameters<typeof ContractDetailsCard>[0]["contract"] }).contract_details ?? null;
-  const canEditContract =
-    canEditMetadata ||
-    !!me?.permissions?.manage_contracts ||
-    !!me?.permissions?.manage_documents;
-  const project = (doc as { document_projects?: { id: string; code: string; name_ru: string; name_kk: string } | null }).document_projects;
+  const contractDetails =
+    (data as { contract_details?: Parameters<typeof ContractDetailsCard>[0]["contract"] })
+      .contract_details ?? null;
+  const canEditContract = canEditMetadata || !!perms.manage_contracts || canManageDocuments;
+  const project = (
+    doc as {
+      document_projects?: { id: string; code: string; name_ru: string; name_kk: string } | null;
+    }
+  ).document_projects;
 
   const handleStartWorkflow = () => {
     startWorkflow(chosenWf || undefined, {
@@ -241,17 +264,18 @@ function DocumentDetail() {
               </Dialog>
             )}
 
-            {/* Кнопка архивации */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => archiveDocument()}
-              disabled={!!doc.legal_hold}
-              title={doc.legal_hold ? t("archive.legalHoldBlock") : undefined}
-            >
-              <Archive className="w-4 h-4 mr-1" />
-              {t("common.archive")}
-            </Button>
+            {canManageArchive && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => archiveDocument()}
+                disabled={!!doc.legal_hold}
+                title={doc.legal_hold ? t("archive.legalHoldBlock") : undefined}
+              >
+                <Archive className="w-4 h-4 mr-1" />
+                {t("common.archive")}
+              </Button>
+            )}
           </>
         }
       />
@@ -261,12 +285,30 @@ function DocumentDetail() {
         <div className="col-span-2 space-y-4">
           <Tabs defaultValue="content">
             <TabsList className="rounded-sm">
-              <TabsTrigger value="content"><FileEdit className="w-4 h-4 mr-1" />{t("doc.body")}</TabsTrigger>
-              <TabsTrigger value="office"><FileSearch className="w-4 h-4 mr-1" />Office Web</TabsTrigger>
-              <TabsTrigger value="versions"><History className="w-4 h-4 mr-1" />{t("doc.versions")}</TabsTrigger>
-              <TabsTrigger value="links"><Link2 className="w-4 h-4 mr-1" />{t("doc.links")}</TabsTrigger>
-              <TabsTrigger value="comments"><MessageSquare className="w-4 h-4 mr-1" />{t("doc.comments")}</TabsTrigger>
-              <TabsTrigger value="audit"><Shield className="w-4 h-4 mr-1" />{t("doc.audit")}</TabsTrigger>
+              <TabsTrigger value="content">
+                <FileEdit className="w-4 h-4 mr-1" />
+                {t("doc.body")}
+              </TabsTrigger>
+              <TabsTrigger value="office">
+                <FileSearch className="w-4 h-4 mr-1" />
+                Office Web
+              </TabsTrigger>
+              <TabsTrigger value="versions">
+                <History className="w-4 h-4 mr-1" />
+                {t("doc.versions")}
+              </TabsTrigger>
+              <TabsTrigger value="links">
+                <Link2 className="w-4 h-4 mr-1" />
+                {t("doc.links")}
+              </TabsTrigger>
+              <TabsTrigger value="comments">
+                <MessageSquare className="w-4 h-4 mr-1" />
+                {t("doc.comments")}
+              </TabsTrigger>
+              <TabsTrigger value="audit">
+                <Shield className="w-4 h-4 mr-1" />
+                {t("doc.audit")}
+              </TabsTrigger>
             </TabsList>
 
             {/* Вкладка 1: Скомпилированное содержание документа (решает проблему тегов) */}
@@ -315,9 +357,11 @@ function DocumentDetail() {
                   {data.comments.length === 0 && (
                     <div className="text-sm text-muted-foreground">{t("common.empty")}</div>
                   )}
-                  {data.comments.map((c) => (
+                  {data.comments.map((c: DocumentComment) => (
                     <div key={c.id} className="border-l-2 border-primary/50 pl-3 py-1">
-                      <div className="text-xs text-muted-foreground">{fmtDate(c.created_at, locale)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {fmtDate(c.created_at, locale)}
+                      </div>
                       <div className="text-sm whitespace-pre-wrap">{c.body}</div>
                     </div>
                   ))}
@@ -356,7 +400,7 @@ function DocumentDetail() {
               documentId={id}
               tasks={data.tasks ?? []}
               currentUserId={me?.profile?.id}
-              isAdmin={me?.roles?.includes("admin")}
+              canManageWorkflows={canManageWorkflows}
               substituteFor={subs?.actingFor ?? []}
               substitutePrincipalName={substitutePrincipalName}
               signPayload={doc.body ?? doc.title_ru ?? id}
@@ -381,21 +425,33 @@ function DocumentDetail() {
 
           {/* Карточка системных метаданных документа */}
           <Card className="rounded-sm">
-            <CardHeader><CardTitle className="text-sm">{t("doc.metadata")}</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm">{t("doc.metadata")}</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Field label={t("common.status")}><StatusBadge status={doc.status} /></Field>
-              <Field label="SLA"><SlaBadgeSafe sla={doc.sla_status} /></Field>
+              <Field label={t("common.status")}>
+                <StatusBadge status={doc.status} />
+              </Field>
+              <Field label="SLA">
+                <SlaBadgeSafe sla={doc.sla_status} />
+              </Field>
               <Field label={t("doc.documentType")}>{documentTypeLabel(doc, locale)}</Field>
               {project && (
                 <Field label={t("project.title")}>
-                  <Link to="/projects/$id" params={{ id: project.id }} className="text-primary hover:underline">
+                  <Link
+                    to="/projects/$id"
+                    params={{ id: project.id }}
+                    className="text-primary hover:underline"
+                  >
                     {project.code} — {localized(project, locale, "name")}
                   </Link>
                 </Field>
               )}
               <Field label={t("doc.priority")}>{priorityLabel(doc, locale)}</Field>
               <Field label={t("doc.correspondent")}>{correspondentLabel(doc, locale)}</Field>
-              <Field label={t("doc.registrationJournal")}>{registrationJournalLabel(doc, locale)}</Field>
+              <Field label={t("doc.registrationJournal")}>
+                {registrationJournalLabel(doc, locale)}
+              </Field>
               <Field label={t("doc.deliveryMethod")}>{deliveryMethodLabel(doc, locale)}</Field>
               <Field label={t("access.level")}>{accessLevelLabel(doc, locale)}</Field>
               <Field label={t("doc.externalRegNumber")}>{doc.external_reg_number || "—"}</Field>
@@ -406,7 +462,9 @@ function DocumentDetail() {
                 {doc.sent_at ? fmtDateShort(doc.sent_at, locale) : "—"}
               </Field>
               <Field label={t("doc.pagesCount")}>{doc.pages_count ?? "—"}</Field>
-              <Field label={t("common.deadline")}>{doc.due_at ? fmtDateShort(doc.due_at, locale) : "—"}</Field>
+              <Field label={t("common.deadline")}>
+                {doc.due_at ? fmtDateShort(doc.due_at, locale) : "—"}
+              </Field>
               <Field label={t("common.version")}>v{doc.current_version}</Field>
             </CardContent>
           </Card>

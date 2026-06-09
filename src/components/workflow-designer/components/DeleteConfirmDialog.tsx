@@ -1,4 +1,13 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useI18n } from "@/i18n";
 import type { FlowNode } from "../types";
 
@@ -10,7 +19,13 @@ interface DeleteConfirmDialogProps {
   onConfirm: () => void;
 }
 
-export function DeleteConfirmDialog({ open, node, connectedEdgesCount, onClose, onConfirm }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({
+  open,
+  node,
+  connectedEdgesCount,
+  onClose,
+  onConfirm,
+}: DeleteConfirmDialogProps) {
   const { t } = useI18n();
 
   if (!node) return null;
@@ -23,9 +38,7 @@ export function DeleteConfirmDialog({ open, node, connectedEdgesCount, onClose, 
           <AlertDialogDescription>
             {node.data.label}
             {connectedEdgesCount > 0 && (
-              <span className="block mt-2 text-amber-600">
-                {connectedEdgesCount}
-              </span>
+              <span className="block mt-2 text-amber-600">{connectedEdgesCount}</span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>

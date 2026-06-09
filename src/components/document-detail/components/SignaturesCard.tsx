@@ -20,9 +20,7 @@ function parseCertSubject(subject?: string): string {
   return match ? match[1].trim() : subject;
 }
 
-function statusVariant(
-  status?: string,
-): "default" | "secondary" | "destructive" | "outline" {
+function statusVariant(status?: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "valid") return "default";
   if (status === "unverified") return "secondary";
   return "destructive";
@@ -40,8 +38,7 @@ export function SignaturesCard({ signatures, documentId }: SignaturesCardProps) 
       const key = `eds.verify.${result.verification_status}` as const;
       toast.success(t(key));
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : t("eds.verify.error")),
+    onError: (error) => toast.error(error instanceof Error ? error.message : t("eds.verify.error")),
   });
 
   return (
@@ -66,8 +63,7 @@ export function SignaturesCard({ signatures, documentId }: SignaturesCardProps) 
               const displayName = parseCertSubject(s.cert_subject);
               const status = s.verification_status ?? "unverified";
               const details = s.verification_details;
-              const isVerifying =
-                verifyMutation.isPending && verifyMutation.variables === s.id;
+              const isVerifying = verifyMutation.isPending && verifyMutation.variables === s.id;
 
               return (
                 <div

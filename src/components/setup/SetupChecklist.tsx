@@ -55,9 +55,7 @@ export function SetupChecklist({ isAdmin }: { isAdmin: boolean }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-3">
-          {t("setup.description")}
-        </p>
+        <p className="text-sm text-muted-foreground mb-3">{t("setup.description")}</p>
         <ul>
           <Step
             done={data.has_admin}

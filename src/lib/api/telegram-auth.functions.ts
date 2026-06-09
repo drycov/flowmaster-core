@@ -11,9 +11,8 @@ import {
 } from "@/lib/telegram/auth.server";
 
 export const startTelegramLogin = createServerFn({ method: "POST" }).handler(async () => {
-  const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } = await import(
-    "@/lib/telegram/polling.server",
-  );
+  const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } =
+    await import("@/lib/telegram/polling.server");
   if ((await getTelegramDeliveryMode()) === "polling") {
     void pollTelegramUpdatesOnce(0);
   }

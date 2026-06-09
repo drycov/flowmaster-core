@@ -43,9 +43,7 @@ export async function getS3PublicInfo() {
     configured: Boolean(cfg),
     endpoint:
       cfg?.endpoint ??
-      (projectRef
-        ? `https://${projectRef}.storage.supabase.co/storage/v1/s3`
-        : null),
+      (projectRef ? `https://${projectRef}.storage.supabase.co/storage/v1/s3` : null),
     region: cfg?.region ?? "auto",
     buckets: ["avatars", "documents", "templates", "signatures"] as StorageBucket[],
   };

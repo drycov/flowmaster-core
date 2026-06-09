@@ -1,33 +1,21 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 
 import {
-
   Outlet,
-
   Link,
-
   createRootRouteWithContext,
-
   useRouter,
-
   HeadContent,
-
   Scripts,
-
 } from "@tanstack/react-router";
 
 import { useEffect, type ReactNode } from "react";
 
-
-
 import appCss from "../styles.css?url";
-
 
 import { I18nProvider } from "@/i18n";
 
 import { Toaster } from "@/components/ui/sonner";
-
-
 
 function NotFoundComponent() {
   return (
@@ -51,8 +39,6 @@ function NotFoundComponent() {
   );
 }
 
-
-
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
@@ -65,7 +51,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Что-то пошло не так</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          Что-то пошло не так
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {import.meta.env.DEV
             ? error.message
@@ -93,14 +81,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-
-
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-
   head: () => ({
-
     meta: [
-
       { charSet: "utf-8" },
 
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -115,38 +98,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
       { name: "twitter:title", content: "ЕСЭДО — Единая система электронного документооборота" },
 
-      { property: "og:description", content: "Enterprise EDMS: документы, маршруты, согласования, ЭЦП." },
-
-      { name: "twitter:description", content: "Enterprise EDMS: документы, маршруты, согласования, ЭЦП." },
-
       {
-
-        property: "og:image",
-
-        content:
-
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4ccf569a-5724-4fc6-81ad-16bf9b767b17",
-
+        property: "og:description",
+        content: "Enterprise EDMS: документы, маршруты, согласования, ЭЦП.",
       },
 
       {
+        name: "twitter:description",
+        content: "Enterprise EDMS: документы, маршруты, согласования, ЭЦП.",
+      },
 
+      {
+        property: "og:image",
+
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4ccf569a-5724-4fc6-81ad-16bf9b767b17",
+      },
+
+      {
         name: "twitter:image",
 
         content:
-
           "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4ccf569a-5724-4fc6-81ad-16bf9b767b17",
-
       },
 
       { name: "twitter:card", content: "summary_large_image" },
 
       { property: "og:type", content: "website" },
-
     ],
 
     links: [
-
       { rel: "stylesheet", href: appCss },
 
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -156,9 +137,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://rsms.me/" },
 
       { rel: "stylesheet", href: "https://rsms.me/inter/inter.css" },
-
     ],
-
   }),
 
   shellComponent: RootShell,
@@ -168,66 +147,43 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   notFoundComponent: NotFoundComponent,
 
   errorComponent: ErrorComponent,
-
 });
 
-
-
 function RootShell({ children }: { children: ReactNode }) {
-
   return (
-
     <html lang="ru">
-
       <head>
-
         <HeadContent />
-
       </head>
 
       <body>
-
         {children}
 
         <Scripts />
-
       </body>
-
     </html>
-
   );
-
 }
 
-
-
 function AuthSync() {
-
   const router = useRouter();
 
   const qc = useQueryClient();
 
   useEffect(() => {
-
     const onAuthChange = () => {
-
       router.invalidate();
 
       qc.invalidateQueries();
-
     };
 
     window.addEventListener("app-auth-changed", onAuthChange);
 
     return () => window.removeEventListener("app-auth-changed", onAuthChange);
-
   }, [router, qc]);
 
   return null;
-
 }
-
-
 
 function SentryInit() {
   useEffect(() => {
@@ -237,30 +193,18 @@ function SentryInit() {
 }
 
 function RootComponent() {
-
   const { queryClient } = Route.useRouteContext();
 
-
-
   return (
-
     <QueryClientProvider client={queryClient}>
-
       <I18nProvider>
-
         <SentryInit />
         <AuthSync />
 
         <Outlet />
 
         <Toaster position="top-right" />
-
       </I18nProvider>
-
     </QueryClientProvider>
-
   );
-
 }
-
-

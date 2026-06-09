@@ -36,7 +36,9 @@ export function LeaveDayList({
               backgroundColor: type?.color ?? "#22c55e",
               opacity: isPending ? 0.75 : 1,
             }}
-            title={[showEmployee ? employeeLabel : null, typeLabel, status].filter(Boolean).join(" · ")}
+            title={[showEmployee ? employeeLabel : null, typeLabel, status]
+              .filter(Boolean)
+              .join(" · ")}
           >
             {showEmployee && employeeLabel ? `${employeeLabel}: ` : ""}
             {typeLabel}

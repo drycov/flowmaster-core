@@ -181,21 +181,31 @@ const DEFAULT_TELEGRAM: TelegramPolicySettings = {
 
 export function parseSystemSettings(raw: unknown): SystemSettings {
   const root = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  const authRaw = root.auth && typeof root.auth === "object" ? (root.auth as Record<string, unknown>) : {};
-  const edsRaw = root.eds && typeof root.eds === "object" ? (root.eds as Record<string, unknown>) : {};
-  const ldapRaw = root.ldap && typeof root.ldap === "object" ? (root.ldap as Record<string, unknown>) : {};
+  const authRaw =
+    root.auth && typeof root.auth === "object" ? (root.auth as Record<string, unknown>) : {};
+  const edsRaw =
+    root.eds && typeof root.eds === "object" ? (root.eds as Record<string, unknown>) : {};
+  const ldapRaw =
+    root.ldap && typeof root.ldap === "object" ? (root.ldap as Record<string, unknown>) : {};
   const generalRaw =
-    root.general && typeof root.general === "object" ? (root.general as Record<string, unknown>) : {};
+    root.general && typeof root.general === "object"
+      ? (root.general as Record<string, unknown>)
+      : {};
   const integrationsRaw =
     root.integrations && typeof root.integrations === "object"
       ? (root.integrations as Record<string, unknown>)
       : {};
-  const mailRaw = root.mail && typeof root.mail === "object" ? (root.mail as Record<string, unknown>) : {};
+  const mailRaw =
+    root.mail && typeof root.mail === "object" ? (root.mail as Record<string, unknown>) : {};
   const telegramRaw =
-    root.telegram && typeof root.telegram === "object" ? (root.telegram as Record<string, unknown>) : {};
+    root.telegram && typeof root.telegram === "object"
+      ? (root.telegram as Record<string, unknown>)
+      : {};
 
   const domains = Array.isArray(authRaw.allowed_email_domains)
-    ? authRaw.allowed_email_domains.filter((d): d is string => typeof d === "string" && d.length > 0)
+    ? authRaw.allowed_email_domains.filter(
+        (d): d is string => typeof d === "string" && d.length > 0,
+      )
     : DEFAULT_AUTH.allowed_email_domains;
 
   const sessionTtl =
@@ -242,7 +252,10 @@ export function parseSystemSettings(raw: unknown): SystemSettings {
     },
     general: {
       default_locale: defaultLocale,
-      app_url: typeof generalRaw.app_url === "string" ? generalRaw.app_url.trim() : DEFAULT_GENERAL.app_url,
+      app_url:
+        typeof generalRaw.app_url === "string"
+          ? generalRaw.app_url.trim()
+          : DEFAULT_GENERAL.app_url,
     },
     integrations: {
       office_enabled:
@@ -271,13 +284,14 @@ export function parseSystemSettings(raw: unknown): SystemSettings {
           : DEFAULT_INTEGRATIONS.s3_secret_access_key,
     },
     ldap: {
-      enabled:
-        typeof ldapRaw.enabled === "boolean" ? ldapRaw.enabled : DEFAULT_LDAP.enabled,
+      enabled: typeof ldapRaw.enabled === "boolean" ? ldapRaw.enabled : DEFAULT_LDAP.enabled,
       url: typeof ldapRaw.url === "string" ? ldapRaw.url.trim() : DEFAULT_LDAP.url,
       base_dn: typeof ldapRaw.base_dn === "string" ? ldapRaw.base_dn.trim() : DEFAULT_LDAP.base_dn,
       bind_dn: typeof ldapRaw.bind_dn === "string" ? ldapRaw.bind_dn.trim() : DEFAULT_LDAP.bind_dn,
       bind_password:
-        typeof ldapRaw.bind_password === "string" ? ldapRaw.bind_password : DEFAULT_LDAP.bind_password,
+        typeof ldapRaw.bind_password === "string"
+          ? ldapRaw.bind_password
+          : DEFAULT_LDAP.bind_password,
       user_filter:
         typeof ldapRaw.user_filter === "string" && ldapRaw.user_filter.trim()
           ? ldapRaw.user_filter.trim()
@@ -309,25 +323,40 @@ export function parseSystemSettings(raw: unknown): SystemSettings {
     mail: {
       enabled: typeof mailRaw.enabled === "boolean" ? mailRaw.enabled : DEFAULT_MAIL.enabled,
       provider: mailRaw.provider === "smtp" ? "smtp" : "resend",
-      from_address: typeof mailRaw.from_address === "string" ? mailRaw.from_address.trim() : DEFAULT_MAIL.from_address,
-      from_name: typeof mailRaw.from_name === "string" && mailRaw.from_name.trim()
-        ? mailRaw.from_name.trim()
-        : DEFAULT_MAIL.from_name,
+      from_address:
+        typeof mailRaw.from_address === "string"
+          ? mailRaw.from_address.trim()
+          : DEFAULT_MAIL.from_address,
+      from_name:
+        typeof mailRaw.from_name === "string" && mailRaw.from_name.trim()
+          ? mailRaw.from_name.trim()
+          : DEFAULT_MAIL.from_name,
       resend_api_key:
-        typeof mailRaw.resend_api_key === "string" ? mailRaw.resend_api_key.trim() : DEFAULT_MAIL.resend_api_key,
-      smtp_host: typeof mailRaw.smtp_host === "string" ? mailRaw.smtp_host.trim() : DEFAULT_MAIL.smtp_host,
+        typeof mailRaw.resend_api_key === "string"
+          ? mailRaw.resend_api_key.trim()
+          : DEFAULT_MAIL.resend_api_key,
+      smtp_host:
+        typeof mailRaw.smtp_host === "string" ? mailRaw.smtp_host.trim() : DEFAULT_MAIL.smtp_host,
       smtp_port:
         typeof mailRaw.smtp_port === "number" && mailRaw.smtp_port > 0
           ? Math.round(mailRaw.smtp_port)
           : DEFAULT_MAIL.smtp_port,
-      smtp_user: typeof mailRaw.smtp_user === "string" ? mailRaw.smtp_user.trim() : DEFAULT_MAIL.smtp_user,
+      smtp_user:
+        typeof mailRaw.smtp_user === "string" ? mailRaw.smtp_user.trim() : DEFAULT_MAIL.smtp_user,
       smtp_password:
-        typeof mailRaw.smtp_password === "string" ? mailRaw.smtp_password : DEFAULT_MAIL.smtp_password,
-      smtp_secure: typeof mailRaw.smtp_secure === "boolean" ? mailRaw.smtp_secure : DEFAULT_MAIL.smtp_secure,
+        typeof mailRaw.smtp_password === "string"
+          ? mailRaw.smtp_password
+          : DEFAULT_MAIL.smtp_password,
+      smtp_secure:
+        typeof mailRaw.smtp_secure === "boolean" ? mailRaw.smtp_secure : DEFAULT_MAIL.smtp_secure,
     },
     telegram: {
-      enabled: typeof telegramRaw.enabled === "boolean" ? telegramRaw.enabled : DEFAULT_TELEGRAM.enabled,
-      bot_token: typeof telegramRaw.bot_token === "string" ? telegramRaw.bot_token.trim() : DEFAULT_TELEGRAM.bot_token,
+      enabled:
+        typeof telegramRaw.enabled === "boolean" ? telegramRaw.enabled : DEFAULT_TELEGRAM.enabled,
+      bot_token:
+        typeof telegramRaw.bot_token === "string"
+          ? telegramRaw.bot_token.trim()
+          : DEFAULT_TELEGRAM.bot_token,
       default_chat_id:
         typeof telegramRaw.default_chat_id === "string"
           ? telegramRaw.default_chat_id.trim()
@@ -404,7 +433,11 @@ export function normalizeEmailDomains(input: string[]): string[] {
 }
 
 export async function loadSystemSettings(): Promise<SystemSettings> {
-  const { data } = await supabaseAdmin.from("organization").select("settings").limit(1).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("organization")
+    .select("settings")
+    .limit(1)
+    .maybeSingle();
   return parseSystemSettings(data?.settings);
 }
 
@@ -476,8 +509,7 @@ export async function getPublicAuthConfig(): Promise<PublicAuthConfig> {
     allow_ldap_login: !meta.bootstrap_needed && settings.ldap.enabled,
     telegram_bot_configured: telegramBotConfigured,
     telegram_notifications_enabled: telegramBotConfigured && settings.telegram.enabled,
-    allow_telegram_login:
-      telegramBotConfigured && settings.telegram.allow_telegram_login,
+    allow_telegram_login: telegramBotConfigured && settings.telegram.allow_telegram_login,
     allow_telegram_password_reset:
       telegramBotConfigured && settings.telegram.allow_telegram_password_reset,
     min_password_length: settings.auth.min_password_length,
@@ -515,7 +547,10 @@ export async function assertEmailRegistrationAllowed(email: string): Promise<{
 }
 
 export async function assertEdsRegistrationAllowed(): Promise<{ bootstrap: boolean }> {
-  const [settings, bootstrapNeeded] = await Promise.all([loadSystemSettings(), hasAdminUser().then((v) => !v)]);
+  const [settings, bootstrapNeeded] = await Promise.all([
+    loadSystemSettings(),
+    hasAdminUser().then((v) => !v),
+  ]);
 
   if (!bootstrapNeeded && !settings.auth.allow_eds_signup) {
     throw new Error(

@@ -16,7 +16,11 @@ export function DutyDayList({
   return (
     <ul className="mt-1 space-y-0.5">
       {duties.map((d) => {
-        const role = d.ref_duty_roles as { name_ru: string; name_kk: string; color?: string } | null;
+        const role = d.ref_duty_roles as {
+          name_ru: string;
+          name_kk: string;
+          color?: string;
+        } | null;
         const assignee = d.assignee as { full_name_ru?: string; full_name_kk?: string } | null;
         const dept = d.departments as { code?: string; name_ru?: string; name_kk?: string } | null;
         const deptLabel = dept ? (dept.code ?? localized(dept, locale, "name")) : null;

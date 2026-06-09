@@ -24,9 +24,7 @@ export const getTelegramLinkStatus = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("user_notification_preferences")
-      .select(
-        "telegram_chat_id, telegram_username, telegram_enabled, telegram_linked_at",
-      )
+      .select("telegram_chat_id, telegram_username, telegram_enabled, telegram_linked_at")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -55,9 +53,8 @@ export const createTelegramLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const result = await createTelegramLinkToken(context.userId);
-    const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } = await import(
-      "@/lib/telegram/polling.server",
-    );
+    const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } =
+      await import("@/lib/telegram/polling.server");
     if ((await getTelegramDeliveryMode()) === "polling") {
       void pollTelegramUpdatesOnce(0);
     }
@@ -108,9 +105,8 @@ export const getTelegramWebhookInfo = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireSystemSettingsAccess(context.supabase, context.userId);
-    const { ensureTelegramPolling, getTelegramDeliveryMode } = await import(
-      "@/lib/telegram/polling.server",
-    );
+    const { ensureTelegramPolling, getTelegramDeliveryMode } =
+      await import("@/lib/telegram/polling.server");
     const mode = await getTelegramDeliveryMode();
     if (mode === "polling") void ensureTelegramPolling();
     return {

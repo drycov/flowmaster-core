@@ -40,16 +40,18 @@ export function resolveWorkflowDefinition(options: {
 }): WorkflowDefinition | null {
   const { customRoute, workflowDefinition, runContext } = options;
 
-  if (runContext && typeof runContext === "object" && Array.isArray((runContext as { nodes?: unknown }).nodes)) {
+  if (
+    runContext &&
+    typeof runContext === "object" &&
+    Array.isArray((runContext as { nodes?: unknown }).nodes)
+  ) {
     return runContext as WorkflowDefinition;
   }
 
   const parsed = parseStoredCustomRoute(customRoute);
   if (parsed.graph?.nodes?.length) return parsed.graph;
   if (parsed.steps?.length) {
-    return linearStepsToDefinition(
-      parsed.steps as Parameters<typeof linearStepsToDefinition>[0],
-    );
+    return linearStepsToDefinition(parsed.steps as Parameters<typeof linearStepsToDefinition>[0]);
   }
 
   if (
@@ -183,8 +185,7 @@ export function buildRouteStepsView(options: {
     decision?: string | null;
   }>;
 }): { runStatus: string | null; steps: RouteStepView[] } {
-  const activeRun =
-    options.runs.find((r) => r.status === "running") ?? options.runs[0] ?? null;
+  const activeRun = options.runs.find((r) => r.status === "running") ?? options.runs[0] ?? null;
 
   const def = resolveWorkflowDefinition({
     customRoute: options.customRoute,

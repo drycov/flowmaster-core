@@ -29,7 +29,6 @@ export function ProfileHrCard() {
       {
         roles: me.roles,
         permissions: me.permissions,
-        isAdmin: me.roles.includes("admin"),
       },
       license,
       "hr",
@@ -78,8 +77,11 @@ export function ProfileHrCard() {
                 <span className="text-muted-foreground">{t("profile.hr.nextLeave")}: </span>
                 <span className="font-medium">
                   {localized(
-                    (data.next_leave as { ref_absence_types?: { name_ru: string; name_kk: string } })
-                      .ref_absence_types ?? { name_ru: "—", name_kk: "—" },
+                    (
+                      data.next_leave as {
+                        ref_absence_types?: { name_ru: string; name_kk: string };
+                      }
+                    ).ref_absence_types ?? { name_ru: "—", name_kk: "—" },
                     locale,
                     "name",
                   )}
@@ -107,7 +109,10 @@ export function ProfileHrCard() {
                 </span>
                 <span className="text-muted-foreground">
                   {" "}
-                  · {fmtDateShort(String((data.next_duty as { starts_at: string }).starts_at).slice(0, 10))}
+                  ·{" "}
+                  {fmtDateShort(
+                    String((data.next_duty as { starts_at: string }).starts_at).slice(0, 10),
+                  )}
                 </span>
               </div>
             ) : null}

@@ -108,7 +108,9 @@ export async function renderTemplateFile(
     return Buffer.from(out);
   }
 
-  throw new Error(`Формат ${format} не поддерживается для автозаполнения. Используйте DOCX или XLSX.`);
+  throw new Error(
+    `Формат ${format} не поддерживается для автозаполнения. Используйте DOCX или XLSX.`,
+  );
 }
 
 export async function downloadTemplateBuffer(storagePath: string): Promise<Buffer> {

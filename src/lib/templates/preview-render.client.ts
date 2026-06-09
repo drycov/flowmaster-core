@@ -36,7 +36,10 @@ export async function renderDocxTemplateClient(
     doc.render(values);
   } catch (e) {
     const err = e as { properties?: { errors?: Array<{ message?: string }> } };
-    const details = err.properties?.errors?.map((x) => x.message).filter(Boolean).join("; ");
+    const details = err.properties?.errors
+      ?.map((x) => x.message)
+      .filter(Boolean)
+      .join("; ");
     throw new Error(details || (e instanceof Error ? e.message : "Ошибка подстановки в DOCX"));
   }
   return doc.getZip().generate({

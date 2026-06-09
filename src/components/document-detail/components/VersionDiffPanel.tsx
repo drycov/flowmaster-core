@@ -37,7 +37,8 @@ export function VersionDiffPanel({ versions }: VersionDiffPanelProps) {
     return diffLines(a, b);
   }, [left, right]);
 
-  const hashChanged = left?.content_hash && right?.content_hash && left.content_hash !== right.content_hash;
+  const hashChanged =
+    left?.content_hash && right?.content_hash && left.content_hash !== right.content_hash;
 
   if (sorted.length < 2) return null;
 
@@ -63,7 +64,10 @@ export function VersionDiffPanel({ versions }: VersionDiffPanelProps) {
           </Select>
         </div>
         <div className="w-36">
-          <Select value={rightNo || "none"} onValueChange={(v) => setRightNo(v === "none" ? "" : v)}>
+          <Select
+            value={rightNo || "none"}
+            onValueChange={(v) => setRightNo(v === "none" ? "" : v)}
+          >
             <SelectTrigger className="h-9">
               <SelectValue placeholder={t("doc.versions.diffTo")} />
             </SelectTrigger>
@@ -89,7 +93,9 @@ export function VersionDiffPanel({ versions }: VersionDiffPanelProps) {
       {showDiff && left && right && (
         <div className="space-y-2">
           {hashChanged && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">{t("doc.versions.fileChanged")}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              {t("doc.versions.fileChanged")}
+            </p>
           )}
           {!left.body_snapshot && !right.body_snapshot ? (
             <p className="text-sm text-muted-foreground">{t("doc.versions.noTextSnapshot")}</p>

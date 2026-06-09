@@ -1,15 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 import { requireModuleAccess, requirePermission } from "./_helpers";
 
 function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120) || `article-${Date.now()}`;
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 120) || `article-${Date.now()}`
+  );
 }
 
 export const listKbCategories = createServerFn({ method: "GET" })
@@ -28,7 +31,9 @@ export const listKbCategories = createServerFn({ method: "GET" })
 export const listKbCategoriesAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "knowledge_base", { action: "manage" });
+    await requireModuleAccess(context.supabase, context.userId, "knowledge_base", {
+      action: "manage",
+    });
     const { data, error } = await context.supabase
       .from("kb_categories")
       .select("*")
@@ -97,7 +102,9 @@ export const listKbArticles = createServerFn({ method: "POST" })
     if (data?.category_id) q = q.eq("category_id", data.category_id);
 
     if (data?.include_all) {
-      await requireModuleAccess(context.supabase, context.userId, "knowledge_base", { action: "manage" });
+      await requireModuleAccess(context.supabase, context.userId, "knowledge_base", {
+        action: "manage",
+      });
     } else if (data?.status) {
       q = q.eq("status", data.status);
     } else {
@@ -128,7 +135,8 @@ export const getKbArticle = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Article not found");
-    return row;
+    const { search_tsv: _searchTsv, ...article } = row as typeof row & { search_tsv?: unknown };
+    return article;
   });
 
 export const upsertKbArticle = createServerFn({ method: "POST" })
@@ -175,7 +183,8 @@ export const upsertKbArticle = createServerFn({ method: "POST" })
         .eq("id", data.id)
         .maybeSingle();
 
-      const nextStatus = data.status ?? (existingRow as { status?: string } | null)?.status ?? "draft";
+      const nextStatus =
+        data.status ?? (existingRow as { status?: string } | null)?.status ?? "draft";
       const patch: Record<string, unknown> = {
         category_id: data.category_id ?? null,
         source_document_id: data.source_document_id ?? null,
@@ -186,7 +195,10 @@ export const upsertKbArticle = createServerFn({ method: "POST" })
         body_ru: data.body_ru ?? "",
         body_kk: data.body_kk ?? "",
         tags: data.tags ?? [],
-        slug: data.slug?.trim() || (existingRow as { slug?: string } | null)?.slug || slugify(data.title_ru),
+        slug:
+          data.slug?.trim() ||
+          (existingRow as { slug?: string } | null)?.slug ||
+          slugify(data.title_ru),
       };
 
       if (data.status !== undefined) {
@@ -246,6 +258,8 @@ export const publishDocumentToKb = createServerFn({ method: "POST" })
     });
     const { supabase, userId } = context;
 
+    await assertCanViewDocumentContent(supabase, userId, data.document_id);
+
     const { data: doc, error: docErr } = await supabase
       .from("documents")
       .select("id, reg_number, title_ru, title_kk, summary, body, access_level_id, status")
@@ -283,7 +297,10 @@ export const publishDocumentToKb = createServerFn({ method: "POST" })
     };
 
     if (existing?.id) {
-      const { error } = await supabase.from("kb_articles").update(payload as never).eq("id", existing.id);
+      const { error } = await supabase
+        .from("kb_articles")
+        .update(payload as never)
+        .eq("id", existing.id);
       if (error) throw new Error(error.message);
       return { id: existing.id };
     }

@@ -12,6 +12,7 @@ import {
 } from "@/lib/workflow/route-builder";
 import { customRouteStepSchema, graphDefinitionSchema } from "@/lib/workflow/custom-route-schema";
 import { workflowDefinitionSchema } from "@/lib/workflow/workflow-schema";
+import type { Json } from "@/integrations/supabase/types";
 
 // ============== WORKFLOW DEFINITIONS ==============
 export const listWorkflows = createServerFn({ method: "GET" })
@@ -65,8 +66,7 @@ export const upsertWorkflow = createServerFn({ method: "POST" })
       const prevVersion = (existing as { version?: number } | null)?.version ?? 1;
       const prevStatus = (existing as { status?: string } | null)?.status;
       const shouldBump =
-        data.bump_version ||
-        (data.status === "published" && prevStatus !== "published");
+        data.bump_version || (data.status === "published" && prevStatus !== "published");
       version = shouldBump ? prevVersion + 1 : prevVersion;
     }
 
@@ -125,8 +125,8 @@ async function advanceFromStart(
     _run_id: runId,
     _doc_id: docId,
     _from_node_id: start.id,
-    _nodes: def.nodes,
-    _edges: def.edges,
+    _nodes: def.nodes as Json,
+    _edges: def.edges as Json,
   });
   if (error) throw new Error(error.message);
 }
@@ -137,7 +137,10 @@ export const startWorkflow = createServerFn({ method: "POST" })
     z.object({
       document_id: z.string().uuid(),
       workflow_id: z.string().uuid().nullable().optional(),
-      custom_route: z.union([z.array(customRouteStepSchema), graphDefinitionSchema]).optional().nullable(),
+      custom_route: z
+        .union([z.array(customRouteStepSchema), graphDefinitionSchema])
+        .optional()
+        .nullable(),
       graph_definition: graphDefinitionSchema.optional().nullable(),
     }),
   )
@@ -152,7 +155,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .single();
     if (docErr) throw new Error(docErr.message);
 
-    const { data: canManage, error: canErr } = await supabase.rpc(
+    const { data: canManage, error: canErr } = await supabaseAdmin.rpc(
       "can_manage_document_workflow" as never,
       { _doc_id: data.document_id, _user: userId } as never,
     );
@@ -178,8 +181,8 @@ export const startWorkflow = createServerFn({ method: "POST" })
       typeof data.custom_route === "object" &&
       Array.isArray((data.custom_route as { nodes?: unknown }).nodes)
     ) {
-      const g = data.custom_route as WorkflowDefinition;
-      graphDef = { nodes: g.nodes as WorkflowDefinition["nodes"], edges: g.edges ?? [] };
+      const g = data.custom_route as unknown as WorkflowDefinition;
+      graphDef = { nodes: g.nodes, edges: g.edges ?? [] };
     }
 
     if (!graphDef && !customSteps && doc.custom_route) {
@@ -213,7 +216,10 @@ export const startWorkflow = createServerFn({ method: "POST" })
         actor_id: userId,
         payload: opts.payload ?? {},
       } as never);
-      await supabase.from("documents").update({ status: "in_review" as never }).eq("id", data.document_id);
+      await supabase
+        .from("documents")
+        .update({ status: "in_review" as never })
+        .eq("id", data.document_id);
       await advanceFromStart(run.id, data.document_id, def);
       return run.id as string;
     }
@@ -231,7 +237,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
     if (customSteps && customSteps.length > 0) {
       const built = linearStepsToDefinition(customSteps);
       const runId = await insertRunAndStart(
-        { nodes: built.nodes, edges: built.edges, custom_route: customSteps },
+        { nodes: built.nodes, edges: built.edges },
         { workflow_id: null, payload: { custom: true } },
       );
       return { run_id: runId };
@@ -239,11 +245,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
 
     // === STANDARD WORKFLOW branch ===
     if (!workflowId) throw new Error("workflow_id, custom_route или graph_definition обязателен");
-    const wf = await supabase
-      .from("workflows")
-      .select("definition")
-      .eq("id", workflowId)
-      .single();
+    const wf = await supabase.from("workflows").select("definition").eq("id", workflowId).single();
     if (wf.error) throw new Error(wf.error.message);
     const def = wf.data.definition as unknown as WfDef;
     const start = def.nodes.find((n) => n.type === "START");
@@ -254,31 +256,6 @@ export const startWorkflow = createServerFn({ method: "POST" })
       payload: { source: "workflow" },
     });
     return { run_id: runId };
-  });
-
-// ============== ADVANCE TASK ==============
-export const completeTask = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(
-    z.object({
-      task_id: z.string().uuid(),
-      decision: z.enum(["approve", "reject", "return"]),
-      comment: z.string().max(4000).optional().nullable(),
-    }),
-  )
-  .handler(async ({ data, context }) => {
-    await enforceModuleLicense(context.supabase, "workflows", "write");
-    const { supabase } = context;
-    if (data.decision !== "approve" && !data.comment?.trim()) {
-      throw new Error("Комментарий обязателен для отклонения или возврата");
-    }
-    const { data: res, error } = await supabase.rpc("app_advance_workflow_task" as never, {
-      _task_id: data.task_id,
-      _decision: data.decision,
-      _comment: data.comment ?? null,
-    } as never);
-    if (error) throw new Error(error.message);
-    return res as { ok: boolean; next: string | null; correlation_id: string };
   });
 
 // ============== MY TASKS ==============
@@ -310,7 +287,10 @@ export const listMyTasks = createServerFn({ method: "GET" })
       .order("due_at", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
 
-    let principalMap = new Map<string, { id: string; full_name_ru: string; full_name_kk: string; email: string }>();
+    let principalMap = new Map<
+      string,
+      { id: string; full_name_ru: string; full_name_kk: string; email: string }
+    >();
     if (principalIds.length > 0) {
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
@@ -326,7 +306,9 @@ export const listMyTasks = createServerFn({ method: "GET" })
       return {
         ...task,
         is_substitute: isSubstitute,
-        substitute_principal: isSubstitute ? (principalMap.get(assigneeId) ?? { id: assigneeId }) : null,
+        substitute_principal: isSubstitute
+          ? (principalMap.get(assigneeId) ?? { id: assigneeId })
+          : null,
       };
     });
   });
@@ -342,11 +324,14 @@ export const delegateWorkflowTask = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await enforceModuleLicense(context.supabase, "workflows", "write");
-    const { data: res, error } = await context.supabase.rpc("delegate_workflow_task" as never, {
-      _task_id: data.task_id,
-      _to_user: data.to_user_id,
-      _comment: data.comment ?? null,
-    } as never);
+    const { data: res, error } = await supabaseAdmin.rpc(
+      "delegate_workflow_task" as never,
+      {
+        _task_id: data.task_id,
+        _to_user: data.to_user_id,
+        _comment: data.comment ?? null,
+      } as never,
+    );
     if (error) throw new Error(error.message);
     return res;
   });
@@ -367,11 +352,14 @@ export const advanceWorkflowTask = createServerFn({ method: "POST" })
     if (data.decision !== "approve" && !data.comment?.trim()) {
       throw new Error("Комментарий обязателен для отклонения или возврата");
     }
-    const { data: res, error } = await supabase.rpc("app_advance_workflow_task" as never, {
-      _task_id: data.task_id,
-      _decision: data.decision,
-      _comment: data.comment ?? null,
-    } as never);
+    const { data: res, error } = await supabaseAdmin.rpc(
+      "app_advance_workflow_task" as never,
+      {
+        _task_id: data.task_id,
+        _decision: data.decision,
+        _comment: data.comment ?? null,
+      } as never,
+    );
     if (error) throw new Error(error.message);
     return res as { ok: boolean; next: string | null; correlation_id: string };
   });

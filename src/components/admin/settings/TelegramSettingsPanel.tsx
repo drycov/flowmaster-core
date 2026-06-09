@@ -33,7 +33,10 @@ export function TelegramSettingsPanel({
 
   return (
     <SettingsSection title={t("settings.telegram.title")} icon={<Send className="h-4 w-4" />}>
-      <SettingRow label={t("settings.telegram.enabled")} description={t("settings.telegram.enabledDesc")}>
+      <SettingRow
+        label={t("settings.telegram.enabled")}
+        description={t("settings.telegram.enabledDesc")}
+      >
         <Switch
           checked={form.telegram.enabled}
           onCheckedChange={(v) => patch("telegram", "enabled", v)}
@@ -61,7 +64,10 @@ export function TelegramSettingsPanel({
         </div>
       </div>
 
-      <SettingRow label={t("settings.telegram.allowLogin")} description={t("settings.telegram.allowLoginDesc")}>
+      <SettingRow
+        label={t("settings.telegram.allowLogin")}
+        description={t("settings.telegram.allowLoginDesc")}
+      >
         <Switch
           checked={form.telegram.allow_telegram_login}
           onCheckedChange={(v) => patch("telegram", "allow_telegram_login", v)}
@@ -76,7 +82,10 @@ export function TelegramSettingsPanel({
           onCheckedChange={(v) => patch("telegram", "allow_telegram_password_reset", v)}
         />
       </SettingRow>
-      <SettingRow label={t("settings.telegram.notifyTasks")} description={t("settings.telegram.notifyTasksDesc")}>
+      <SettingRow
+        label={t("settings.telegram.notifyTasks")}
+        description={t("settings.telegram.notifyTasksDesc")}
+      >
         <Switch
           checked={form.telegram.notify_on_tasks}
           onCheckedChange={(v) => patch("telegram", "notify_on_tasks", v)}

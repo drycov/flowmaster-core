@@ -110,7 +110,9 @@ function GanttListPage() {
                     <SelectContent>
                       <SelectItem value="general">{t("scheduling.gantt.type.general")}</SelectItem>
                       <SelectItem value="project">{t("scheduling.gantt.type.project")}</SelectItem>
-                      <SelectItem value="department">{t("scheduling.gantt.type.department")}</SelectItem>
+                      <SelectItem value="department">
+                        {t("scheduling.gantt.type.department")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -125,14 +127,22 @@ function GanttListPage() {
                 {planType === "project" && (
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label>{t("scheduling.gantt.project")}</Label>
-                    <Select value={projectId || "__none"} onValueChange={(v) => setProjectId(v === "__none" ? "" : v)}>
+                    <Select
+                      value={projectId || "__none"}
+                      onValueChange={(v) => setProjectId(v === "__none" ? "" : v)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">—</SelectItem>
                         {projects.map((p) => {
-                          const row = p as { id: string; code: string; name_ru: string; name_kk: string };
+                          const row = p as {
+                            id: string;
+                            code: string;
+                            name_ru: string;
+                            name_kk: string;
+                          };
                           return (
                             <SelectItem key={row.id} value={row.id}>
                               {row.code} — {localized(row, locale, "name")}
@@ -145,15 +155,25 @@ function GanttListPage() {
                 )}
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.dateFrom")}</Label>
-                  <Input type="date" value={plannedStart} onChange={(e) => setPlannedStart(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={plannedStart}
+                    onChange={(e) => setPlannedStart(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("scheduling.gantt.dateTo")}</Label>
-                  <Input type="date" value={plannedEnd} onChange={(e) => setPlannedEnd(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={plannedEnd}
+                    onChange={(e) => setPlannedEnd(e.target.value)}
+                  />
                 </div>
                 <div className="sm:col-span-2">
                   <Button
-                    disabled={createMut.isPending || !code.trim() || !nameRu.trim() || !nameKk.trim()}
+                    disabled={
+                      createMut.isPending || !code.trim() || !nameRu.trim() || !nameKk.trim()
+                    }
                     onClick={() => createMut.mutate()}
                   >
                     {createMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -175,7 +195,9 @@ function GanttListPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : plans.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">{t("scheduling.gantt.empty")}</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("scheduling.gantt.empty")}
+              </p>
             ) : (
               <ul className="divide-y">
                 {plans.map((raw) => {
@@ -202,7 +224,9 @@ function GanttListPage() {
                             {row.code} — {localized(row, locale, "name")}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {t(`scheduling.gantt.type.${row.plan_type}` as "scheduling.gantt.type.general")}
+                            {t(
+                              `scheduling.gantt.type.${row.plan_type}` as "scheduling.gantt.type.general",
+                            )}
                             {row.document_projects ? ` · ${row.document_projects.code}` : ""}
                             {row.planned_start && row.planned_end
                               ? ` · ${fmtDateShort(row.planned_start)} — ${fmtDateShort(row.planned_end)}`

@@ -9,13 +9,11 @@ import { useI18n, interpolate } from "@/i18n";
 import type { Template, TemplateField } from "../types";
 import type { RouteValue } from "../components/RoutePickerCard";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
-import {
-  isAuthorExecutorField,
-  isAuthorSignatoryField,
-} from "@/lib/templates/author-field-values";
+import { isAuthorExecutorField, isAuthorSignatoryField } from "@/lib/templates/author-field-values";
 import { buildModifiedDefinition } from "@/lib/workflow/route-builder";
 import { getWorkflow } from "@/lib/api/workflows.functions";
 import type { WorkflowDefinition } from "@/components/workflow-designer/types";
+import { toGraphRouteInput } from "@/lib/workflow/route-builder";
 
 interface CreateDocumentParams {
   values: Record<string, string>;
@@ -71,9 +69,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       }
 
       const nomenclatureId =
-        values.nomenclature_id && values.nomenclature_id !== "none"
-          ? values.nomenclature_id
-          : null;
+        values.nomenclature_id && values.nomenclature_id !== "none" ? values.nomenclature_id : null;
 
       const documentTypeId = values.document_type_id?.trim() || null;
       const priorityId = values.priority_id?.trim() || null;
@@ -105,9 +101,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       let graphDefinition: WorkflowDefinition | null = null;
 
       const hasRoute =
-        route &&
-        route.kind !== "none" &&
-        (route.kind !== "custom" || route.steps.length > 0);
+        route && route.kind !== "none" && (route.kind !== "custom" || route.steps.length > 0);
 
       if (route) {
         if (route.kind === "template_default") {
@@ -118,7 +112,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
           customRouteSteps = route.steps;
         } else if (route.kind === "modify") {
           const wf = await getWorkflow({ data: { id: route.workflow_id } });
-          const base = (wf as { definition: WorkflowDefinition }).definition;
+          const base = (wf as unknown as { definition: WorkflowDefinition }).definition;
           graphDefinition = buildModifiedDefinition(base, route.overrides);
           resolvedWorkflowId = route.workflow_id;
         }
@@ -131,8 +125,11 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       if (templateId && templateId !== "none" && template) {
         const templateValues: Record<string, string> = {};
         templateFields.forEach((field) => {
-          const value =
-            (values[field.key]?.trim() || authorDefaults[field.key]?.trim() || "").trim();
+          const value = (
+            values[field.key]?.trim() ||
+            authorDefaults[field.key]?.trim() ||
+            ""
+          ).trim();
           if (value) {
             templateValues[field.key] = value;
           } else if (
@@ -182,14 +179,18 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       const shouldStart =
         hasRoute || (!route && resolvedWorkflowId) || customRouteSteps || graphDefinition;
 
-      if (created?.id && shouldStart && (resolvedWorkflowId || customRouteSteps || graphDefinition)) {
+      if (
+        created?.id &&
+        shouldStart &&
+        (resolvedWorkflowId || customRouteSteps || graphDefinition)
+      ) {
         try {
           await startWorkflow({
             data: {
               document_id: created.id,
               workflow_id: resolvedWorkflowId,
               custom_route: (graphDefinition ?? customRouteSteps) as any,
-              graph_definition: graphDefinition ?? undefined,
+              graph_definition: toGraphRouteInput(graphDefinition) ?? undefined,
             },
           });
         } catch (workflowErr) {

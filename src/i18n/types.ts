@@ -4,7 +4,13 @@ export interface Dictionary {
   [key: string]: string;
 }
 
-export type FieldType = "name" | "title" | "full_name" | "description";
+export type FieldType =
+  | "name"
+  | "title"
+  | "full_name"
+  | "description"
+  | "body"
+  | "summary";
 
 export interface LocalizableFields {
   name_ru?: string | null;
@@ -15,4 +21,8 @@ export interface LocalizableFields {
   full_name_kk?: string | null;
   description_ru?: string | null;
   description_kk?: string | null;
+  body_ru?: string | null;
+  body_kk?: string | null;
+  summary_ru?: string | null;
+  summary_kk?: string | null;
 }

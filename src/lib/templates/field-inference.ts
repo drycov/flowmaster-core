@@ -159,7 +159,7 @@ function inferFieldType(key: string): TemplateFieldDef["type"] {
     k.includes("amount") ||
     k.includes("sum") ||
     k.includes("count") ||
-    k.includes("number") && !k.includes("reg")
+    (k.includes("number") && !k.includes("reg"))
   ) {
     return "number";
   }
@@ -174,7 +174,12 @@ function inferFieldType(key: string): TemplateFieldDef["type"] {
   ) {
     return "textarea";
   }
-  if (k.includes("user") || k.includes("person") || k.includes("employee") || k.includes("signer")) {
+  if (
+    k.includes("user") ||
+    k.includes("person") ||
+    k.includes("employee") ||
+    k.includes("signer")
+  ) {
     return "user";
   }
   return "text";
@@ -251,7 +256,10 @@ export function isDefaultTemplateName(name: string | null | undefined): boolean 
 }
 
 export function humanizeFilename(filename: string): string {
-  const base = filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  const base = filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
   if (!base) return "";
   return base.charAt(0).toUpperCase() + base.slice(1);
 }

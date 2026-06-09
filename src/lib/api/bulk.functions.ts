@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyDocumentStatusTransition } from "@/lib/documents/status-transition.server";
 import { requireModuleAccess } from "./_helpers";
 
@@ -22,10 +23,13 @@ export const bulkUpdateDocuments = createServerFn({ method: "POST" })
 
     for (const docId of data.document_ids) {
       try {
-        const { data: canView } = await supabase.rpc("can_view_document_content" as never, {
-          _doc_id: docId,
-          _user: userId,
-        } as never);
+        const { data: canView } = await supabaseAdmin.rpc(
+          "can_view_document_content" as never,
+          {
+            _doc_id: docId,
+            _user: userId,
+          } as never,
+        );
         if (!canView) {
           results.push({ id: docId, ok: false, error: "Нет доступа" });
           continue;

@@ -11,10 +11,7 @@ import {
   licenseServerAvailable,
   syncLicenseWithServer,
 } from "@/lib/license/server/client.server";
-import {
-  getLicenseMode,
-  isOnlineLicenseRequired,
-} from "@/lib/license/server/config.server";
+import { getLicenseMode, isOnlineLicenseRequired } from "@/lib/license/server/config.server";
 import type { LicenseStatusResponse } from "@/lib/license/types";
 import { requireModuleAccess } from "./_helpers";
 
@@ -58,9 +55,7 @@ async function buildSchemaMissingStatus(
   supabase: typeof supabaseAdmin,
   autoId: string,
 ): Promise<LicenseStatusResponse> {
-  const { count } = await supabase
-    .from("profiles")
-    .select("id", { count: "exact", head: true });
+  const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
   return {
     ...SCHEMA_MISSING_STATUS,
     installation_id: autoId || null,
@@ -74,7 +69,7 @@ export const getLicenseStatus = createServerFn({ method: "GET" })
     ensureInstallationEnv();
     const autoId = getInstallationId();
 
-    const { data, error } = await context.supabase.rpc("get_license_status" as never);
+    const { data, error } = await supabaseAdmin.rpc("get_license_status" as never);
     if (error) {
       if (isLicenseSchemaMissing(error.message)) {
         return buildSchemaMissingStatus(context.supabase, autoId);
@@ -220,9 +215,12 @@ export const setLicenseSuspended = createServerFn({ method: "POST" })
   .inputValidator(z.object({ suspended: z.boolean() }))
   .handler(async ({ data, context }) => {
     await requireModuleAccess(supabaseAdmin, context.userId, "admin_license", { action: "manage" });
-    const { data: result, error } = await supabaseAdmin.rpc("set_license_status" as never, {
-      p_status: data.suspended ? "suspended" : "active",
-    } as never);
+    const { data: result, error } = await supabaseAdmin.rpc(
+      "set_license_status" as never,
+      {
+        p_status: data.suspended ? "suspended" : "active",
+      } as never,
+    );
     if (error) throw new Error(error.message);
     return result as LicenseStatusResponse;
   });
@@ -233,8 +231,6 @@ export const getInstallationInfo = createServerFn({ method: "GET" })
     await requireModuleAccess(supabaseAdmin, context.userId, "admin_license", { action: "manage" });
     ensureInstallationEnv();
     const installation_id = getInstallationId();
-    const source = process.env.SUPABASE_PROJECT_REF?.trim()
-      ? "supabase_project"
-      : "persisted";
+    const source = process.env.SUPABASE_PROJECT_REF?.trim() ? "supabase_project" : "persisted";
     return { installation_id, source };
   });

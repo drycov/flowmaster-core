@@ -70,7 +70,9 @@ export function AuthForm({
     <form onSubmit={onSubmit} className="space-y-4">
       {showBootstrapOrg && mode === "signup" && (
         <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
-          <p className="text-xs font-medium text-muted-foreground">{t("auth.tenant.bootstrapOrgTitle")}</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("auth.tenant.bootstrapOrgTitle")}
+          </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("auth.tenant.orgNameRu")}</Label>
@@ -218,11 +220,7 @@ export function AuthForm({
       )}
 
       <Button type="submit" className="w-full" size="lg" disabled={loading}>
-        {loading
-          ? t("common.loading")
-          : mode === "signin"
-            ? t("auth.signin")
-            : t("auth.signup")}
+        {loading ? t("common.loading") : mode === "signin" ? t("auth.signin") : t("auth.signup")}
       </Button>
     </form>
   );

@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireModuleAccess } from "./_helpers";
 
-const LINK_DOC_SELECT =
-  "id, reg_number, title_ru, title_kk, status, doc_type, created_at";
+const LINK_DOC_SELECT = "id, reg_number, title_ru, title_kk, status, doc_type, created_at";
 
 const LINK_TYPE_SELECT = "id, code, name_ru, name_kk";
 
@@ -15,10 +15,13 @@ export const listDocumentLinks = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const docId = data.document_id;
 
-    const { data: canView, error: viewErr } = await supabase.rpc("can_view_document" as never, {
-      _doc_id: docId,
-      _user: userId,
-    } as never);
+    const { data: canView, error: viewErr } = await supabaseAdmin.rpc(
+      "can_view_document" as never,
+      {
+        _doc_id: docId,
+        _user: userId,
+      } as never,
+    );
     if (viewErr) throw new Error(viewErr.message);
     if (!canView) throw new Error("Forbidden");
 
@@ -71,14 +74,20 @@ export const createDocumentLink = createServerFn({ method: "POST" })
     }
 
     const [{ data: canViewSource }, { data: canViewTarget }] = await Promise.all([
-      supabase.rpc("can_view_document" as never, {
-        _doc_id: data.source_document_id,
-        _user: userId,
-      } as never),
-      supabase.rpc("can_view_document" as never, {
-        _doc_id: data.target_document_id,
-        _user: userId,
-      } as never),
+      supabaseAdmin.rpc(
+        "can_view_document" as never,
+        {
+          _doc_id: data.source_document_id,
+          _user: userId,
+        } as never,
+      ),
+      supabaseAdmin.rpc(
+        "can_view_document" as never,
+        {
+          _doc_id: data.target_document_id,
+          _user: userId,
+        } as never,
+      ),
     ]);
     if (!canViewSource || !canViewTarget) {
       throw new Error("Forbidden");
@@ -104,11 +113,26 @@ export const deleteDocumentLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+
+    const { data: link, error: linkErr } = await supabase
       .from("document_links")
-      .delete()
-      .eq("id", data.id);
+      .select("id, created_by")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (linkErr) throw new Error(linkErr.message);
+    if (!link) throw new Error("Связь не найдена");
+
+    if ((link as { created_by: string }).created_by !== userId) {
+      const { data: isAdmin, error: adminErr } = await supabaseAdmin.rpc(
+        "is_admin" as never,
+        { _user_id: userId } as never,
+      );
+      if (adminErr) throw new Error(adminErr.message);
+      if (!isAdmin) throw new Error("Forbidden");
+    }
+
+    const { error } = await supabase.from("document_links").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

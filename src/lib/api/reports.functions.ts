@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireModuleAccess } from "./_helpers";
 
 export type EdmsReports = {
@@ -30,10 +31,13 @@ export const getEdmsReports = createServerFn({ method: "POST" })
     await requireModuleAccess(supabase, userId, "reports", { action: "read" });
 
     const days = data?.days ?? 30;
-    const { data: result, error } = await supabase.rpc("get_edms_reports" as never, {
-      _user: userId,
-      _days: days,
-    } as never);
+    const { data: result, error } = await supabaseAdmin.rpc(
+      "get_edms_reports" as never,
+      {
+        _user: userId,
+        _days: days,
+      } as never,
+    );
 
     if (error) throw new Error(error.message);
     return result as EdmsReports;

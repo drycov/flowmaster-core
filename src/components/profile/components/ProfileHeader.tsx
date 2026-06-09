@@ -27,9 +27,7 @@ export function ProfileHeader({
 
   const dateLocale = locale === "ru" ? ru : kk;
 
-  const createdAt = profile.created_at
-    ? new Date(profile.created_at)
-    : null;
+  const createdAt = profile.created_at ? new Date(profile.created_at) : null;
 
   const joinDate =
     createdAt && !isNaN(createdAt.getTime())

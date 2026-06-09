@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  enforceModuleLicense,
-  requireModuleAccess,
-} from "@/lib/access/enforcement.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enforceModuleLicense, requireModuleAccess } from "@/lib/access/enforcement.server";
 
 export const ALLOWED_DIRECT_STATUS = ["archived", "cancelled", "draft"] as const;
 export type DirectDocumentStatus = (typeof ALLOWED_DIRECT_STATUS)[number];
@@ -47,9 +45,12 @@ export async function applyDocumentStatusTransition(
     await requireModuleAccess(supabase, userId, "archive", { action: "write" });
   } else if (nextStatus === "cancelled") {
     if (row.created_by !== userId) {
-      const { data: isAdmin, error: adminErr } = await supabase.rpc("is_admin" as never, {
-        _user_id: userId,
-      } as never);
+      const { data: isAdmin, error: adminErr } = await supabaseAdmin.rpc(
+        "is_admin" as never,
+        {
+          _user_id: userId,
+        } as never,
+      );
       if (adminErr) throw new Error(adminErr.message);
       if (!isAdmin) {
         throw new Error("Только автор или администратор может отменить документ");
@@ -68,6 +69,9 @@ export async function applyDocumentStatusTransition(
     patch.archived_at = new Date().toISOString();
   }
 
-  const { error } = await supabase.from("documents").update(patch as never).eq("id", documentId);
+  const { error } = await supabase
+    .from("documents")
+    .update(patch as never)
+    .eq("id", documentId);
   if (error) throw new Error(error.message);
 }

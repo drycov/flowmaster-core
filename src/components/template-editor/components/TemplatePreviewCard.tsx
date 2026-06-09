@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Maximize2, RefreshCw } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { TemplatePreviewPane } from "@/components/shared/TemplatePreviewPane";
@@ -22,14 +17,7 @@ interface Props {
   nameKk?: string;
 }
 
-export function TemplatePreviewCard({
-  filePath,
-  fileFormat,
-  body,
-  fields,
-  nameRu,
-  nameKk,
-}: Props) {
+export function TemplatePreviewCard({ filePath, fileFormat, body, fields, nameRu, nameKk }: Props) {
   const { t } = useI18n();
   const [fullscreen, setFullscreen] = useState(false);
   const preview = useTemplatePreview({

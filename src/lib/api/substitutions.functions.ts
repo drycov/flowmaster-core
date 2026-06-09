@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireModuleAccess } from "./_helpers";
 
@@ -11,7 +12,7 @@ type ProfileBrief = {
 };
 
 async function loadProfiles(
-  supabase: { from: (table: string) => { select: (cols: string) => { in: (col: string, ids: string[]) => PromiseLike<{ data: ProfileBrief[] | null; error: { message: string } | null }> } } },
+  supabase: SupabaseClient,
   ids: string[],
 ): Promise<Map<string, ProfileBrief>> {
   const unique = [...new Set(ids.filter(Boolean))];
@@ -33,7 +34,9 @@ export const listMySubstitutions = createServerFn({ method: "GET" })
     const [asPrincipal, asSubstitute] = await Promise.all([
       supabase
         .from("user_substitutions")
-        .select("id, principal_id, substitute_id, valid_from, valid_until, note, is_active, created_at")
+        .select(
+          "id, principal_id, substitute_id, valid_from, valid_until, note, is_active, created_at",
+        )
         .eq("principal_id", userId)
         .order("valid_from", { ascending: false }),
       supabase
@@ -82,7 +85,9 @@ export const listOrgSubstitutions = createServerFn({ method: "GET" })
 
     const { data, error } = await supabase
       .from("user_substitutions")
-      .select("id, principal_id, substitute_id, valid_from, valid_until, note, is_active, created_at")
+      .select(
+        "id, principal_id, substitute_id, valid_from, valid_until, note, is_active, created_at",
+      )
       .eq("is_active", true)
       .order("valid_from", { ascending: false });
 
@@ -110,7 +115,9 @@ export const createSubstitution = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "substitutions", { action: "write" });
+    await requireModuleAccess(context.supabase, context.userId, "substitutions", {
+      action: "write",
+    });
     const { supabase, userId } = context;
 
     const { data: row, error } = await supabase
@@ -134,7 +141,9 @@ export const deactivateSubstitution = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "substitutions", { action: "write" });
+    await requireModuleAccess(context.supabase, context.userId, "substitutions", {
+      action: "write",
+    });
     const { error } = await context.supabase
       .from("user_substitutions")
       .update({ is_active: false })

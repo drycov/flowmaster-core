@@ -135,10 +135,7 @@ export async function confirmTelegramLoginFromBot(
   };
 }
 
-export async function pollTelegramLogin(
-  token: string,
-  opts?: { organizationId?: string | null },
-) {
+export async function pollTelegramLogin(token: string, opts?: { organizationId?: string | null }) {
   const { data: row } = await supabaseAdmin
     .from("telegram_auth_tokens")
     .select("id, user_id, expires_at, confirmed_at, consumed_at")
@@ -314,10 +311,13 @@ export async function confirmTelegramPasswordReset(
     throw new Error("Неверный email или код");
   }
 
-  const { error } = await supabaseAdmin.rpc("change_app_user_password" as never, {
-    p_user_id: profile.id,
-    p_new_password: password,
-  } as never);
+  const { error } = await supabaseAdmin.rpc(
+    "change_app_user_password" as never,
+    {
+      p_user_id: profile.id,
+      p_new_password: password,
+    } as never,
+  );
   if (error) throw new Error(error.message);
 
   await supabaseAdmin
@@ -357,10 +357,13 @@ export async function confirmTelegramPasswordResetFromBot(
     throw new Error("Неверный или просроченный код");
   }
 
-  const { error } = await supabaseAdmin.rpc("change_app_user_password" as never, {
-    p_user_id: userId,
-    p_new_password: password,
-  } as never);
+  const { error } = await supabaseAdmin.rpc(
+    "change_app_user_password" as never,
+    {
+      p_user_id: userId,
+      p_new_password: password,
+    } as never,
+  );
   if (error) throw new Error(error.message);
 
   await supabaseAdmin

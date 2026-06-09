@@ -13,11 +13,7 @@ export type RegisterUserInput = {
   organization_id?: string | null;
 };
 
-export async function enableEmailLoginForUser(
-  userId: string,
-  email: string,
-  password: string,
-) {
+export async function enableEmailLoginForUser(userId: string, email: string, password: string) {
   const normalized = email.toLowerCase().trim();
 
   const { data: current, error: loadErr } = await supabaseAdmin
@@ -37,10 +33,13 @@ export async function enableEmailLoginForUser(
 
   if (taken?.id) throw new Error("Пользователь с таким email уже существует");
 
-  const { error: pwdErr } = await supabaseAdmin.rpc("change_app_user_password" as never, {
-    p_user_id: userId,
-    p_new_password: password,
-  } as never);
+  const { error: pwdErr } = await supabaseAdmin.rpc(
+    "change_app_user_password" as never,
+    {
+      p_user_id: userId,
+      p_new_password: password,
+    } as never,
+  );
   if (pwdErr) throw new Error(pwdErr.message);
 
   const cur = current as { iin: string | null; password_hash: string | null };
@@ -58,16 +57,19 @@ export async function enableEmailLoginForUser(
 
 /** Register via DB RPC (hash + role assignment in one transaction). */
 export async function registerUser(input: RegisterUserInput): Promise<string> {
-  const { data, error } = await supabaseAdmin.rpc("register_app_user" as never, {
-    p_email: input.email,
-    p_password: input.password,
-    p_full_name_ru: input.full_name_ru,
-    p_full_name_kk: input.full_name_kk,
-    p_locale: input.locale ?? "ru",
-    p_iin: input.iin ?? null,
-    p_auth_method: input.auth_method ?? "email",
-    p_organization_id: input.organization_id ?? null,
-  } as never);
+  const { data, error } = await supabaseAdmin.rpc(
+    "register_app_user" as never,
+    {
+      p_email: input.email,
+      p_password: input.password,
+      p_full_name_ru: input.full_name_ru,
+      p_full_name_kk: input.full_name_kk,
+      p_locale: input.locale ?? "ru",
+      p_iin: input.iin ?? null,
+      p_auth_method: input.auth_method ?? "email",
+      p_organization_id: input.organization_id ?? null,
+    } as never,
+  );
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Не удалось создать пользователя");
@@ -88,10 +90,13 @@ export async function authenticateUser(email: string, password: string) {
     );
   }
 
-  const { data, error } = await supabaseAdmin.rpc("authenticate_app_user" as never, {
-    p_email: email.trim(),
-    p_password: password,
-  } as never);
+  const { data, error } = await supabaseAdmin.rpc(
+    "authenticate_app_user" as never,
+    {
+      p_email: email.trim(),
+      p_password: password,
+    } as never,
+  );
 
   if (error) {
     const msg = error.message;
@@ -115,11 +120,7 @@ export async function authenticateUser(email: string, password: string) {
   return { user_id: userId, email: userEmail };
 }
 
-export async function setUserRole(
-  userId: string,
-  role: AppRole,
-  enabled: boolean,
-): Promise<void> {
+export async function setUserRole(userId: string, role: AppRole, enabled: boolean): Promise<void> {
   if (enabled) {
     const { error } = await supabaseAdmin
       .from("user_roles")
@@ -145,10 +146,13 @@ export async function ensureAdminRole(userId: string, reason: string) {
 
   if (roles.data?.length) return;
 
-  const { error } = await supabaseAdmin.rpc("grant_app_role" as never, {
-    _user: userId,
-    _role: "admin",
-    _reason: reason,
-  } as never);
+  const { error } = await supabaseAdmin.rpc(
+    "grant_app_role" as never,
+    {
+      _user: userId,
+      _role: "admin",
+      _reason: reason,
+    } as never,
+  );
   if (error) throw new Error(error.message);
 }

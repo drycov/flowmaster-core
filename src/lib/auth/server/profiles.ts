@@ -10,13 +10,17 @@ export type ProfileRow = {
   [key: string]: unknown;
 };
 
-export function normalizeProfileNames<T extends { full_name_ru?: string | null; full_name_kk?: string | null }>(
-  profile: T,
-): T {
+export function normalizeProfileNames<
+  T extends { full_name_ru?: string | null; full_name_kk?: string | null },
+>(profile: T): T {
   return {
     ...profile,
-    full_name_ru: profile.full_name_ru ? fixUtf8Mojibake(profile.full_name_ru) : profile.full_name_ru,
-    full_name_kk: profile.full_name_kk ? fixUtf8Mojibake(profile.full_name_kk) : profile.full_name_kk,
+    full_name_ru: profile.full_name_ru
+      ? fixUtf8Mojibake(profile.full_name_ru)
+      : profile.full_name_ru,
+    full_name_kk: profile.full_name_kk
+      ? fixUtf8Mojibake(profile.full_name_kk)
+      : profile.full_name_kk,
   };
 }
 

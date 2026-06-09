@@ -68,19 +68,19 @@ export interface ReferenceBrief {
   code: string;
   name_ru: string;
   name_kk: string;
-  bin?: string;
+  bin?: string | null;
   sla_hours?: number | null;
-  color?: string;
+  color?: string | null;
 }
 
 // Вспомогательная функция для получения полей из schema
 export function getTemplateFields(template: Template | undefined): TemplateField[] {
   if (!template?.schema) return [];
-  
+
   const schema = template.schema as any;
   if (schema && Array.isArray(schema.fields)) {
     return schema.fields;
   }
-  
+
   return [];
 }

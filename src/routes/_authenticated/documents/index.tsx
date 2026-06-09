@@ -16,7 +16,11 @@ import { Archive } from "lucide-react";
 import { bulkUpdateDocuments } from "@/lib/api/bulk.functions";
 import { listUsersBrief } from "@/lib/api/admin.functions";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { UserPlus, FilePen } from "lucide-react";
 
@@ -27,11 +31,11 @@ export const Route = createFileRoute("/_authenticated/documents/")({
 function DocumentsList() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
-  
+
   const [search, setSearch] = useState("");
   // Отложенное значение для поиска (Debounce "из коробки" React)
   const deferredSearch = useDeferredValue(search);
-  
+
   const [status, setStatus] = useState<string>("all");
   const [scope, setScope] = useState<"all" | "mine" | "assigned">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -47,13 +51,14 @@ function DocumentsList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["documents", { search: deferredSearch, status, scope }],
-    queryFn: () => listDocuments({ 
-      data: { 
-        search: deferredSearch || undefined, // Убираем пустые строки из пейлоада
-        status: status === "all" ? undefined : status, 
-        scope: scope === "all" ? undefined : scope // Приводим к единому стилю API
-      } 
-    }),
+    queryFn: () =>
+      listDocuments({
+        data: {
+          search: deferredSearch || undefined, // Убираем пустые строки из пейлоада
+          status: status === "all" ? undefined : status,
+          scope: scope === "all" ? undefined : scope, // Приводим к единому стилю API
+        },
+      }),
   });
 
   const bulkMutation = useMutation({
@@ -107,7 +112,20 @@ function DocumentsList() {
       <PageHeader
         title={t("nav.documents")}
         actions={
-          <Button onClick={() => navigate({ to: "/documents/new", search: {} })} size="sm">
+          <Button
+            onClick={() =>
+              navigate({
+                to: "/documents/new",
+                search: {
+                  projectId: undefined,
+                  templateId: undefined,
+                  nomenclatureId: undefined,
+                  departmentId: undefined,
+                },
+              })
+            }
+            size="sm"
+          >
             <Plus className="w-4 h-4 mr-1" />
             {t("doc.new")}
           </Button>
@@ -115,11 +133,7 @@ function DocumentsList() {
       />
       <PageBody>
         <PageToolbar>
-          <SearchField
-            value={search}
-            onChange={setSearch}
-            placeholder={t("common.search")}
-          />
+          <SearchField value={search} onChange={setSearch} placeholder={t("common.search")} />
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder={t("common.all")} />
@@ -155,9 +169,7 @@ function DocumentsList() {
               size="sm"
               variant="outline"
               disabled={bulkMutation.isPending}
-              onClick={() =>
-                bulkMutation.mutate({ ids: [...selected], action: "archive" })
-              }
+              onClick={() => bulkMutation.mutate({ ids: [...selected], action: "archive" })}
             >
               <Archive className="w-3 h-3 mr-1" />
               {t("bulk.archive")}
@@ -167,7 +179,7 @@ function DocumentsList() {
                 <SelectValue placeholder={t("bulk.assignee")} />
               </SelectTrigger>
               <SelectContent>
-                {users.map((u: { id: string; full_name_ru: string; full_name_kk: string }) => (
+                {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
                     {localized(u, locale, "full_name")}
                   </SelectItem>
@@ -189,10 +201,7 @@ function DocumentsList() {
               <UserPlus className="w-3 h-3 mr-1" />
               {t("bulk.assign")}
             </Button>
-            <Select
-              value={bulkStatus}
-              onValueChange={(v) => setBulkStatus(v as typeof bulkStatus)}
-            >
+            <Select value={bulkStatus} onValueChange={(v) => setBulkStatus(v as typeof bulkStatus)}>
               <SelectTrigger className="w-36 h-8">
                 <SelectValue />
               </SelectTrigger>
@@ -228,7 +237,11 @@ function DocumentsList() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="w-10 px-2 py-2">
-                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="select all" />
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="select all"
+                  />
                 </th>
                 <th className="text-left px-4 py-2 w-64">{t("doc.regNumber")}</th>
                 <th className="text-left px-4 py-2">{t("common.title")}</th>
@@ -238,9 +251,7 @@ function DocumentsList() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <TableStatusRow colSpan={6}>{t("common.loading")}</TableStatusRow>
-              )}
+              {isLoading && <TableStatusRow colSpan={6}>{t("common.loading")}</TableStatusRow>}
               {!isLoading && rows.length === 0 && (
                 <TableStatusRow colSpan={6}>{t("common.empty")}</TableStatusRow>
               )}
@@ -262,8 +273,12 @@ function DocumentsList() {
                       {localized(d, locale, "title")}
                     </Link>
                   </td>
-                  <td className="px-4 py-2"><StatusBadge status={d.status} /></td>
-                  <td className="px-4 py-2"><SlaBadge sla={d.sla_status} /></td>
+                  <td className="px-4 py-2">
+                    <StatusBadge status={d.status} />
+                  </td>
+                  <td className="px-4 py-2">
+                    <SlaBadge sla={d.sla_status} />
+                  </td>
                   <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
                     {fmtDateShort(d.created_at, locale)}
                   </td>

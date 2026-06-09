@@ -28,8 +28,7 @@ function todayYmd(): string {
 function formatPeriod(startsAt: string, endsAt: string): string {
   const start = startsAt.slice(0, 10);
   const end = endsAt.slice(0, 10);
-  const fmt = (iso: string) =>
-    new Date(`${iso}T12:00:00`).toLocaleDateString("ru-RU");
+  const fmt = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("ru-RU");
   return start === end ? fmt(start) : `${fmt(start)} — ${fmt(end)}`;
 }
 
@@ -56,12 +55,7 @@ async function markReminded(dutyId: string, userId: string, remindedOn: string) 
   } as never);
 }
 
-async function notifyUser(
-  userId: string,
-  title: string,
-  body: string,
-  asSubstitute: boolean,
-) {
+async function notifyUser(userId: string, title: string, body: string, asSubstitute: boolean) {
   await supabaseAdmin.from("notifications").insert({
     user_id: userId,
     type: "hr",

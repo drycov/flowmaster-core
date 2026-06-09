@@ -31,7 +31,9 @@ export const upsertNomenclature = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "nomenclature", { action: "manage" });
+    await requireModuleAccess(context.supabase, context.userId, "nomenclature", {
+      action: "manage",
+    });
     const { supabase } = context;
     const row = await upsertRow({
       supabase,
@@ -46,7 +48,9 @@ export const deleteNomenclature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    await requireModuleAccess(context.supabase, context.userId, "nomenclature", { action: "manage" });
+    await requireModuleAccess(context.supabase, context.userId, "nomenclature", {
+      action: "manage",
+    });
     const { error } = await context.supabase.from("nomenclature_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

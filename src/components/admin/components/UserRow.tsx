@@ -45,9 +45,7 @@ export function UserRow({
             ) : (
               <Checkbox
                 checked={hasRole}
-                onCheckedChange={(v) =>
-                  onRoleChange(user.id, role, v === true)
-                }
+                onCheckedChange={(v) => onRoleChange(user.id, role, v === true)}
               />
             )}
           </td>

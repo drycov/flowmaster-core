@@ -28,14 +28,20 @@ export const getDocumentAccessState = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const [{ data: canView }, { data: canViewContent }, { data: grant }] = await Promise.all([
-      supabase.rpc("can_view_document" as never, {
-        _doc_id: data.document_id,
-        _user: userId,
-      } as never),
-      supabase.rpc("can_view_document_content" as never, {
-        _doc_id: data.document_id,
-        _user: userId,
-      } as never),
+      supabaseAdmin.rpc(
+        "can_view_document" as never,
+        {
+          _doc_id: data.document_id,
+          _user: userId,
+        } as never,
+      ),
+      supabaseAdmin.rpc(
+        "can_view_document_content" as never,
+        {
+          _doc_id: data.document_id,
+          _user: userId,
+        } as never,
+      ),
       supabase
         .from("document_access_grants")
         .select("id, status, reason, review_note, expires_at, created_at, reviewed_at")
@@ -90,7 +96,7 @@ export const requestDocumentAccess = createServerFn({ method: "POST" })
     if (docErr) throw new Error(docErr.message);
     if (!doc) throw new Error("Документ не найден");
 
-    const { data: canViewContent } = await supabase.rpc(
+    const { data: canViewContent } = await supabaseAdmin.rpc(
       "can_view_document_content" as never,
       { _doc_id: data.document_id, _user: userId } as never,
     );
@@ -144,7 +150,7 @@ export const listDocumentAccessGrants = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return (rows ?? []) as DocumentAccessGrant[];
+    return (rows ?? []) as unknown as DocumentAccessGrant[];
   });
 
 export const resolveDocumentAccessGrant = createServerFn({ method: "POST" })
@@ -180,7 +186,7 @@ export const resolveDocumentAccessGrant = createServerFn({ method: "POST" })
         review_note: data.review_note?.trim() || null,
         reviewed_by: userId,
         reviewed_at: new Date().toISOString(),
-        expires_at: data.decision === "approved" ? data.expires_at ?? null : null,
+        expires_at: data.decision === "approved" ? (data.expires_at ?? null) : null,
       } as never)
       .eq("id", data.grant_id);
 

@@ -28,10 +28,7 @@ import { claimTelegramUpdate } from "./update-dedup.server";
 const LINK_TOKEN_TTL_HOURS = 24;
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 async function reply(
@@ -58,11 +55,7 @@ function normalizeLinkToken(raw: string): string {
   return raw.trim().toLowerCase();
 }
 
-async function handleStartWithToken(
-  chatId: string,
-  username: string | null,
-  rawToken: string,
-) {
+async function handleStartWithToken(chatId: string, username: string | null, rawToken: string) {
   const token = normalizeLinkToken(rawToken);
 
   const { data: row, error } = await supabaseAdmin
@@ -207,11 +200,9 @@ async function dispatchLegacyCommand(
         reply_markup: mainReplyKeyboard(),
       });
     } catch (e) {
-      await reply(
-        chatId,
-        `❌ ${e instanceof Error ? e.message : "Не удалось сменить пароль"}`,
-        { reply_markup: mainReplyKeyboard() },
-      );
+      await reply(chatId, `❌ ${e instanceof Error ? e.message : "Не удалось сменить пароль"}`, {
+        reply_markup: mainReplyKeyboard(),
+      });
     }
     return true;
   }
@@ -282,16 +273,8 @@ async function handleCallbackQuery(update: TelegramUpdate) {
   }
 
   if (data.startsWith("leave:")) {
-    const result = await handleLeaveApprovalCallback(
-      cq.id,
-      chatId,
-      cq.message?.message_id,
-      data,
-    );
-    await answerTelegramCallback(
-      cq.id,
-      result.awaitingComment ? "Введите комментарий" : undefined,
-    );
+    const result = await handleLeaveApprovalCallback(cq.id, chatId, cq.message?.message_id, data);
+    await answerTelegramCallback(cq.id, result.awaitingComment ? "Введите комментарий" : undefined);
     if (cq.message?.message_id) {
       if (result.awaitingComment) {
         await editTelegramMessage(
@@ -399,7 +382,9 @@ export async function createTelegramLinkToken(userId: string): Promise<{
   if (insertError) {
     const msg = insertError.message;
     if (msg.includes("does not exist")) {
-      throw new Error("Не удалось сохранить код привязки. Примените миграцию telegram_notifications.");
+      throw new Error(
+        "Не удалось сохранить код привязки. Примените миграцию telegram_notifications.",
+      );
     }
     if (msg.includes("telegram_link_tokens_user_id_fkey")) {
       throw new Error(

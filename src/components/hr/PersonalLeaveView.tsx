@@ -34,13 +34,7 @@ function leaveDaysInRange(d: LeaveRow): string[] {
   return days;
 }
 
-export function PersonalLeaveView({
-  leaves,
-  isLoading,
-  year,
-  month,
-  onYearMonthChange,
-}: Props) {
+export function PersonalLeaveView({ leaves, isLoading, year, month, onYearMonthChange }: Props) {
   const { t, locale } = useI18n();
   const todayKey = toDateKey(new Date());
 
@@ -133,11 +127,17 @@ export function PersonalLeaveView({
                       className={cn(
                         "min-h-[88px] rounded-md border p-1.5 text-xs",
                         isWeekend ? "bg-muted/40" : "bg-card",
-                        hasLeave && "border-emerald-500/60 bg-emerald-500/5 ring-1 ring-emerald-500/20",
+                        hasLeave &&
+                          "border-emerald-500/60 bg-emerald-500/5 ring-1 ring-emerald-500/20",
                         isToday && "ring-2 ring-primary",
                       )}
                     >
-                      <div className={cn("font-medium", hasLeave && "text-emerald-700 dark:text-emerald-400")}>
+                      <div
+                        className={cn(
+                          "font-medium",
+                          hasLeave && "text-emerald-700 dark:text-emerald-400",
+                        )}
+                      >
                         {date.getDate()}
                       </div>
                       <LeaveDayList leaves={dayLeaves} locale={locale} />
@@ -172,7 +172,10 @@ export function PersonalLeaveView({
                 };
                 const type = d.ref_absence_types;
                 return (
-                  <li key={String(d.id)} className="flex flex-wrap items-start justify-between gap-2 py-3">
+                  <li
+                    key={String(d.id)}
+                    className="flex flex-wrap items-start justify-between gap-2 py-3"
+                  >
                     <div>
                       <div className="font-medium">
                         {type ? localized(type, locale, "name") : "—"}

@@ -52,8 +52,8 @@ export interface DocumentComment {
   id: string;
   body: string;
   created_at: string;
-  author_id: string;       // Исправлено с user_id
-  document_id: string;     // Добавлено из API
+  author_id: string; // Исправлено с user_id
+  document_id: string; // Добавлено из API
   parent_id: string | null; // Добавлено из API (для цепочек ответов)
 }
 

@@ -25,7 +25,12 @@ type DocRow = {
   archived_at?: string | null;
   archive_location_id?: string | null;
   retention_period_id?: string | null;
-  ref_retention_periods?: { name_ru: string; name_kk: string; years?: number; is_permanent?: boolean } | null;
+  ref_retention_periods?: {
+    name_ru: string;
+    name_kk: string;
+    years?: number;
+    is_permanent?: boolean;
+  } | null;
   ref_archive_locations?: { name_ru: string; name_kk: string } | null;
   nomenclature_items?: { retention_years?: number } | null;
 };
@@ -133,7 +138,10 @@ export function ArchiveRetentionCard({ document, canManage = false }: ArchiveRet
                 className="mt-2"
                 disabled={saveMutation.isPending}
                 onClick={() =>
-                  saveMutation.mutate({ legal_hold: true, legal_hold_note: holdNote.trim() || null })
+                  saveMutation.mutate({
+                    legal_hold: true,
+                    legal_hold_note: holdNote.trim() || null,
+                  })
                 }
               >
                 {t("archive.saveNote")}
@@ -165,9 +173,7 @@ export function ArchiveRetentionCard({ document, canManage = false }: ArchiveRet
           </div>
           <div>
             <span className="text-muted-foreground block">{t("archive.archivedAt")}</span>
-            <span>
-              {document.archived_at ? fmtDateShort(document.archived_at, locale) : "—"}
-            </span>
+            <span>{document.archived_at ? fmtDateShort(document.archived_at, locale) : "—"}</span>
           </div>
         </div>
 

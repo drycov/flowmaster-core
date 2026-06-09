@@ -65,9 +65,7 @@ export async function extractTemplateFileContext(
       .map((l) => l.trim())
       .filter((l) => l.length > 0);
 
-    const meaningful = lines
-      .map(stripPlaceholders)
-      .filter((l) => l.length > 2);
+    const meaningful = lines.map(stripPlaceholders).filter((l) => l.length > 2);
 
     const title = meaningful[0] || nameFromFile || "Шаблон документа";
     const description = buildDescription(meaningful, title);

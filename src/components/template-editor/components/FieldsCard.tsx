@@ -44,16 +44,17 @@ export function FieldsCard({
             <p className="text-xs mt-1">{t("tpl.noFieldsHint")}</p>
           </div>
         )}
-        
-        {!isLoading && fields.map((field, index) => (
-          <FieldItem
-            key={index}
-            field={field}
-            index={index}
-            onUpdate={(patch) => onUpdateField(index, patch)}
-            onDelete={() => onDeleteField(index)}
-          />
-        ))}
+
+        {!isLoading &&
+          fields.map((field, index) => (
+            <FieldItem
+              key={index}
+              field={field}
+              index={index}
+              onUpdate={(patch) => onUpdateField(index, patch)}
+              onDelete={() => onDeleteField(index)}
+            />
+          ))}
       </CardContent>
     </Card>
   );

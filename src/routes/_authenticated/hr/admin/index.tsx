@@ -16,7 +16,11 @@ export const Route = createFileRoute("/_authenticated/hr/admin/")({
 
 function HrAdminPage() {
   const { t, locale } = useI18n();
-  const { data: requests = [], isLoading, error } = useQuery({
+  const {
+    data: requests = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["org-leave-requests"],
     queryFn: listOrgLeaveRequests,
   });
@@ -67,12 +71,12 @@ function HrAdminPage() {
                     <tr key={String(row.id)} className="border-b last:border-0">
                       <td className="px-4 py-3">
                         <div className="font-medium">
-                          {employee ? localized(employee, locale, "full_name") || employee.email : "—"}
+                          {employee
+                            ? localized(employee, locale, "full_name") || employee.email
+                            : "—"}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        {type ? localized(type, locale, "name") : "—"}
-                      </td>
+                      <td className="px-4 py-3">{type ? localized(type, locale, "name") : "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {fmtDateShort(String(row.date_from))} — {fmtDateShort(String(row.date_to))}
                         {row.business_days

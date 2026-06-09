@@ -5,6 +5,7 @@ import {
   registerUploadedFileVersion,
   resolveNextDocumentVersionNo,
 } from "@/lib/documents/versions.server";
+import { assertCanEditDocument } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
 import {
   STORAGE_BUCKETS,
@@ -59,6 +60,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
+    await assertCanEditDocument(supabase, userId, data.document_id);
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
@@ -70,11 +72,7 @@ export const prepareDocumentVersionUpload = createServerFn({ method: "POST" })
 
     const nextVersion = await resolveNextDocumentVersionNo(supabase, data.document_id);
 
-    const storagePath = documentVersionPath(
-      data.document_id,
-      nextVersion,
-      data.filename,
-    );
+    const storagePath = documentVersionPath(data.document_id, nextVersion, data.filename);
 
     const ext = data.filename.split(".").pop()?.toLowerCase() ?? "";
     const mimeByExt: Record<string, string> = {
@@ -108,7 +106,11 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
       comment: z.string().max(2000).optional().nullable(),
     }),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{
+    version_no: number;
+    file_path: string;
+    file_format: string | null;
+  }> => {
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
 
@@ -135,7 +137,7 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
 
     const bodySnapshot = (doc as { body?: string | null } | null)?.body ?? null;
 
-    return registerUploadedFileVersion(supabase, {
+    const row = await registerUploadedFileVersion(supabase, {
       documentId: data.document_id,
       userId,
       versionNo: data.version_no,
@@ -144,6 +146,11 @@ export const registerDocumentVersion = createServerFn({ method: "POST" })
       comment: data.comment,
       bodySnapshot,
     });
+    return {
+      version_no: Number(row.version_no),
+      file_path: String(row.file_path),
+      file_format: row.file_format != null ? String(row.file_format) : null,
+    };
   });
 
 /** Upload template file to storage and link to template record. */

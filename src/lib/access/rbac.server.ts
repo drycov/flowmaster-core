@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  ALL_PERMISSIONS,
-  type Permission,
-} from "./permissions";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { ALL_PERMISSIONS, type Permission } from "./permissions";
 import {
   userCanManageIntegrations,
   userCanManageSystemSettings,
@@ -24,10 +22,13 @@ export async function requirePermission(
   userId: string,
   permission: string,
 ): Promise<void> {
-  const { data, error } = await supabase.rpc("user_has_permission" as never, {
-    _user: userId,
-    _permission: permission,
-  } as never);
+  const { data, error } = await supabaseAdmin.rpc(
+    "user_has_permission" as never,
+    {
+      _user: userId,
+      _permission: permission,
+    } as never,
+  );
   if (error) throw new Error(`Permission check failed: ${error.message}`);
   if (!data) throw new Error(`Forbidden: missing permission "${permission}"`);
 }
@@ -39,10 +40,13 @@ export async function requireAnyPermission(
 ): Promise<void> {
   if (permissions.length === 0) return;
   for (const p of permissions) {
-    const { data, error } = await supabase.rpc("user_has_permission" as never, {
-      _user: userId,
-      _permission: p,
-    } as never);
+    const { data, error } = await supabaseAdmin.rpc(
+      "user_has_permission" as never,
+      {
+        _user: userId,
+        _permission: p,
+      } as never,
+    );
     if (error) throw new Error(`Permission check failed: ${error.message}`);
     if (data) return;
   }
@@ -56,10 +60,13 @@ export async function fetchUserPermissions(
   const result = {} as Record<Permission, boolean>;
   await Promise.all(
     ALL_PERMISSIONS.map(async (code) => {
-      const { data, error } = await supabase.rpc("user_has_permission" as never, {
-        _user: userId,
-        _permission: code,
-      } as never);
+      const { data, error } = await supabaseAdmin.rpc(
+        "user_has_permission" as never,
+        {
+          _user: userId,
+          _permission: code,
+        } as never,
+      );
       if (error) throw new Error(`Permission check failed: ${error.message}`);
       result[code] = !!data;
     }),
@@ -75,20 +82,14 @@ export async function requireSystemSettingsAccess(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<void> {
-  await requireAnyPermission(supabase, userId, [
-    "manage_system_settings",
-    "manage_license",
-  ]);
+  await requireAnyPermission(supabase, userId, ["manage_system_settings", "manage_license"]);
 }
 
 export async function requireIntegrationsAccess(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<void> {
-  await requireAnyPermission(supabase, userId, [
-    "manage_integrations",
-    "manage_license",
-  ]);
+  await requireAnyPermission(supabase, userId, ["manage_integrations", "manage_license"]);
 }
 
 export async function requirePlatformAccess(

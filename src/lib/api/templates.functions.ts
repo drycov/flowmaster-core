@@ -10,12 +10,13 @@ import {
   type TemplateFieldDef,
   type TemplateFileFormat,
 } from "@/lib/templates/file-formats";
-import {
-  isDefaultTemplateName,
-} from "@/lib/templates/field-inference";
+import { isDefaultTemplateName } from "@/lib/templates/field-inference";
 import { extractTemplateFileContext } from "@/lib/templates/file-context.server";
 import { registerInitialFileVersion } from "@/lib/documents/versions.server";
-import { scanTemplatePlaceholders } from "@/lib/templates/file-processing.server";
+import {
+  downloadTemplateBuffer,
+  scanTemplatePlaceholders,
+} from "@/lib/templates/file-processing.server";
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
@@ -92,10 +93,7 @@ export const upsertTemplate = createServerFn({ method: "POST" })
     return { id: String(row.id) };
   });
 
-function substituteTemplateBody(
-  template: string,
-  values: Record<string, string>,
-): string {
+function substituteTemplateBody(template: string, values: Record<string, string>): string {
   let body = template;
   for (const [k, v] of Object.entries(values)) {
     body = body.replaceAll(`{{${k}}}`, String(v));
@@ -312,9 +310,7 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     }
 
     const workflowId =
-      data.workflow_id !== undefined
-        ? data.workflow_id
-        : (tplRow.default_workflow_id ?? null);
+      data.workflow_id !== undefined ? data.workflow_id : (tplRow.default_workflow_id ?? null);
 
     const resolvedTitles = resolveDocumentTitles(
       {
@@ -371,7 +367,10 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       (bodyTemplate.includes("{{registration_number}}") || bodyTemplate.includes("{{reg_number}}"))
     ) {
       body = substituteTemplateBody(bodyTemplate, finalValues);
-      await supabaseAdmin.from("documents").update({ body } as never).eq("id", doc.id);
+      await supabaseAdmin
+        .from("documents")
+        .update({ body } as never)
+        .eq("id", doc.id);
     }
 
     const fileFormat = tplRow.file_format as TemplateFileFormat | null;

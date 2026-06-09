@@ -59,9 +59,7 @@ export function useTemplateFileUpload(
 
       const added = result.synced?.added ?? 0;
       if (added > 0) {
-        toast.success(
-          interpolate(t("tpl.fileTemplate.fieldsFound"), { count: String(added) }),
-        );
+        toast.success(interpolate(t("tpl.fileTemplate.fieldsFound"), { count: String(added) }));
       } else if (result.synced && result.synced.keys.length === 0) {
         toast.info(t("tpl.fileTemplate.noPlaceholders"));
       }

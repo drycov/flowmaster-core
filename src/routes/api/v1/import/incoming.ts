@@ -42,13 +42,9 @@ export const Route = createFileRoute("/api/v1/import/incoming")({
             summary: typeof row.summary === "string" ? row.summary : null,
             body: typeof row.body === "string" ? row.body : null,
             external_reg_number:
-              typeof row.external_reg_number === "string"
-                ? row.external_reg_number
-                : null,
+              typeof row.external_reg_number === "string" ? row.external_reg_number : null,
             correspondent_code:
-              typeof row.correspondent_code === "string"
-                ? row.correspondent_code
-                : null,
+              typeof row.correspondent_code === "string" ? row.correspondent_code : null,
             received_at: typeof row.received_at === "string" ? row.received_at : null,
           };
         });

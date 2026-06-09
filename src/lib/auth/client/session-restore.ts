@@ -1,10 +1,6 @@
 import { refreshAccessToken } from "@/lib/api/auth.functions";
 import { resetSupabaseClient } from "@/integrations/supabase/client";
-import {
-  getAccessToken,
-  isAccessTokenExpiringSoon,
-  setSession,
-} from "@/lib/auth/session-storage";
+import { getAccessToken, isAccessTokenExpiringSoon, setSession } from "@/lib/auth/session-storage";
 
 let restorePromise: Promise<boolean> | null = null;
 

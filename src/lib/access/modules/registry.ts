@@ -321,7 +321,9 @@ export function getModule(id: ModuleId): ModuleDefinition {
   return MODULE_REGISTRY[id];
 }
 
-export function findModuleByPath(path: string): { module: ModuleDefinition; action: ModuleAction } | null {
+export function findModuleByPath(
+  path: string,
+): { module: ModuleDefinition; action: ModuleAction } | null {
   let best: { module: ModuleDefinition; action: ModuleAction; len: number } | null = null;
   for (const mod of Object.values(MODULE_REGISTRY)) {
     if (!mod.routes) continue;

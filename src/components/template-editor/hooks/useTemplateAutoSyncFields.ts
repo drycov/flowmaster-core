@@ -17,8 +17,7 @@ export function useTemplateAutoSyncFields(options: {
   const attemptedRef = useRef<string | null>(null);
 
   const sync = useMutation({
-    mutationFn: () =>
-      syncTemplateFieldsFromFile({ data: { template_id: templateId } }),
+    mutationFn: () => syncTemplateFieldsFromFile({ data: { template_id: templateId } }),
     onSuccess: (result) => {
       onSynced({
         fields: result.fields,

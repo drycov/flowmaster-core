@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button"; // Импортируем кнопку
-import { Label } from "@/components/ui/label";   // Импортируем Label для формы
+import { Label } from "@/components/ui/label"; // Импортируем Label для формы
 import {
   Select,
   SelectContent,
@@ -53,14 +53,7 @@ export const Route = createFileRoute("/_authenticated/admin/users/")({
    Roles domain
 ======================= */
 
-const ROLES = [
-  "admin",
-  "registrar",
-  "approver",
-  "signer",
-  "archivist",
-  "viewer",
-] as const;
+const ROLES = ["admin", "registrar", "approver", "signer", "archivist", "viewer"] as const;
 
 const PLATFORM_ROLE = "platform_admin" as const;
 
@@ -147,20 +140,20 @@ function UserRow({
 
   const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
     const target = e.target as HTMLElement;
-    
+
     if (
-      target.closest("button") || 
-      target.closest("input") || 
+      target.closest("button") ||
+      target.closest("input") ||
       target.closest("[role='checkbox']")
     ) {
       return;
     }
-    
+
     onRowClick(user.id);
   };
 
   return (
-    <tr 
+    <tr
       onClick={handleRowClick}
       className="border-b border-border/60 hover:bg-muted/50 transition-colors group cursor-pointer"
     >
@@ -168,9 +161,7 @@ function UserRow({
         <div className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
           {displayName}
         </div>
-        <div className="text-xs text-muted-foreground mt-0.5 select-all">
-          {user.email}
-        </div>
+        <div className="text-xs text-muted-foreground mt-0.5 select-all">{user.email}</div>
         <div className="flex flex-wrap gap-1 mt-1.5">
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
             {authLabel}
@@ -198,9 +189,7 @@ function UserRow({
               ) : (
                 <Checkbox
                   checked={hasRole}
-                  onCheckedChange={(checked) =>
-                    onRoleChange(user.id, role, checked === true)
-                  }
+                  onCheckedChange={(checked) => onRoleChange(user.id, role, checked === true)}
                   disabled={isUpdating}
                   className={cn("transition-transform active:scale-95")}
                 />
@@ -272,13 +261,7 @@ function UserFilters({
    Stats Component
 ======================= */
 
-function UsersStats({
-  users,
-  roles,
-}: {
-  users: User[];
-  roles: readonly TableRole[];
-}) {
+function UsersStats({ users, roles }: { users: User[]; roles: readonly TableRole[] }) {
   const { t } = useI18n();
 
   const roleCounts = useMemo(() => {
@@ -301,10 +284,14 @@ function UsersStats({
 
       {roles.map((role) =>
         roleCounts[role] > 0 ? (
-          <Badge key={role} variant="outline" className="px-2.5 py-1 font-normal text-muted-foreground">
+          <Badge
+            key={role}
+            variant="outline"
+            className="px-2.5 py-1 font-normal text-muted-foreground"
+          >
             {roleLabel(t, role)}: {roleCounts[role]}
           </Badge>
-        ) : null
+        ) : null,
       )}
     </div>
   );
@@ -319,8 +306,7 @@ function UsersAdmin() {
   const { can } = useAccessContext();
   const canManagePlatform = can("manage_platform");
   const tableRoles = useMemo(
-    (): readonly TableRole[] =>
-      canManagePlatform ? [...ROLES, PLATFORM_ROLE] : ROLES,
+    (): readonly TableRole[] => (canManagePlatform ? [...ROLES, PLATFORM_ROLE] : ROLES),
     [canManagePlatform],
   );
   const queryClient = useQueryClient();
@@ -328,7 +314,7 @@ function UsersAdmin() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  
+
   // Состояния для модалки создания пользователя
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -374,7 +360,7 @@ function UsersAdmin() {
       setUserRole({
         data: { user_id: userId, role, enabled },
       }),
-    
+
     onMutate: async ({ userId, role, enabled }) => {
       await queryClient.cancelQueries({ queryKey: ["users"] });
       const previousUsers = queryClient.getQueryData<User[]>(["users"]);
@@ -390,7 +376,7 @@ function UsersAdmin() {
             allRoles,
             roles: allRoles.filter(isRole),
           };
-        })
+        }),
       );
 
       return { previousUsers };
@@ -399,9 +385,7 @@ function UsersAdmin() {
       if (context?.previousUsers) {
         queryClient.setQueryData(["users"], context.previousUsers);
       }
-      toast.error(
-        err instanceof Error ? err.message : t("admin.users.roleUpdateError")
-      );
+      toast.error(err instanceof Error ? err.message : t("admin.users.roleUpdateError"));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -424,8 +408,7 @@ function UsersAdmin() {
         u.full_name_kk?.toLowerCase().includes(normalizedSearch);
 
       const matchRole =
-        roleFilter === "all" ||
-        (isTableRole(roleFilter) && u.allRoles.includes(roleFilter));
+        roleFilter === "all" || (isTableRole(roleFilter) && u.allRoles.includes(roleFilter));
 
       return matchSearch && matchRole;
     });
@@ -435,15 +418,18 @@ function UsersAdmin() {
     (userId: string, role: TableRole, enabled: boolean) => {
       roleMutation.mutate({ userId, role, enabled });
     },
-    [roleMutation]
+    [roleMutation],
   );
 
-  const handleRowClick = useCallback((userId: string) => {
-    navigate({
-      to: "/admin/users/$id",
-      params: { id: userId },
-    });
-  }, [navigate]);
+  const handleRowClick = useCallback(
+    (userId: string) => {
+      navigate({
+        to: "/admin/users/$id",
+        params: { id: userId },
+      });
+    },
+    [navigate],
+  );
 
   // Обработчик отправки формы создания пользователя
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -541,7 +527,10 @@ function UsersAdmin() {
 
                 <div className="py-5 space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label
+                      htmlFor="email"
+                      className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                    >
                       Email <span className="text-destructive">*</span>
                     </Label>
                     <Input
@@ -556,7 +545,10 @@ function UsersAdmin() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="fullNameRu" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label
+                      htmlFor="fullNameRu"
+                      className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                    >
                       {t("admin.users.fullNameRu")}
                     </Label>
                     <Input
@@ -570,7 +562,10 @@ function UsersAdmin() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="fullNameKk" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label
+                      htmlFor="fullNameKk"
+                      className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                    >
                       {t("admin.users.fullNameKk")}
                     </Label>
                     <Input

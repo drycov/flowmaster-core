@@ -31,20 +31,24 @@ function WorkflowCanvasNodeComponent({ data, selected }: NodeProps) {
         <span>{icon}</span>
         <span>{typeLabel}</span>
       </div>
-      <div className="text-xs font-semibold mt-0.5 leading-tight">{nodeData.label || typeLabel}</div>
+      <div className="text-xs font-semibold mt-0.5 leading-tight">
+        {nodeData.label || typeLabel}
+      </div>
       {nodeData.assignee_type && ["APPROVAL", "SIGNATURE", "TASK"].includes(type) && (
         <div className="text-[10px] text-muted-foreground mt-1 truncate">
           {t(
-            ({
-              user: "wf.assignee.user",
-              position: "wf.assignee.position",
-              department: "wf.assignee.department",
-              department_head: "wf.assignee.deptHead",
-              parent_department_head: "wf.assignee.parentDeptHead",
-              initiator_manager: "wf.assignee.initiatorManager",
-              role: "wf.assignee.role",
-              group: "wf.assignee.group",
-            } as const)[nodeData.assignee_type] ?? "wf.assignee.user",
+            (
+              {
+                user: "wf.assignee.user",
+                position: "wf.assignee.position",
+                department: "wf.assignee.department",
+                department_head: "wf.assignee.deptHead",
+                parent_department_head: "wf.assignee.parentDeptHead",
+                initiator_manager: "wf.assignee.initiatorManager",
+                role: "wf.assignee.role",
+                group: "wf.assignee.group",
+              } as const
+            )[nodeData.assignee_type] ?? "wf.assignee.user",
           )}
         </div>
       )}

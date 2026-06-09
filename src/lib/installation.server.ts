@@ -102,9 +102,7 @@ export function getLicenseSigningSecret(): string {
   ensureInstallationEnv();
   const secret = process.env.LICENSE_SIGNING_SECRET?.trim();
   if (!secret) {
-    throw new Error(
-      "Не задан секрет подписи лицензий. Укажите SUPABASE_JWT_SECRET в окружении.",
-    );
+    throw new Error("Не задан секрет подписи лицензий. Укажите SUPABASE_JWT_SECRET в окружении.");
   }
   return secret;
 }

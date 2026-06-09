@@ -267,8 +267,29 @@ export type ExternalReferenceLink = {
 };
 
 export const EXTERNAL_REFERENCE_LINKS: ExternalReferenceLink[] = [
-  { to: "/nomenclature", titleKey: "nav.nomenclature", descriptionKey: "ref.nomenclatureDesc", icon: "Library" },
-  { to: "/templates", titleKey: "nav.templates", descriptionKey: "ref.templatesDesc", icon: "FilePlus2" },
-  { to: "/workflows", titleKey: "nav.workflows", descriptionKey: "ref.workflowsDesc", icon: "GitBranch" },
-  { to: "/admin/positions", titleKey: "nav.positions", descriptionKey: "ref.positionsDesc", icon: "Settings", permission: "manage_org" },
+  {
+    to: "/nomenclature",
+    titleKey: "nav.nomenclature",
+    descriptionKey: "ref.nomenclatureDesc",
+    icon: "Library",
+  },
+  {
+    to: "/templates",
+    titleKey: "nav.templates",
+    descriptionKey: "ref.templatesDesc",
+    icon: "FilePlus2",
+  },
+  {
+    to: "/workflows",
+    titleKey: "nav.workflows",
+    descriptionKey: "ref.workflowsDesc",
+    icon: "GitBranch",
+  },
+  {
+    to: "/admin/positions",
+    titleKey: "nav.positions",
+    descriptionKey: "ref.positionsDesc",
+    icon: "Settings",
+    permission: "manage_org",
+  },
 ];

@@ -46,7 +46,7 @@ export async function requireModuleAccess(
   const perms =
     mod.permissions[action] ??
     (action === "manage"
-      ? mod.permissions.write ?? mod.permissions.read
+      ? (mod.permissions.write ?? mod.permissions.read)
       : action === "write"
         ? mod.permissions.read
         : undefined);

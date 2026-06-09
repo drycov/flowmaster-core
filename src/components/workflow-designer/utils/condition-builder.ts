@@ -7,7 +7,10 @@ export interface ParsedCondition {
 export const parseCondition = (conditionStr: string = ""): ParsedCondition => {
   const patterns = [
     { regex: /(\w+)\s*(===|!==|>=|<=|>|<)\s*['"](.+)['"]/, fields: ["field", "operator", "value"] },
-    { regex: /(\w+)\s*(includes|startsWith|endsWith)\s*['"](.+)['"]/, fields: ["field", "operator", "value"] },
+    {
+      regex: /(\w+)\s*(includes|startsWith|endsWith)\s*['"](.+)['"]/,
+      fields: ["field", "operator", "value"],
+    },
   ];
 
   for (const pattern of patterns) {
@@ -16,7 +19,7 @@ export const parseCondition = (conditionStr: string = ""): ParsedCondition => {
       const result: ParsedCondition = {
         field: "",
         operator: "===",
-        value: ""
+        value: "",
       };
       pattern.fields.forEach((field, idx) => {
         if (field === "field") result.field = match[idx + 1];

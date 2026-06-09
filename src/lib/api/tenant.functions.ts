@@ -6,10 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registerUser, setUserRole as setUserRoleDb } from "@/lib/auth/server";
 import { validatePassword } from "@/lib/auth/policy";
 import { requireAvailableSeat, requireModuleAccess } from "@/lib/api/_helpers";
-import {
-  isValidTenantSlug,
-  normalizeTenantSlug,
-} from "@/lib/access/tenant-auth.server";
+import { isValidTenantSlug, normalizeTenantSlug } from "@/lib/access/tenant-auth.server";
 import {
   buildPublicTenantAuthContext,
   type PublicTenantAuthContext,

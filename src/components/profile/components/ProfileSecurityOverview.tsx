@@ -22,7 +22,7 @@ export function ProfileSecurityOverview({ profile, telegram }: Props) {
     {
       icon: Mail,
       label: t("profile.authMethod.email"),
-      active: profile.has_password && !isEdsPlaceholderEmail(profile.email),
+      active: !!profile.has_password && !isEdsPlaceholderEmail(profile.email),
     },
     {
       icon: LockKeyhole,

@@ -102,7 +102,10 @@ export async function dispatchWebhookOutbox(limit = 50) {
         claimed_at: null,
       };
       if (!exhausted) failPatch.next_retry_at = computeNextRetryAt(attempts);
-      await supabaseAdmin.from("webhook_outbox").update(failPatch as never).eq("id", row.id);
+      await supabaseAdmin
+        .from("webhook_outbox")
+        .update(failPatch as never)
+        .eq("id", row.id);
 
       if (exhausted) failed++;
       else retried++;

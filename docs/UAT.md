@@ -10,6 +10,7 @@
 - [ ] `CRON_SECRET` задан, hooks работают (email, webhooks, SLA, retention, license-sync)
 - [ ] Лицензия `FM1.*` активирована
 - [ ] HTTPS, резервное копирование БД
+- [ ] Automated smoke: `npm run uat:smoke` (health, cron, DB/RLS regression)
 - [ ] E2E smoke: `E2E_EMAIL` / `E2E_PASSWORD` → `npm run test:e2e`
 
 ## Аутентификация

@@ -24,10 +24,7 @@ const fieldMessageKey: Record<string, string> = {
   tenantSlug: "auth.error.tenantSlugRequired",
 };
 
-export function formatAuthValidationIssues(
-  issues: z.ZodIssue[],
-  t: Translate,
-): string {
+export function formatAuthValidationIssues(issues: z.ZodIssue[], t: Translate): string {
   const messages = issues.map((issue) => {
     const field = String(issue.path[0] ?? "");
     const key = fieldMessageKey[field];

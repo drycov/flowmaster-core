@@ -52,8 +52,7 @@ export function DocumentHeader({
           </Button>
 
           <Button size="sm" variant="outline" onClick={onArchive} disabled={isArchiving}>
-            <Archive className="w-4 h-4 mr-1" />
-            В архив
+            <Archive className="w-4 h-4 mr-1" />В архив
           </Button>
         </>
       }

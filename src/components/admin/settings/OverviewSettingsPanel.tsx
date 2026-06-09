@@ -105,17 +105,13 @@ export function OverviewSettingsPanel({
           label={t("settings.overview.telegram")}
           enabled={form.telegram.enabled && meta.has_telegram_bot_token}
           detail={
-            form.telegram.enabled
-              ? t("settings.overview.enabled")
-              : t("settings.overview.disabled")
+            form.telegram.enabled ? t("settings.overview.enabled") : t("settings.overview.disabled")
           }
         />
         <StatusCard
           label={t("settings.overview.appUrl")}
           enabled={meta.has_app_url}
-          detail={
-            meta.has_app_url ? form.general.app_url : t("settings.overview.notConfigured")
-          }
+          detail={meta.has_app_url ? form.general.app_url : t("settings.overview.notConfigured")}
           neutral={!meta.has_app_url}
         />
         <StatusCard
@@ -144,7 +140,11 @@ export function OverviewSettingsPanel({
       <div className="rounded-xl border bg-card p-5">
         <h3 className="mb-3 font-semibold">{t("settings.overview.linksTitle")}</h3>
         <div className="flex flex-wrap gap-2">
-          <QuickLink to="/admin/users" icon={<Users className="h-4 w-4" />} label={t("nav.users")} />
+          <QuickLink
+            to="/admin/users"
+            icon={<Users className="h-4 w-4" />}
+            label={t("nav.users")}
+          />
           <QuickLink
             to="/admin/organization"
             icon={<Building2 className="h-4 w-4" />}

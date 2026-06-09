@@ -45,7 +45,19 @@ export function QuickLink({
   label,
 }: {
   to: string;
-  search?: { tab: string };
+  search?: {
+    tab?:
+      | "overview"
+      | "auth"
+      | "ldap"
+      | "eds"
+      | "general"
+      | "mail"
+      | "telegram"
+      | "integrations"
+      | "license"
+      | "tenants";
+  };
   icon: React.ReactNode;
   label: string;
 }) {

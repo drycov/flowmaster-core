@@ -3,10 +3,7 @@ import { resolve } from "node:path";
 
 function parseEnvValue(raw: string): string {
   const val = raw.trim();
-  if (
-    (val.startsWith('"') && val.endsWith('"')) ||
-    (val.startsWith("'") && val.endsWith("'"))
-  ) {
+  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
     return val.slice(1, -1);
   }
   return val;

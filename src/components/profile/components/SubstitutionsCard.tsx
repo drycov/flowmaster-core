@@ -43,9 +43,7 @@ export function SubstitutionsCard() {
             </div>
             {actingFor.map((row) => (
               <div key={row.id} className="text-xs">
-                {row.principal
-                  ? localized(row.principal, locale, "full_name")
-                  : row.principal_id}{" "}
+                {row.principal ? localized(row.principal, locale, "full_name") : row.principal_id}{" "}
                 <span className="text-muted-foreground">
                   ({fmtDateShort(row.valid_from, locale)} — {fmtDateShort(row.valid_until, locale)})
                 </span>

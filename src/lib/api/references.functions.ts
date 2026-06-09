@@ -2,12 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireModuleAccess } from "./_helpers";
-import {
-  getCatalogById,
-  REFERENCE_CATALOGS,
-  REFERENCE_TABLES,
-} from "@/lib/references/catalogs";
-import { queryActiveReferenceBrief } from "@/lib/api/reference-brief.server";
+import { getCatalogById, REFERENCE_CATALOGS, REFERENCE_TABLES } from "@/lib/references/catalogs";
+import { queryActiveReferenceBrief, type ReferenceBriefRow } from "@/lib/api/reference-brief.server";
+import type { ReferenceCatalogRow } from "@/lib/api/reference-types";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 
 const catalogIdSchema = z.object({
@@ -46,10 +43,10 @@ function buildSelectQuery(table: string, catalogId: string) {
 export const listReferenceCatalog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(catalogIdSchema)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<ReferenceCatalogRow[]> => {
     const catalog = assertCatalog(data.catalogId);
     let query = context.supabase
-      .from(catalog.table as "ref_document_types")
+      .from(catalog.table as never)
       .select(buildSelectQuery(catalog.table, catalog.id));
 
     for (const order of catalog.orderBy ?? [{ column: "code" }]) {
@@ -58,7 +55,7 @@ export const listReferenceCatalog = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    return (rows ?? []) as ReferenceCatalogRow[];
   });
 
 export const upsertReferenceRow = createServerFn({ method: "POST" })
@@ -113,110 +110,120 @@ const defaultBriefOrder = [{ column: "sort_order" }, { column: "code" }] as cons
 /** Brief lists for selects in forms */
 export const listDocumentTypesBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_document_types",
-      "id, code, name_ru, name_kk",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_document_types",
+        "id, code, name_ru, name_kk",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listPrioritiesBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_priorities",
-      "id, code, name_ru, name_kk, sla_hours, color",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_priorities",
+        "id, code, name_ru, name_kk, sla_hours, color",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listTemplateCategoriesBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_template_categories",
-      "id, code, name_ru, name_kk",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_template_categories",
+        "id, code, name_ru, name_kk",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listRegistrationJournalsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_registration_journals",
-      "id, code, name_ru, name_kk, prefix, document_type_id",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_registration_journals",
+        "id, code, name_ru, name_kk, prefix, document_type_id",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listDocumentLinkTypesBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_document_link_types",
-      "id, code, name_ru, name_kk",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_document_link_types",
+        "id, code, name_ru, name_kk",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listAccessLevelsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_access_levels",
-      "id, code, name_ru, name_kk, level_order",
-      [{ column: "level_order" }, { column: "sort_order" }],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_access_levels",
+        "id, code, name_ru, name_kk, level_order",
+        [{ column: "level_order" }, { column: "sort_order" }],
+      ),
   );
 
 export const listDeliveryMethodsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_delivery_methods",
-      "id, code, name_ru, name_kk",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_delivery_methods",
+        "id, code, name_ru, name_kk",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listCorrespondentsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_correspondents",
-      "id, code, name_ru, name_kk, bin",
-      [{ column: "name_ru" }, { column: "code" }],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_correspondents",
+        "id, code, name_ru, name_kk, bin",
+        [{ column: "name_ru" }, { column: "code" }],
+      ),
   );
 
 export const listRetentionPeriodsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_retention_periods",
-      "id, code, name_ru, name_kk, years, is_permanent",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_retention_periods",
+        "id, code, name_ru, name_kk, years, is_permanent",
+        [...defaultBriefOrder],
+      ),
   );
 
 export const listArchiveLocationsBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) =>
-    queryActiveReferenceBrief(
-      context.supabase,
-      "ref_archive_locations",
-      "id, code, name_ru, name_kk, parent_id",
-      [...defaultBriefOrder],
-    ),
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_archive_locations",
+        "id, code, name_ru, name_kk, parent_id",
+        [...defaultBriefOrder],
+      ),
   );

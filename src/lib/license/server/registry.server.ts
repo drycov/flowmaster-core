@@ -157,15 +157,13 @@ export async function activateOnLicenseServer(
       throw new Error("Достигнут лимит активаций для этого ключа");
     }
 
-    const { error: insErr } = await supabase
-      .from("license_server_activations" as never)
-      .insert({
-        key_id: keyId,
-        installation_id: req.installation_id,
-        token_hash: tokenHash,
-        hostname: req.hostname ?? "",
-        app_version: req.app_version ?? "",
-      } as never);
+    const { error: insErr } = await supabase.from("license_server_activations" as never).insert({
+      key_id: keyId,
+      installation_id: req.installation_id,
+      token_hash: tokenHash,
+      hostname: req.hostname ?? "",
+      app_version: req.app_version ?? "",
+    } as never);
     if (insErr) throw new Error(insErr.message);
   }
 
@@ -232,9 +230,7 @@ export async function heartbeatOnLicenseServer(
 
   return {
     status: "active",
-    entitlement: key
-      ? rowToEntitlement(key as Parameters<typeof rowToEntitlement>[0])
-      : undefined,
+    entitlement: key ? rowToEntitlement(key as Parameters<typeof rowToEntitlement>[0]) : undefined,
     next_heartbeat_hours: DEFAULT_HEARTBEAT_HOURS,
   };
 }

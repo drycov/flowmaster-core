@@ -16,59 +16,38 @@ export interface AssigneeLookup {
 export function getNodeAssignee(node: WorkflowNode): { mode: string; ref: string | null } {
   const data = (node as { data?: Record<string, unknown> }).data;
   const mode = String(
-    node.assignee_mode ||
-      node.assignee_type ||
-      data?.assignee_mode ||
-      data?.assignee_type ||
-      "",
+    node.assignee_mode || node.assignee_type || data?.assignee_mode || data?.assignee_type || "",
   ).trim();
-  const ref =
-    (node.assignee_ref ??
-      node.assignee_id ??
-      data?.assignee_ref ??
-      data?.assignee_id ??
-      null) as string | null;
+  const ref = (node.assignee_ref ??
+    node.assignee_id ??
+    data?.assignee_ref ??
+    data?.assignee_id ??
+    null) as string | null;
   return { mode: mode || "user", ref: ref || null };
 }
 
-function positionTitle(
-  id: string | null,
-  locale: string,
-  lookup: AssigneeLookup,
-): string | null {
+function positionTitle(id: string | null, locale: string, lookup: AssigneeLookup): string | null {
   if (!id) return null;
   const pos = lookup.positions.find((p) => p.id === id);
   if (!pos) return null;
   return locale === "kk" && pos.title_kk ? pos.title_kk : pos.title_ru;
 }
 
-function departmentName(
-  id: string | null,
-  locale: string,
-  lookup: AssigneeLookup,
-): string | null {
+function departmentName(id: string | null, locale: string, lookup: AssigneeLookup): string | null {
   if (!id) return null;
   const dept = lookup.departments.find((d) => d.id === id);
   if (!dept) return null;
   return locale === "kk" && dept.name_kk ? dept.name_kk : dept.name_ru;
 }
 
-function userName(
-  id: string | null,
-  locale: string,
-  lookup: AssigneeLookup,
-): string | null {
+function userName(id: string | null, locale: string, lookup: AssigneeLookup): string | null {
   if (!id) return null;
   const user = lookup.users.find((u) => u.id === id);
   if (!user) return null;
   return locale === "kk" && user.full_name_kk ? user.full_name_kk : user.full_name_ru;
 }
 
-function roleTitle(
-  code: string | null,
-  locale: string,
-  lookup: AssigneeLookup,
-): string | null {
+function roleTitle(code: string | null, locale: string, lookup: AssigneeLookup): string | null {
   if (!code) return null;
   const role = lookup.roles.find((r) => r.role === code);
   if (!role) return code;
@@ -106,9 +85,7 @@ export function resolveAssigneeLabel(options: {
       const name = userName(ref, locale, lookup);
       if (!name) return modeLabel;
       const user = lookup.users.find((u) => u.id === ref);
-      const posTitle = user?.position_id
-        ? positionTitle(user.position_id, locale, lookup)
-        : null;
+      const posTitle = user?.position_id ? positionTitle(user.position_id, locale, lookup) : null;
       return posTitle ? `${name} — ${posTitle}` : name;
     }
     case "department": {
@@ -151,8 +128,6 @@ export function resolveTaskAssigneeLabel(
   const name = userName(assigneeId, locale, lookup);
   if (!name) return null;
   const user = lookup.users.find((u) => u.id === assigneeId);
-  const posTitle = user?.position_id
-    ? positionTitle(user.position_id, locale, lookup)
-    : null;
+  const posTitle = user?.position_id ? positionTitle(user.position_id, locale, lookup) : null;
   return posTitle ? `${name} (${posTitle})` : name;
 }

@@ -2,7 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, XAxis, YAxis, Cell } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+  Cell,
+} from "recharts";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,13 +137,23 @@ function ReportsPage() {
                 <CardContent>
                   <ChartContainer
                     config={Object.fromEntries(
-                      statusData.map((d, i) => [d.status, { label: d.name, color: STATUS_COLORS[i % STATUS_COLORS.length] }]),
+                      statusData.map((d, i) => [
+                        d.status,
+                        { label: d.name, color: STATUS_COLORS[i % STATUS_COLORS.length] },
+                      ]),
                     )}
                     className="h-[280px]"
                   >
                     <PieChart>
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
+                      <Pie
+                        data={statusData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={90}
+                      >
                         {statusData.map((_, i) => (
                           <Cell key={i} fill={STATUS_COLORS[i % STATUS_COLORS.length]} />
                         ))}
@@ -177,7 +198,13 @@ function ReportsPage() {
                     <XAxis dataKey="day" tick={{ fontSize: 10 }} />
                     <YAxis allowDecimals={false} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ChartContainer>
               </CardContent>
@@ -185,27 +212,60 @@ function ReportsPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <Card className="rounded-sm">
-                <CardHeader><CardTitle className="text-sm">{t("reports.sla")}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("reports.sla")}</CardTitle>
+                </CardHeader>
                 <CardContent className="text-sm space-y-1">
-                  <div className="flex justify-between"><span>{t("sla.ok")}</span><span>{data.sla_summary.ok}</span></div>
-                  <div className="flex justify-between"><span>{t("sla.warning")}</span><span>{data.sla_summary.warning}</span></div>
-                  <div className="flex justify-between text-destructive"><span>{t("sla.overdue")}</span><span>{data.sla_summary.overdue}</span></div>
+                  <div className="flex justify-between">
+                    <span>{t("sla.ok")}</span>
+                    <span>{data.sla_summary.ok}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("sla.warning")}</span>
+                    <span>{data.sla_summary.warning}</span>
+                  </div>
+                  <div className="flex justify-between text-destructive">
+                    <span>{t("sla.overdue")}</span>
+                    <span>{data.sla_summary.overdue}</span>
+                  </div>
                 </CardContent>
               </Card>
               <Card className="rounded-sm">
-                <CardHeader><CardTitle className="text-sm">{t("reports.workflow")}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("reports.workflow")}</CardTitle>
+                </CardHeader>
                 <CardContent className="text-sm space-y-1">
-                  <div className="flex justify-between"><span>{t("status.pending")}</span><span>{data.workflow_tasks.pending}</span></div>
-                  <div className="flex justify-between"><span>{t("status.completed")}</span><span>{data.workflow_tasks.completed}</span></div>
-                  <div className="flex justify-between"><span>{t("reports.avgHours")}</span><span>{data.workflow_tasks.avg_completion_hours ?? "—"}</span></div>
+                  <div className="flex justify-between">
+                    <span>{t("status.pending")}</span>
+                    <span>{data.workflow_tasks.pending}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("status.completed")}</span>
+                    <span>{data.workflow_tasks.completed}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("reports.avgHours")}</span>
+                    <span>{data.workflow_tasks.avg_completion_hours ?? "—"}</span>
+                  </div>
                 </CardContent>
               </Card>
               <Card className="rounded-sm">
-                <CardHeader><CardTitle className="text-sm">{t("archive.title")}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("archive.title")}</CardTitle>
+                </CardHeader>
                 <CardContent className="text-sm space-y-1">
-                  <div className="flex justify-between"><span>{t("archive.filterArchived")}</span><span>{data.archive.archived}</span></div>
-                  <div className="flex justify-between"><span>{t("archive.legalHold")}</span><span>{data.archive.legal_hold}</span></div>
-                  <div className="flex justify-between"><span>{t("archive.filterExpiring")}</span><span>{data.archive.expiring_30d}</span></div>
+                  <div className="flex justify-between">
+                    <span>{t("archive.filterArchived")}</span>
+                    <span>{data.archive.archived}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("archive.legalHold")}</span>
+                    <span>{data.archive.legal_hold}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("archive.filterExpiring")}</span>
+                    <span>{data.archive.expiring_30d}</span>
+                  </div>
                 </CardContent>
               </Card>
             </div>

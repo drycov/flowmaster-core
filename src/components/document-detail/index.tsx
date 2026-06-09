@@ -21,7 +21,7 @@ export function ContentTab({ body, summary, isEditable = false, onSave }: Conten
 
   const handleSave = async () => {
     if (!onSave) return;
-    
+
     setIsSaving(true);
     try {
       await onSave(editedBody);
@@ -70,9 +70,7 @@ export function ContentTab({ body, summary, isEditable = false, onSave }: Conten
           </div>
         ) : (
           <>
-            {summary && (
-              <p className="text-muted-foreground italic mb-4">{summary}</p>
-            )}
+            {summary && <p className="text-muted-foreground italic mb-4">{summary}</p>}
             <div className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-sm">
               {body || <span className="text-muted-foreground">{t("common.empty")}</span>}
             </div>

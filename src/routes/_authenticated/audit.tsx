@@ -5,12 +5,7 @@ import { Fragment, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { listAuditLogs } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
-import {
-  DataTableShell,
-  PageToolbar,
-  SearchField,
-  TableStatusRow,
-} from "@/components/PageLayout";
+import { DataTableShell, PageToolbar, SearchField, TableStatusRow } from "@/components/PageLayout";
 import { useI18n, auditEntityLabel, auditActionLabel } from "@/i18n";
 import { fmtDate } from "@/lib/format";
 import {
@@ -48,7 +43,7 @@ function AuditPage() {
   const { t, locale } = useI18n();
   const [entityType, setEntityType] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | number | null>(null);
   const { data } = useQuery({
     queryKey: ["audit", entityType],
     queryFn: () =>
@@ -132,14 +127,10 @@ function AuditPage() {
                       <td className="px-4 py-2 text-xs font-mono text-muted-foreground whitespace-nowrap">
                         {fmtDate(a.created_at, locale)}
                       </td>
-                      <td className="px-4 py-2 text-xs">
-                        {auditEntityLabel(t, a.entity_type)}
-                      </td>
+                      <td className="px-4 py-2 text-xs">{auditEntityLabel(t, a.entity_type)}</td>
                       <td className="px-4 py-2 text-xs">
                         <Badge
-                          variant={
-                            a.action?.startsWith("workflow.sla") ? "destructive" : "outline"
-                          }
+                          variant={a.action?.startsWith("workflow.sla") ? "destructive" : "outline"}
                           className="font-mono text-[10px]"
                         >
                           {auditActionLabel(t, a.action) !== a.action
@@ -178,7 +169,9 @@ function AuditPage() {
                           <div className="grid md:grid-cols-2 gap-3 text-xs">
                             {a.before && (
                               <div>
-                                <div className="font-medium mb-1 text-muted-foreground">{t("audit.diff.before")}</div>
+                                <div className="font-medium mb-1 text-muted-foreground">
+                                  {t("audit.diff.before")}
+                                </div>
                                 <pre className="bg-background border rounded-sm p-2 overflow-auto max-h-48 text-[10px]">
                                   {JSON.stringify(a.before, null, 2)}
                                 </pre>
@@ -186,7 +179,9 @@ function AuditPage() {
                             )}
                             {a.after && (
                               <div>
-                                <div className="font-medium mb-1 text-muted-foreground">{t("audit.diff.after")}</div>
+                                <div className="font-medium mb-1 text-muted-foreground">
+                                  {t("audit.diff.after")}
+                                </div>
                                 <pre className="bg-background border rounded-sm p-2 overflow-auto max-h-48 text-[10px]">
                                   {JSON.stringify(a.after, null, 2)}
                                 </pre>

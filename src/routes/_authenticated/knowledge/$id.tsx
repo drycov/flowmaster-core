@@ -35,7 +35,11 @@ function KbArticlePage() {
         <div className="max-w-3xl mx-auto space-y-4">
           {article.kb_categories && (
             <Badge variant="secondary">
-              {localized(article.kb_categories as { name_ru: string; name_kk: string }, locale, "name")}
+              {localized(
+                article.kb_categories as { name_ru: string; name_kk: string },
+                locale,
+                "name",
+              )}
             </Badge>
           )}
           {localized(article, locale, "summary") && (

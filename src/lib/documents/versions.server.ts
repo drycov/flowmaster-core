@@ -1,14 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORAGE_BUCKETS, documentVersionPath } from "@/lib/storage/buckets";
-import {
-  templateMimeType,
-  type TemplateFileFormat,
-} from "@/lib/templates/file-formats";
-import {
-  downloadTemplateBuffer,
-  renderTemplateFile,
-} from "@/lib/templates/file-processing.server";
+import { templateMimeType, type TemplateFileFormat } from "@/lib/templates/file-formats";
+import { downloadTemplateBuffer, renderTemplateFile } from "@/lib/templates/file-processing.server";
 
 export async function resolveNextDocumentVersionNo(
   supabase: SupabaseClient,
@@ -125,11 +119,13 @@ export async function registerUploadedFileVersion(
     comment: options.comment ?? null,
   });
 
-  return row ?? {
-    version_no: options.versionNo,
-    file_path: options.storagePath,
-    file_format: options.fileFormat ?? null,
-  };
+  return (
+    row ?? {
+      version_no: options.versionNo,
+      file_path: options.storagePath,
+      file_format: options.fileFormat ?? null,
+    }
+  );
 }
 
 export async function registerInitialFileVersion(options: {
@@ -142,11 +138,7 @@ export async function registerInitialFileVersion(options: {
 }): Promise<void> {
   const versionNo = options.versionNo ?? 1;
   const templateBuffer = await downloadTemplateBuffer(options.templateFilePath);
-  const rendered = await renderTemplateFile(
-    templateBuffer,
-    options.fileFormat,
-    options.values,
-  );
+  const rendered = await renderTemplateFile(templateBuffer, options.fileFormat, options.values);
   const storagePath = documentVersionPath(
     options.documentId,
     versionNo,

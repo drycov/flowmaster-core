@@ -17,8 +17,7 @@ export function getSupabaseEnv() {
   return {
     url: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL,
     publishableKey:
-      process.env.SUPABASE_PUBLISHABLE_KEY ??
-      process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     jwtSecret:
       process.env.SUPABASE_JWT_SECRET ??

@@ -20,8 +20,7 @@ function ContractDetailPage() {
   const { t, locale } = useI18n();
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMyProfile });
-  const canEdit =
-    !!me?.permissions?.manage_contracts || !!me?.permissions?.manage_documents;
+  const canEdit = !!me?.permissions?.manage_contracts || !!me?.permissions?.manage_documents;
 
   const { data: contract, isLoading } = useQuery({
     queryKey: ["contract", documentId],
@@ -44,9 +43,7 @@ function ContractDetailPage() {
     <>
       <PageHeader
         title={contract?.contract_number || doc?.reg_number || t("contract.detailTitle")}
-        description={
-          doc ? localized(doc, locale, "title") : t("contract.pageSubtitle")
-        }
+        description={doc ? localized(doc, locale, "title") : t("contract.pageSubtitle")}
         actions={
           doc ? (
             <Button size="sm" variant="outline" asChild>
@@ -61,15 +58,9 @@ function ContractDetailPage() {
       <PageBody>
         <div className="max-w-2xl mx-auto space-y-4">
           {contract?.contract_status ? (
-            <Badge variant="secondary">
-              {t(`contract.status.${contract.contract_status}`)}
-            </Badge>
+            <Badge variant="secondary">{t(`contract.status.${contract.contract_status}`)}</Badge>
           ) : null}
-          <ContractDetailsCard
-            documentId={documentId}
-            contract={contract}
-            canEdit={canEdit}
-          />
+          <ContractDetailsCard documentId={documentId} contract={contract ?? null} canEdit={canEdit} />
         </div>
       </PageBody>
     </>

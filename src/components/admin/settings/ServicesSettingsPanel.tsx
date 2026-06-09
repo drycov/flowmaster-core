@@ -11,16 +11,21 @@ export function ServicesSettingsPanel({
   form,
   meta,
   patch,
+  canManageIntegrations = true,
 }: {
   form: SystemSettings;
   meta: SystemSettingsMeta;
   patch: SettingsPatchFn;
+  canManageIntegrations?: boolean;
 }) {
   const { t } = useI18n();
 
   return (
     <div className="space-y-6">
-      <SettingsSection title={t("settings.integrations.servicesTitle")} icon={<Plug className="h-4 w-4" />}>
+      <SettingsSection
+        title={t("settings.integrations.servicesTitle")}
+        icon={<Plug className="h-4 w-4" />}
+      >
         <div className="space-y-4">
           <SettingRow
             label={t("settings.integrations.officeEnabled")}
@@ -38,7 +43,9 @@ export function ServicesSettingsPanel({
               onChange={(e) => patch("integrations", "office_url", e.target.value)}
               placeholder="https://office.company.kz"
             />
-            <p className="text-xs text-muted-foreground">{t("settings.integrations.officeUrlHint")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.integrations.officeUrlHint")}
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
@@ -76,7 +83,7 @@ export function ServicesSettingsPanel({
           </div>
         </div>
       </SettingsSection>
-      <IntegrationsSettingsPanel />
+      <IntegrationsSettingsPanel canManage={canManageIntegrations} />
     </div>
   );
 }

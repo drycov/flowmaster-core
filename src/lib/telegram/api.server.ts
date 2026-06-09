@@ -82,8 +82,7 @@ export async function registerTelegramWebhook(secret?: string) {
   const { stopTelegramPolling } = await import("./polling.server");
   stopTelegramPolling();
 
-  const webhookSecret =
-    secret?.trim() || crypto.randomUUID().replace(/-/g, "").slice(0, 32);
+  const webhookSecret = secret?.trim() || crypto.randomUUID().replace(/-/g, "").slice(0, 32);
 
   const result = await callTelegramApi("setWebhook", {
     url,

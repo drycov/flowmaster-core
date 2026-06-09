@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
-import { listNomenclature, upsertNomenclature, deleteNomenclature } from "@/lib/api/nomenclature.functions";
+import {
+  listNomenclature,
+  upsertNomenclature,
+  deleteNomenclature,
+} from "@/lib/api/nomenclature.functions";
 import { getMyProfile, listDepartments } from "@/lib/api/admin.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import {
@@ -84,7 +88,12 @@ function NomenclaturePage() {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
 
-  const { data: items = [], isLoading, isError, error } = useQuery({
+  const {
+    data: items = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["nom"],
     queryFn: () => listNomenclature(),
   });
@@ -99,8 +108,7 @@ function NomenclaturePage() {
     queryFn: () => getMyProfile(),
   });
 
-  const canManage =
-    !!me?.roles?.includes("admin") || !!me?.permissions?.manage_nomenclature;
+  const canManage = !!me?.permissions?.manage_nomenclature;
 
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -332,7 +340,9 @@ function NomenclaturePage() {
                 <p>{search.trim() ? t("nom.noResults") : t("nom.empty")}</p>
               </ListEmpty>
             ) : (
-              <div className="divide-y divide-border/60">{roots.map((root) => renderNode(root, 0))}</div>
+              <div className="divide-y divide-border/60">
+                {roots.map((root) => renderNode(root, 0))}
+              </div>
             )}
           </PanelCard>
         )}
@@ -398,9 +408,7 @@ function NomenclaturePage() {
                 <Input
                   type="number"
                   value={form.sort_order}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
                 />
               </div>
             </div>
@@ -426,9 +434,7 @@ function NomenclaturePage() {
                 <Input
                   type="number"
                   value={form.retention}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, retention: Number(e.target.value) }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, retention: Number(e.target.value) }))}
                 />
               </div>
               <div>

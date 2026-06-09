@@ -61,11 +61,7 @@ export function VersionsTab({ documentId, versions, canUpload = true }: Versions
               }
             }}
           />
-          <Button
-            size="sm"
-            disabled={upload.isPending}
-            onClick={() => fileRef.current?.click()}
-          >
+          <Button size="sm" disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
             {upload.isPending ? (
               <Loader2 className="w-4 h-4 mr-1 animate-spin" />
             ) : (

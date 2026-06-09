@@ -98,9 +98,7 @@ export function ContentTab({
           </div>
         ) : (
           <div className="space-y-4">
-            {summary && (
-              <p className="text-muted-foreground italic">{summary}</p>
-            )}
+            {summary && <p className="text-muted-foreground italic">{summary}</p>}
             <div className="min-h-[320px]">
               <TemplatePreviewPane
                 status={preview.status}

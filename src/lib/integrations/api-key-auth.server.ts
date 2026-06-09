@@ -29,9 +29,7 @@ function extractBearerToken(request: Request): string | null {
   return request.headers.get("x-api-key")?.trim() ?? null;
 }
 
-export async function authenticateApiKey(
-  request: Request,
-): Promise<ApiKeyContext | null> {
+export async function authenticateApiKey(request: Request): Promise<ApiKeyContext | null> {
   const token = extractBearerToken(request);
   if (!token || !token.startsWith("fm_")) return null;
 

@@ -57,9 +57,7 @@ export function TenantsSettingsPanel() {
           admin_password: adminPassword,
           admin_full_name_ru: adminNameRu,
           admin_full_name_kk: adminNameKk,
-          max_users: provisionMaxUsers.trim()
-            ? Number.parseInt(provisionMaxUsers, 10)
-            : null,
+          max_users: provisionMaxUsers.trim() ? Number.parseInt(provisionMaxUsers, 10) : null,
         },
       }),
     onSuccess: (result) => {
@@ -104,9 +102,7 @@ export function TenantsSettingsPanel() {
           slug: editSlug,
           name_ru: editNameRu,
           name_kk: editNameKk,
-          max_users: editMaxUsers.trim()
-            ? Number.parseInt(editMaxUsers, 10)
-            : null,
+          max_users: editMaxUsers.trim() ? Number.parseInt(editMaxUsers, 10) : null,
         },
       });
     },
@@ -165,7 +161,9 @@ export function TenantsSettingsPanel() {
             variant={showForm ? "outline" : "default"}
             onClick={() => (showForm ? resetForm() : setShowForm(true))}
           >
-            {showForm ? t("common.cancel") : (
+            {showForm ? (
+              t("common.cancel")
+            ) : (
               <>
                 <Plus className="mr-1 h-4 w-4" />
                 {t("settings.tenants.add")}
@@ -205,7 +203,9 @@ export function TenantsSettingsPanel() {
                           {tenant.user_count}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">{formatQuota(tenant)}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {formatQuota(tenant)}
+                      </td>
                       <td className="px-3 py-2">
                         <Badge variant="secondary">{tenant.tenant_mode}</Badge>
                       </td>
@@ -297,9 +297,7 @@ export function TenantsSettingsPanel() {
               }
               onClick={() => updateMutation.mutate()}
             >
-              {updateMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {updateMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t("common.save")}
             </Button>
           </DialogFooter>
@@ -339,7 +337,9 @@ export function TenantsSettingsPanel() {
                   onChange={(e) => setProvisionMaxUsers(e.target.value)}
                   placeholder={t("settings.tenants.quotaUnlimited")}
                 />
-                <p className="text-xs text-muted-foreground">{t("settings.tenants.maxUsersHint")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.tenants.maxUsersHint")}
+                </p>
               </div>
             </div>
 

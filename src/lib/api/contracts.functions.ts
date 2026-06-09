@@ -29,6 +29,7 @@ export const listContracts = createServerFn({ method: "POST" })
       .optional(),
   )
   .handler(async ({ data, context }) => {
+    await enforceModuleLicense(context.supabase, "contracts", "read");
     let q = context.supabase
       .from("contract_details")
       .select(CONTRACT_SELECT)
@@ -53,15 +54,21 @@ export const listContracts = createServerFn({ method: "POST" })
     let result = rows ?? [];
     if (data?.search?.trim()) {
       const s = data.search.trim().toLowerCase();
-      result = result.filter((r: { contract_number?: string; subject_ru?: string; documents?: { reg_number?: string; title_ru?: string } }) => {
-        const doc = r.documents as { reg_number?: string; title_ru?: string } | null;
-        return (
-          r.contract_number?.toLowerCase().includes(s) ||
-          r.subject_ru?.toLowerCase().includes(s) ||
-          doc?.reg_number?.toLowerCase().includes(s) ||
-          doc?.title_ru?.toLowerCase().includes(s)
-        );
-      });
+      result = result.filter(
+        (r: {
+          contract_number?: string;
+          subject_ru?: string;
+          documents?: { reg_number?: string; title_ru?: string };
+        }) => {
+          const doc = r.documents as { reg_number?: string; title_ru?: string } | null;
+          return (
+            r.contract_number?.toLowerCase().includes(s) ||
+            r.subject_ru?.toLowerCase().includes(s) ||
+            doc?.reg_number?.toLowerCase().includes(s) ||
+            doc?.title_ru?.toLowerCase().includes(s)
+          );
+        },
+      );
     }
     return result;
   });
@@ -70,6 +77,7 @@ export const getContractDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ document_id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
+    await enforceModuleLicense(context.supabase, "contracts", "read");
     const { data: row, error } = await context.supabase
       .from("contract_details")
       .select(CONTRACT_SELECT)
@@ -105,8 +113,14 @@ export const upsertContractDetails = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const canManage =
-      (await requireAnyPermission(supabase, userId, ["manage_contracts"]).then(() => true, () => false)) ||
-      (await requireAnyPermission(supabase, userId, ["manage_documents"]).then(() => true, () => false));
+      (await requireAnyPermission(supabase, userId, ["manage_contracts"]).then(
+        () => true,
+        () => false,
+      )) ||
+      (await requireAnyPermission(supabase, userId, ["manage_documents"]).then(
+        () => true,
+        () => false,
+      ));
 
     if (!canManage) {
       const { data: doc } = await supabase

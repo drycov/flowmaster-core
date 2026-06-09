@@ -1,4 +1,11 @@
-import type { WorkflowDefinition, WorkflowNode, WorkflowEdge, NodeType } from "@/components/workflow-designer/types";
+import type { z } from "zod";
+import type {
+  WorkflowDefinition,
+  WorkflowNode,
+  WorkflowEdge,
+  NodeType,
+} from "@/components/workflow-designer/types";
+import type { graphDefinitionSchema } from "@/lib/workflow/custom-route-schema";
 
 export type { WorkflowDefinition, WorkflowNode, WorkflowEdge };
 
@@ -23,7 +30,11 @@ export function parseStoredCustomRoute(raw: unknown): {
 } {
   if (!raw) return { steps: null, graph: null };
   if (Array.isArray(raw)) return { steps: raw, graph: null };
-  if (typeof raw === "object" && raw !== null && Array.isArray((raw as { nodes?: unknown }).nodes)) {
+  if (
+    typeof raw === "object" &&
+    raw !== null &&
+    Array.isArray((raw as { nodes?: unknown }).nodes)
+  ) {
     const g = raw as { nodes: WorkflowNode[]; edges?: WorkflowEdge[] };
     return {
       steps: null,
@@ -76,9 +87,7 @@ export function buildModifiedDefinition(
     });
 
   const nodeIds = new Set(nodes.map((n) => n.id));
-  const edges = (base.edges ?? []).filter(
-    (e) => nodeIds.has(e.source) && nodeIds.has(e.target),
-  );
+  const edges = (base.edges ?? []).filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
 
   return pruneUnreachable({ nodes, edges });
 }
@@ -93,9 +102,7 @@ function pruneUnreachable(def: WorkflowDefinition): WorkflowDefinition {
     const id = queue.shift()!;
     if (reachable.has(id)) continue;
     reachable.add(id);
-    def.edges
-      .filter((e) => e.source === id)
-      .forEach((e) => queue.push(e.target));
+    def.edges.filter((e) => e.source === id).forEach((e) => queue.push(e.target));
   }
 
   return {
@@ -130,16 +137,16 @@ export function linearStepsToDefinition(
         assignee_type: s.assignee_mode as WorkflowNode["assignee_type"],
         assignee_ref:
           s.assignee_mode === "user"
-            ? s.assignee_user_id ?? null
+            ? (s.assignee_user_id ?? null)
             : s.assignee_mode === "position"
-              ? s.assignee_position_id ?? null
+              ? (s.assignee_position_id ?? null)
               : s.assignee_mode === "role"
-                ? s.assignee_role ?? null
-                : s.assignee_department_id ?? null,
+                ? (s.assignee_role ?? null)
+                : (s.assignee_department_id ?? null),
         assignee_id:
           s.assignee_mode === "user"
-            ? s.assignee_user_id ?? null
-            : s.assignee_department_id ?? null,
+            ? (s.assignee_user_id ?? null)
+            : (s.assignee_department_id ?? null),
         sla_hours: s.sla_hours,
       })),
     { id: "end", type: "END", label: "End", position: { x: 0, y: (steps.length + 1) * 80 } },
@@ -155,4 +162,16 @@ export function linearStepsToDefinition(
   }
 
   return { nodes, edges };
+}
+
+export type GraphRouteInput = z.infer<typeof graphDefinitionSchema>;
+
+export function toGraphRouteInput(def: WorkflowDefinition | null | undefined): GraphRouteInput | null {
+  if (!def?.nodes?.length) return null;
+  return {
+    nodes: def.nodes as unknown as Record<string, unknown>[],
+    edges: def.edges ?? [],
+    kind: "graph",
+    schema_version: def.schema_version,
+  };
 }

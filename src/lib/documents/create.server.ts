@@ -72,10 +72,7 @@ export async function insertDocumentWithRegistration(
 
   if (error) throw new Error(error.message);
 
-  const regNumber = await ensureDocumentRegNumber(
-    row.id,
-    input.registration_journal_id ?? null,
-  );
+  const regNumber = await ensureDocumentRegNumber(row.id, input.registration_journal_id ?? null);
 
   return { id: row.id, reg_number: regNumber };
 }

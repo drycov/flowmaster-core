@@ -25,10 +25,13 @@ export async function v1ListDocuments(
 
   const visible = [];
   for (const row of data ?? []) {
-    const { data: canView } = await supabaseAdmin.rpc("can_view_document" as never, {
-      _doc_id: row.id,
-      _user: ctx.userId,
-    } as never);
+    const { data: canView } = await supabaseAdmin.rpc(
+      "can_view_document" as never,
+      {
+        _doc_id: row.id,
+        _user: ctx.userId,
+      } as never,
+    );
     if (canView) visible.push(row);
   }
 
@@ -36,10 +39,13 @@ export async function v1ListDocuments(
 }
 
 export async function v1GetDocument(ctx: ApiKeyContext, documentId: string) {
-  const { data: canView } = await supabaseAdmin.rpc("can_view_document" as never, {
-    _doc_id: documentId,
-    _user: ctx.userId,
-  } as never);
+  const { data: canView } = await supabaseAdmin.rpc(
+    "can_view_document" as never,
+    {
+      _doc_id: documentId,
+      _user: ctx.userId,
+    } as never,
+  );
   if (!canView) return null;
 
   const { data, error } = await supabaseAdmin
@@ -123,10 +129,13 @@ export async function v1UpdateDocumentStatus(
     throw new Error(`Status must be one of: ${allowed.join(", ")}`);
   }
 
-  const { data: canView } = await supabaseAdmin.rpc("can_view_document_content" as never, {
-    _doc_id: documentId,
-    _user: ctx.userId,
-  } as never);
+  const { data: canView } = await supabaseAdmin.rpc(
+    "can_view_document_content" as never,
+    {
+      _doc_id: documentId,
+      _user: ctx.userId,
+    } as never,
+  );
   if (!canView) return null;
 
   const { data, error } = await supabaseAdmin
@@ -140,10 +149,7 @@ export async function v1UpdateDocumentStatus(
   return data;
 }
 
-export async function v1ListTasks(
-  ctx: ApiKeyContext,
-  params: { status?: string; limit?: number },
-) {
+export async function v1ListTasks(ctx: ApiKeyContext, params: { status?: string; limit?: number }) {
   const limit = Math.min(params.limit ?? 100, 200);
 
   let q = supabaseAdmin
@@ -176,11 +182,7 @@ type ImportItem = {
   received_at?: string | null;
 };
 
-export async function v1ImportIncoming(
-  ctx: ApiKeyContext,
-  items: ImportItem[],
-  apiKeyId?: string,
-) {
+export async function v1ImportIncoming(ctx: ApiKeyContext, items: ImportItem[], apiKeyId?: string) {
   const { data: job, error: jobErr } = await supabaseAdmin
     .from("import_jobs")
     .insert({
@@ -281,10 +283,13 @@ export async function v1UpdateDocument(
     due_at?: string | null;
   },
 ) {
-  const { data: canView } = await supabaseAdmin.rpc("can_view_document_content" as never, {
-    _doc_id: documentId,
-    _user: ctx.userId,
-  } as never);
+  const { data: canView } = await supabaseAdmin.rpc(
+    "can_view_document_content" as never,
+    {
+      _doc_id: documentId,
+      _user: ctx.userId,
+    } as never,
+  );
   if (!canView) return null;
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -339,10 +344,13 @@ export async function v1CreateDocumentVersion(
   documentId: string,
   input: { body: string; comment?: string | null },
 ) {
-  const { data: canView } = await supabaseAdmin.rpc("can_view_document_content" as never, {
-    _doc_id: documentId,
-    _user: ctx.userId,
-  } as never);
+  const { data: canView } = await supabaseAdmin.rpc(
+    "can_view_document_content" as never,
+    {
+      _doc_id: documentId,
+      _user: ctx.userId,
+    } as never,
+  );
   if (!canView) return null;
 
   const { data: latest } = await supabaseAdmin
@@ -405,11 +413,14 @@ export async function v1CompleteTask(
     throw new Error("Comment required for reject/return");
   }
 
-  const { data: res, error } = await supabaseAdmin.rpc("app_advance_workflow_task" as never, {
-    _task_id: taskId,
-    _decision: input.decision,
-    _comment: input.comment ?? null,
-  } as never);
+  const { data: res, error } = await supabaseAdmin.rpc(
+    "app_advance_workflow_task" as never,
+    {
+      _task_id: taskId,
+      _decision: input.decision,
+      _comment: input.comment ?? null,
+    } as never,
+  );
 
   if (error) throw new Error(error.message);
   return res;
@@ -442,10 +453,13 @@ export async function v1ListContracts(
   const visible = [];
   for (const row of data ?? []) {
     const docId = row.document_id as string;
-    const { data: canView } = await supabaseAdmin.rpc("can_view_document" as never, {
-      _doc_id: docId,
-      _user: ctx.userId,
-    } as never);
+    const { data: canView } = await supabaseAdmin.rpc(
+      "can_view_document" as never,
+      {
+        _doc_id: docId,
+        _user: ctx.userId,
+      } as never,
+    );
     if (canView) visible.push(row);
   }
 

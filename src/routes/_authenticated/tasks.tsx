@@ -5,10 +5,7 @@ import { PageHeader, PageBody } from "@/components/AppShell";
 import { TasksTable } from "@/components/tasks/TasksTable";
 import { SubstitutionActingBanner } from "@/components/substitution/SubstitutionActingBanner";
 import { useI18n } from "@/i18n";
-import {
-  useMyTasksQuery,
-  useWorkflowTaskActions,
-} from "@/components/tasks/useWorkflowTaskActions";
+import { useMyTasksQuery, useWorkflowTaskActions } from "@/components/tasks/useWorkflowTaskActions";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   component: TasksPage,

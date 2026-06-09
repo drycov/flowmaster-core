@@ -14,11 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n, localized } from "@/i18n";
-import {
-  getKbArticle,
-  listKbCategories,
-  upsertKbArticle,
-} from "@/lib/api/kb.functions";
+import { getKbArticle, listKbCategories, upsertKbArticle } from "@/lib/api/kb.functions";
 
 type ArticleForm = {
   title_ru: string;
@@ -59,6 +55,7 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
     queryKey: ["kb-article", articleId],
     queryFn: () => getKbArticle({ data: { id: articleId! } }),
     enabled: !!articleId,
+    select: (row) => row as unknown as ArticleForm & { id: string; tags: string[] },
   });
 
   useEffect(() => {
@@ -171,9 +168,7 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
           <Label>{t("kb.field.category")}</Label>
           <Select
             value={form.category_id || "__none"}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, category_id: v === "__none" ? "" : v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "__none" ? "" : v }))}
           >
             <SelectTrigger>
               <SelectValue placeholder={t("kb.field.category")} />
@@ -192,9 +187,7 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
           <Label>{t("common.status")}</Label>
           <Select
             value={form.status}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, status: v as ArticleForm["status"] }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, status: v as ArticleForm["status"] }))}
           >
             <SelectTrigger>
               <SelectValue />

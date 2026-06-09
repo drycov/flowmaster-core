@@ -30,7 +30,8 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
   });
 
   const authorDefaults = useMemo(
-    () => (me as { template_defaults?: Record<string, string> } | undefined)?.template_defaults ?? {},
+    () =>
+      (me as { template_defaults?: Record<string, string> } | undefined)?.template_defaults ?? {},
     [me],
   );
 
@@ -59,16 +60,13 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
     [templateFields],
   );
   const watchedFieldValues = form.watch(
-    watchedFieldKeys.length > 0 ? (watchedFieldKeys as (keyof DocumentFormValues)[]) : [],
+    watchedFieldKeys.length > 0 ? (watchedFieldKeys as string[]) : [],
   );
 
   useEffect(() => {
     templateFields.forEach((field) => {
       const autoValue = authorDefaults[field.key];
-      form.setValue(
-        field.key as keyof DocumentFormValues,
-        autoValue ?? "",
-      );
+      form.setValue(field.key, autoValue ?? "");
     });
   }, [activeTemplateId, templateFields, authorDefaults, form]);
 
@@ -83,8 +81,7 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
         ? watchedFieldValues[index]
         : watchedFieldValues;
       const value =
-        (form.getValues(field.key as keyof DocumentFormValues) as string | undefined) ??
-        (typeof raw === "string" ? raw : "");
+        (form.getValues(field.key) as string | undefined) ?? (typeof raw === "string" ? raw : "");
       if (value) {
         fieldValues[field.key] = value;
       }
@@ -97,19 +94,12 @@ export function useDocumentForm({ templateId = "none", template }: UseDocumentFo
     if (form.getValues("title_kk") !== title_kk) {
       form.setValue("title_kk", title_kk, { shouldValidate: true, shouldDirty: false });
     }
-  }, [
-    activeTemplateId,
-    template,
-    templateFields,
-    authorDefaults,
-    watchedFieldValues,
-    form,
-  ]);
+  }, [activeTemplateId, template, templateFields, authorDefaults, watchedFieldValues, form]);
 
   const getTemplateFieldValues = (): Record<string, string> => {
     const values: Record<string, string> = {};
     templateFields.forEach((field) => {
-      const value = form.getValues(field.key as keyof DocumentFormValues) as unknown as string;
+      const value = form.getValues(field.key) as string;
       if (value && typeof value === "string" && value.trim() !== "") {
         values[field.key] = value;
       }

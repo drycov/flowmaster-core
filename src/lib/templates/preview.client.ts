@@ -1,10 +1,7 @@
 import ExcelJS from "exceljs";
 import DOMPurify from "dompurify";
 import { renderAsync } from "docx-preview";
-import {
-  applyDocxBackgroundLayers,
-  extractDocxBackgroundImages,
-} from "./docx-background.client";
+import { applyDocxBackgroundLayers, extractDocxBackgroundImages } from "./docx-background.client";
 import { replaceDocxVectorImages } from "./docx-vector-images.client";
 import { PLACEHOLDER_PATTERN } from "./file-formats";
 import type { TemplateFieldLabel } from "./preview";
@@ -124,4 +121,3 @@ function hideBrokenDocxImages(container: HTMLElement): void {
     if (img.complete && img.naturalWidth === 0) hide();
   });
 }
-

@@ -16,13 +16,22 @@ interface ComboboxProps {
   isLoading?: boolean;
 }
 
-export function Combobox({ options, value, onChange, placeholder, disabled, isLoading }: ComboboxProps) {
+export function Combobox({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  isLoading,
+}: ComboboxProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const selectedOption = options.find((option) => option.value === value);
-  const filteredOptions = options.filter((opt) => opt.label.toLowerCase().includes(search.toLowerCase()));
+  const filteredOptions = options.filter((opt) =>
+    opt.label.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="relative">

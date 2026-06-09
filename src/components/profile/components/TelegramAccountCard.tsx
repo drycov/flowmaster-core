@@ -19,10 +19,7 @@ import {
   Unlink,
 } from "lucide-react";
 import { requestPasswordResetTelegram } from "@/lib/api/telegram-auth.functions";
-import {
-  createTelegramLink,
-  unlinkTelegramAccount,
-} from "@/lib/api/telegram.functions";
+import { createTelegramLink, unlinkTelegramAccount } from "@/lib/api/telegram.functions";
 import { isTelegramProfileAvailable } from "../constants";
 import type { useProfileTelegramData } from "../hooks/useProfileTelegramData";
 import type { UserProfile } from "../types";
@@ -66,7 +63,7 @@ export function TelegramAccountCard({ profile, telegram }: Props) {
   }, [linkStatus.linked]);
 
   const linkMutation = useMutation({
-    mutationFn: createTelegramLink,
+    mutationFn: () => createTelegramLink(),
     onSuccess: (data) => {
       if (!mountedRef.current) return;
       setPendingLink({ token: data.token, deep_link: data.deep_link });
@@ -83,7 +80,7 @@ export function TelegramAccountCard({ profile, telegram }: Props) {
   });
 
   const unlinkMutation = useMutation({
-    mutationFn: unlinkTelegramAccount,
+    mutationFn: () => unlinkTelegramAccount(),
     onSuccess: () => {
       if (!mountedRef.current) return;
       void qc.invalidateQueries({ queryKey: ["telegram-link-status"] });
@@ -252,7 +249,9 @@ export function TelegramAccountCard({ profile, telegram }: Props) {
             {pendingLink && (
               <div className="rounded-md border bg-muted/40 p-3 space-y-2">
                 <p className="text-xs font-medium">{t("profile.telegram.pendingCode")}</p>
-                <code className="block text-xs font-mono break-all">/start {pendingLink.token}</code>
+                <code className="block text-xs font-mono break-all">
+                  /start {pendingLink.token}
+                </code>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"

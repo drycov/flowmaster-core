@@ -23,7 +23,7 @@ export function KbPublishCard({
     queryKey: ["kb-by-doc", documentId],
     queryFn: () =>
       listKbArticles({ data: { status: "published", limit: 200 } }).then((rows) =>
-        rows.filter((a: { source_document_id?: string }) => a.source_document_id === documentId),
+        rows.filter((a) => a.source_document_id === documentId),
       ),
   });
 

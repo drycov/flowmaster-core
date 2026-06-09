@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Cloud, KeyRound, Loader2, RefreshCw, Shield, Users, Calendar, Building2 } from "lucide-react";
+import {
+  Cloud,
+  KeyRound,
+  Loader2,
+  RefreshCw,
+  Shield,
+  Users,
+  Calendar,
+  Building2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +36,7 @@ const STATUS_STYLES: Record<LicenseStatus, string> = {
   suspended: "bg-muted text-muted-foreground",
 };
 
-export function LicenseSettingsPanel() {
+export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean }) {
   const { t, locale } = useI18n();
   const qc = useQueryClient();
   const [licenseKey, setLicenseKey] = useState("");
@@ -58,7 +67,7 @@ export function LicenseSettingsPanel() {
   });
 
   const syncMutation = useMutation({
-    mutationFn: syncLicenseNow,
+    mutationFn: () => syncLicenseNow(),
     onSuccess: () => {
       toast.success(t("license.syncSuccess"));
       qc.invalidateQueries({ queryKey: ["license-status"] });
@@ -84,15 +93,11 @@ export function LicenseSettingsPanel() {
   }
 
   const seatPct =
-    status.max_users > 0
-      ? Math.min(100, (status.active_users / status.max_users) * 100)
-      : 0;
+    status.max_users > 0 ? Math.min(100, (status.active_users / status.max_users) * 100) : 0;
   const seatsFull = status.seats_available <= 0;
   const seatsWarning = !seatsFull && seatPct >= 80;
   const trialExpiring =
-    status.plan === "trial" &&
-    status.days_remaining !== null &&
-    status.days_remaining <= 7;
+    status.plan === "trial" && status.days_remaining !== null && status.days_remaining <= 7;
   const expiresLabel = status.expires_at
     ? new Date(status.expires_at).toLocaleDateString(locale === "kk" ? "kk-KZ" : "ru-RU")
     : t("license.perpetual");
@@ -132,7 +137,9 @@ export function LicenseSettingsPanel() {
                 <p className="text-xs text-destructive sm:col-span-2">{status.last_sync_error}</p>
               ) : null}
               {status.server_revoked ? (
-                <p className="text-xs text-destructive sm:col-span-2">{t("license.online.revoked")}</p>
+                <p className="text-xs text-destructive sm:col-span-2">
+                  {t("license.online.revoked")}
+                </p>
               ) : null}
               {status.sync_stale ? (
                 <p className="text-xs text-amber-600 dark:text-amber-400 sm:col-span-2">
@@ -144,19 +151,21 @@ export function LicenseSettingsPanel() {
               ) : null}
             </div>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={syncMutation.isPending || !isOnline}
-            onClick={() => syncMutation.mutate()}
-          >
-            {syncMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            {t("license.online.syncNow")}
-          </Button>
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={syncMutation.isPending || !isOnline}
+              onClick={() => syncMutation.mutate()}
+            >
+              {syncMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              {t("license.online.syncNow")}
+            </Button>
+          )}
         </div>
       ) : null}
 
@@ -195,17 +204,19 @@ export function LicenseSettingsPanel() {
         ) : null}
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-xl border bg-card p-5">
-        <div>
-          <p className="text-sm font-medium">{t("license.suspend")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{t("license.suspendHint")}</p>
+      {canManage && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border bg-card p-5">
+          <div>
+            <p className="text-sm font-medium">{t("license.suspend")}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("license.suspendHint")}</p>
+          </div>
+          <Switch
+            checked={status.status === "suspended"}
+            disabled={suspendMutation.isPending}
+            onCheckedChange={(checked) => suspendMutation.mutate(checked)}
+          />
         </div>
-        <Switch
-          checked={status.status === "suspended"}
-          disabled={suspendMutation.isPending}
-          onCheckedChange={(checked) => suspendMutation.mutate(checked)}
-        />
-      </div>
+      )}
 
       <div className="space-y-3 rounded-xl border bg-card p-5">
         <div className="flex items-center justify-between text-sm">
@@ -256,7 +267,9 @@ export function LicenseSettingsPanel() {
       {installInfo?.installation_id ? (
         <div className="space-y-1 rounded-lg bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
           <div className="font-mono">
-            <span className="font-sans font-medium text-foreground">{t("license.installationId")}: </span>
+            <span className="font-sans font-medium text-foreground">
+              {t("license.installationId")}:{" "}
+            </span>
             {installInfo.installation_id}
           </div>
           <p className="font-sans text-[11px]">
@@ -267,34 +280,36 @@ export function LicenseSettingsPanel() {
         </div>
       ) : null}
 
-      <div className="space-y-4 rounded-xl border bg-card p-5">
-        <div className="flex items-center gap-2 font-semibold">
-          <KeyRound className="h-4 w-4" />
-          {t("license.activate")}
+      {canManage && (
+        <div className="space-y-4 rounded-xl border bg-card p-5">
+          <div className="flex items-center gap-2 font-semibold">
+            <KeyRound className="h-4 w-4" />
+            {t("license.activate")}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {serverConfig?.mode === "online"
+              ? t("license.activateHintOnline")
+              : t("license.activateHint")}
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="license-key">{t("license.key")}</Label>
+            <Input
+              id="license-key"
+              value={licenseKey}
+              onChange={(e) => setLicenseKey(e.target.value)}
+              placeholder="FM1...."
+              className="font-mono text-sm"
+            />
+          </div>
+          <Button
+            onClick={() => activateMutation.mutate(licenseKey)}
+            disabled={!licenseKey.trim() || activateMutation.isPending}
+          >
+            {activateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("license.activateBtn")}
+          </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {serverConfig?.mode === "online"
-            ? t("license.activateHintOnline")
-            : t("license.activateHint")}
-        </p>
-        <div className="space-y-2">
-          <Label htmlFor="license-key">{t("license.key")}</Label>
-          <Input
-            id="license-key"
-            value={licenseKey}
-            onChange={(e) => setLicenseKey(e.target.value)}
-            placeholder="FM1...."
-            className="font-mono text-sm"
-          />
-        </div>
-        <Button
-          onClick={() => activateMutation.mutate(licenseKey)}
-          disabled={!licenseKey.trim() || activateMutation.isPending}
-        >
-          {activateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {t("license.activateBtn")}
-        </Button>
-      </div>
+      )}
     </div>
   );
 }

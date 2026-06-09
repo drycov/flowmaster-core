@@ -3,10 +3,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { uploadAuthenticatedFile } from "@/lib/storage/client";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
-import {
-  prepareDocumentVersionUpload,
-  registerDocumentVersion,
-} from "@/lib/api/storage.functions";
+import { prepareDocumentVersionUpload, registerDocumentVersion } from "@/lib/api/storage.functions";
 
 export function useDocumentVersionUpload(documentId: string) {
   const qc = useQueryClient();

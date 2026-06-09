@@ -59,5 +59,8 @@ export async function getPendingAction(chatId: string): Promise<PendingAction | 
 }
 
 export async function clearPendingAction(chatId: string) {
-  await supabaseAdmin.from("telegram_pending_actions" as never).delete().eq("chat_id", chatId);
+  await supabaseAdmin
+    .from("telegram_pending_actions" as never)
+    .delete()
+    .eq("chat_id", chatId);
 }

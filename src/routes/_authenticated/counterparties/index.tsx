@@ -41,7 +41,10 @@ function CounterpartiesPage() {
 
   return (
     <>
-      <PageHeader title={t("counterparty.pageTitle")} description={t("counterparty.pageSubtitle")} />
+      <PageHeader
+        title={t("counterparty.pageTitle")}
+        description={t("counterparty.pageSubtitle")}
+      />
       <PageBody>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 justify-between">
@@ -65,7 +68,9 @@ function CounterpartiesPage() {
               </Select>
             </div>
             <Button size="sm" variant="outline" asChild>
-              <Link to="/references/correspondents">{t("counterparty.manageRefs")}</Link>
+              <Link to="/references/$catalog" params={{ catalog: "correspondents" }}>
+                {t("counterparty.manageRefs")}
+              </Link>
             </Button>
           </div>
 
@@ -86,39 +91,41 @@ function CounterpartiesPage() {
                   <TableStatusRow colSpan={5}>{t("common.empty")}</TableStatusRow>
                 )}
                 {!isLoading &&
-                  rows.map((r: {
-                    id: string;
-                    code: string;
-                    name_ru: string;
-                    name_kk: string;
-                    correspondent_type?: string;
-                    bin?: string;
-                    contact_person?: string;
-                    phone?: string;
-                  }) => (
-                    <tr key={r.id} className="border-t border-border hover:bg-muted/40">
-                      <td className="px-4 py-2 font-mono text-xs">{r.code}</td>
-                      <td className="px-4 py-2">
-                        <Link
-                          to="/counterparties/$id"
-                          params={{ id: r.id }}
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          <Building2 className="w-3 h-3" />
-                          {localized(r, locale, "name")}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2">
-                        <Badge variant="outline" className="text-[10px]">
-                          {t(`counterparty.type.${r.correspondent_type ?? "legal"}`)}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs">{r.bin || "—"}</td>
-                      <td className="px-4 py-2 text-xs text-muted-foreground">
-                        {r.contact_person || r.phone || "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  rows.map(
+                    (r: {
+                      id: string;
+                      code: string;
+                      name_ru: string;
+                      name_kk: string;
+                      correspondent_type?: string;
+                      bin?: string;
+                      contact_person?: string;
+                      phone?: string;
+                    }) => (
+                      <tr key={r.id} className="border-t border-border hover:bg-muted/40">
+                        <td className="px-4 py-2 font-mono text-xs">{r.code}</td>
+                        <td className="px-4 py-2">
+                          <Link
+                            to="/counterparties/$id"
+                            params={{ id: r.id }}
+                            className="text-primary hover:underline flex items-center gap-1"
+                          >
+                            <Building2 className="w-3 h-3" />
+                            {localized(r, locale, "name")}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2">
+                          <Badge variant="outline" className="text-[10px]">
+                            {t(`counterparty.type.${r.correspondent_type ?? "legal"}`)}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2 font-mono text-xs">{r.bin || "—"}</td>
+                        <td className="px-4 py-2 text-xs text-muted-foreground">
+                          {r.contact_person || r.phone || "—"}
+                        </td>
+                      </tr>
+                    ),
+                  )}
               </tbody>
             </table>
           </DataTableShell>

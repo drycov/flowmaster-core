@@ -24,6 +24,8 @@ import { PageHeader, PageBody } from "@/components/AppShell";
 import { useI18n } from "@/i18n";
 import { EXTERNAL_REFERENCE_LINKS, REFERENCE_CATALOGS } from "@/lib/references/catalogs";
 import { getMyProfile } from "@/lib/api/admin.functions";
+import type { Permission } from "@/lib/access/permissions";
+import { userHasPermission } from "@/lib/access/rbac";
 
 const ICONS: Record<string, typeof FileText> = {
   FileText,
@@ -53,16 +55,12 @@ function ReferencesIndexPage() {
   const { t } = useI18n();
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
-  const roles = me?.roles ?? [];
   const perms = me?.permissions ?? {};
-  const can = (p?: string) => !p || roles.includes("admin") || !!(p && perms[p as keyof typeof perms]);
+  const can = (p?: string) => !p || userHasPermission({ permissions: perms }, p as Permission);
 
   return (
     <>
-      <PageHeader
-        title={t("ref.hubTitle")}
-        description={t("ref.hubDescription")}
-      />
+      <PageHeader title={t("ref.hubTitle")} description={t("ref.hubDescription")} />
 
       <PageBody>
         <section className="mb-8">
@@ -81,7 +79,9 @@ function ReferencesIndexPage() {
                   <Icon className="w-5 h-5 mt-0.5 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">{t(item.titleKey)}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{t(item.descriptionKey)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t(item.descriptionKey)}
+                    </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground shrink-0 mt-1" />
                 </Link>
@@ -107,7 +107,9 @@ function ReferencesIndexPage() {
                   <Icon className="w-5 h-5 mt-0.5 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">{t(catalog.titleKey)}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{t(catalog.descriptionKey)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {t(catalog.descriptionKey)}
+                    </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground shrink-0 mt-1" />
                 </Link>

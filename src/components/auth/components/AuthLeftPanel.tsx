@@ -42,14 +42,21 @@ export function AuthLeftPanel() {
       </div>
 
       <div className="relative max-w-lg">
-        <h2 className="mb-4 text-3xl font-semibold leading-tight xl:text-4xl">{t("auth.heroTitle")}</h2>
-        <p className="mb-8 text-sm leading-relaxed text-white/75 xl:text-base">{t("auth.heroDescription")}</p>
+        <h2 className="mb-4 text-3xl font-semibold leading-tight xl:text-4xl">
+          {t("auth.heroTitle")}
+        </h2>
+        <p className="mb-8 text-sm leading-relaxed text-white/75 xl:text-base">
+          {t("auth.heroDescription")}
+        </p>
 
         <div className="space-y-4">
           {features.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.title} className="flex gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+              <div
+                key={item.title}
+                className="flex gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3"
+              >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-white/90" />
                 <div>
                   <div className="text-sm font-medium">{item.title}</div>

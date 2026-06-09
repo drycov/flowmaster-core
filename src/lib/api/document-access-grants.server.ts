@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requirePermission } from "@/lib/access/rbac.server";
 
 /** Author, workflow manager, or manage_documents may review/list access grants. */
@@ -20,7 +21,7 @@ export async function assertCanManageDocumentAccessGrants(
     return;
   }
 
-  const { data: canManage, error: wfErr } = await supabase.rpc(
+  const { data: canManage, error: wfErr } = await supabaseAdmin.rpc(
     "can_manage_document_workflow" as never,
     { _doc_id: documentId, _user: userId } as never,
   );

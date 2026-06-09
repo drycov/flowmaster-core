@@ -16,9 +16,12 @@ import { DEFAULT_NOTIFICATION_PREFS } from "../constants";
 
 type PrefKey = string;
 
-type LinkStatus = {
-  linked: boolean;
-} | null | undefined;
+type LinkStatus =
+  | {
+      linked: boolean;
+    }
+  | null
+  | undefined;
 
 interface Props {
   linkStatus?: LinkStatus;
@@ -41,8 +44,7 @@ export function NotificationChannelsCard({ linkStatus }: Props) {
   });
 
   const save = useMutation({
-    mutationFn: (patch: Record<string, boolean>) =>
-      updateNotificationPreferences({ data: patch }),
+    mutationFn: (patch: Record<string, boolean>) => updateNotificationPreferences({ data: patch }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notification-preferences"] });
       toast.success(t("profile.notifications.saved"));
@@ -83,7 +85,7 @@ export function NotificationChannelsCard({ linkStatus }: Props) {
         </Label>
         <Switch
           id={`${prefix}-${item.key}`}
-          checked={(resolvedPrefs as Record<string, boolean | undefined>)[item.key] !== false}
+          checked={(resolvedPrefs as unknown as Record<string, boolean | undefined>)[item.key] !== false}
           disabled={disabled || save.isPending || (!masterOn && !item.master)}
           onCheckedChange={(v) => save.mutate({ [item.key]: v })}
         />
@@ -145,7 +147,9 @@ export function NotificationChannelsCard({ linkStatus }: Props) {
             </div>
           </>
         ) : (
-          <p className="text-xs text-muted-foreground">{t("profile.notifications.telegramLocked")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("profile.notifications.telegramLocked")}
+          </p>
         )}
       </CardContent>
     </Card>

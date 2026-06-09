@@ -35,10 +35,7 @@ export function MailSettingsPanel({
   return (
     <SettingsSection title={t("settings.mail.title")} icon={<Mail className="h-4 w-4" />}>
       <SettingRow label={t("settings.mail.enabled")} description={t("settings.mail.enabledDesc")}>
-        <Switch
-          checked={form.mail.enabled}
-          onCheckedChange={(v) => patch("mail", "enabled", v)}
-        />
+        <Switch checked={form.mail.enabled} onCheckedChange={(v) => patch("mail", "enabled", v)} />
       </SettingRow>
 
       <div className="max-w-xs space-y-1.5">
@@ -105,7 +102,10 @@ export function MailSettingsPanel({
               onChange={(e) => patch("mail", "smtp_port", Number(e.target.value) || 587)}
             />
           </div>
-          <SettingRow label={t("settings.mail.smtpSecure")} description={t("settings.mail.smtpSecureDesc")}>
+          <SettingRow
+            label={t("settings.mail.smtpSecure")}
+            description={t("settings.mail.smtpSecureDesc")}
+          >
             <Switch
               checked={form.mail.smtp_secure}
               onCheckedChange={(v) => patch("mail", "smtp_secure", v)}

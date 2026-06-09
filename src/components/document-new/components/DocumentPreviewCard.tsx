@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Maximize2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { TemplatePreviewPane } from "@/components/shared/TemplatePreviewPane";
@@ -30,10 +25,7 @@ export function DocumentPreviewCard({
   const { t } = useI18n();
   const [fullscreen, setFullscreen] = useState(false);
 
-  const watchedKeys = useMemo(
-    () => templateFields.map((field) => field.key),
-    [templateFields],
-  );
+  const watchedKeys = useMemo(() => templateFields.map((field) => field.key), [templateFields]);
   const watchedValues = form.watch(watchedKeys.length > 0 ? watchedKeys : []);
 
   const fieldValues = useMemo(() => {

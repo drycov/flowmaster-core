@@ -8,16 +8,10 @@ import { workflowNodeLabel } from "@/i18n/helpers";
 
 import type { CSSProperties } from "react";
 
-
-
 const resolveNodeLabel = (type: NodeType, stored?: string | null, t?: TFunction) =>
-
   stored?.trim() || (t ? workflowNodeLabel(t, type) : type);
 
-
-
 export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
-
   id: n.id,
 
   type: "workflowNode",
@@ -25,7 +19,6 @@ export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
   position: n.position,
 
   data: {
-
     type: n.type,
 
     label: resolveNodeLabel(n.type as NodeType, n.label, t),
@@ -43,23 +36,16 @@ export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
     sla_working_hours_only: n.sla_working_hours_only || false,
 
     config: n.config,
-
   },
 
   style: {
-
     ...DEFAULT_NODE_STYLE,
 
     ...(NODE_STYLE_BY_TYPE[n.type as NodeType] || {}),
-
   } as CSSProperties,
-
 });
 
-
-
 export const toFlowEdge = (e: WorkflowEdge): FlowEdge => ({
-
   id: e.id,
 
   type: "default",
@@ -73,39 +59,28 @@ export const toFlowEdge = (e: WorkflowEdge): FlowEdge => ({
   data: { condition: e.condition },
 
   style: DEFAULT_EDGE_STYLE,
-
 });
 
-
-
 export const toDomainNode = (n: FlowNode): WorkflowNode => {
-
   const cfg = {
-
     ...(n.data.config ?? {}),
 
     is_required: (n.data.config as { is_required?: boolean } | undefined)?.is_required ?? true,
 
     timeout_action:
-
       (n.data.config as { timeout_action?: string } | undefined)?.timeout_action ?? "notify",
 
     escalation_role:
-
       (n.data.config as { escalation_role?: string } | undefined)?.escalation_role ?? null,
 
     max_escalations:
-
       (n.data.config as { max_escalations?: number } | undefined)?.max_escalations ?? 5,
 
     sla_repeat_hours:
-
       (n.data.config as { sla_repeat_hours?: number } | undefined)?.sla_repeat_hours ?? 24,
-
   };
 
   return {
-
     id: n.id,
 
     type: n.data.type,
@@ -152,14 +127,7 @@ export const toDomainNode = (n: FlowNode): WorkflowNode => {
       },
     },
   } as WorkflowNode & { data?: Record<string, unknown> };
-
 };
-
-
-
-
-
-
 
 export const toDomainDefinition = (
   nodes: FlowNode[],
@@ -171,7 +139,6 @@ export const toDomainDefinition = (
 });
 
 export const toDomainEdge = (e: FlowEdge): WorkflowEdge => ({
-
   id: e.id,
 
   source: e.source,
@@ -181,13 +148,9 @@ export const toDomainEdge = (e: FlowEdge): WorkflowEdge => ({
   label: typeof e.label === "string" ? e.label : undefined,
 
   condition: e.data?.condition,
-
 });
 
-
-
 export const createNewEdge = (connection: { source: string; target: string }): FlowEdge => ({
-
   id: `edge_${Date.now()}_${Math.random()}`,
 
   type: "default",
@@ -197,13 +160,9 @@ export const createNewEdge = (connection: { source: string; target: string }): F
   target: connection.target,
 
   style: DEFAULT_EDGE_STYLE,
-
 });
 
-
-
 export const createNewNode = (
-
   type: NodeType,
 
   position: { x: number; y: number },
@@ -211,9 +170,7 @@ export const createNewNode = (
   t?: TFunction,
 
   label?: string,
-
 ): FlowNode => ({
-
   id: `node_${Date.now()}_${Math.random()}`,
 
   type: "workflowNode",
@@ -221,7 +178,6 @@ export const createNewNode = (
   position,
 
   data: {
-
     type,
 
     label: label || resolveNodeLabel(type, null, t),
@@ -237,16 +193,11 @@ export const createNewNode = (
     sla_working_hours_only: false,
 
     config: {},
-
   },
 
   style: {
-
     ...DEFAULT_NODE_STYLE,
 
     ...(NODE_STYLE_BY_TYPE[type] || {}),
-
   } as CSSProperties,
-
 });
-

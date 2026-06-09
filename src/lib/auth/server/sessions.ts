@@ -26,7 +26,10 @@ export async function validateActiveSession(sessionId: string): Promise<boolean>
 
   const row = data as { id: string; expires_at: string };
   if (new Date(row.expires_at) < new Date()) {
-    await supabaseAdmin.from("app_sessions" as never).delete().eq("id", sessionId);
+    await supabaseAdmin
+      .from("app_sessions" as never)
+      .delete()
+      .eq("id", sessionId);
     return false;
   }
 
@@ -117,8 +120,7 @@ export async function refreshAccessTokenFromOpaque(refreshToken: string) {
     throw new Error("User not found");
   }
 
-  const organizationId =
-    (profile as { organization_id?: string | null }).organization_id ?? null;
+  const organizationId = (profile as { organization_id?: string | null }).organization_id ?? null;
   const accessTtlSec = getAccessTokenTtlSec();
   const access_token = signAccessToken(
     row.user_id,
@@ -142,9 +144,15 @@ export async function refreshAccessTokenFromOpaque(refreshToken: string) {
 }
 
 export async function revokeAppSession(sessionId: string): Promise<void> {
-  await supabaseAdmin.from("app_sessions" as never).delete().eq("id", sessionId);
+  await supabaseAdmin
+    .from("app_sessions" as never)
+    .delete()
+    .eq("id", sessionId);
 }
 
 export async function revokeAllUserSessions(userId: string): Promise<void> {
-  await supabaseAdmin.from("app_sessions" as never).delete().eq("user_id", userId);
+  await supabaseAdmin
+    .from("app_sessions" as never)
+    .delete()
+    .eq("user_id", userId);
 }

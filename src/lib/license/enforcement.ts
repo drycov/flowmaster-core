@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { LicenseFeature, LicenseStatusResponse } from "./types";
 
 export type LicenseErrorCode = "expired" | "suspended" | "feature" | "seats" | "unavailable";
@@ -17,10 +18,8 @@ export function isLicenseError(err: unknown): err is LicenseError {
   return err instanceof LicenseError;
 }
 
-export async function fetchLicenseStatus(
-  supabase: SupabaseClient,
-): Promise<LicenseStatusResponse> {
-  const { data, error } = await supabase.rpc("get_license_status" as never);
+export async function fetchLicenseStatus(_supabase?: SupabaseClient): Promise<LicenseStatusResponse> {
+  const { data, error } = await supabaseAdmin.rpc("get_license_status" as never);
   if (error) throw new Error(`License status failed: ${error.message}`);
   return data as LicenseStatusResponse;
 }
@@ -34,10 +33,7 @@ export async function requireWritableLicense(
       status.status === "suspended"
         ? "Лицензия приостановлена. Операция недоступна."
         : "Срок действия лицензии истёк. Операция недоступна.";
-    throw new LicenseError(
-      msg,
-      status.status === "suspended" ? "suspended" : "expired",
-    );
+    throw new LicenseError(msg, status.status === "suspended" ? "suspended" : "expired");
   }
   return status;
 }
@@ -53,10 +49,7 @@ export async function requireLicenseFeatureAccess(
     : await fetchLicenseStatus(supabase);
 
   if (!status.features[feature]) {
-    throw new LicenseError(
-      `Модуль недоступен в текущем тарифном плане`,
-      "feature",
-    );
+    throw new LicenseError(`Модуль недоступен в текущем тарифном плане`, "feature");
   }
   return status;
 }
@@ -68,9 +61,7 @@ export async function requireLicenseFeature(
   await requireLicenseFeatureAccess(supabase, feature, true);
 }
 
-export async function requireAvailableSeat(
-  supabase: SupabaseClient,
-): Promise<void> {
+export async function requireAvailableSeat(supabase: SupabaseClient): Promise<void> {
   const status = await requireWritableLicense(supabase);
   if (status.seats_available <= 0) {
     throw new LicenseError(
@@ -105,9 +96,7 @@ export async function enforceLicense(
   }
 }
 
-export function isLicenseWritable(
-  status: LicenseStatusResponse | undefined,
-): boolean {
+export function isLicenseWritable(status: LicenseStatusResponse | undefined): boolean {
   if (!status) return false;
   return status.is_writable;
 }

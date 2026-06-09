@@ -38,14 +38,17 @@ else
   printf '  skip — set CRON_SECRET to test\n'
 fi
 
-printf '\n3. E2E smoke\n'
+printf '\n3. UAT smoke script\n'
+printf '  run: APP_URL=%s npm run uat:smoke\n' "$APP_URL"
+
+printf '\n4. E2E smoke\n'
 if [ -n "${E2E_EMAIL:-}" ] && [ -n "${E2E_PASSWORD:-}" ]; then
   printf '  run: E2E_BASE_URL=%s npm run test:e2e\n' "$APP_URL"
 else
   printf '  skip — set E2E_EMAIL and E2E_PASSWORD in .env\n'
 fi
 
-printf '\n4. Manual UAT\n'
+printf '\n5. Manual UAT\n'
 printf '  docs/UAT.md — checklist for acceptance with customer\n'
 printf '  docs/STAGING.md — staging environment guide\n'
 

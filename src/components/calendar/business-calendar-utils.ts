@@ -24,10 +24,7 @@ export function parseDateKey(key: string): Date {
   return new Date(y, m - 1, d);
 }
 
-export function getDayKind(
-  date: Date,
-  overrides: Map<string, CalendarDayRecord>,
-): DayKind {
+export function getDayKind(date: Date, overrides: Map<string, CalendarDayRecord>): DayKind {
   const key = toDateKey(date);
   const rec = overrides.get(key);
   if (rec) {

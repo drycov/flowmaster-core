@@ -8,27 +8,17 @@ import { getSupabaseEnv } from "@/lib/env.server";
 
 import type { Database } from "./types";
 
-
-
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
-
   async ({ next }) => {
     const { getJwtSecret, verifyAccessToken } = await import("@/lib/auth/session.server");
 
-    const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } =
-
-      getSupabaseEnv();
-
-
+    const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } = getSupabaseEnv();
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-
       const missing = [
-
         ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
 
         ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
-
       ];
 
       const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Set them in .env.`;
@@ -36,59 +26,34 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       console.error(`[Supabase] ${message}`);
 
       throw new Error(message);
-
     }
-
-
 
     const request = getRequest();
 
-
-
     if (!request?.headers) {
-
       throw new Error("Unauthorized: No request headers available");
-
     }
-
-
 
     const authHeader = request.headers.get("authorization");
 
-
-
     if (!authHeader) {
-
       throw new Error("Unauthorized: No authorization header provided");
-
     }
-
-
 
     if (!authHeader.startsWith("Bearer ")) {
-
       throw new Error("Unauthorized: Only Bearer tokens are supported");
-
     }
-
-
 
     const token = authHeader.replace("Bearer ", "");
 
     if (!token) {
-
       throw new Error("Unauthorized: No token provided");
-
     }
-
-
 
     const claims = verifyAccessToken(token, getJwtSecret());
 
     if (!claims?.sub) {
-
       throw new Error("Unauthorized: Invalid or expired token");
-
     }
 
     if (claims.sid) {
@@ -99,41 +64,27 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       }
     }
 
-
-
     const supabase = createClient<Database>(
-
       SUPABASE_URL,
 
       SUPABASE_PUBLISHABLE_KEY,
 
       {
-
         global: {
-
           headers: {
-
             Authorization: `Bearer ${token}`,
-
           },
-
         },
 
         auth: {
-
           storage: undefined,
 
           persistSession: false,
 
           autoRefreshToken: false,
-
         },
-
       },
-
     );
-
-
 
     return next({
       context: {
@@ -143,8 +94,5 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
         claims,
       },
     });
-
   },
-
 );
-

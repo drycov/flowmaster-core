@@ -1,10 +1,22 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trash2, ArrowRight, Code2, MousePointerSquareDashed } from "lucide-react";
 import { OPERATORS } from "../constants";
 import { parseCondition, buildCondition } from "../utils/condition-builder";
@@ -45,13 +57,20 @@ export function EdgeEditSheet({
 
   return (
     <Sheet open={open} onOpenChange={onClose} modal={false}>
-      <SheetContent className="w-[450px] sm:w-[540px] overflow-y-auto shadow-xl border-l" style={{ zIndex: 40 }}>
+      <SheetContent
+        className="w-[450px] sm:w-[540px] overflow-y-auto shadow-xl border-l"
+        style={{ zIndex: 40 }}
+      >
         <SheetHeader>
           <SheetTitle>{t("wf.editEdge")}</SheetTitle>
           <SheetDescription className="flex items-center gap-2 mt-2 text-sm text-slate-700">
-            <span className="font-medium px-2 py-1 bg-slate-100 rounded border">{sourceNode?.data.label}</span>
+            <span className="font-medium px-2 py-1 bg-slate-100 rounded border">
+              {sourceNode?.data.label}
+            </span>
             <ArrowRight className="w-4 h-4 text-slate-400" />
-            <span className="font-medium px-2 py-1 bg-slate-100 rounded border">{targetNode?.data.label}</span>
+            <span className="font-medium px-2 py-1 bg-slate-100 rounded border">
+              {targetNode?.data.label}
+            </span>
           </SheetDescription>
         </SheetHeader>
 
@@ -68,7 +87,12 @@ export function EdgeEditSheet({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>{t("wf.edgeCondition")}</Label>
-              <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setIsRawCondition(!isRawCondition)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs px-2"
+                onClick={() => setIsRawCondition(!isRawCondition)}
+              >
                 {isRawCondition ? (
                   <MousePointerSquareDashed className="w-3 h-3 mr-1" />
                 ) : (
@@ -85,7 +109,13 @@ export function EdgeEditSheet({
                     <label className="text-xs text-muted-foreground">{t("wf.docField")}</label>
                     <Select
                       value={parsedCondition.field}
-                      onValueChange={(v) => handleVisualConditionChange(v, parsedCondition.operator, parsedCondition.value)}
+                      onValueChange={(v) =>
+                        handleVisualConditionChange(
+                          v,
+                          parsedCondition.operator,
+                          parsedCondition.value,
+                        )
+                      }
                     >
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder={t("wf.selectField")} />
@@ -104,7 +134,9 @@ export function EdgeEditSheet({
                     <label className="text-xs text-muted-foreground">{t("wf.operator")}</label>
                     <Select
                       value={parsedCondition.operator}
-                      onValueChange={(v) => handleVisualConditionChange(parsedCondition.field, v, parsedCondition.value)}
+                      onValueChange={(v) =>
+                        handleVisualConditionChange(parsedCondition.field, v, parsedCondition.value)
+                      }
                     >
                       <SelectTrigger className="bg-white w-[120px]">
                         <SelectValue />
@@ -126,7 +158,11 @@ export function EdgeEditSheet({
                       className="bg-white"
                       value={parsedCondition.value}
                       onChange={(e) =>
-                        handleVisualConditionChange(parsedCondition.field, parsedCondition.operator, e.target.value)
+                        handleVisualConditionChange(
+                          parsedCondition.field,
+                          parsedCondition.operator,
+                          e.target.value,
+                        )
                       }
                     />
                   </div>

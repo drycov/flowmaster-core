@@ -41,8 +41,7 @@ function ProjectDetailPage() {
   const [labelRu, setLabelRu] = useState("");
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMyProfile });
-  const canManage =
-    !!me?.permissions?.manage_projects || !!me?.permissions?.manage_documents;
+  const canManage = !!me?.permissions?.manage_projects || !!me?.permissions?.manage_documents;
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["document-project", id],
@@ -126,8 +125,7 @@ function ProjectDetailPage() {
             )}
             {project.nomenclature_items && (
               <span>
-                {t("nav.nomenclature")}:{" "}
-                {(project.nomenclature_items as { code: string }).code}{" "}
+                {t("nav.nomenclature")}: {(project.nomenclature_items as { code: string }).code}{" "}
                 {localized(project.nomenclature_items as never, locale, "title")}
               </span>
             )}
@@ -159,7 +157,11 @@ function ProjectDetailPage() {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="outline" onClick={() => createDoc(row.template_id)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => createDoc(row.template_id)}
+                      >
                         <FilePlus2 className="w-3 h-3 mr-1" />
                         {t("project.createDoc")}
                       </Button>
@@ -181,16 +183,21 @@ function ProjectDetailPage() {
                 <div className="grid sm:grid-cols-3 gap-2 pt-2 border-t">
                   <div className="sm:col-span-2">
                     <Label>{t("nav.templates")}</Label>
-                    <Select value={templateId || "none"} onValueChange={(v) => setTemplateId(v === "none" ? "" : v)}>
+                    <Select
+                      value={templateId || "none"}
+                      onValueChange={(v) => setTemplateId(v === "none" ? "" : v)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {allTemplates.map((tp: { id: string; name_ru: string; name_kk: string }) => (
-                          <SelectItem key={tp.id} value={tp.id}>
-                            {localized(tp, locale, "name")}
-                          </SelectItem>
-                        ))}
+                        {allTemplates.map(
+                          (tp: { id: string; name_ru: string; name_kk: string }) => (
+                            <SelectItem key={tp.id} value={tp.id}>
+                              {localized(tp, locale, "name")}
+                            </SelectItem>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -220,18 +227,19 @@ function ProjectDetailPage() {
               {docs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("common.empty")}</p>
               ) : (
-                docs.map((d: { id: string; reg_number: string; title_ru: string; title_kk: string; status: string }) => (
-                  <Link
-                    key={d.id}
-                    to="/documents/$id"
-                    params={{ id: d.id }}
-                    className="block border rounded-sm px-3 py-2 text-sm hover:bg-muted/40"
-                  >
-                    <span className="font-mono text-xs mr-2">{d.reg_number}</span>
-                    {localized(d, locale, "title")}
-                    <StatusBadge status={d.status} kind="status" />
-                  </Link>
-                ))
+                docs.map((d) => (
+                    <Link
+                      key={d.id}
+                      to="/documents/$id"
+                      params={{ id: d.id }}
+                      className="block border rounded-sm px-3 py-2 text-sm hover:bg-muted/40"
+                    >
+                      <span className="font-mono text-xs mr-2">{d.reg_number}</span>
+                      {localized(d, locale, "title")}
+                      <StatusBadge status={d.status} kind="status" />
+                    </Link>
+                  ),
+                )
               )}
             </CardContent>
           </Card>
