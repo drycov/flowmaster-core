@@ -211,6 +211,46 @@ export function NodeEditSheet({
                   Только рабочее время
                 </Label>
               </div>
+
+              <div className="space-y-2">
+                <Label>Действие при просрочке SLA</Label>
+                <Select
+                  value={(node.data.config?.timeout_action as string) || "notify"}
+                  onValueChange={(v) =>
+                    onUpdate({ config: { ...node.data.config, timeout_action: v } })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="notify">Уведомить исполнителя и его руководителя</SelectItem>
+                    <SelectItem value="reassign">Создать дубль на роль эскалации</SelectItem>
+                    <SelectItem value="approve">Авто-одобрить</SelectItem>
+                    <SelectItem value="reject">Авто-отклонить</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {((node.data.config?.timeout_action as string) === "reassign") && (
+                <div className="space-y-2">
+                  <Label>Роль эскалации (code)</Label>
+                  <Combobox
+                    options={(roles || []).map((r) => ({
+                      value: (r as unknown as { code?: string }).code || r.id,
+                      label: r.name,
+                    }))}
+                    value={(node.data.config?.escalation_role as string) || undefined}
+                    onChange={(v) =>
+                      onUpdate({ config: { ...node.data.config, escalation_role: v || null } })
+                    }
+                    placeholder="Выберите роль"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Задача будет продублирована на всех пользователей с активным грантом этой роли.
+                  </p>
+                </div>
+              )}
             </>
           )}
 
