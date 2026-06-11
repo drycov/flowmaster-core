@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { timingSafeEqual } from "node:crypto";
 import { getSupabase } from "./supabase.js";
 import { getTelegramWebhookSecret } from "./vendor-admin-config.js";
 import { handleTelegramVendorAdminStart } from "./vendor-admin-verify.js";
@@ -33,9 +34,20 @@ async function notifyChat(chatId: string, text: string): Promise<void> {
   logWebhook("bot_status", { chat_id: chatId, text, sent: result.ok, ...(result.ok ? {} : result) });
 }
 
+function verifyTelegramWebhookSecret(header: string | undefined, secret: string): boolean {
+  if (!header) return false;
+  if (header.length !== secret.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(header), Buffer.from(secret));
+  } catch {
+    return false;
+  }
+}
+
 export async function handleTelegramWebhook(c: Context): Promise<Response> {
   const secret = getTelegramWebhookSecret();
   const secretHeader = c.req.header("X-Telegram-Bot-Api-Secret-Token");
+  const secretOk = secret ? verifyTelegramWebhookSecret(secretHeader, secret) : true;
 
   let rawBody: string;
   try {
@@ -48,12 +60,18 @@ export async function handleTelegramWebhook(c: Context): Promise<Response> {
   logWebhook("received", {
     path: c.req.path,
     secret_configured: Boolean(secret),
-    secret_ok: secret ? secretHeader === secret : true,
+    secret_ok: secretOk,
     body_preview: rawBody.slice(0, 500),
   });
 
-  if (secret && secretHeader !== secret) {
-    logWebhook("rejected", { reason: "invalid_secret_token" });
+  if (secret && !secretOk) {
+    logWebhook("rejected", {
+      reason: "invalid_secret_token",
+      header_present: Boolean(secretHeader),
+      header_len: secretHeader?.length ?? 0,
+      env_secret_len: secret.length,
+      hint: "Vercel VENDOR_TELEGRAM_WEBHOOK_SECRET must match setWebhook secret_token; npm run vendor-telegram:webhook",
+    });
     return c.json({ ok: false }, 401);
   }
 

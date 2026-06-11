@@ -22,6 +22,7 @@ import {
   type VendorStaffRole,
 } from "./lib/vendor-staff.server.js";
 import { bootstrapOwnerFromTelegramEnv } from "./lib/vendor-staff-bootstrap.server.js";
+import { checkVendorTelegramWebhook, registerVendorTelegramWebhook } from "./lib/vendor-telegram-check.server.js";
 import {
   clearVerifySessionCookie,
   getVerifyMethods,
@@ -82,6 +83,26 @@ adminRoutes.get("/session", async (c) => {
 adminRoutes.post("/logout", (c) => {
   clearVerifySessionCookie(c);
   return c.json({ ok: true });
+});
+
+adminRoutes.get("/telegram/webhook/check", async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const result = await checkVendorTelegramWebhook();
+    return c.json(result, result.ok ? 200 : 503);
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+adminRoutes.post("/telegram/webhook/register", async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const result = await registerVendorTelegramWebhook();
+    return c.json(result);
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 400);
+  }
 });
 
 adminRoutes.post("/verify/start", async (c) => {

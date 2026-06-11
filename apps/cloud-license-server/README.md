@@ -140,9 +140,28 @@ Telegram webhook для **@zeus_cloud_bot** (после деплоя на Vercel
 
 ```bash
 cd apps/cloud-license-server
-npm run vendor-telegram:webhook          # установить
-npm run vendor-telegram:webhook -- --info  # проверить
+npm run vendor-telegram:webhook              # register через Vercel env (рекомендуется)
+npm run vendor-telegram:webhook -- --local   # register с локального .env
+npm run vendor-telegram:webhook -- --check   # полная проверка
 ```
+
+API-проверка (Bearer `LICENSE_SERVER_ADMIN_SECRET`):
+
+```bash
+curl -s -H "Authorization: Bearer $LICENSE_SERVER_ADMIN_SECRET" \
+  https://your-project.vercel.app/api/v1/hooks/telegram/check | jq
+```
+
+### 401 на `/api/v1/hooks/telegram`
+
+Telegram шлёт `X-Telegram-Bot-Api-Secret-Token` из `setWebhook`. Значение на **Vercel** (`VENDOR_TELEGRAM_WEBHOOK_SECRET`) должно **совпадать** с тем, что зарегистрировано в Telegram.
+
+1. Vercel → Environment Variables → `VENDOR_TELEGRAM_WEBHOOK_SECRET` (скопировать из `.env`)
+2. **Redeploy**
+3. `npm run vendor-telegram:webhook` — регистрация **через API Vercel** (secret берётся из runtime env, не из локального `.env`)
+4. `npm run vendor-telegram:webhook -- --check` — сравните `secret_len` локально и на Vercel
+
+Лог `secret_ok:false` + `body_preview:{"update_id":0}` — probe/check шлёт secret из `.env`, а на Vercel другой.
 
 URL webhook: `https://your-project.vercel.app/api/v1/hooks/telegram`  
 **Не путать** с `/api/v1/admin/verify/approve` — это другой endpoint (approval webhook).

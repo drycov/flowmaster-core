@@ -22,6 +22,7 @@ import { LICENSE_PLANS } from "./lib/types.js";
 import { adminRoutes } from "./admin-routes.js";
 import { handleTelegramWebhook } from "./lib/telegram-webhook.js";
 import { ensureVendorOwnerBootstrapped } from "./lib/vendor-staff-bootstrap.server.js";
+import { checkVendorTelegramWebhook, registerVendorTelegramWebhook } from "./lib/vendor-telegram-check.server.js";
 
 const installationIdSchema = z.string().uuid();
 const connectSchema = z.object({
@@ -113,6 +114,26 @@ app.use("/api/*", async (_c, next) => {
 app.route("/api/v1/admin", adminRoutes);
 
 app.post("/api/v1/hooks/telegram", (c) => handleTelegramWebhook(c));
+
+app.get("/api/v1/hooks/telegram/check", async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const result = await checkVendorTelegramWebhook();
+    return c.json(result, result.ok ? 200 : 503);
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+app.post("/api/v1/hooks/telegram/register", async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const result = await registerVendorTelegramWebhook();
+    return c.json(result);
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+});
 
 app.get("/api/v1/portal/plans", (c) => c.json({ plans: buildPublicPlans() }));
 
