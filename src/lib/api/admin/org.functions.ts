@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 import { resolveTenantListScope } from "@/lib/access/tenant-admin.server";
-import { requireAnyPermission, requireModuleAccess } from "./_helpers";
+import { requireAnyPermission, requireModuleAccess } from "../_helpers";
 
 export const listDepartments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

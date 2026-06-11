@@ -6,7 +6,7 @@ import {
   resolveNextDocumentVersionNo,
 } from "@/lib/documents/versions.server";
 import { assertCanEditDocument } from "@/lib/api/document-access.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 import {
   STORAGE_BUCKETS,
   documentVersionPath,

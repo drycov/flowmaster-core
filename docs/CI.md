@@ -9,6 +9,7 @@ GitHub Actions: [.github/workflows/ci.yml](../.github/workflows/ci.yml).
 ```mermaid
 flowchart LR
   push[push / PR] --> build
+  push --> cloud_license[cloud-license]
   build --> smoke_db[smoke-db]
   build --> e2e[e2e]
   build --> smoke_staging[smoke-staging]
@@ -17,6 +18,7 @@ flowchart LR
 | Job | Условие | Что проверяет |
 |-----|---------|---------------|
 | **build** | всегда | `lint`, `typecheck`, `test`, `build` |
+| **cloud-license** | всегда | миграции license server, `typecheck`, `build` |
 | **smoke-db** | secrets Supabase | `uat:smoke:db` — миграции, RPC, RLS |
 | **e2e** | secrets E2E + Supabase | Playwright `test:e2e` (поднимает preview) |
 | **smoke-staging** | secrets staging + E2E | `uat:smoke:full` против живого staging |
@@ -46,6 +48,35 @@ Build env — placeholder Supabase (только для сборки Vite):
 | `SUPABASE_JWT_SECRET` | `placeholder-jwt-secret-for-ci-build-only` |
 
 Локально: `npm ci --legacy-peer-deps` — см. [CONTRIBUTING.md](./CONTRIBUTING.md) (peer-deps TanStack/shadcn).
+
+## Job: cloud-license
+
+Всегда выполняется параллельно с **build** (отдельный `package-lock.json` в `apps/cloud-license-server`).
+
+```yaml
+npm ci                          # working-directory: apps/cloud-license-server
+node scripts/validate-migrations.mjs
+node scripts/validate-migrations.mjs --apply   # Postgres 16 service
+npm run typecheck
+npm run build
+```
+
+Локально (без apply):
+
+```bash
+npm run license:cloud:validate-migrations
+npm run license:cloud:typecheck
+npm run license:cloud:build
+```
+
+Apply против локального Postgres:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres \
+  npm run license:cloud:validate-migrations -- --apply
+```
+
+Vercel auto-deploy остаётся отдельным; этот job ловит поломки миграций и сборки до merge.
 
 ## GitHub Secrets
 
@@ -139,7 +170,7 @@ INSTALLATION_ID=<uuid> \
 
 ### Облачный license server (Vercel)
 
-Отдельный pipeline: push в `apps/cloud-license-server`, Vercel auto-deploy. Env — Vercel Dashboard. См. [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+CI job **cloud-license** проверяет миграции и сборку на каждый PR. Production deploy — Vercel auto-deploy при push в main; env — Vercel Dashboard. См. [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
 
 ## Чеклист перед релизом
 

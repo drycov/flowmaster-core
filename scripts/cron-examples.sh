@@ -1,6 +1,16 @@
 #!/usr/bin/env sh
-# Example cron invocations for Flowmaster / ЕСЭДО internal hooks.
-# Set APP_URL and CRON_SECRET before use.
+# Example cron invocations for Flowmaster / ЕСЭДО.
+#
+# Internal hooks — set APP_URL and CRON_SECRET.
+# Database backup — run from repo root (no secrets required if Docker stack is up).
+
+# --- Host cron (crontab -e) ---
+#
+# Daily DB backup at 02:00:
+#   0 2 * * * cd /opt/edms && npm run backup:db >> /var/log/edms-backup.log 2>&1
+#
+# Weekly storage archive (Sunday 03:00):
+#   0 3 * * 0 cd /opt/edms && npm run backup:db -- --storage >> /var/log/edms-backup.log 2>&1
 
 : "${APP_URL:=https://esedo.example.kz}"
 : "${CRON_SECRET:?Set CRON_SECRET}"

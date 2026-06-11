@@ -16,7 +16,7 @@ import {
 import { buildPublicTenantAuthContext } from "@/lib/access/tenant-public.server";
 import type { PublicAuthConfig } from "@/components/auth/types";
 import { loadSystemInitStatus, type SystemInitStatus } from "@/lib/system/init-status.server";
-import { requireSystemSettingsAccess } from "./_helpers";
+import { requireSystemSettingsAccess } from "../_helpers";
 import { requireLicenseFeatureAccess } from "@/lib/license/enforcement";
 
 export type { SystemInitStatus };

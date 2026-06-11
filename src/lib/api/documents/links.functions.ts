@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 
 const LINK_DOC_SELECT = "id, reg_number, title_ru, title_kk, status, doc_type, created_at";
 

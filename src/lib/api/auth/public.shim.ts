@@ -4,4 +4,4 @@ export {
   createAuthChallenge,
   loginWithEmail,
   registerWithEmail,
-} from "@/lib/api/auth.functions";
+} from "./functions";

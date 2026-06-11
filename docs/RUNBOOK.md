@@ -71,28 +71,44 @@ npm run compose:tls:cron
 
 ## Backup
 
-### PostgreSQL
+Автоматизация: `npm run backup:db` (PostgreSQL custom dump через `pg_dump -Fc`).
 
 ```bash
-# Создание (ежедневно, хранить ≥30 дней)
-docker exec supabase-db pg_dump -U postgres -Fc postgres > \
-  "backup-$(date +%Y%m%d-%H%M).dump"
+# Ежедневный backup (по умолчанию ./backups/, retention 30 дней)
+npm run backup:db
 
-# Проверка размера
+# С архивом Storage (еженедельно)
+npm run backup:db -- --storage
+
+# Каталог и проверка существующего dump
+npm run backup:db -- --dir=/var/backups/edms
+npm run backup:db -- --verify-only=/var/backups/edms/backup-20260610-0200.dump
+```
+
+Переменные: `DB_CONTAINER` (default `supabase-db`), `POSTGRES_USER`, `POSTGRES_DB`, `BACKUP_DIR`, `BACKUP_RETENTION_DAYS`.
+
+Cron на хосте (02:00 ежедневно):
+
+```cron
+0 2 * * * cd /opt/edms && npm run backup:db >> /var/log/edms-backup.log 2>&1
+0 3 * * 0 cd /opt/edms && npm run backup:db -- --storage >> /var/log/edms-backup.log 2>&1
+```
+
+Примеры: `scripts/cron-examples.sh`.
+
+### PostgreSQL (ручной)
+
+```bash
+docker exec supabase-db pg_dump -U postgres -Fc postgres > "backup-$(date +%Y%m%d-%H%M).dump"
 ls -lh backup-*.dump
 ```
 
-`-Fc` — custom format (сжатие, selective restore). Альтернатива plain SQL:
-
-```bash
-docker exec supabase-db pg_dump -U postgres postgres > backup.sql
-```
+`-Fc` — custom format (сжатие, selective restore). Plain SQL: `pg_dump -U postgres postgres > backup.sql`.
 
 ### Storage (файлы)
 
 ```bash
-tar -czf "storage-$(date +%Y%m%d).tar.gz" \
-  -C docker/supabase/volumes storage/
+tar -czf "storage-$(date +%Y%m%d).tar.gz" -C docker/supabase/volumes storage/
 ```
 
 ### Секреты и конфиг

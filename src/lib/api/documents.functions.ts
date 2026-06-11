@@ -1,10 +1,10 @@
-/** Barrel re-exports — implementation split by domain. */
+/** Barrel re-exports — implementation in `./documents/`. */
 export {
   listDocuments,
   getDocument,
   getDashboardStats,
   type DocumentListRowEnriched,
-} from "./documents-query.functions";
+} from "./documents/query.functions";
 
 export {
   createDocument,
@@ -12,6 +12,6 @@ export {
   addComment,
   updateDocumentStatus,
   type CreateDocumentResult,
-} from "./documents-mutation.functions";
+} from "./documents/mutation.functions";
 
-export { addSignature } from "./documents-signatures.functions";
+export { addSignature } from "./documents/signatures.functions";

@@ -16,7 +16,8 @@
     "support-code": "node scripts/support-code.mjs",
     "vendor-staff:bootstrap": "node scripts/vendor-staff-bootstrap.mjs",
     "vendor-staff:reset-password": "node scripts/vendor-staff-reset-password.mjs",
-    "vendor-telegram:webhook": "node scripts/vendor-telegram-set-webhook.mjs"
+    "vendor-telegram:webhook": "node scripts/vendor-telegram-set-webhook.mjs",
+    "validate-migrations": "node scripts/validate-migrations.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",

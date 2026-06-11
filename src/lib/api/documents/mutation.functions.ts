@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireModuleAccess, requirePermission } from "./_helpers";
+import { requireModuleAccess, requirePermission } from "../_helpers";
 import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
 import { registerBodyContentVersion } from "@/lib/documents/versions.server";

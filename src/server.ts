@@ -6,11 +6,13 @@ import { ensureInstallationEnv } from "./lib/installation.server";
 import { logger, resolveRequestId } from "./lib/logger.server";
 import { initSentryServer, captureServerException } from "./lib/observability/sentry.server";
 import { applySecurityHeaders } from "./lib/observability/security-headers.server";
+import { assertProductionSecurityConfig } from "./lib/production-security.server";
 
 loadEnvFileIntoProcessEnv();
 loadServerEnv();
 ensureInstallationEnv();
 initSentryServer();
+assertProductionSecurityConfig();
 
 void import("./lib/telegram/polling.server")
   .then((m) => {

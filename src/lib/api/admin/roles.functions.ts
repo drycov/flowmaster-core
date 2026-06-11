@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 import { assertUserManagedByActor } from "@/lib/access/tenant-admin.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 
 export const listPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

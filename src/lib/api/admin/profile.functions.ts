@@ -9,7 +9,7 @@ import {
   mapProfileRow,
 } from "@/lib/auth/server";
 import type { Permission } from "@/lib/access/permissions";
-import { fetchUserPermissions, requireModuleAccess } from "./_helpers";
+import { fetchUserPermissions, requireModuleAccess } from "../_helpers";
 import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defaults.server";
 
 export type MyProfileResponse = {

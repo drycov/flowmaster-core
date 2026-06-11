@@ -3,7 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCanEditDocument, assertCanViewDocument } from "@/lib/api/document-access.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 import {
   STORAGE_BUCKETS,
   documentAttachmentPath,

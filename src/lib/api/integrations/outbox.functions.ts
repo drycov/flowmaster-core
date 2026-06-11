@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSystemSettingsAccess } from "./_helpers";
+import { requireSystemSettingsAccess } from "../_helpers";
 
 export type OutboxChannel = "email" | "telegram" | "webhook";
 

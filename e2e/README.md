@@ -17,10 +17,23 @@ npm run test:e2e:install   # Chromium (один раз)
 
 npm run test:e2e
 npm run test:e2e:ui          # интерактивный режим
-npm run test:e2e:security    # health + security routes only
+npm run test:e2e:security    # health + security + tenant-isolation (skipped without creds)
 ```
 
 Без `E2E_EMAIL` / `E2E_PASSWORD` выполняются только публичные сценарии.
+
+### Cross-tenant isolation (опционально)
+
+Пользователь организации B не должен видеть документ организации A:
+
+```bash
+# E2E_TENANT_B_EMAIL=user@tenant-b.example
+# E2E_TENANT_B_PASSWORD=...
+# E2E_CROSS_TENANT_DOCUMENT_ID=<uuid документа в org A>
+npm run test:e2e:security
+```
+
+DB-проверка без Playwright: `npm run uat:smoke:db` (нужны ≥2 org с пользователями и документами).
 
 ## Против staging / CI
 

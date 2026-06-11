@@ -9,7 +9,7 @@ import {
 } from "@/lib/access/tenant-admin.server";
 import { APP_ROLES, type AppRole } from "@/lib/auth/roles";
 import { registerUser, setUserRole as setUserRoleDb } from "@/lib/auth/server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 
 const ASSIGNABLE_ROLES = [...APP_ROLES] as const;
 

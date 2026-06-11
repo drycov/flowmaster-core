@@ -1,6 +1,6 @@
-/** Barrel re-exports — implementation split by domain. */
-export type { MyProfileResponse } from "./admin-profile.functions";
-export { getMyProfile, getUserProfile } from "./admin-profile.functions";
+/** Barrel re-exports — implementation in `./admin/`. */
+export type { MyProfileResponse } from "./admin/profile.functions";
+export { getMyProfile, getUserProfile } from "./admin/profile.functions";
 
 export {
   listUsers,
@@ -8,7 +8,7 @@ export {
   setUserRole,
   createUser,
   adminResetUserPassword,
-} from "./admin-users.functions";
+} from "./admin/users.functions";
 
 export {
   listDepartments,
@@ -16,11 +16,11 @@ export {
   listUsersBrief,
   listDepartmentsBrief,
   listRolesBrief,
-} from "./admin-org.functions";
+} from "./admin/org.functions";
 
-export { listAuditLogs } from "./admin-audit.functions";
+export { listAuditLogs } from "./admin/audit.functions";
 
-export { listNotifications, markNotificationsRead } from "./admin-notifications.functions";
+export { listNotifications, markNotificationsRead } from "./admin/notifications.functions";
 
 export {
   listPermissions,
@@ -30,4 +30,4 @@ export {
   listRoleGrants,
   grantRole,
   revokeRoleGrant,
-} from "./admin-roles.functions";
+} from "./admin/roles.functions";

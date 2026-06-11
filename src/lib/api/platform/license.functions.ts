@@ -15,7 +15,7 @@ import {
 } from "@/lib/license/server/client.server";
 import { getLicenseMode, isOnlineLicenseRequired, usesCloudLicense } from "@/lib/license/server/config.server";
 import type { LicenseStatusResponse } from "@/lib/license/types";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 
 function isLicenseSchemaMissing(message: string): boolean {
   return (

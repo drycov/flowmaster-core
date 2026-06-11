@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { applyDocumentStatusTransition } from "@/lib/documents/status-transition.server";
 import { canViewDocumentContent } from "@/lib/api/document-access.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 
 const bulkActionSchema = z.object({
   document_ids: z.array(z.string().uuid()).min(1).max(200),

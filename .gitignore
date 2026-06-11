@@ -41,6 +41,10 @@ docker/supabase/volumes/db/data
 docker/supabase/volumes/storage
 docker/supabase/.env
 
+# Local diagnostics
+tsc-errors.txt
+backups/
+
 # Playwright
 /test-results/
 /playwright-report/

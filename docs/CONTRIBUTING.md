@@ -38,8 +38,20 @@ CI (`.github/workflows/ci.yml`) запускает `lint`, `typecheck`, `test`; 
 ## Маршруты и серверный код
 
 - File-based routing: [src/routes/README.md](../src/routes/README.md)
-- Server Functions: `src/routes/**` + `src/server/`
+- Обзор `src/`: [src/README.md](../src/README.md)
+- Server Functions (API): [src/lib/api/README.md](../src/lib/api/README.md)
+- Domain logic: `src/lib/{domain}/*.server.ts`
 - Не редактируйте `src/routeTree.gen.ts` вручную
+
+### `src/lib/api/` — соглашения
+
+| Импорт | Когда |
+|--------|--------|
+| `@/lib/api/admin.functions` | Barrel split-модуля |
+| `@/lib/api/hr.functions` | Доменный entry-point |
+| `@/lib/api/document-access.server` | Shared helper |
+
+Не импортируйте внутренние файлы вроде `admin/users.functions` — только barrels и публичные shims в корне `api/`.
 
 ## Миграции БД
 

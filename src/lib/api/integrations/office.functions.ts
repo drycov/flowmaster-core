@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAppOrigin, resolveOfficeUrl } from "@/lib/app-origin.server";
 import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
-import { requireModuleAccess } from "./_helpers";
+import { requireModuleAccess } from "../_helpers";
 import { createSignedDownloadUrl, createAdminSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
 import {

@@ -2,9 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { enforceModuleLicense } from "./_helpers";
+import { enforceModuleLicense } from "../_helpers";
 import { assertCanManageDocumentAccessGrants } from "@/lib/api/document-access-grants.server";
-import { CONTENT_MASK, DOCUMENT_FULL_LIST_SELECT } from "./documents.shared.server";
+import { CONTENT_MASK, DOCUMENT_FULL_LIST_SELECT } from "./shared.server";
 import { resolveDocumentTypeByCode } from "@/lib/documents/reference-fields.server";
 import {
   enrichDocumentListRows,

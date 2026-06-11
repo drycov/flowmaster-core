@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { fetchUserPermissions, requireModuleAccess } from "./_helpers";
+import { fetchUserPermissions, requireModuleAccess } from "../_helpers";
 import { ALL_PERMISSIONS } from "@/lib/auth/permissions";
 
 /**

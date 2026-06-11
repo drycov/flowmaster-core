@@ -281,6 +281,84 @@ async function checkDatabase() {
   } else {
     pass("RLS can_view_document arg order sanity");
   }
+
+  await checkTenantIsolation(sb);
+}
+
+async function checkTenantIsolation(sb) {
+  const { data: orgs, error: orgErr } = await sb.from("organization").select("id").limit(10);
+  if (orgErr) {
+    fail("tenant isolation org lookup", orgErr.message);
+    return;
+  }
+  if (!orgs || orgs.length < 2) {
+    skip("cross-tenant document isolation", "fewer than 2 organizations in database");
+    return;
+  }
+
+  let tested = false;
+  for (let i = 0; i < orgs.length && !tested; i++) {
+    for (let j = 0; j < orgs.length && !tested; j++) {
+      if (i === j) continue;
+
+      const orgA = orgs[i].id;
+      const orgB = orgs[j].id;
+
+      const { data: userB, error: userErr } = await sb
+        .from("profiles")
+        .select("id")
+        .eq("organization_id", orgB)
+        .limit(1)
+        .maybeSingle();
+      const { data: docA, error: docErr } = await sb
+        .from("documents")
+        .select("id")
+        .eq("organization_id", orgA)
+        .limit(1)
+        .maybeSingle();
+
+      if (userErr) {
+        fail("tenant isolation user lookup", userErr.message);
+        return;
+      }
+      if (docErr) {
+        fail("tenant isolation document lookup", docErr.message);
+        return;
+      }
+      if (!userB?.id || !docA?.id) continue;
+
+      for (const [label, fn] of [
+        ["can_view_document", "can_view_document"],
+        ["can_view_document_content", "can_view_document_content"],
+      ]) {
+        const { data: allowed, error } = await sb.rpc(fn, {
+          _doc_id: docA.id,
+          _user: userB.id,
+        });
+        if (error) {
+          fail(`cross-tenant RPC ${label}`, error.message);
+          return;
+        }
+        if (allowed === true) {
+          fail(
+            `cross-tenant ${label}`,
+            `user ${userB.id} (org ${orgB}) must not access doc ${docA.id} (org ${orgA})`,
+          );
+          return;
+        }
+      }
+
+      pass("cross-tenant document isolation", `orgA≠orgB, both RPCs false`);
+      tested = true;
+    }
+  }
+
+  if (!tested) {
+    skip(
+      "cross-tenant document isolation",
+      "no cross-org user+document pair in seed data (need 2 orgs with profiles and documents)",
+    );
+  }
 }
 
 async function runE2e() {
@@ -300,6 +378,7 @@ async function runE2e() {
       "--",
       "e2e/health.spec.ts",
       "e2e/security-routes.spec.ts",
+      "e2e/tenant-isolation.spec.ts",
     ],
     {
       cwd: root,
@@ -315,16 +394,16 @@ async function runE2e() {
   );
 
   if (proc.status === 0) {
-    pass("playwright health + security-routes");
+    pass("playwright health + security + tenant-isolation");
   } else {
     const detail = JSON_OUT ? proc.stdout?.slice(-500) ?? proc.stderr?.slice(-500) : "";
-    fail("playwright health + security-routes", detail || `exit ${proc.status}`);
+    fail("playwright health + security + tenant-isolation", detail || `exit ${proc.status}`);
   }
 }
 
 function printManualChecklist() {
   if (JSON_OUT) return;
-  section("8. Manual UAT (remaining)");
+  section("9. Manual UAT (remaining)");
   const items = [
     "KB publish blocked without document content access",
     "upsertDocumentCorrespondent requires document edit rights",

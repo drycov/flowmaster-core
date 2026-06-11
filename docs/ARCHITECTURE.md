@@ -8,13 +8,18 @@
 
 ```
 flowmaster-core/
-├── src/                         # ЕСЭДО: React 19 + TanStack Start + Server Functions
+├── src/                         # ЕСЭДО (см. src/README.md, src/lib/api/README.md)
 ├── supabase/migrations/         # PostgreSQL (self-hosted Supabase)
-├── docker/                      # Compose, nginx, ONLYOFFICE
-├── scripts/                     # env, orchestration, UAT, FM1 CLI
+├── docker/                      # Compose overlays, nginx, ONLYOFFICE (см. docker/README.md)
+├── scripts/                     # env, orchestration, UAT, FM1 CLI (см. scripts/README.md)
 ├── apps/cloud-license-server/   # Vercel: license API + portal + Cloud Admin
+├── docs/                        # Канонические runbook'и (см. docs/README.md)
+├── wiki/                        # Краткие страницы для GitHub Wiki
 └── e2e/                         # Playwright
 ```
+
+Корневые `docker-compose*.yml` — **точки входа** Compose (стандарт Docker); overrides в `docker/compose/`.
+Шаблоны env: `.env.docker.example`, `.env.example` (генерация через `npm run env:*`).
 
 Отдельного `packages/` нет. Облачный LS вызывается через `npm run license:cloud:*` или `--prefix apps/cloud-license-server`.
 

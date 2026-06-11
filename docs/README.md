@@ -92,14 +92,15 @@ Wiki — краткие страницы; канонический текст о
 
 ```
 flowmaster-core/
-├── src/                         # ЕСЭДО
+├── src/                         # ЕСЭДО — src/README.md, lib/api/README.md
 ├── supabase/migrations/         # PostgreSQL
-├── docker/                        # Compose, nginx
-├── scripts/                       # env, orchestration
-├── apps/cloud-license-server/     # Vercel LS
-├── docs/                          # ← вы здесь (канонические guides)
-├── wiki/                          # Wiki-страницы (+ GitHub Wiki)
-├── e2e/                           # Playwright
+├── docker/                      # Compose overrides, nginx, monitoring
+├── docker-compose*.yml          # Entrypoints Compose (корень — по convention)
+├── scripts/                     # env, orchestration — scripts/README.md
+├── apps/cloud-license-server/   # Vercel LS
+├── docs/                        # ← вы здесь (канонические guides)
+├── wiki/                        # Wiki-страницы (+ GitHub Wiki)
+├── e2e/                         # Playwright
 └── CHANGELOG.md
 ```
 

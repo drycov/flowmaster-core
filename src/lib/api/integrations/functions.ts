@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireIntegrationsAccess } from "./_helpers";
+import { requireIntegrationsAccess } from "../_helpers";
 import {
   API_KEY_SCOPES,
   WEBHOOK_EVENTS,
