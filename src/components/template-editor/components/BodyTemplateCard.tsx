@@ -244,7 +244,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={editor.isActive("bold")}
+                    pressed={editor.isActive("bold") ?? false}
                     onPressedChange={() => editor.chain().focus().toggleBold().run()}
                   >
                     <Bold className="w-4 h-4" />
@@ -257,7 +257,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={editor.isActive("italic")}
+                    pressed={editor.isActive("italic") ?? false}
                     onPressedChange={() => editor.chain().focus().toggleItalic().run()}
                   >
                     <Italic className="w-4 h-4" />
@@ -272,7 +272,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={editor.isActive("bulletList")}
+                    pressed={editor.isActive("bulletList") ?? false}
                     onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
                   >
                     <List className="w-4 h-4" />
@@ -285,7 +285,7 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={editor.isActive("orderedList")}
+                    pressed={editor.isActive("orderedList") ?? false}
                     onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
                   >
                     <ListOrdered className="w-4 h-4" />

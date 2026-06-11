@@ -128,27 +128,32 @@ SET search_path = public
 AS $fn$
 DECLARE
   v_doc_id uuid;
-  v_org uuid;
+  v_row jsonb;
 BEGIN
   IF NEW.organization_id IS NOT NULL THEN
     RETURN NEW;
   END IF;
 
-  v_doc_id := CASE TG_TABLE_NAME
-    WHEN 'document_links' THEN NEW.source_document_id
-    ELSE NEW.document_id
-  END;
+  v_row := to_jsonb(NEW);
 
-  IF v_doc_id IS NULL THEN
-    NEW.organization_id := public.effective_organization_id();
-    RETURN NEW;
+  IF TG_TABLE_NAME = 'document_links' AND v_row ? 'source_document_id' THEN
+    v_doc_id := NULLIF(trim(v_row->>'source_document_id'), '')::uuid;
+  ELSIF v_row ? 'document_id' THEN
+    v_doc_id := NULLIF(trim(v_row->>'document_id'), '')::uuid;
   END IF;
 
-  SELECT d.organization_id INTO v_org
-  FROM public.documents d
-  WHERE d.id = v_doc_id;
+  IF v_doc_id IS NOT NULL THEN
+    SELECT d.organization_id INTO NEW.organization_id
+    FROM public.documents d
+    WHERE d.id = v_doc_id;
+  END IF;
 
-  NEW.organization_id := COALESCE(v_org, public.effective_organization_id(), public.current_organization_id());
+  NEW.organization_id := COALESCE(
+    NEW.organization_id,
+    public.effective_organization_id(),
+    public.current_organization_id()
+  );
+
   RETURN NEW;
 END;
 $fn$;

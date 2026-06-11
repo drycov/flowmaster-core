@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo } from "lucide-react";
+import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -27,19 +27,18 @@ export function OfficeTab({
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: officeConfig } = useQuery({
+  const { data: officeConfig, isLoading: officeLoading } = useQuery({
     queryKey: ["office-config", "document", documentId],
     queryFn: () => getOfficeEditorConfig({ data: { document_id: documentId } }),
     staleTime: 5 * 60 * 1000,
   });
 
-  const officeUrl = officeConfig?.office_url ?? "";
-  const officeConfigured = Boolean(officeUrl);
+  const officeConfigured = Boolean(officeConfig?.office_url);
 
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder: t("doc.contentPlaceholder") })],
     content: initialContent,
-    editable: !isReadOnly,
+    editable: !isReadOnly && !officeConfigured,
     immediatelyRender: false,
   });
 
@@ -62,18 +61,27 @@ export function OfficeTab({
     }
   };
 
+  if (officeLoading) {
+    return (
+      <div className="flex items-center justify-center h-40 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+        {t("common.loading")}
+      </div>
+    );
+  }
+
   if (officeConfigured) {
     return <DocumentOfficeEditor documentId={documentId} />;
   }
 
   return (
     <div className="space-y-4">
-      {!isReadOnly && (
+      {!isReadOnly && editor && (
         <div className="flex justify-between items-center">
           <div className="flex gap-1 border rounded-md p-1 bg-muted/30">
             <Toggle
               size="sm"
-              pressed={editor?.isActive("bold")}
+              pressed={editor?.isActive("bold") ?? false}
               onPressedChange={() => editor?.chain().focus().toggleBold().run()}
               disabled={!editor}
             >
@@ -81,7 +89,7 @@ export function OfficeTab({
             </Toggle>
             <Toggle
               size="sm"
-              pressed={editor?.isActive("italic")}
+              pressed={editor?.isActive("italic") ?? false}
               onPressedChange={() => editor?.chain().focus().toggleItalic().run()}
               disabled={!editor}
             >
@@ -89,7 +97,7 @@ export function OfficeTab({
             </Toggle>
             <Toggle
               size="sm"
-              pressed={editor?.isActive("bulletList")}
+              pressed={editor?.isActive("bulletList") ?? false}
               onPressedChange={() => editor?.chain().focus().toggleBulletList().run()}
               disabled={!editor}
             >
@@ -97,7 +105,7 @@ export function OfficeTab({
             </Toggle>
             <Toggle
               size="sm"
-              pressed={editor?.isActive("orderedList")}
+              pressed={editor?.isActive("orderedList") ?? false}
               onPressedChange={() => editor?.chain().focus().toggleOrderedList().run()}
               disabled={!editor}
             >
