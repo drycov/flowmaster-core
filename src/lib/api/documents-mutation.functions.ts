@@ -183,6 +183,10 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     if (patchIn.legal_hold === true) {
       patch.legal_hold_at = new Date().toISOString();
       patch.legal_hold_by = userId;
+    } else if (patchIn.legal_hold === false) {
+      patch.legal_hold_at = null;
+      patch.legal_hold_by = null;
+      patch.legal_hold_note = null;
     }
     if (patchIn.document_type_id !== undefined) patch.doc_type = refs.doc_type;
     if (patchIn.document_type_id !== undefined) patch.document_type_id = refs.document_type_id;

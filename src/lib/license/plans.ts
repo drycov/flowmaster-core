@@ -17,6 +17,9 @@ const CORE_FEATURES: LicenseFeatures = {
   correspondence: true,
   substitutions: true,
   counterparties: true,
+  office: false,
+  reports: false,
+  monitoring: false,
 };
 
 const PROFESSIONAL_FEATURES: LicenseFeatures = {
@@ -26,11 +29,14 @@ const PROFESSIONAL_FEATURES: LicenseFeatures = {
   projects: true,
   contracts: true,
   hr: true,
+  office: true,
+  reports: true,
 };
 
 const ALL_FEATURES: LicenseFeatures = {
   ...PROFESSIONAL_FEATURES,
   integrations: true,
+  monitoring: true,
 };
 
 export const PLAN_PRESETS: Record<LicensePlan, PlanPreset> = {
@@ -51,6 +57,9 @@ export const PLAN_PRESETS: Record<LicensePlan, PlanPreset> = {
       contracts: false,
       hr: false,
       integrations: false,
+      office: false,
+      reports: false,
+      monitoring: false,
     },
   },
   professional: {
@@ -80,6 +89,7 @@ export function featureLabel(feature: LicenseFeature, locale: "ru" | "kk"): stri
     workflows: { ru: "Маршруты согласования", kk: "Келісу бағыттары" },
     templates: { ru: "Шаблоны документов", kk: "Құжат үлгілері" },
     eds_signing: { ru: "Подписание ЭЦП", kk: "ЭЦҚ қол қою" },
+    office: { ru: "ONLYOFFICE (DOCX/XLSX)", kk: "ONLYOFFICE (DOCX/XLSX)" },
     archive: { ru: "Архив", kk: "Мұрағат" },
     references: { ru: "Справочники СЭД", kk: "СЭД анықтамалықтары" },
     nomenclature: { ru: "Номенклатура дел", kk: "Іс номенклатурасы" },
@@ -92,6 +102,8 @@ export function featureLabel(feature: LicenseFeature, locale: "ru" | "kk"): stri
     substitutions: { ru: "Замещения", kk: "Ауыстырулар" },
     correspondence: { ru: "Корреспонденция", kk: "Корреспонденция" },
     integrations: { ru: "Интеграции и API", kk: "Интеграциялар және API" },
+    reports: { ru: "Отчёты и аналитика", kk: "Есептер мен аналитика" },
+    monitoring: { ru: "Мониторинг системы", kk: "Жүйе мониторингі" },
   };
   return labels[feature][locale];
 }

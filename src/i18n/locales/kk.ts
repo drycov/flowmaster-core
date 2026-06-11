@@ -364,6 +364,8 @@ export const kkDictionary: Dictionary = {
   "settings.integrations.officeUrl": "Document Server URL",
   "settings.integrations.officeUrlHint":
     "ONLYOFFICE мекенжайы. Callback: /api/public/hooks/office-callback",
+  "settings.integrations.officeLicenseRequired":
+    "ONLYOFFICE модулі ағымдағы тарифте қолжетilmейді. «Лицензия» қоймасынан тарифті жаңартыңыз.",
   "settings.integrations.s3Endpoint": "S3 endpoint (Supabase Storage)",
   "settings.integrations.s3Region": "S3 region",
   "settings.integrations.s3AccessKey": "S3 Access Key",
@@ -627,6 +629,15 @@ export const kkDictionary: Dictionary = {
   // Workflow
   "wf.designer": "Бағыт конструкторы",
   "wf.add_node": "Түйін қосу",
+  "wf.palette.title": "Түйіндер",
+  "wf.canvasHint": "Түйінді схемаға апарыңыз · баптау үшін түйінді немесе байланысты басыңыз",
+  "wf.properties.workflow": "Бағыт",
+  "wf.properties.node": "Түйін",
+  "wf.properties.edge": "Байланыс",
+  "wf.properties.selectHint": "Схемада түйінді немесе байланысты таңдаңыз — параметрлер осы жерде көрсетіледі.",
+  "wf.properties.routeSettings": "Бағыт параметрлері",
+  "wf.properties.details": "Қосымша",
+  "wf.properties.missingAssignee": "Орындаушы көрсетілмеген — бағыт осы кезеңде іске қосылмайды.",
   "wf.draft": "Жоба",
   "wf.published": "Жарияланды",
   "wf.simulate": "Симуляция",

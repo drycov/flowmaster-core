@@ -58,7 +58,7 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 
 function SystemSettingsPage() {
   const { t } = useI18n();
-  const { can, canModule, canAny } = useAccessContext();
+  const { can, canModule, canAny, licensed } = useAccessContext();
   const canManagePlatform = can("manage_platform");
   const canManageLicense = canModule("admin_license", "manage");
   const canManageIntegrations = canAny("manage_integrations", "manage_license");
@@ -348,6 +348,7 @@ function SystemSettingsPage() {
                 meta={meta}
                 patch={patch}
                 canManageIntegrations={canManageIntegrations}
+                officeLicensed={licensed("office")}
               />
             </TabsContent>
           )}

@@ -12,11 +12,13 @@ export function ServicesSettingsPanel({
   meta,
   patch,
   canManageIntegrations = true,
+  officeLicensed = true,
 }: {
   form: SystemSettings;
   meta: SystemSettingsMeta;
   patch: SettingsPatchFn;
   canManageIntegrations?: boolean;
+  officeLicensed?: boolean;
 }) {
   const { t } = useI18n();
 
@@ -32,10 +34,14 @@ export function ServicesSettingsPanel({
             description={t("settings.integrations.officeEnabledDesc")}
           >
             <Switch
-              checked={form.integrations.office_enabled}
+              checked={officeLicensed && form.integrations.office_enabled}
+              disabled={!officeLicensed}
               onCheckedChange={(v) => patch("integrations", "office_enabled", v)}
             />
           </SettingRow>
+          {!officeLicensed && (
+            <p className="text-xs text-muted-foreground">{t("settings.integrations.officeLicenseRequired")}</p>
+          )}
           <div className="space-y-1.5">
             <Label>{t("settings.integrations.officeUrl")}</Label>
             <Input

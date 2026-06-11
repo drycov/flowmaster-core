@@ -10,7 +10,7 @@ import { getSystemMonitoringStatus } from "@/lib/api/monitoring.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/monitoring")({
-  beforeLoad: () => requireModule("admin_system", "read"),
+  beforeLoad: () => requireModule("monitoring", "read"),
   component: AdminMonitoringPage,
 });
 

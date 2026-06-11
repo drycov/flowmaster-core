@@ -8,6 +8,7 @@ import {
 import { listWorkflows, startWorkflow } from "@/lib/api/workflows.functions";
 import { getDocument } from "@/lib/api/documents.functions";
 import { parseStoredCustomRoute, toGraphRouteInput } from "@/lib/workflow/route-builder";
+import { hasStoredWorkflowRoute } from "@/lib/workflow/start-route.server";
 import { signCMSFull } from "@/lib/ncalayer";
 import { buildSignatureInsertData } from "@/lib/eds/build-signature-record";
 import { toast } from "sonner";
@@ -45,12 +46,13 @@ export function useDocumentActions(documentId: string) {
         custom_route?: unknown;
       };
       const parsed = parseStoredCustomRoute(doc.custom_route);
+      const graphInput = toGraphRouteInput(parsed.graph);
       return startWorkflow({
         data: {
           document_id: documentId,
           workflow_id: workflowId ?? doc.workflow_id ?? null,
-          graph_definition: toGraphRouteInput(parsed.graph),
-          custom_route: parsed.steps as never,
+          graph_definition: graphInput,
+          custom_route: (parsed.steps ?? graphInput) as never,
         },
       });
     },

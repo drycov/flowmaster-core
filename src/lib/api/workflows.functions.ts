@@ -5,11 +5,12 @@ import { upsertRow } from "@/lib/api/db.helpers.server";
 import { enforceModuleLicense, requireModuleAccess } from "./_helpers";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-  parseStoredCustomRoute,
   findStartNodeId,
   linearStepsToDefinition,
+  normalizeWorkflowDefinition,
   type WorkflowDefinition,
 } from "@/lib/workflow/route-builder";
+import { resolveStartWorkflowRoute } from "@/lib/workflow/start-route.server";
 import { customRouteStepSchema, graphDefinitionSchema } from "@/lib/workflow/custom-route-schema";
 import { workflowDefinitionSchema } from "@/lib/workflow/workflow-schema";
 import type { Json } from "@/integrations/supabase/types";
@@ -119,16 +120,24 @@ async function advanceFromStart(
   docId: string,
   def: { nodes: unknown[]; edges: unknown[] },
 ) {
-  const start = (def.nodes as WfNode[]).find((n) => n.type === "START");
+  const normalized = normalizeWorkflowDefinition(def as WorkflowDefinition);
+  const start = normalized.nodes.find((n) => n.type === "START");
   if (!start) throw new Error("No START node");
   const { error } = await supabaseAdmin.rpc("wf_advance_from_node", {
     _run_id: runId,
     _doc_id: docId,
     _from_node_id: start.id,
-    _nodes: def.nodes as Json,
-    _edges: def.edges as Json,
+    _nodes: normalized.nodes as Json,
+    _edges: normalized.edges as Json,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.message.includes("has no assignees")) {
+      throw new Error(
+        "У этапа маршрута не назначен исполнитель. Откройте маршрут в редакторе и укажите, кто должен согласовать или подписать документ.",
+      );
+    }
+    throw new Error(error.message);
+  }
 }
 
 export const startWorkflow = createServerFn({ method: "POST" })
@@ -149,9 +158,9 @@ export const startWorkflow = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const { data: doc, error: docErr } = await supabase
-      .from("documents")
-      .select("created_by, workflow_id, custom_route, status")
-      .eq("id", data.document_id)
+      .from("documents_full" as never)
+      .select("created_by, status")
+      .eq("id" as never, data.document_id)
       .single();
     if (docErr) throw new Error(docErr.message);
 
@@ -170,39 +179,25 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .maybeSingle();
     if (activeRun) throw new Error("Маршрут уже запущен для этого документа");
 
-    let workflowId = data.workflow_id ?? doc.workflow_id ?? null;
-    let graphDef: WorkflowDefinition | null = data.graph_definition as WorkflowDefinition | null;
-    let customSteps: Array<z.infer<typeof customRouteStepSchema>> | null = null;
-
-    if (Array.isArray(data.custom_route)) {
-      customSteps = data.custom_route;
-    } else if (
-      data.custom_route &&
-      typeof data.custom_route === "object" &&
-      Array.isArray((data.custom_route as { nodes?: unknown }).nodes)
-    ) {
-      const g = data.custom_route as unknown as WorkflowDefinition;
-      graphDef = { nodes: g.nodes, edges: g.edges ?? [] };
-    }
-
-    if (!graphDef && !customSteps && doc.custom_route) {
-      const parsed = parseStoredCustomRoute(doc.custom_route);
-      graphDef = parsed.graph;
-      customSteps = parsed.steps as Array<z.infer<typeof customRouteStepSchema>> | null;
-    }
+    const { workflowId, graphDef, customSteps } = await resolveStartWorkflowRoute(
+      supabase,
+      data.document_id,
+      data,
+    );
 
     async function insertRunAndStart(
       def: { nodes: unknown[]; edges: unknown[] },
       opts: { workflow_id: string | null; payload?: Record<string, unknown> },
     ) {
-      const startId = findStartNodeId(def as WorkflowDefinition);
+      const normalized = normalizeWorkflowDefinition(def as WorkflowDefinition);
+      const startId = findStartNodeId(normalized);
       const { data: run, error } = await (supabase.from("workflow_runs") as any)
         .insert({
           workflow_id: opts.workflow_id,
           document_id: data.document_id,
           current_node: startId,
           status: "running",
-          context: def,
+          context: normalized,
         })
         .select("id")
         .single();
@@ -220,7 +215,7 @@ export const startWorkflow = createServerFn({ method: "POST" })
         .from("documents")
         .update({ status: "in_review" as never })
         .eq("id", data.document_id);
-      await advanceFromStart(run.id, data.document_id, def);
+      await advanceFromStart(run.id, data.document_id, normalized);
       return run.id as string;
     }
 
@@ -244,7 +239,11 @@ export const startWorkflow = createServerFn({ method: "POST" })
     }
 
     // === STANDARD WORKFLOW branch ===
-    if (!workflowId) throw new Error("workflow_id, custom_route или graph_definition обязателен");
+    if (!workflowId) {
+      throw new Error(
+        "Не задан маршрут согласования. Выберите маршрут в диалоге или задайте его при создании документа.",
+      );
+    }
     const wf = await supabase.from("workflows").select("definition").eq("id", workflowId).single();
     if (wf.error) throw new Error(wf.error.message);
     const def = wf.data.definition as unknown as WfDef;

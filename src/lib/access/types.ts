@@ -13,6 +13,8 @@ export const MODULE_IDS = [
   "workflows",
   "templates",
   "eds_signing",
+  "office",
+  "monitoring",
   "archive",
   "references",
   "nomenclature",

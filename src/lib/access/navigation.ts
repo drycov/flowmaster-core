@@ -169,7 +169,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
         id: "monitoring",
         to: "/admin/monitoring",
         labelKey: "nav.monitoring",
-        moduleId: "admin_system",
+        moduleId: "monitoring",
       },
       { id: "settings", to: "/admin/settings", labelKey: "nav.settings", moduleId: "admin_system" },
       {

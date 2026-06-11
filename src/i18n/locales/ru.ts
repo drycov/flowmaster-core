@@ -370,6 +370,8 @@ export const ruDictionary: Dictionary = {
   "settings.integrations.officeUrl": "URL Document Server",
   "settings.integrations.officeUrlHint":
     "Адрес ONLYOFFICE без завершающего слэша. Callback: /api/public/hooks/office-callback",
+  "settings.integrations.officeLicenseRequired":
+    "Модуль ONLYOFFICE недоступен в текущем тарифном плане. Обновите лицензию на вкладке «Лицензия».",
   "settings.integrations.s3Endpoint": "S3 endpoint (Supabase Storage)",
   "settings.integrations.s3Region": "S3 region",
   "settings.integrations.s3AccessKey": "S3 Access Key",
@@ -638,6 +640,15 @@ export const ruDictionary: Dictionary = {
   // Workflow
   "wf.designer": "Конструктор маршрута",
   "wf.add_node": "Добавить узел",
+  "wf.palette.title": "Узлы",
+  "wf.canvasHint": "Перетащите узел на схему · кликните узел или связь для настройки",
+  "wf.properties.workflow": "Маршрут",
+  "wf.properties.node": "Узел",
+  "wf.properties.edge": "Связь",
+  "wf.properties.selectHint": "Выберите узел или связь на схеме — настройки появятся здесь.",
+  "wf.properties.routeSettings": "Параметры маршрута",
+  "wf.properties.details": "Дополнительно",
+  "wf.properties.missingAssignee": "Не указан исполнитель — маршрут не запустится на этом этапе.",
   "wf.draft": "Черновик",
   "wf.published": "Опубликован",
   "wf.simulate": "Симуляция",

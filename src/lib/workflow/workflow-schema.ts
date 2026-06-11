@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const assigneeTypeSchema = z.enum([
   "user",
+  "initiator",
   "position",
   "department",
   "department_head",

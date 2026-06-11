@@ -16,6 +16,7 @@ export type NodeType =
 
 export type AssigneeType =
   | "user"
+  | "initiator"
   | "position"
   | "department"
   | "department_head"

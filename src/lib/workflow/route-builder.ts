@@ -6,6 +6,7 @@ import type {
   NodeType,
 } from "@/components/workflow-designer/types";
 import type { graphDefinitionSchema } from "@/lib/workflow/custom-route-schema";
+import { getNodeAssignee } from "@/lib/workflow/assignee-display";
 
 export type { WorkflowDefinition, WorkflowNode, WorkflowEdge };
 
@@ -49,6 +50,39 @@ export function findStartNodeId(def: WorkflowDefinition): string {
   return start?.id ?? "start";
 }
 
+/** Flatten designer / stored node shapes so DB assignee resolution sees consistent fields. */
+export function normalizeWorkflowDefinition(def: WorkflowDefinition): WorkflowDefinition {
+  return {
+    ...def,
+    nodes: (def.nodes ?? []).map((node) => {
+      const nested = (node as { data?: Record<string, unknown> }).data;
+      const type = (node.type || (nested?.type as NodeType | undefined) || "TASK") as NodeType;
+      const { mode, ref } = getNodeAssignee(node);
+      const label = node.label ?? (nested?.label as string | undefined);
+
+      return {
+        ...node,
+        type,
+        label,
+        assignee_mode: mode as WorkflowNode["assignee_mode"],
+        assignee_type: mode as WorkflowNode["assignee_type"],
+        assignee_ref: ref,
+        assignee_id: ref,
+        data: {
+          ...nested,
+          type,
+          label,
+          assignee_mode: mode,
+          assignee_type: mode,
+          assignee_ref: ref,
+          assignee_id: ref,
+        },
+      };
+    }),
+    edges: def.edges ?? [],
+  };
+}
+
 export function extractActionableNodes(def: WorkflowDefinition): WorkflowNode[] {
   return (def.nodes ?? []).filter((n) => ACTIONABLE_TYPES.includes(n.type as NodeType));
 }
@@ -89,7 +123,7 @@ export function buildModifiedDefinition(
   const nodeIds = new Set(nodes.map((n) => n.id));
   const edges = (base.edges ?? []).filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
 
-  return pruneUnreachable({ nodes, edges });
+  return normalizeWorkflowDefinition(pruneUnreachable({ nodes, edges }));
 }
 
 function pruneUnreachable(def: WorkflowDefinition): WorkflowDefinition {

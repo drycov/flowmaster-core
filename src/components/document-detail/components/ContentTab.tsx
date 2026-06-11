@@ -11,7 +11,7 @@ import type { DocumentVersion } from "../types";
 interface ContentTabProps {
   body?: string | null;
   fieldValues?: Record<string, string>;
-  currentVersion?: DocumentVersion | null;
+  fileVersion?: DocumentVersion | null;
   summary?: string;
   isEditable?: boolean;
   onSave?: (content: string) => Promise<void>;
@@ -20,7 +20,7 @@ interface ContentTabProps {
 export function ContentTab({
   body = "",
   fieldValues = {},
-  currentVersion,
+  fileVersion,
   summary,
   isEditable = false,
   onSave,
@@ -33,7 +33,7 @@ export function ContentTab({
   const preview = useDocumentContentPreview({
     body,
     fieldValues,
-    currentVersion,
+    fileVersion,
   });
 
   const labels = {
@@ -67,7 +67,7 @@ export function ContentTab({
   return (
     <Card className="rounded-sm">
       <CardContent className="p-6">
-        {isEditable && !isEditing && (
+        {isEditable && !isEditing && !fileVersion?.file_path && (
           <div className="flex justify-end mb-4">
             <Button size="sm" variant="outline" onClick={handleStartEditing}>
               <Pencil className="w-4 h-4 mr-1" />

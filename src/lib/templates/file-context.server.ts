@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
-import PizZip from "pizzip";
 import { PLACEHOLDER_PATTERN, type TemplateFileFormat } from "./file-formats";
 import { humanizeFilename, inferCategoryFromTitle } from "./field-inference";
+import { extractDocxPlainText } from "@/lib/office/docx-text.server";
 
 export type TemplateFileContext = {
   title: string;
@@ -9,32 +9,8 @@ export type TemplateFileContext = {
   category: string | null;
 };
 
-function docxXmlToPlainText(xml: string): string {
-  return xml
-    .replace(/<w:tab[^/]*\/>/g, "\t")
-    .replace(/<w:br[^/]*\/>/g, "\n")
-    .replace(/<[^>]+>/g, "");
-}
-
 function stripPlaceholders(text: string): string {
   return text.replace(PLACEHOLDER_PATTERN, "").replace(/\s+/g, " ").trim();
-}
-
-function extractDocxPlainText(buffer: Buffer): string {
-  const zip = new PizZip(buffer);
-  const xmlParts = Object.keys(zip.files).filter(
-    (name) =>
-      name === "word/document.xml" ||
-      name.startsWith("word/header") ||
-      name.startsWith("word/footer"),
-  );
-  let combinedXml = "";
-  for (const part of xmlParts) {
-    const file = zip.file(part);
-    if (!file) continue;
-    combinedXml += file.asText();
-  }
-  return docxXmlToPlainText(combinedXml);
 }
 
 function buildDescription(lines: string[], title: string): string {

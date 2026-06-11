@@ -8,6 +8,7 @@ export const LICENSE_FEATURES = [
   "workflows",
   "templates",
   "eds_signing",
+  "office",
   "archive",
   "references",
   "nomenclature",
@@ -20,6 +21,8 @@ export const LICENSE_FEATURES = [
   "substitutions",
   "correspondence",
   "integrations",
+  "reports",
+  "monitoring",
 ] as const;
 export type LicenseFeature = (typeof LICENSE_FEATURES)[number];
 

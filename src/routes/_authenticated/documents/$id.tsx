@@ -6,7 +6,7 @@ import { useDocumentData } from "@/components/document-detail/hooks/useDocumentD
 import { useRealtimeUpdates } from "@/components/document-detail/hooks/useRealtimeUpdates";
 import { getMyProfile } from "@/lib/api/admin.functions";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Компоненты разметки и UI
 import { PageBody, PageHeader } from "@/components/AppShell";
@@ -58,10 +58,11 @@ import {
   priorityLabel,
   registrationJournalLabel,
 } from "@/lib/documents/reference-display";
+import { resolvePreviewFileVersion } from "@/lib/documents/file-version";
 import { findMyPendingTask } from "@/lib/workflow/task-match";
+import { hasStoredWorkflowRoute } from "@/lib/workflow/start-route.server";
 import type {
   DocumentComment,
-  DocumentVersion,
   WorkflowRun,
 } from "@/components/document-detail/types";
 import { SubstitutionActingBanner } from "@/components/substitution/SubstitutionActingBanner";
@@ -120,6 +121,14 @@ function DocumentDetail() {
   const [chosenWf, setChosenWf] = useState("");
   const [editOpen, setEditOpen] = useState(false);
 
+  const docForRoute = (data as { document?: { workflow_id?: string | null } } | undefined)?.document;
+
+  useEffect(() => {
+    if (wfDialog && docForRoute?.workflow_id && !chosenWf) {
+      setChosenWf(docForRoute.workflow_id);
+    }
+  }, [wfDialog, docForRoute?.workflow_id, chosenWf]);
+
   if (isLoading) {
     return <PageBody>{t("common.loading")}</PageBody>;
   }
@@ -142,10 +151,9 @@ function DocumentDetail() {
   const doc = data.document;
   const contentRestricted = !!(data as { content_restricted?: boolean }).content_restricted;
 
-  const currentVersion =
-    data.versions.find((v: DocumentVersion) => v.version_no === doc.current_version) ??
-    data.versions[0] ??
-    null;
+  const previewFileVersion = resolvePreviewFileVersion(data.versions, doc.current_version);
+  const savedWorkflowRoute = hasStoredWorkflowRoute(doc.workflow_id, doc.custom_route);
+  const canStartWorkflow = Boolean(chosenWf || savedWorkflowRoute);
 
   const hasActiveRun = (data?.runs ?? []).some((r: WorkflowRun) => r.status === "running");
   const perms = me?.permissions ?? {};
@@ -194,6 +202,7 @@ function DocumentDetail() {
   ).document_projects;
 
   const handleStartWorkflow = () => {
+    if (!canStartWorkflow) return;
     startWorkflow(chosenWf || undefined, {
       onSuccess: () => {
         setWfDialog(false);
@@ -258,7 +267,10 @@ function DocumentDetail() {
                     </SelectContent>
                   </Select>
                   <DialogFooter>
-                    <Button onClick={handleStartWorkflow} disabled={isStartingWorkflow}>
+                    <Button
+                      onClick={handleStartWorkflow}
+                      disabled={isStartingWorkflow || !canStartWorkflow}
+                    >
                       {t("common.submit")}
                     </Button>
                   </DialogFooter>
@@ -322,7 +334,7 @@ function DocumentDetail() {
               <ContentTab
                 body={doc.body}
                 fieldValues={data.documentFields}
-                currentVersion={currentVersion}
+                fileVersion={previewFileVersion}
                 summary={doc.summary}
                 isEditable={canEditMetadata}
                 onSave={saveContent}

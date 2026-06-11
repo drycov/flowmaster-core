@@ -56,6 +56,7 @@ function roleTitle(code: string | null, locale: string, lookup: AssigneeLookup):
 
 const ASSIGNEE_MODE_KEYS: Record<string, string> = {
   user: "wf.assignee.user",
+  initiator: "wf.assignee.initiator",
   position: "wf.assignee.position",
   department: "wf.assignee.department",
   department_head: "wf.assignee.deptHead",
@@ -102,6 +103,7 @@ export function resolveAssigneeLabel(options: {
       const title = roleTitle(ref, locale, lookup);
       return title ? `${modeLabel}: ${title}` : modeLabel;
     }
+    case "initiator":
     case "initiator_manager":
       return modeLabel;
     default:

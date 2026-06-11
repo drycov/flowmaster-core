@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireModuleAccess } from "@/lib/access/enforcement.server";
 import { runHealthChecks } from "@/lib/health/server";
-import { requireSystemSettingsAccess } from "./_helpers";
 import { loadSystemInitStatus, type SystemInitStatus } from "@/lib/system/init-status.server";
 
 export type SystemMonitoringStatus = {
@@ -18,7 +18,7 @@ export type SystemMonitoringStatus = {
 export const getSystemMonitoringStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireSystemSettingsAccess(context.supabase, context.userId);
+    await requireModuleAccess(context.supabase, context.userId, "monitoring", { action: "read" });
 
     const [{ ok, checks }, init] = await Promise.all([
       runHealthChecks(),

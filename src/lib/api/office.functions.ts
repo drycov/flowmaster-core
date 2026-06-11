@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAppOrigin, resolveOfficeUrl } from "@/lib/app-origin.server";
 import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
@@ -34,7 +35,7 @@ import {
 export type { OfficeFileInitMode, OfficeInitOptions } from "@/lib/office/document-file-init.server";
 export type { OnlyOfficeEditorConfig } from "@/lib/office/config.types";
 
-export type OfficeUnavailableReason = "office_not_configured" | "no_file_version";
+export type OfficeUnavailableReason = "office_not_licensed" | "office_not_configured" | "no_file_version";
 
 export type OfficeEditorConfigResponse =
   | {
@@ -53,7 +54,24 @@ export type OfficeEditorConfigResponse =
 export function isOfficeNotConfigured(
   config: OfficeEditorConfigResponse | undefined,
 ): boolean {
-  return Boolean(config && !config.available && config.reason === "office_not_configured");
+  return Boolean(
+    config &&
+      !config.available &&
+      (config.reason === "office_not_configured" || config.reason === "office_not_licensed"),
+  );
+}
+
+async function ensureOfficeModuleAccess(
+  supabase: SupabaseClient,
+  userId: string,
+  write: boolean,
+): Promise<OfficeUnavailableReason | null> {
+  try {
+    await requireModuleAccess(supabase, userId, "office", { action: write ? "write" : "read" });
+    return null;
+  } catch {
+    return "office_not_licensed";
+  }
 }
 
 function officeFileTypes(format: string) {
@@ -156,7 +174,6 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
     await assertCanViewDocumentContent(supabase, userId, data.document_id);
-    const officeUrl = await resolveOfficeUrl();
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
@@ -165,6 +182,17 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
       .single();
     if (docErr || !doc) throw new Error("Документ не найден");
 
+    const readOnly = !["draft", "returned_for_revision"].includes(doc.status);
+    const licenseBlock = await ensureOfficeModuleAccess(supabase, userId, !readOnly);
+    if (licenseBlock) {
+      return {
+        available: false as const,
+        office_url: null,
+        reason: licenseBlock,
+      };
+    }
+
+    const officeUrl = await resolveOfficeUrl();
     if (!officeUrl) {
       return {
         available: false as const,
@@ -208,7 +236,6 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
       };
     }
 
-    const readOnly = !["draft", "returned_for_revision"].includes(doc.status);
     const key = officeDocumentKey(doc.id, fileVersion.version_no, doc.updated_at);
 
     return buildEditorPayload({
@@ -230,7 +257,6 @@ export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<OfficeEditorConfigResponse> => {
     await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
     const { supabase, userId } = context;
-    const officeUrl = await resolveOfficeUrl();
 
     const { data: tpl, error } = await supabase
       .from("document_templates")
@@ -239,6 +265,17 @@ export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
       .single();
     if (error || !tpl) throw new Error("Шаблон не найден");
 
+    const readOnly = tpl.status !== "draft";
+    const licenseBlock = await ensureOfficeModuleAccess(supabase, userId, !readOnly);
+    if (licenseBlock) {
+      return {
+        available: false as const,
+        office_url: null,
+        reason: licenseBlock,
+      };
+    }
+
+    const officeUrl = await resolveOfficeUrl();
     if (!officeUrl) {
       return {
         available: false as const,
@@ -255,7 +292,6 @@ export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
       };
     }
 
-    const readOnly = tpl.status !== "draft";
     const key = officeTemplateKey(tpl.id, tpl.updated_at, tpl.file_path);
 
     return buildEditorPayload({
@@ -290,6 +326,16 @@ export const getTemplateOfficePreviewConfig = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<OfficeEditorConfigResponse> => {
     await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
     const { supabase, userId } = context;
+
+    const licenseBlock = await ensureOfficeModuleAccess(supabase, userId, false);
+    if (licenseBlock) {
+      return {
+        available: false as const,
+        office_url: null,
+        reason: licenseBlock,
+      };
+    }
+
     const officeUrl = await resolveOfficeUrl();
 
     const { data: tpl, error } = await supabase
@@ -357,6 +403,8 @@ export const initializeDocumentOfficeFileFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
+    const licenseBlock = await ensureOfficeModuleAccess(context.supabase, context.userId, true);
+    if (licenseBlock) throw new Error("Модуль ONLYOFFICE недоступен в текущем тарифном плане");
     await assertCanViewDocumentContent(context.supabase, context.userId, data.document_id);
     return initializeDocumentOfficeFile({
       supabase: context.supabase,

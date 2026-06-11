@@ -17,6 +17,7 @@ import { buildPublicTenantAuthContext } from "@/lib/access/tenant-public.server"
 import type { PublicAuthConfig } from "@/components/auth/types";
 import { loadSystemInitStatus, type SystemInitStatus } from "@/lib/system/init-status.server";
 import { requireSystemSettingsAccess } from "./_helpers";
+import { requireLicenseFeatureAccess } from "@/lib/license/enforcement";
 
 export type { SystemInitStatus };
 
@@ -125,6 +126,10 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
     if (loadErr) throw new Error(loadErr.message);
     if (!org?.id) throw new Error("Организация не найдена");
 
+    if (data.integrations.office_enabled) {
+      await requireLicenseFeatureAccess(context.supabase, "office", false);
+    }
+
     const current = parseSystemSettings(org.settings);
     const domains = normalizeEmailDomains(data.auth.allowed_email_domains);
     if (data.auth.allowed_email_domains.length > 0 && domains.length === 0) {
@@ -142,6 +147,7 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
       integrations: {
         ...current.integrations,
         ...data.integrations,
+        office_enabled: data.integrations.office_enabled,
         s3_secret_access_key: mergeSecretField(
           data.integrations.s3_secret_access_key,
           current.integrations.s3_secret_access_key,

@@ -22,6 +22,7 @@ function allFeatures() {
     workflows: true,
     templates: true,
     eds_signing: true,
+    office: true,
     archive: true,
     references: true,
     nomenclature: true,
@@ -34,6 +35,8 @@ function allFeatures() {
     substitutions: true,
     correspondence: true,
     integrations: true,
+    reports: true,
+    monitoring: true,
   };
 }
 
@@ -47,6 +50,9 @@ const CORE_FEATURES = {
   correspondence: true,
   substitutions: true,
   counterparties: true,
+  office: false,
+  reports: false,
+  monitoring: false,
 };
 
 const PROFESSIONAL_FEATURES = {
@@ -56,6 +62,8 @@ const PROFESSIONAL_FEATURES = {
   projects: true,
   contracts: true,
   hr: true,
+  office: true,
+  reports: true,
 };
 
 const PLAN_PRESETS = {
@@ -70,6 +78,9 @@ const PLAN_PRESETS = {
       contracts: false,
       hr: false,
       integrations: false,
+      office: false,
+      reports: false,
+      monitoring: false,
     },
   },
   professional: { max_users: 100, features: PROFESSIONAL_FEATURES },

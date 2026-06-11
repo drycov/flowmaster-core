@@ -50,6 +50,16 @@ export function useRealtimeUpdates(documentId: string, onUpdate: () => void) {
         },
         () => onUpdate(),
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "document_versions",
+          filter: `document_id=eq.${documentId}`,
+        },
+        () => onUpdate(),
+      )
       .subscribe();
 
     return () => {

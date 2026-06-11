@@ -6,6 +6,7 @@ import {
   templateMimeType,
   type TemplateFileFormat,
 } from "@/lib/templates/file-formats";
+import { extractDocxPlainText } from "@/lib/office/docx-text.server";
 import {
   officeDocumentKey,
   parseOfficeDocumentKey,
@@ -54,6 +55,7 @@ async function processDocumentOfficeSave(docId: string, downloadUrl: string) {
   if (uploadErr) throw new Error(uploadErr.message);
 
   const contentHash = createHash("sha256").update(buffer).digest("hex");
+  const bodySnapshot = extractDocxPlainText(buffer);
 
   await supabaseAdmin.from("document_versions").insert({
     document_id: docId,
@@ -62,12 +64,16 @@ async function processDocumentOfficeSave(docId: string, downloadUrl: string) {
     file_format: "docx",
     comment: "ONLYOFFICE",
     content_hash: contentHash,
+    body_snapshot: bodySnapshot || null,
     created_by: doc?.created_by,
   } as never);
 
   await supabaseAdmin
     .from("documents")
-    .update({ current_version: nextVersion } as never)
+    .update({
+      current_version: nextVersion,
+      updated_at: new Date().toISOString(),
+    } as never)
     .eq("id", docId);
 
   return { ok: true, saved: true, version_no: nextVersion, entity: "document" as const };

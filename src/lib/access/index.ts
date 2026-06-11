@@ -25,6 +25,13 @@ export {
   MODULE_REGISTRY,
 } from "./modules/registry";
 
+export {
+  assertRegistryLicenseFeatures,
+  licenseFeatureForModule,
+  moduleIdsForLicenseFeature,
+  licensedModuleCatalog,
+} from "./modules/catalog";
+
 export { evaluateModuleAccess, canAccessModule, canAccessModuleFeature } from "./evaluate";
 
 export {

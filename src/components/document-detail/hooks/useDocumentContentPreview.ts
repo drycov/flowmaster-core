@@ -6,22 +6,27 @@ import type { DocumentVersion } from "../types";
 export function useDocumentContentPreview(options: {
   body?: string | null;
   fieldValues?: Record<string, string>;
-  currentVersion?: DocumentVersion | null;
+  fileVersion?: DocumentVersion | null;
 }) {
-  const { body, fieldValues = {}, currentVersion } = options;
+  const { body, fieldValues = {}, fileVersion } = options;
   const bodyText = useMemo(() => resolveBodyTemplate(body), [body]);
 
+  const reloadToken = fileVersion
+    ? `${fileVersion.version_no}:${fileVersion.content_hash ?? ""}:${fileVersion.file_path ?? ""}`
+    : 0;
+
   return useFilePreview({
-    filePath: currentVersion?.file_path ?? null,
-    fileFormat: currentVersion?.file_format ?? null,
+    filePath: fileVersion?.file_path ?? null,
+    fileFormat: fileVersion?.file_format ?? null,
     body: bodyText,
     bucket: "documents",
     substitutePlaceholders: false,
     values: fieldValues,
     htmlBody:
-      !currentVersion?.file_path && bodyText
+      !fileVersion?.file_path && bodyText
         ? { kind: "filled", body: bodyText, values: fieldValues }
         : null,
     debounceMs: 0,
+    reloadToken,
   });
 }

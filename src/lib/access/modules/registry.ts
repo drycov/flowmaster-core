@@ -57,7 +57,8 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
 
   reports: {
     id: "reports",
-    tier: "core",
+    tier: "licensed",
+    licenseFeature: "reports",
     permissions: {
       read: [P.view_all_documents],
       manage: [P.view_all_documents],
@@ -130,6 +131,27 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
     permissions: {
       write: [P.sign_documents],
     },
+  },
+
+  office: {
+    id: "office",
+    tier: "licensed",
+    licenseFeature: "office",
+    permissions: {
+      read: [],
+      write: [P.create_documents, P.manage_documents, P.manage_templates],
+    },
+    requireWritableForWrite: true,
+  },
+
+  monitoring: {
+    id: "monitoring",
+    tier: "licensed",
+    licenseFeature: "monitoring",
+    permissions: {
+      read: [P.manage_system_settings],
+    },
+    routes: { paths: ["/admin/monitoring"], action: "read" },
   },
 
   archive: {

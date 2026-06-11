@@ -1,4 +1,4 @@
-import type { WorkflowNode, WorkflowEdge, FlowNode, FlowEdge, NodeType } from "../types";
+import type { WorkflowNode, WorkflowEdge, FlowNode, FlowEdge, NodeType, AssigneeType } from "../types";
 
 import { NODE_STYLE_BY_TYPE, DEFAULT_NODE_STYLE, DEFAULT_EDGE_STYLE } from "../constants";
 
@@ -11,7 +11,19 @@ import type { CSSProperties } from "react";
 const resolveNodeLabel = (type: NodeType, stored?: string | null, t?: TFunction) =>
   stored?.trim() || (t ? workflowNodeLabel(t, type) : type);
 
-export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
+export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => {
+  const nested = (n as { data?: Record<string, unknown> }).data;
+  const assigneeId =
+    n.assignee_id ?? n.assignee_ref ?? (nested?.assignee_id as string | null | undefined) ?? null;
+  const assigneeType = (
+    n.assignee_type ??
+    n.assignee_mode ??
+    (nested?.assignee_type as string | undefined) ??
+    (nested?.assignee_mode as string | undefined) ??
+    "user"
+  ) as AssigneeType;
+
+  return {
   id: n.id,
 
   type: "workflowNode",
@@ -25,9 +37,9 @@ export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
 
     description: n.description,
 
-    assignee_id: n.assignee_id,
+    assignee_id: assigneeId,
 
-    assignee_type: n.assignee_type || "user",
+    assignee_type: assigneeType,
 
     sla_hours: n.sla_hours ?? null,
 
@@ -43,7 +55,8 @@ export const toFlowNode = (n: WorkflowNode, t?: TFunction): FlowNode => ({
 
     ...(NODE_STYLE_BY_TYPE[n.type as NodeType] || {}),
   } as CSSProperties,
-});
+};
+};
 
 export const toFlowEdge = (e: WorkflowEdge): FlowEdge => ({
   id: e.id,
