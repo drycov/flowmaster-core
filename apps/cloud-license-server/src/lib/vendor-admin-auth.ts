@@ -1,44 +1,64 @@
 import type { Context } from "hono";
-import { getPortalUserFromRequest, type PortalUser } from "./portal-auth.js";
+import { getPortalUserFromRequest } from "./portal-auth.js";
+import { isVendorStepUpVerifyRequiredAsync } from "./vendor-admin-config.js";
 import {
-  getVendorAdminAllowlist,
   isVendorAdminUiConfigured,
-  isVendorStepUpVerifyRequired,
-} from "./vendor-admin-config.js";
+  resolveVendorAdminIdentity,
+  type VendorAdminIdentity,
+} from "./vendor-staff.server.js";
 import { hasValidVerifyCookie } from "./vendor-admin-verify.js";
+import { getSupabase } from "./supabase.js";
 
-export { getVendorAdminAllowlist, isVendorAdminUiConfigured } from "./vendor-admin-config.js";
+export {
+  canManageVendorStaff,
+  type VendorAdminIdentity,
+  type VendorStaffPublic,
+} from "./vendor-staff.server.js";
 
 export async function getVendorAdminIdentity(
   authorization: string | undefined,
-): Promise<PortalUser | null> {
-  const user = await getPortalUserFromRequest(authorization);
-  if (!user) return null;
-  const allowlist = getVendorAdminAllowlist();
-  if (!allowlist.has(user.email.toLowerCase())) return null;
-  return user;
+): Promise<VendorAdminIdentity | null> {
+  return resolveVendorAdminIdentity(
+    getSupabase(),
+    authorization,
+    getPortalUserFromRequest,
+  );
 }
 
 export async function isVendorAdminFullyAuthenticated(c: Context): Promise<boolean> {
-  const user = await getVendorAdminIdentity(c.req.header("Authorization"));
-  if (!user) return false;
-  if (!isVendorStepUpVerifyRequired()) return true;
-  return hasValidVerifyCookie(c, user.id);
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!identity) return false;
+  if (!(await isVendorStepUpVerifyRequiredAsync(getSupabase()))) return true;
+  return hasValidVerifyCookie(c, identity.id);
 }
 
 export async function requireVendorAdminSession(c: Context): Promise<Response | null> {
-  if (!isVendorAdminUiConfigured()) {
+  const supabase = getSupabase();
+  if (!(await isVendorAdminUiConfigured(supabase))) {
     return c.json(
-      { error: "Admin UI не настроен (LICENSE_SERVER_VENDOR_ADMIN_EMAILS)" },
+      {
+        error:
+          "Admin UI не настроен (vendor_staff пуст — задайте LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS и VENDOR_TELEGRAM_BOT_TOKEN)",
+      },
       503,
     );
   }
-  const user = await getVendorAdminIdentity(c.req.header("Authorization"));
-  if (!user) {
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!identity) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  if (isVendorStepUpVerifyRequired() && !hasValidVerifyCookie(c, user.id)) {
+  if ((await isVendorStepUpVerifyRequiredAsync(supabase)) && !hasValidVerifyCookie(c, identity.id)) {
     return c.json({ error: "Требуется подтверждение (Telegram или webhook)" }, 403);
+  }
+  return null;
+}
+
+export async function requireVendorStaffManager(c: Context): Promise<Response | null> {
+  const denied = await requireVendorAdminSession(c);
+  if (denied) return denied;
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!identity || (identity.staff.role !== "owner" && identity.staff.role !== "admin")) {
+    return c.json({ error: "Forbidden" }, 403);
   }
   return null;
 }

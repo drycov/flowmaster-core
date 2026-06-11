@@ -13,7 +13,8 @@
     "build": "npm run build:web && npm run typecheck",
     "typecheck": "tsc --noEmit",
     "start": "tsx src/dev.ts",
-    "support-code": "node scripts/support-code.mjs"
+    "support-code": "node scripts/support-code.mjs",
+    "vendor-staff:bootstrap": "node scripts/vendor-staff-bootstrap.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",

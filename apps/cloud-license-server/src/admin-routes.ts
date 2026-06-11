@@ -11,9 +11,17 @@ import {
 import {
   getVendorAdminIdentity,
   isVendorAdminFullyAuthenticated,
-  isVendorAdminUiConfigured,
   requireVendorAdminSession,
+  requireVendorStaffManager,
 } from "./lib/vendor-admin-auth.js";
+import {
+  createVendorStaffUser,
+  isVendorAdminUiConfigured,
+  listVendorStaff,
+  updateVendorStaff,
+  type VendorStaffRole,
+} from "./lib/vendor-staff.server.js";
+import { bootstrapOwnerFromTelegramEnv } from "./lib/vendor-staff-bootstrap.server.js";
 import {
   clearVerifySessionCookie,
   getVerifyMethods,
@@ -23,6 +31,7 @@ import {
   confirmVerifyChallenge,
 } from "./lib/vendor-admin-verify.js";
 import { getVendorApprovalSecret } from "./lib/vendor-admin-config.js";
+import { requireAdmin } from "./lib/auth.js";
 import { generateLicenseKey, hashLicenseKey } from "./lib/keys.js";
 import { PLAN_PRESETS } from "./lib/plans.js";
 import {
@@ -41,8 +50,9 @@ const listQuerySchema = z.object({
 export const adminRoutes = new Hono();
 
 adminRoutes.get("/session", async (c) => {
-  const configured = isVendorAdminUiConfigured();
-  const verify = getVerifyMethods();
+  const supabase = getSupabase();
+  const configured = await isVendorAdminUiConfigured(supabase);
+  const verify = await getVerifyMethods(supabase);
   const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
 
   if (!configured || !identity) {
@@ -59,7 +69,11 @@ adminRoutes.get("/session", async (c) => {
   return c.json({
     configured: true,
     authenticated,
-    identity: { email: identity.email },
+    identity: {
+      email: identity.email,
+      full_name: identity.staff.full_name,
+      role: identity.staff.role,
+    },
     step: authenticated ? "ready" : "verify",
     verify,
   });
@@ -71,13 +85,14 @@ adminRoutes.post("/logout", (c) => {
 });
 
 adminRoutes.post("/verify/start", async (c) => {
-  if (!isVendorAdminUiConfigured()) {
+  const supabase = getSupabase();
+  if (!(await isVendorAdminUiConfigured(supabase))) {
     return c.json({ error: "Admin UI не настроен" }, 503);
   }
   const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
   if (!identity) return c.json({ error: "Unauthorized" }, 401);
 
-  const verify = getVerifyMethods();
+  const verify = await getVerifyMethods(supabase);
   if (!verify.required) {
     setVerifySessionCookie(c, identity.id);
     return c.json({ ok: true, skipped: true, verify });
@@ -127,6 +142,101 @@ adminRoutes.post(
     return c.json({ ok: true, user_id: result.user_id });
   },
 );
+
+
+const staffRoleSchema = z.enum(["owner", "admin", "staff"]);
+
+const createStaffSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  full_name: z.string().min(1).max(200).optional(),
+  role: staffRoleSchema.optional(),
+  telegram_chat_id: z.string().max(32).optional(),
+});
+
+const updateStaffSchema = z.object({
+  full_name: z.string().min(1).max(200).optional(),
+  role: staffRoleSchema.optional(),
+  telegram_chat_id: z.string().max(32).optional(),
+  status: z.enum(["active", "disabled"]).optional(),
+});
+
+adminRoutes.post("/staff/bootstrap", async (c) => {
+  if (!requireAdmin(c)) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const result = await bootstrapOwnerFromTelegramEnv(getSupabase());
+    if (!result) {
+      return c.json({
+        ok: true,
+        skipped: true,
+        reason: "vendor_staff уже заполнен или LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS пуст",
+      });
+    }
+    return c.json({
+      ok: true,
+      staff: result.staff,
+      password_sent: result.password_sent,
+    });
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+});
+
+adminRoutes.get("/staff", async (c) => {
+  const denied = await requireVendorAdminSession(c);
+  if (denied) return denied;
+  try {
+    const items = await listVendorStaff(getSupabase());
+    return c.json({ items, total: items.length });
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+adminRoutes.post("/staff", zValidator("json", createStaffSchema), async (c) => {
+  const denied = await requireVendorStaffManager(c);
+  if (denied) return denied;
+  const actor = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!actor) return c.json({ error: "Unauthorized" }, 401);
+
+  try {
+    const body = c.req.valid("json");
+    if (body.role === "owner" && actor.staff.role !== "owner") {
+      return c.json({ error: "Только owner может назначать owner" }, 403);
+    }
+    const staff = await createVendorStaffUser(getSupabase(), actor.staff.id, {
+      ...body,
+      role: (body.role ?? "staff") as VendorStaffRole,
+    });
+    return c.json({ ok: true, staff });
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+});
+
+adminRoutes.patch("/staff/:id", zValidator("json", updateStaffSchema), async (c) => {
+  const denied = await requireVendorStaffManager(c);
+  if (denied) return denied;
+  const actor = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!actor) return c.json({ error: "Unauthorized" }, 401);
+
+  const staffId = c.req.param("id");
+  const body = c.req.valid("json");
+
+  if (body.role === "owner" && actor.staff.role !== "owner") {
+    return c.json({ error: "Только owner может назначать owner" }, 403);
+  }
+  if (staffId === actor.staff.id && body.status === "disabled") {
+    return c.json({ error: "Нельзя отключить собственный аккаунт" }, 400);
+  }
+
+  try {
+    const staff = await updateVendorStaff(getSupabase(), staffId, body);
+    return c.json({ ok: true, staff });
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+});
 
 adminRoutes.get("/overview", async (c) => {
   const denied = await requireVendorAdminSession(c);

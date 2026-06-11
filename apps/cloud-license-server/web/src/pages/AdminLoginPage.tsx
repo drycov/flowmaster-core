@@ -73,8 +73,10 @@ export function AdminLoginPage() {
 
         {!loading && session && !session.configured ? (
           <div className="card border-amber-500/30 p-5 text-sm text-amber-200">
-            На сервере не задан{" "}
-            <code className="text-amber-100">LICENSE_SERVER_VENDOR_ADMIN_EMAILS</code>.
+            Admin UI не настроен: таблица <code className="text-amber-100">vendor_staff</code> пуста.
+            Задайте <code className="text-amber-100">LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS</code> и{" "}
+            <code className="text-amber-100">VENDOR_TELEGRAM_BOT_TOKEN</code> — owner создастся автоматически,
+            пароль придёт в Telegram. Или: <code className="text-amber-100">npm run vendor-staff:bootstrap</code>.
           </div>
         ) : (
           <form onSubmit={onSubmit} className="card space-y-4 p-6">

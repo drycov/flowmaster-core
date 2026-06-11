@@ -58,7 +58,7 @@ npm run dev:web
 | `SUPABASE_ANON_KEY` | API (проверка JWT кабинета) |
 | `LICENSE_SERVER_ADMIN_SECRET` | Machine API (Bearer, CI/скрипты) |
 | `LICENSE_SERVER_VENDOR_ADMIN_EMAILS` | Cloud Admin — allowlist email |
-| `VENDOR_TELEGRAM_BOT_TOKEN`, `LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS` | Step-up verify — **отдельный бот вендора** |
+| `VENDOR_TELEGRAM_BOT_TOKEN`, `LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS` | **Отдельный бот вендора**: привязка `email:telegram_chat_id`, bootstrap owner, step-up verify |
 | `LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_WEBHOOK_URL` | Step-up verify через webhook |
 | `VITE_SUPABASE_URL` | Landing / кабинет (или дублируйте `SUPABASE_URL`) |
 | `VITE_SUPABASE_ANON_KEY` | Landing / кабинет (или дублируйте `SUPABASE_ANON_KEY`) |
@@ -88,16 +88,26 @@ npm run dev:web
 
 ### Настройка Cloud Admin
 
-**Шаг 1 — учётные записи вендора**
+**Шаг 1 — таблица `vendor_staff` (миграция `005_vendor_staff.sql`)**
 
-1. Supabase **Authentication → Users** — создайте email + пароль для сотрудников.
-2. Env allowlist:
+Первый owner создаётся автоматически из `LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS` (первый `email:chat_id`), пароль приходит в **Telegram DM** от vendor-бота. Срабатывает при первом запросе к API или вручную:
 
-```env
-LICENSE_SERVER_VENDOR_ADMIN_EMAILS=admin@vendor.kz,ops@vendor.kz
+```bash
+cd apps/cloud-license-server
+# API должен быть доступен (local: npm run dev или Vercel)
+npm run vendor-staff:bootstrap
 ```
 
-**Шаг 2 — второй фактор (хотя бы один в production)**
+Пример env:
+
+```env
+LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS=d.rykov@zeus.kz:8328036041
+VENDOR_TELEGRAM_BOT_TOKEN=...
+```
+
+Альтернатива (legacy): `LICENSE_SERVER_VENDOR_ADMIN_EMAILS` — при первом входе email автоматически попадёт в `vendor_staff` без заранее созданного пароля (первый = owner).
+
+**Шаг 2 — второй фактор (Telegram / webhook)**
 
 **Telegram — отдельный бот вендора** (не путать с ботом EDMS у клиента; создайте через @BotFather):
 
@@ -128,11 +138,9 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 
 **Шаг 3 — миграции**
 
-SQL Editor: `004_vendor_admin_verify.sql` (в дополнение к `001`–`003`).
+SQL Editor: `001` … `005_vendor_staff.sql`.
 
-**Поток входа:** `/admin` (email + пароль) → `/admin/verify` (Telegram или webhook) → `/admin/app`.
-
-Если Telegram и webhook **не** настроены — после пароля доступ сразу (удобно для dev).
+**Поток входа:** `/admin` → `/admin/verify` → `/admin/app`. Новых сотрудников добавляют owner/admin в разделе **Сотрудники** (создаётся Supabase Auth user + строка в `vendor_staff`).
 
 **На Vercel (production):**
 
@@ -150,7 +158,7 @@ SQL Editor: `004_vendor_admin_verify.sql` (в дополнение к `001`–`0
 - **Установки** — provision, телеметрия, отзыв
 - **Активации** — phone-home от EDMS
 - **Ключи FM1** — legacy
-- **Инструменты** — pre-register FM1, machine API
+- **Сотрудники** — vendor_staff: создание, роли owner/admin/staff, Telegram chat_id
 
 Для CI/скриптов Bearer API (`/api/v1/license/provision`, …) — `LICENSE_SERVER_ADMIN_SECRET`, не для браузера.
 

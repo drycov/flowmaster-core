@@ -7,6 +7,7 @@ import { AdminClientsPage } from "./admin/AdminClientsPage";
 import { AdminDashboardPage } from "./admin/AdminDashboardPage";
 import { AdminInstallationsPage } from "./admin/AdminInstallationsPage";
 import { AdminKeysPage } from "./admin/AdminKeysPage";
+import { AdminStaffPage } from "./admin/AdminStaffPage";
 import { AdminToolsPage } from "./admin/AdminToolsPage";
 
 export function AdminApp() {
@@ -33,6 +34,7 @@ export function AdminApp() {
         <Route element={<AdminShell />}>
           <Route index element={<AdminDashboardPage />} />
           <Route path="clients" element={<AdminClientsPage />} />
+          <Route path="staff" element={<AdminStaffPage />} />
           <Route path="installations" element={<AdminInstallationsPage />} />
           <Route path="activations" element={<AdminActivationsPage />} />
           <Route path="keys" element={<AdminKeysPage />} />

@@ -24,12 +24,25 @@ export type AdminVerifyMethods = {
   webhook: boolean;
 };
 
+export type VendorStaffRole = "owner" | "admin" | "staff";
+
 export type AdminSession = {
   configured: boolean;
   authenticated: boolean;
-  identity: { email: string } | null;
+  identity: { email: string; full_name?: string; role?: VendorStaffRole } | null;
   step: "none" | "password" | "verify" | "ready";
   verify: AdminVerifyMethods;
+};
+
+export type VendorStaffRow = {
+  id: string;
+  email: string;
+  full_name: string;
+  role: VendorStaffRole;
+  telegram_chat_id: string;
+  status: "active" | "disabled";
+  last_login_at: string | null;
+  created_at: string;
 };
 
 export type VerifyStartResponse = {
@@ -88,6 +101,38 @@ export function pollAdminVerify(token: string) {
 
 export function adminLogout() {
   return adminFetch<{ ok: true }>("/logout", { method: "POST" });
+}
+
+export function fetchVendorStaff() {
+  return adminFetch<{ items: VendorStaffRow[]; total: number }>("/staff");
+}
+
+export function createVendorStaff(body: {
+  email: string;
+  password: string;
+  full_name?: string;
+  role?: VendorStaffRole;
+  telegram_chat_id?: string;
+}) {
+  return adminFetch<{ ok: true; staff: VendorStaffRow }>("/staff", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function updateVendorStaff(
+  id: string,
+  body: {
+    full_name?: string;
+    role?: VendorStaffRole;
+    telegram_chat_id?: string;
+    status?: "active" | "disabled";
+  },
+) {
+  return adminFetch<{ ok: true; staff: VendorStaffRow }>(`/staff/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
 }
 
 export function fetchAdminOverview() {

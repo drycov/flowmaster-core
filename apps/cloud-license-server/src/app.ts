@@ -21,6 +21,7 @@ import { getAppVersion, getSupabase } from "./lib/supabase.js";
 import { LICENSE_PLANS } from "./lib/types.js";
 import { adminRoutes } from "./admin-routes.js";
 import { handleTelegramWebhook } from "./lib/telegram-webhook.js";
+import { ensureVendorOwnerBootstrapped } from "./lib/vendor-staff-bootstrap.server.js";
 
 const installationIdSchema = z.string().uuid();
 const connectSchema = z.object({
@@ -99,6 +100,15 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use("/api/*", async (_c, next) => {
+  try {
+    await ensureVendorOwnerBootstrapped();
+  } catch (err) {
+    console.error("[vendor-staff] bootstrap:", err instanceof Error ? err.message : err);
+  }
+  await next();
+});
 
 app.route("/api/v1/admin", adminRoutes);
 

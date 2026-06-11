@@ -5,14 +5,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getTelegramBotToken,
   getTelegramBotUsername,
-  getVendorAdminAllowlist,
   getVendorApprovalSecret,
   getVendorApprovalWebhookUrl,
-  getVendorTelegramChatByEmail,
-  isTelegramVerifyEnabled,
-  isVendorStepUpVerifyRequired,
+  isTelegramVerifyEnabledAsync,
+  isVendorStepUpVerifyRequiredAsync,
   isWebhookVerifyEnabled,
 } from "./vendor-admin-config.js";
+import { getTelegramChatIdForStaff } from "./vendor-staff.server.js";
 import type { PortalUser } from "./portal-auth.js";
 
 export const VENDOR_VERIFY_COOKIE = "fm_vendor_admin_verified";
@@ -80,11 +79,6 @@ export function hasValidVerifyCookie(c: Context, userId: string): boolean {
   return fromCookie === userId;
 }
 
-export function assertVendorIdentity(user: PortalUser | null): user is PortalUser {
-  if (!user) return false;
-  return getVendorAdminAllowlist().has(user.email.toLowerCase());
-}
-
 function generateChallengeToken(): string {
   return randomBytes(16).toString("hex");
 }
@@ -118,8 +112,9 @@ export async function startVerifyChallenge(
 
   const botUsername = getTelegramBotUsername();
   const startCommand = `vendor_admin_${token}`;
+  const telegramEnabled = await isTelegramVerifyEnabledAsync(supabase);
   const deepLink =
-    isTelegramVerifyEnabled() && botUsername
+    telegramEnabled && botUsername
       ? `https://t.me/${botUsername}?start=${startCommand}`
       : null;
 
@@ -152,7 +147,7 @@ export async function startVerifyChallenge(
     token,
     expires_at: expiresAt,
     telegram: {
-      enabled: isTelegramVerifyEnabled(),
+      enabled: telegramEnabled,
       bot_username: botUsername,
       deep_link: deepLink,
       start_command: startCommand,
@@ -197,8 +192,7 @@ export async function confirmVerifyChallenge(
   if (new Date(row.expires_at) < new Date()) return { ok: false, error: "Challenge expired" };
 
   if (via === "telegram") {
-    const chatMap = getVendorTelegramChatByEmail();
-    const expectedChat = chatMap.get(row.email.toLowerCase());
+    const expectedChat = await getTelegramChatIdForStaff(supabase, row.email);
     if (!expectedChat || !opts?.chatId || expectedChat !== opts.chatId) {
       return { ok: false, error: "Telegram not linked for this vendor account" };
     }
@@ -226,7 +220,7 @@ export async function handleTelegramVendorAdminStart(
   const result = await confirmVerifyChallenge(supabase, token, "telegram", { chatId });
   if (!result.ok) {
     if (result.error.includes("not linked")) {
-      return "❌ Telegram не привязан к этому vendor-аккаунту. Проверьте LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS.";
+      return "❌ Telegram не привязан к этому vendor-аккаунту. Укажите telegram_chat_id в карточке сотрудника.";
     }
     if (result.error.includes("expired")) {
       return "❌ Код истёк. Запросите новый на странице /admin.";
@@ -251,10 +245,10 @@ export async function fetchTelegramBotUsername(): Promise<string | null> {
   }
 }
 
-export function getVerifyMethods() {
+export async function getVerifyMethods(supabase: SupabaseClient) {
   return {
-    required: isVendorStepUpVerifyRequired(),
-    telegram: isTelegramVerifyEnabled(),
+    required: await isVendorStepUpVerifyRequiredAsync(supabase),
+    telegram: await isTelegramVerifyEnabledAsync(supabase),
     webhook: isWebhookVerifyEnabled(),
   };
 }

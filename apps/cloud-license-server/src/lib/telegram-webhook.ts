@@ -1,7 +1,8 @@
 import type { Context } from "hono";
 import { getSupabase } from "./supabase.js";
-import { getTelegramBotToken, getTelegramWebhookSecret } from "./vendor-admin-config.js";
+import { getTelegramWebhookSecret } from "./vendor-admin-config.js";
 import { handleTelegramVendorAdminStart } from "./vendor-admin-verify.js";
+import { sendVendorTelegramMessage } from "./vendor-telegram.server.js";
 
 type TelegramUpdate = {
   message?: {
@@ -42,20 +43,6 @@ export async function handleTelegramWebhook(c: Context): Promise<Response> {
       "Это не бот клиентского EDMS.";
   }
 
-  await sendTelegramMessage(String(chatId), reply);
+  await sendVendorTelegramMessage(String(chatId), reply);
   return c.json({ ok: true });
-}
-
-async function sendTelegramMessage(chatId: string, text: string): Promise<void> {
-  const token = getTelegramBotToken();
-  if (!token) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    });
-  } catch {
-    /* ignore */
-  }
 }

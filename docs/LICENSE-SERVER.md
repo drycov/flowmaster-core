@@ -14,7 +14,7 @@
 | Интерфейс | Деплой | URL | Вход |
 |-----------|--------|-----|------|
 | **Console** | Локальный license server (Docker self-hosted) | `/vendor/license` на `127.0.0.1:3847` | **Support code** (8 цифр, 15 мин) + SSH tunnel |
-| **Admin** | Облачный license server (Vercel) | `/admin` → `/admin/verify` → `/admin/app` | **Email + пароль** (Supabase) + **Telegram** или **webhook** |
+| **Admin** | Облачный license server (Vercel) | `/admin` → `/admin/verify` → `/admin/app` | **Email + пароль** (таблица `vendor_staff`) + **Telegram** или **webhook** |
 | **Кабинет** | Vercel | `/cabinet` | Email + пароль клиента (Supabase Auth) |
 
 Bearer API (`LICENSE_SERVER_ADMIN_SECRET`) — для automation, не для браузерного входа.

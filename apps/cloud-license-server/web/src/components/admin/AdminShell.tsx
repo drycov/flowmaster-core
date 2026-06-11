@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase";
 const NAV: { to: string; end?: boolean; label: string; icon: string }[] = [
   { to: "/admin/app", end: true, label: "Обзор", icon: "◫" },
   { to: "/admin/app/clients", label: "Клиенты", icon: "◎" },
+  { to: "/admin/app/staff", label: "Сотрудники", icon: "👤" },
   { to: "/admin/app/installations", label: "Установки", icon: "⬡" },
   { to: "/admin/app/activations", label: "Активации", icon: "↻" },
   { to: "/admin/app/keys", label: "Ключи FM1", icon: "🔑" },

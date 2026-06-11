@@ -1,4 +1,4 @@
-/** Comma-separated vendor staff emails allowed into Cloud Admin (/admin). */
+/** Comma-separated bootstrap emails (legacy). Auto-provision vendor_staff on first login. */
 export function getVendorAdminAllowlist(): Set<string> {
   const raw = process.env.LICENSE_SERVER_VENDOR_ADMIN_EMAILS?.trim();
   if (!raw) return new Set();
@@ -11,16 +11,25 @@ export function getVendorAdminAllowlist(): Set<string> {
 }
 
 export function isVendorAdminUiConfigured(): boolean {
-  return getVendorAdminAllowlist().size > 0;
+  return isVendorAdminUiConfiguredSync();
 }
 
+/**
+ * Привязка email сотрудника → Telegram chat id.
+ * Env: LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS=email@domain.tld:123456789[,email2@...:...]
+ * Используется для bootstrap owner, step-up verify и отправки пароля в DM.
+ */
 export function getVendorTelegramChatByEmail(): Map<string, string> {
   const raw = process.env.LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS?.trim();
   const map = new Map<string, string>();
   if (!raw) return map;
   for (const part of raw.split(",")) {
-    const [email, chatId] = part.split(":").map((s) => s.trim());
-    if (email && chatId) map.set(email.toLowerCase(), chatId);
+    const trimmed = part.trim();
+    const sep = trimmed.lastIndexOf(":");
+    if (sep <= 0) continue;
+    const email = trimmed.slice(0, sep).trim().toLowerCase();
+    const chatId = trimmed.slice(sep + 1).trim();
+    if (email && chatId) map.set(email, chatId);
   }
   return map;
 }
@@ -58,19 +67,40 @@ export function getVendorApprovalSecret(): string | null {
   return process.env.LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_SECRET?.trim() || null;
 }
 
-export function isTelegramVerifyEnabled(): boolean {
+export function isVendorAdminUiConfiguredSync(): boolean {
+  return getVendorAdminAllowlist().size > 0;
+}
+
+export function isTelegramVerifyEnabledSync(): boolean {
   const token = getTelegramBotToken();
   if (!token) return false;
   return getVendorTelegramChatByEmail().size > 0;
+}
+
+export async function isTelegramVerifyEnabledAsync(supabase: import("@supabase/supabase-js").SupabaseClient): Promise<boolean> {
+  const token = getTelegramBotToken();
+  if (!token) return false;
+  const { hasAnyStaffTelegramLinked } = await import("./vendor-staff.server.js");
+  return hasAnyStaffTelegramLinked(supabase);
 }
 
 export function isWebhookVerifyEnabled(): boolean {
   return Boolean(getVendorApprovalWebhookUrl() && getVendorApprovalSecret());
 }
 
-/** Step-up verify required when Telegram or approval webhook is configured. */
+export async function isVendorStepUpVerifyRequiredAsync(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+): Promise<boolean> {
+  return (await isTelegramVerifyEnabledAsync(supabase)) || isWebhookVerifyEnabled();
+}
+
+/** @deprecated use isVendorStepUpVerifyRequiredAsync */
 export function isVendorStepUpVerifyRequired(): boolean {
-  return isTelegramVerifyEnabled() || isWebhookVerifyEnabled();
+  return isTelegramVerifyEnabledSync() || isWebhookVerifyEnabled();
+}
+
+export function isTelegramVerifyEnabled(): boolean {
+  return isTelegramVerifyEnabledSync();
 }
 
 export function getVerifySigningSecret(): string | null {
