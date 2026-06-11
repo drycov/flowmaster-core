@@ -22,6 +22,7 @@ export function useEdsAuth() {
     linkEmail?: string,
     linkPassword?: string,
     tenantSlug?: string,
+    bootstrapOrg?: { orgNameRu?: string; orgNameKk?: string },
   ) => {
     setLoading(true);
     try {
@@ -46,6 +47,8 @@ export function useEdsAuth() {
           link_email: linkEmail || undefined,
           link_password: linkPassword || undefined,
           tenant_slug: tenantSlug?.trim() || undefined,
+          org_name_ru: bootstrapOrg?.orgNameRu,
+          org_name_kk: bootstrapOrg?.orgNameKk,
         },
       });
 

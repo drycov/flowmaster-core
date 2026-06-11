@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { AppRole } from "@/lib/auth/roles";
+import { isBootstrapNeeded, loadSystemInitStatus } from "@/lib/system/init-status.server";
 
 export type AuthPolicySettings = {
   allow_public_signup: boolean;
@@ -442,26 +443,22 @@ export async function loadSystemSettings(): Promise<SystemSettings> {
 }
 
 export async function getAdminCount(): Promise<number> {
-  const { count } = await supabaseAdmin
-    .from("user_roles")
-    .select("id", { count: "exact", head: true })
-    .eq("role", "admin" as never);
-  return count ?? 0;
+  return (await loadSystemInitStatus()).admin_count;
 }
 
 export async function hasAdminUser(): Promise<boolean> {
-  return (await getAdminCount()) > 0;
+  return !(await isBootstrapNeeded());
 }
 
 export async function loadSystemSettingsResponse(): Promise<SystemSettingsResponse> {
-  const [settings, adminCount] = await Promise.all([loadSystemSettings(), getAdminCount()]);
-  const bootstrapNeeded = adminCount === 0;
+  const [settings, init] = await Promise.all([loadSystemSettings(), loadSystemInitStatus()]);
+  const bootstrapNeeded = init.needs_bootstrap;
   return {
     settings: maskSystemSettingsForClient(settings),
     meta: {
       bootstrap_needed: bootstrapNeeded,
-      has_admin: adminCount > 0,
-      admin_count: adminCount,
+      has_admin: init.has_admin,
+      admin_count: init.admin_count,
       has_resend_api_key: !!settings.mail.resend_api_key,
       has_smtp_password: !!settings.mail.smtp_password,
       has_telegram_bot_token: !!settings.telegram.bot_token,
@@ -528,10 +525,8 @@ export async function assertEmailRegistrationAllowed(email: string): Promise<{
   bootstrap: boolean;
   settings: AuthPolicySettings;
 }> {
-  const [{ settings }, bootstrapNeeded] = await Promise.all([
-    loadSystemSettingsResponse(),
-    hasAdminUser().then((v) => !v),
-  ]);
+  const [init, settings] = await Promise.all([loadSystemInitStatus(), loadSystemSettings()]);
+  const bootstrapNeeded = init.needs_bootstrap;
 
   if (!bootstrapNeeded && !settings.auth.allow_public_signup) {
     throw new Error(
@@ -547,10 +542,8 @@ export async function assertEmailRegistrationAllowed(email: string): Promise<{
 }
 
 export async function assertEdsRegistrationAllowed(): Promise<{ bootstrap: boolean }> {
-  const [settings, bootstrapNeeded] = await Promise.all([
-    loadSystemSettings(),
-    hasAdminUser().then((v) => !v),
-  ]);
+  const [settings, init] = await Promise.all([loadSystemSettings(), loadSystemInitStatus()]);
+  const bootstrapNeeded = init.needs_bootstrap;
 
   if (!bootstrapNeeded && !settings.auth.allow_eds_signup) {
     throw new Error(

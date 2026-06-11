@@ -19,6 +19,7 @@
  *   npm run env:local
  *   npm run env:production -- --domain=esedo.example.kz --install
  *   npm run env:staging
+ *   npm run env:license-server -- --domain=license.example.kz --install
  */
 
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -45,16 +46,19 @@ function usage() {
   console.log(`Usage: node scripts/env-setup.mjs [profile] [options]
 
 Profiles:
-  local       ${PROFILES.local.label} → ${PROFILES.local.defaultOutput} (default)
-  production  ${PROFILES.production.label} → ${PROFILES.production.defaultOutput}
-  staging     ${PROFILES.staging.label} → ${PROFILES.staging.defaultOutput}
+  local           ${PROFILES.local.label} → ${PROFILES.local.defaultOutput} (default)
+  production      ${PROFILES.production.label} → ${PROFILES.production.defaultOutput}
+  staging         ${PROFILES.staging.label} → ${PROFILES.staging.defaultOutput}
+  license-server  ${PROFILES["license-server"].label} → ${PROFILES["license-server"].defaultOutput}
 
 Options:
   --force           overwrite if output exists
   --rotate-secrets  new JWT/Postgres secrets (default: keep from --output / inherit files)
-  --install         copy result to .env (production)
-  --domain=HOST     production HTTPS domain
+  --install         copy result to .env (production / license-server)
+  --domain=HOST     HTTPS domain (production / license-server)
   --email=ADDR      certbot email
+  --license-secret=HEX   production: shared LICENSE_SIGNING_SECRET from vendor
+  --license-server-url=URL production: online license URL for clients
   --output=PATH     override output file
   --dry-run         stdout only
   --help            this message
@@ -91,7 +95,8 @@ function resolveProfileId(positional) {
   if (!raw || raw === "local" || raw === "dev" || raw === "docker") return "local";
   if (raw === "production" || raw === "prod") return "production";
   if (raw === "staging" || raw === "uat") return "staging";
-  console.error(`Unknown profile "${raw}". Use local, production, or staging.`);
+  if (raw === "license-server" || raw === "license" || raw === "licenseserver") return "license-server";
+  console.error(`Unknown profile "${raw}". Use local, production, staging, or license-server.`);
   process.exit(1);
 }
 
@@ -129,12 +134,14 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   const domain =
     values.get("--domain") ??
     process.env.PROXY_DOMAIN ??
-    "esedo.example.kz";
+    (profileId === "license-server" ? "license.example.kz" : "esedo.example.kz");
   const certEmail =
     values.get("--email") ??
     process.env.CERTBOT_EMAIL ??
     `admin@${domain}`;
   const publicUrl = `https://${domain}`;
+  const licenseSecret = values.get("--license-secret") ?? null;
+  const licenseServerUrl = values.get("--license-server-url") ?? null;
 
   const inheritPaths = profile.inheritFrom.map((p) => resolve(root, p));
   const existingFromFiles = loadEnvValues(inheritPaths);
@@ -149,6 +156,8 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     domain,
     certEmail,
     publicUrl,
+    licenseSecret,
+    licenseServerUrl,
     force,
     rotateSecrets,
     install,
@@ -173,7 +182,7 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
 
   writeFileSync(outputPath, content, "utf8");
   console.log(`Created ${outputPath}`);
-  if (profileId === "production") {
+  if (profileId === "production" || profileId === "license-server") {
     console.log(`  Domain:  ${domain}`);
     console.log(`  App URL: ${publicUrl}`);
   }

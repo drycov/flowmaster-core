@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { activateOnLicenseServer } from "@/lib/license/server/registry.server";
+import { assertLicenseServerEnabled } from "@/lib/license/server/route-auth.server";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -13,6 +14,8 @@ export const Route = createFileRoute("/api/v1/license/activate")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const disabled = assertLicenseServerEnabled();
+        if (disabled) return disabled;
         let body: Record<string, unknown>;
         try {
           body = await request.json();

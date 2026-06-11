@@ -1,0 +1,14 @@
+# Vendor license server — HTTPS + Supabase + app (LICENSE_SERVER_ENABLED=true in .env)
+#
+#   npm run env:license-server -- --domain=license.example.kz --install
+#   npm run compose:license-server
+#   curl https://license.example.kz/api/v1/license/health
+
+name: flowmaster-license-server
+
+include:
+  - path:
+      - ./docker/supabase/docker-compose.yml
+      - ./docker/compose/supabase.overrides.yml
+      - ./docker/compose/flowmaster.services.yml
+      - ./docker/compose/nginx-tls.overrides.yml

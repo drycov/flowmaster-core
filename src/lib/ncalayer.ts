@@ -3,6 +3,7 @@
    ========================================================= */
 
 import forge from "node-forge";
+import { extractFirstCertBase64FromCms } from "@/lib/eds/verify-cms";
 import { extractIIN, fixUtf8Mojibake, parseCertDerBase64 } from "@/lib/iin-parser";
 
 const NCA_URL = "wss://127.0.0.1:13579/";
@@ -459,64 +460,6 @@ function extractCertBase64(res: any): string | null {
   if (typeof candidate !== "string" || candidate.length < 20) return null;
   if (candidate.includes("BEGIN CERTIFICATE")) return pemToCertBase64(candidate);
   return candidate;
-}
-
-function looksLikeCertificate(node: forge.asn1.Asn1): boolean {
-  if (node.type !== forge.asn1.Type.SEQUENCE || !Array.isArray(node.value)) return false;
-  const parts = node.value as forge.asn1.Asn1[];
-  return parts.length === 3 && parts[0]?.type === forge.asn1.Type.SEQUENCE;
-}
-
-function findFirstCertificate(nodes: forge.asn1.Asn1[]): forge.asn1.Asn1 | null {
-  for (const node of nodes) {
-    if (node.tagClass === forge.asn1.Class.CONTEXT_SPECIFIC && node.type === 0) {
-      const inner = Array.isArray(node.value) ? (node.value as forge.asn1.Asn1[])[0] : null;
-      if (inner?.type === forge.asn1.Type.SEQUENCE) return inner;
-    }
-    if (looksLikeCertificate(node)) return node;
-    if (Array.isArray(node.value)) {
-      const found = findFirstCertificate(node.value as forge.asn1.Asn1[]);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-/** Извлечь DER сертификата из CMS без парсинга GOST/RSA ключа (node-forge) */
-function extractFirstCertBase64FromCms(cmsB64: string): string | null {
-  try {
-    const asn1 = forge.asn1.fromDer(forge.util.decode64(cmsB64));
-    if (asn1.type !== forge.asn1.Type.SEQUENCE || !Array.isArray(asn1.value)) return null;
-
-    const contentInfoParts = asn1.value as forge.asn1.Asn1[];
-    const signedDataWrapper = contentInfoParts.find(
-      (p) => p.tagClass === forge.asn1.Class.CONTEXT_SPECIFIC && p.type === 0,
-    );
-    if (!signedDataWrapper || !Array.isArray(signedDataWrapper.value)) return null;
-
-    const signedData = (signedDataWrapper.value as forge.asn1.Asn1[])[0];
-    if (
-      !signedData ||
-      signedData.type !== forge.asn1.Type.SEQUENCE ||
-      !Array.isArray(signedData.value)
-    ) {
-      return null;
-    }
-
-    for (const part of signedData.value as forge.asn1.Asn1[]) {
-      if (part.tagClass !== forge.asn1.Class.CONTEXT_SPECIFIC || part.type !== 0) continue;
-      const cert = findFirstCertificate(
-        Array.isArray(part.value) ? (part.value as forge.asn1.Asn1[]) : [part],
-      );
-      if (!cert) continue;
-      return forge.util.encode64(forge.asn1.toDer(cert).getBytes());
-    }
-
-    return null;
-  } catch (e) {
-    log("CMS cert DER extract failed", e);
-    return null;
-  }
 }
 
 function keyInfoToCertificateInfo(res: any): { certBase64: string; info: CertificateInfo } {

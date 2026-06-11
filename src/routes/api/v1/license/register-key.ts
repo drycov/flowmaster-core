@@ -4,6 +4,7 @@ import {
   registerLicenseKeyOnServer,
   verifyLicenseServerAdmin,
 } from "@/lib/license/server/registry.server";
+import { assertLicenseServerEnabled } from "@/lib/license/server/route-auth.server";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -16,6 +17,9 @@ export const Route = createFileRoute("/api/v1/license/register-key")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const disabled = assertLicenseServerEnabled();
+        if (disabled) return disabled;
+
         if (!verifyLicenseServerAdmin(request)) {
           return json({ error: "Unauthorized" }, 401);
         }

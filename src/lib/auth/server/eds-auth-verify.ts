@@ -5,13 +5,37 @@ import { extractIin, type CertInfo } from "./eds";
 export function verifyEdsAuthSignature(
   signatureB64: string,
   edsPolicy: EdsPolicySettings,
+  clientCertInfo?: CertInfo,
 ): { certInfo: CertInfo; iin: string } {
-  const cmsCert = extractCmsCertInfo(signatureB64);
+  let cmsCert = extractCmsCertInfo(signatureB64);
+
+  if (!cmsCert && clientCertInfo?.iin) {
+    cmsCert = {
+      subject: clientCertInfo.subject,
+      issuer: clientCertInfo.issuer,
+      serial: clientCertInfo.serial,
+      iin: clientCertInfo.iin,
+      bin: clientCertInfo.bin,
+      cn: clientCertInfo.cn,
+    };
+  }
+
   if (!cmsCert) {
     throw new Error("Не удалось разобрать подпись ЭЦП");
   }
 
-  const result = verifyCmsSignature(signatureB64, { at: new Date() });
+  if (
+    clientCertInfo?.iin &&
+    cmsCert.iin &&
+    clientCertInfo.iin !== cmsCert.iin
+  ) {
+    throw new Error("ИИН сертификата не совпадает с данными подписи");
+  }
+
+  const result = verifyCmsSignature(signatureB64, {
+    at: new Date(),
+    expectedIin: clientCertInfo?.iin ?? cmsCert.iin,
+  });
 
   if (edsPolicy.require_cert_valid) {
     if (result.status === "expired") {
@@ -23,12 +47,12 @@ export function verifyEdsAuthSignature(
   }
 
   const certInfo: CertInfo = {
-    subject: cmsCert.subject,
-    issuer: cmsCert.issuer,
-    serial: cmsCert.serial,
-    iin: cmsCert.iin,
-    bin: cmsCert.bin,
-    cn: cmsCert.cn,
+    subject: cmsCert.subject ?? clientCertInfo?.subject,
+    issuer: cmsCert.issuer ?? clientCertInfo?.issuer,
+    serial: cmsCert.serial ?? clientCertInfo?.serial,
+    iin: cmsCert.iin ?? clientCertInfo?.iin,
+    bin: cmsCert.bin ?? clientCertInfo?.bin,
+    cn: cmsCert.cn ?? clientCertInfo?.cn,
   };
 
   const iin = extractIin(certInfo);

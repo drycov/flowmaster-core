@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
@@ -16,50 +15,14 @@ import {
 } from "@/lib/auth/policy";
 import { buildPublicTenantAuthContext } from "@/lib/access/tenant-public.server";
 import type { PublicAuthConfig } from "@/components/auth/types";
+import { loadSystemInitStatus, type SystemInitStatus } from "@/lib/system/init-status.server";
 import { requireSystemSettingsAccess } from "./_helpers";
 
-export type SystemInitStatus = {
-  has_organization: boolean;
-  organization_configured: boolean;
-  has_admin: boolean;
-  admin_count: number;
-  departments_count: number;
-  permissions_count: number;
-  roles_count: number;
-  published_workflows: number;
-  published_templates: number;
-  needs_setup: boolean;
-};
-
-export async function loadSystemInitStatus(supabase: SupabaseClient): Promise<SystemInitStatus> {
-  const { data, error } = await supabaseAdmin.rpc("get_system_init_status" as never);
-  if (error) {
-    const [{ count: adminCount }, { count: deptCount }] = await Promise.all([
-      supabase
-        .from("user_roles")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "admin" as never),
-      supabase.from("departments").select("id", { count: "exact", head: true }),
-    ]);
-    return {
-      has_organization: true,
-      organization_configured: false,
-      has_admin: (adminCount ?? 0) > 0,
-      admin_count: adminCount ?? 0,
-      departments_count: deptCount ?? 0,
-      permissions_count: 0,
-      roles_count: 0,
-      published_workflows: 0,
-      published_templates: 0,
-      needs_setup: (adminCount ?? 0) === 0 || (deptCount ?? 0) === 0,
-    } satisfies SystemInitStatus;
-  }
-  return data as SystemInitStatus;
-}
+export type { SystemInitStatus };
 
 export const getSystemInitStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => loadSystemInitStatus(context.supabase));
+  .handler(async () => loadSystemInitStatus());
 
 export const getPublicAuthConfigFn = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();

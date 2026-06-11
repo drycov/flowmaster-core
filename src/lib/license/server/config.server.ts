@@ -30,6 +30,13 @@ export function getLicenseServerAdminSecret(): string | null {
   return process.env.LICENSE_SERVER_ADMIN_SECRET?.trim() || null;
 }
 
+/** Vendor deployment: exposes /api/v1/license/* endpoints. */
+export function isLicenseServerEnabled(): boolean {
+  loadServerEnv();
+  const raw = process.env.LICENSE_SERVER_ENABLED?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 export function getAppVersion(): string {
   return process.env.APP_VERSION?.trim() || process.env.npm_package_version || "unknown";
 }

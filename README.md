@@ -99,10 +99,21 @@ npm run start
 
 Reverse proxy (nginx) перед приложением обязателен в production — см. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+### Сервер лицензирования (vendor)
+
+```bash
+npm run env:license-server -- --domain=license.example.kz --install
+npm run compose:license-server
+curl https://license.example.kz/api/v1/license/health
+```
+
+Подробнее: [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md).
+
 ## Документация
 
 | Документ | Описание |
 |----------|----------|
+| [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md) | Сервер лицензирования (vendor) |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Развёртывание, env, nginx, cron, backup |
 | [docs/SECURITY.md](docs/SECURITY.md) | Аутентификация, RLS, hardening |
 | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | API v1, webhooks, LDAP, Telegram |

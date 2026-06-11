@@ -107,13 +107,14 @@ export const registerWithEmail = createServerFn({ method: "POST" })
       const slug = data.tenant_slug?.trim();
       const orgNameRu = data.org_name_ru?.trim() || data.full_name_ru;
       const orgNameKk = data.org_name_kk?.trim() || data.full_name_kk;
-      if (slug) {
-        await updateBootstrapOrganization({
-          slug,
-          name_ru: orgNameRu,
-          name_kk: orgNameKk,
-        });
+      if (!slug) {
+        throw new Error("Укажите код организации для первоначальной настройки");
       }
+      await updateBootstrapOrganization({
+        slug,
+        name_ru: orgNameRu,
+        name_kk: orgNameKk,
+      });
     } else {
       organizationId = await resolveAuthOrganizationId(data.tenant_slug);
     }
@@ -242,13 +243,19 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
       ),
 
       tenant_slug: z.string().optional(),
+
+      org_name_ru: z.string().optional(),
+
+      org_name_kk: z.string().optional(),
     }),
   )
 
   .handler(async ({ data }) => {
     const settings = await loadSystemSettings();
+    const { loadSystemInitStatus } = await import("@/lib/system/init-status.server");
+    const init = await loadSystemInitStatus();
     const { verifyEdsAuthSignature } = await import("@/lib/auth/server/eds-auth-verify");
-    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds);
+    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds, data.cert_info);
 
     const ch = await consumeAuthChallenge(data.challenge_id);
 
@@ -337,6 +344,18 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
         profileEmail = row.email;
       } else {
+        if (init.needs_bootstrap) {
+          const slug = data.tenant_slug?.trim();
+          if (!slug) {
+            throw new Error("Укажите код организации для первоначальной настройки");
+          }
+          await updateBootstrapOrganization({
+            slug,
+            name_ru: data.org_name_ru?.trim() || displayName,
+            name_kk: data.org_name_kk?.trim() || data.full_name_kk || displayName,
+          });
+        }
+
         userId = await registerUser({
           email: edsEmail(iin),
 
@@ -391,7 +410,7 @@ export const linkEdsToProfile = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const settings = await loadSystemSettings();
     const { verifyEdsAuthSignature } = await import("@/lib/auth/server/eds-auth-verify");
-    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds);
+    const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds, data.cert_info);
 
     await consumeAuthChallenge(data.challenge_id, "link");
 

@@ -6,8 +6,13 @@
  *   node scripts/license-server-admin.mjs revoke --installation-id <uuid>
  *   node scripts/license-server-admin.mjs revoke --key-hash <sha256>
  *
- * Env: LICENSE_SERVER_URL, LICENSE_SERVER_ADMIN_SECRET
+ * Env (auto-loaded from .env / .env.license-server):
+ *   LICENSE_SERVER_URL, LICENSE_SERVER_ADMIN_SECRET
  */
+
+import { loadEnvFiles } from "./lib/load-env.mjs";
+
+loadEnvFiles();
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -18,11 +23,12 @@ function flag(name) {
   return args[idx + 1] ?? null;
 }
 
-const baseUrl = (process.env.LICENSE_SERVER_URL ?? "").replace(/\/$/, "");
+const baseUrl = (process.env.LICENSE_SERVER_URL ?? process.env.PUBLIC_APP_URL ?? "").replace(/\/$/, "");
 const secret = process.env.LICENSE_SERVER_ADMIN_SECRET ?? "";
 
 if (!baseUrl || !secret) {
-  console.error("Set LICENSE_SERVER_URL and LICENSE_SERVER_ADMIN_SECRET");
+  console.error("Set LICENSE_SERVER_URL (or PUBLIC_APP_URL) and LICENSE_SERVER_ADMIN_SECRET");
+  console.error("Hint: npm run env:license-server -- --install");
   process.exit(1);
 }
 

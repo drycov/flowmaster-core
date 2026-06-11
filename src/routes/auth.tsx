@@ -20,7 +20,7 @@ import {
 } from "@/components/auth/validation";
 
 const DEFAULT_CONFIG: PublicAuthConfig = {
-  bootstrap_needed: false,
+  bootstrap_needed: true,
   allow_public_signup: false,
   allow_eds_signup: true,
   allow_ldap_login: false,
@@ -52,7 +52,7 @@ function AuthPage() {
   const { loading, signIn, signUp } = useAuth();
   const { loading: edsLoading, signInWithEds } = useEdsAuth();
   const { loading: ldapLoading, signInWithLdap } = useLdapAuth();
-  const { data: config = DEFAULT_CONFIG } = useQuery({
+  const { data: config = DEFAULT_CONFIG, isPending: configLoading } = useQuery({
     queryKey: ["public-auth-config"],
     queryFn: getPublicAuthConfigFn,
     staleTime: 60_000,
@@ -93,6 +93,7 @@ function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (configLoading) return;
 
     if (mode === "signin") {
       const parsed = signInInputSchema.safeParse({
@@ -166,7 +167,7 @@ function AuthPage() {
     tenantSlug,
     orgNameRu,
     orgNameKk,
-    loading: loading || edsLoading || ldapLoading,
+    loading: loading || edsLoading || ldapLoading || configLoading,
     onModeChange: setMode,
     onEmailChange: setEmail,
     onPasswordChange: setPassword,
@@ -178,6 +179,11 @@ function AuthPage() {
     onOrgNameKkChange: setOrgNameKk,
     onSubmit: handleSubmit,
     onEdsAuth: () => {
+      if (configLoading) return Promise.resolve();
+      if (config.bootstrap_needed && !tenantSlug.trim()) {
+        toast.error(t("auth.error.tenantSlugRequired"));
+        return Promise.resolve();
+      }
       const { linkEmail, linkPassword } = resolveEdsLinkCredentials(email, password);
       return signInWithEds(
         mode,
@@ -186,6 +192,9 @@ function AuthPage() {
         linkEmail,
         linkPassword,
         authTenantSlug,
+        config.bootstrap_needed
+          ? { orgNameRu: orgNameRu.trim() || undefined, orgNameKk: orgNameKk.trim() || undefined }
+          : undefined,
       );
     },
     edsLoading,

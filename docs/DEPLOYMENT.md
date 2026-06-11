@@ -332,6 +332,8 @@ server {
 
 ## 7. Лицензия
 
+Полная инструкция по **серверу лицензирования (vendor)**: [LICENSE-SERVER.md](./LICENSE-SERVER.md).
+
 ### Offline (изолированный контур)
 
 ```bash
@@ -342,19 +344,21 @@ npm run license:generate -- --plan professional --customer "Организаци
 
 ### Online (license server)
 
-**На стороне поставщика:**
+**На стороне поставщика** (`npm run env:license-server`, см. [LICENSE-SERVER.md](./LICENSE-SERVER.md)):
 
 ```env
+LICENSE_SERVER_ENABLED=true
 LICENSE_SERVER_ADMIN_SECRET=<random>
 LICENSE_SIGNING_SECRET=<shared-with-keygen>
 ```
 
-**На стороне заказчика:**
+**На стороне заказчика** (тот же `LICENSE_SIGNING_SECRET`):
 
-```env
-LICENSE_MODE=online
-LICENSE_SERVER_URL=https://license.vendor.kz
-PUBLIC_APP_URL=https://esedo.example.kz
+```bash
+npm run env:production -- --domain=esedo.example.kz \
+  --license-secret=<LICENSE_SIGNING_SECRET> \
+  --license-server-url=https://license.vendor.kz \
+  --install
 ```
 
 Cron phone-home каждые 6 ч: `POST /api/public/hooks/license-sync`.

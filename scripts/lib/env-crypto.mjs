@@ -85,5 +85,7 @@ export function createSupabaseSecrets(existing = new Map(), { rotate = false } =
     CRON_SECRET: pick("CRON_SECRET", () => hex(32)),
     POOLER_TENANT_ID: pick("POOLER_TENANT_ID", () => hex(8)),
     GRAFANA_ADMIN_PASSWORD: pick("GRAFANA_ADMIN_PASSWORD", () => hex(16)),
+    LICENSE_SIGNING_SECRET: pick("LICENSE_SIGNING_SECRET", () => hex(32)),
+    LICENSE_SERVER_ADMIN_SECRET: pick("LICENSE_SERVER_ADMIN_SECRET", () => hex(32)),
   };
 }

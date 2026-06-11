@@ -18,8 +18,14 @@ export const PROFILES = {
   staging: {
     id: "staging",
     label: "Staging / UAT",
-    defaultOutput: ".env",
-    inheritFrom: [".env"],
+    defaultOutput: ".env.staging",
+    inheritFrom: [".env", ".env.staging"],
+  },
+  "license-server": {
+    id: "license-server",
+    label: "License server (vendor)",
+    defaultOutput: ".env.license-server",
+    inheritFrom: [".env", ".env.license-server"],
   },
 };
 
@@ -89,6 +95,51 @@ export function buildProfileValues(profileId, ctx) {
         SENTRY_ENVIRONMENT: "production",
         SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? `admin@${domain}`,
         MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3001",
+        LICENSE_MODE: ctx.licenseServerUrl
+          ? "online"
+          : (ctx.existing.get("LICENSE_MODE") ?? "offline"),
+        LICENSE_SIGNING_SECRET:
+          ctx.licenseSecret ??
+          ctx.existing.get("LICENSE_SIGNING_SECRET") ??
+          "",
+        LICENSE_SERVER_URL: ctx.licenseServerUrl ?? ctx.existing.get("LICENSE_SERVER_URL") ?? "",
+      };
+    }
+
+    case "license-server": {
+      const { domain, certEmail, publicUrl } = ctx;
+      return {
+        ...base,
+        NODE_ENV: "production",
+        LOG_LEVEL: "info",
+        LICENSE_SERVER_ENABLED: "true",
+        LICENSE_MODE: "offline",
+        LICENSE_SIGNING_SECRET: secrets.LICENSE_SIGNING_SECRET,
+        LICENSE_SERVER_ADMIN_SECRET: secrets.LICENSE_SERVER_ADMIN_SECRET,
+        APP_URL: publicUrl,
+        PUBLIC_APP_URL: publicUrl,
+        DISABLE_TELEGRAM_POLLING: "true",
+        DISABLE_SIGNUP: "true",
+        REPLICA_COUNT: "1",
+        VITE_SUPABASE_URL: publicUrl,
+        SUPABASE_URL: publicUrl,
+        SUPABASE_PUBLIC_URL: publicUrl,
+        API_EXTERNAL_URL: publicUrl,
+        SITE_URL: publicUrl,
+        KONG_HTTP_PORT: "54321",
+        KONG_HTTPS_PORT: "8443",
+        STUDIO_DEFAULT_ORGANIZATION: "Flowmaster License",
+        STUDIO_DEFAULT_PROJECT: "LicenseServer",
+        POOLER_TENANT_ID: ctx.existing.get("POOLER_TENANT_ID") ?? "flowmaster-license",
+        APPLY_DB_MIGRATIONS: "1",
+        APPLY_DB_SEED: "0",
+        ENABLE_EMAIL_AUTOCONFIRM: "false",
+        NGINX_HTTP_PORT: "80",
+        NGINX_HTTPS_PORT: "443",
+        PROXY_DOMAIN: domain,
+        CERTBOT_EMAIL: certEmail,
+        SENTRY_ENVIRONMENT: "license-server",
+        SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? `admin@${domain}`,
       };
     }
 
@@ -163,6 +214,20 @@ export function buildHeader(profileId, ctx) {
         "#",
       );
       break;
+    case "license-server":
+      lines.push(
+        `# Домен license server: ${ctx.domain}`,
+        `# Regenerate: npm run env:license-server -- --domain=${ctx.domain} --force`,
+        "# Установить как .env:",
+        `#   npm run env:license-server -- --domain=${ctx.domain} --install`,
+        "# Запуск:",
+        "#   npm run compose:license-server",
+        `#   curl https://${ctx.domain}/api/v1/license/health`,
+        "#",
+        "# LICENSE_SIGNING_SECRET — тот же секрет укажите у клиентов (npm run env:production -- --license-secret=...)",
+        "#",
+      );
+      break;
   }
 
   return `${lines.join("\n")}\n\n`;
@@ -193,6 +258,20 @@ export function printNextSteps(profileId, ctx) {
       console.log("Next steps:");
       console.log("  npm run compose:staging");
       console.log("  curl http://localhost:8080/api/health");
+      break;
+    case "license-server":
+      console.log("Next steps:");
+      console.log(`  1. DNS A-record: ${ctx.domain} → server IP`);
+      if (!ctx.installed) {
+        console.log("  2. npm run env:license-server -- --install   (или cp .env.license-server .env)");
+      }
+      console.log("  3. npm run compose:license-server");
+      console.log(`  4. curl https://${ctx.domain}/api/v1/license/health`);
+      console.log("  5. npm run license:generate -- --plan professional --customer \"Acme\"");
+      console.log("  6. npm run license:server -- register --key \"FM1....\"");
+      console.log("");
+      console.log("Сохраните LICENSE_SIGNING_SECRET — тот же секрет нужен на инсталляциях клиентов:");
+      console.log("  npm run env:production -- --domain=client.kz --license-secret=<LICENSE_SIGNING_SECRET>");
       break;
   }
 }

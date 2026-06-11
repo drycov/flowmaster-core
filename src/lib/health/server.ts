@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isLicenseServerEnabled } from "@/lib/license/server/config.server";
 
 export type HealthChecks = Record<string, string>;
 
@@ -24,17 +25,33 @@ export async function runHealthChecks(): Promise<HealthResult> {
   }
 
   try {
-    const { data, error } = await supabaseAdmin.rpc("get_license_status" as never);
-    if (error) {
-      checks.license = "error";
-      checks.license_error = error.message;
+    if (isLicenseServerEnabled()) {
+      const [{ count: keyCount }, { count: actCount }] = await Promise.all([
+        supabaseAdmin
+          .from("license_server_keys" as never)
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("license_server_activations" as never)
+          .select("id", { count: "exact", head: true })
+          .eq("status", "active" as never),
+      ]);
+      checks.license_server = "ok";
+      checks.license_server_keys = String(keyCount ?? 0);
+      checks.license_server_activations = String(actCount ?? 0);
     } else {
-      const status = data as { status?: string } | null;
-      checks.license = status?.status ?? "unknown";
+      const { data, error } = await supabaseAdmin.rpc("get_license_status" as never);
+      if (error) {
+        checks.license = "error";
+        checks.license_error = error.message;
+      } else {
+        const status = data as { status?: string } | null;
+        checks.license = status?.status ?? "unknown";
+      }
     }
   } catch (e) {
-    checks.license = "error";
-    checks.license_error = e instanceof Error ? e.message : String(e);
+    const key = isLicenseServerEnabled() ? "license_server" : "license";
+    checks[key] = "error";
+    checks[`${key}_error`] = e instanceof Error ? e.message : String(e);
   }
 
   return { ok: checks.database === "ok", checks };

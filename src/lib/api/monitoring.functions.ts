@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runHealthChecks } from "@/lib/health/server";
 import { requireSystemSettingsAccess } from "./_helpers";
-import type { SystemInitStatus } from "./system.functions";
-import { loadSystemInitStatus } from "./system.functions";
+import { loadSystemInitStatus, type SystemInitStatus } from "@/lib/system/init-status.server";
 
 export type SystemMonitoringStatus = {
   ok: boolean;
@@ -23,7 +22,7 @@ export const getSystemMonitoringStatus = createServerFn({ method: "GET" })
 
     const [{ ok, checks }, init] = await Promise.all([
       runHealthChecks(),
-      loadSystemInitStatus(context.supabase),
+      loadSystemInitStatus(),
     ]);
 
     return {
