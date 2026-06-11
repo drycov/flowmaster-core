@@ -46,4 +46,24 @@ awk '{
 # Remove empty key-auth credentials (unconfigured opaque keys)
 sed -i '/^[[:space:]]*- key:[[:space:]]*$/d' "$KONG_DECLARATIVE_CONFIG"
 
+# Legacy HS256 setup sets ANON_KEY == SUPABASE_PUBLISHABLE_KEY (and service ditto).
+# kong.yml lists both; Kong rejects duplicate keyauth credentials after substitution.
+awk '
+function reset() { anon = 0; svc = 0 }
+BEGIN { reset() }
+/^  - username: anon$/ { reset(); anon = 1; print; next }
+/^  - username: service_role$/ { reset(); svc = 1; print; next }
+/^  - username:/ { reset(); print; next }
+(anon || svc) && /^      - key: / {
+  val = $0
+  sub(/^      - key: /, "", val)
+  if (val == "") next
+  scope = anon ? "anon" : "service"
+  id = scope SUBSEP val
+  if (seen[id]++) next
+}
+{ print }
+' "$KONG_DECLARATIVE_CONFIG" > "${KONG_DECLARATIVE_CONFIG}.dedup" \
+  && mv "${KONG_DECLARATIVE_CONFIG}.dedup" "$KONG_DECLARATIVE_CONFIG"
+
 exec /entrypoint.sh kong docker-start
