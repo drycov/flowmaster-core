@@ -46,6 +46,8 @@ npm run dev:web  # web :5173
 
 Откройте http://127.0.0.1:5173
 
+> **Не запускайте** голый `npx vite --port=4000` из этого каталога без `web/vite.config.ts` — раньше Vite мог подхватить конфиг **корневого** приложения `flowmaster-core` и отдавать чужие бандлы (`index-*.js` с другим хешем), что в Edge даёт `ERR_HTTP2_PROTOCOL_ERROR`. Используйте только `npm run dev:web`.
+
 <a id="npm-scripts"></a>
 
 ## npm-скрипты (каталог приложения)

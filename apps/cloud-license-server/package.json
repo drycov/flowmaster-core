@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "tsx watch src/dev.ts",
-    "dev:web": "vite --config web/vite.config.ts",
+    "dev:web": "vite --config web/vite.config.ts --port 5173 --strictPort",
+    "preview:web": "vite preview --config web/vite.config.ts --port 4173 --strictPort",
     "build:web": "vite build --config web/vite.config.ts",
     "build": "npm run build:web && npm run typecheck",
     "typecheck": "tsc --noEmit",
