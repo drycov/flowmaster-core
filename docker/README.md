@@ -12,7 +12,9 @@ Self-hosted Supabase stack (vendored from [supabase/supabase/docker](https://git
 | `docker-compose.tls.yml` | Production HTTPS (Let's Encrypt) |
 | `docker-compose.monitoring.yml` | Prometheus + Grafana (profile `monitoring`) |
 | `docker/compose/nginx-tls.overrides.yml` | TLS-патчи Supabase/nginx (include) |
+| `docker/compose/flowmaster.services.yml` | app, nginx, db-migrate, cron (include) |
 | `docker/compose/supabase.overrides.yml` | Патчи Supabase (profiles, kong deps) |
+| `docker/compose/staging.overrides.yml` | Staging-порты и cron |
 
 ## Архитектура (production)
 
