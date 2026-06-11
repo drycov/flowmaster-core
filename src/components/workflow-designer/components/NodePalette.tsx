@@ -6,7 +6,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { NODE_PALETTE_GROUPS, NODE_TYPE_ICONS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { NODE_PALETTE_GROUPS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { WorkflowNodeIcon } from "./WorkflowNodeIcon";
 import { useI18n } from "@/i18n";
 import type { NodeType } from "../types";
 
@@ -45,7 +46,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
                         }}
                         onClick={() => onAddNode(type)}
                       >
-                        <span className="text-base leading-none">{NODE_TYPE_ICONS[type]}</span>
+                        <WorkflowNodeIcon type={type} className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="text-xs">

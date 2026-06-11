@@ -5,7 +5,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { NODE_TYPE_ICONS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { NODE_TYPE_LABEL_KEYS } from "../constants";
+import { WorkflowNodeIcon } from "./WorkflowNodeIcon";
 import { useI18n } from "@/i18n";
 import { NodePropertiesForm } from "./NodePropertiesForm";
 import type { FlowNode, User, Role, Department } from "../types";
@@ -41,7 +42,7 @@ export function NodeEditSheet({
       <SheetContent className="w-[450px] overflow-y-auto sm:w-[540px]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <span>{NODE_TYPE_ICONS[node.data.type]}</span>
+            <WorkflowNodeIcon type={node.data.type} className="h-5 w-5" />
             <span>{t("wf.editNode")}</span>
           </SheetTitle>
           <SheetDescription>

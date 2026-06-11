@@ -55,21 +55,6 @@ export const NODE_TYPE_LABEL_KEYS: Record<NodeType, string> = {
   END: "wf.node.END",
 };
 
-export const NODE_TYPE_ICONS: Partial<Record<NodeType, string>> = {
-  START: "🚀",
-  APPROVAL: "✓",
-  SIGNATURE: "✍️",
-  TASK: "📋",
-  CONDITION: "🔀",
-  FORK: "⑂",
-  JOIN: "⑃",
-  NOTIFICATION: "🔔",
-  TIMER: "⏱️",
-  ESCALATION: "⚠️",
-  ARCHIVE: "📦",
-  END: "🏁",
-};
-
 export const NODE_STYLE_BY_TYPE: Partial<Record<NodeType, CSSProperties>> = {
   START: { background: "#10b981", color: "white", border: "2px solid #059669" },
   END: { background: "#ef4444", color: "white", border: "2px solid #dc2626" },

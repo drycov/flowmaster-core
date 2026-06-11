@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { AlertCircle } from "lucide-react";
-import { NODE_TYPE_ICONS, NODE_TYPE_LABEL_KEYS, NODE_STYLE_BY_TYPE } from "../constants";
+import { NODE_TYPE_LABEL_KEYS, NODE_STYLE_BY_TYPE } from "../constants";
+import { WorkflowNodeIcon } from "./WorkflowNodeIcon";
 import { useI18n } from "@/i18n";
 import { useWorkflowDesignerLookup } from "../context/WorkflowDesignerContext";
 import { resolveAssigneeLabel } from "@/lib/workflow/assignee-display";
@@ -22,7 +23,6 @@ function WorkflowCanvasNodeComponent({ data, selected }: NodeProps) {
   const lookup = useWorkflowDesignerLookup();
   const nodeData = data as WorkflowNodeData;
   const type = nodeData.type as NodeType;
-  const icon = NODE_TYPE_ICONS[type] ?? "•";
   const typeLabel = t(NODE_TYPE_LABEL_KEYS[type]);
   const sla =
     nodeData.sla_hours != null && nodeData.sla_hours > 0
@@ -69,7 +69,7 @@ function WorkflowCanvasNodeComponent({ data, selected }: NodeProps) {
       )}
 
       <div className="flex items-center justify-center gap-1 text-[10px] font-medium uppercase tracking-wide opacity-80">
-        <span>{icon}</span>
+        <WorkflowNodeIcon type={type} className="h-3 w-3" />
         <span>{typeLabel}</span>
       </div>
 

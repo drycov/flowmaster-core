@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Button } from "@/components/ui/button";
 
-import { NODE_PALETTE_GROUPS, NODE_TYPE_LABEL_KEYS, NODE_TYPE_ICONS } from "../constants";
+import { NODE_PALETTE_GROUPS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { WorkflowNodeIcon } from "./WorkflowNodeIcon";
 
 import { useI18n } from "@/i18n";
 
@@ -129,7 +130,7 @@ export function LeftPanel({
                   onClick={() => onAddNode(tp)}
                   className="justify-start px-2 cursor-grab active:cursor-grabbing"
                 >
-                  <span className="mr-1">{NODE_TYPE_ICONS[tp]}</span>
+                  <WorkflowNodeIcon type={tp} className="mr-1 h-3.5 w-3.5" />
                   <span className="text-xs">{t(NODE_TYPE_LABEL_KEYS[tp])}</span>
                 </Button>
               ))}

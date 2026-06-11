@@ -57,12 +57,16 @@ npm run dev:web
 | `SUPABASE_SERVICE_ROLE_KEY` | API |
 | `SUPABASE_ANON_KEY` | API (проверка JWT кабинета) |
 | `LICENSE_SERVER_ADMIN_SECRET` | Admin API |
-| `VITE_SUPABASE_URL` | Landing / кабинет |
-| `VITE_SUPABASE_ANON_KEY` | Landing / кабинет |
+| `VITE_SUPABASE_URL` | Landing / кабинет (или дублируйте `SUPABASE_URL`) |
+| `VITE_SUPABASE_ANON_KEY` | Landing / кабинет (или дублируйте `SUPABASE_ANON_KEY`) |
 | `VITE_LICENSE_SERVER_URL` | Кабинет (подсказка LICENSE_SERVER_URL) |
 | `VITE_SALES_EMAIL` | CTA «Связаться с продажами» |
 
 3. Deploy → клиенты указывают `LICENSE_SERVER_URL=https://xxx.vercel.app`
+
+На Vercel для **сборки** фронта нужны **оба** значения: `SUPABASE_URL` **и** `SUPABASE_ANON_KEY` (или явные `VITE_SUPABASE_*`). Если задан только URL — регистрация покажет «Supabase не настроен». После смены env — **Redeploy** (переменные вшиваются при `npm run build`).
+
+**Troubleshooting:** в Vercel → Settings → Environment Variables убедитесь, что `SUPABASE_ANON_KEY` (или `VITE_SUPABASE_ANON_KEY`) включён для **Production** и **Preview**, scope **Build** (по умолчанию — все окружения).
 
 ## Поток клиента
 

@@ -19,7 +19,8 @@ import {
 import { Trash2, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "./Combobox";
-import { NODE_TYPE_ICONS, NODE_TYPE_LABEL_KEYS } from "../constants";
+import { NODE_TYPE_LABEL_KEYS } from "../constants";
+import { WorkflowNodeIcon } from "./WorkflowNodeIcon";
 import { useI18n } from "@/i18n";
 import { listPositions } from "@/lib/api/org.functions";
 import type { FlowNode, AssigneeType, User, Role, Department } from "../types";
@@ -102,7 +103,7 @@ export function NodePropertiesForm({
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3">
-        <span className="text-xl">{NODE_TYPE_ICONS[node.data.type]}</span>
+        <WorkflowNodeIcon type={node.data.type} className="h-5 w-5" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{t(NODE_TYPE_LABEL_KEYS[node.data.type])}</p>
           <p className="truncate text-xs text-muted-foreground">{node.id}</p>

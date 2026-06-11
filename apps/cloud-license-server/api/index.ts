@@ -1,4 +1,4 @@
-import { handle } from "hono/vercel";
 import { app } from "../src/app.js";
 
-export default handle(app);
+/** Vercel zero-config Hono: export app (fetch handler), not hono/vercel handle(). */
+export default app;
