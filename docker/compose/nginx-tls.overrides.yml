@@ -34,6 +34,7 @@ services:
       - ../../docker/nginx/tls-entrypoint.sh:/etc/nginx/tls-entrypoint.sh:ro
       - ../../docker/nginx/ensure-self-signed-cert.sh:/etc/nginx/ensure-self-signed-cert.sh:ro
       - ../../docker/nginx/run-certbot-with-fallback.sh:/etc/nginx/run-certbot-with-fallback.sh:ro
+      - ../../docker/nginx/snippets/onlyoffice.conf:/etc/nginx/snippets/onlyoffice.conf:ro
       - nginx_letsencrypt:/etc/letsencrypt
     healthcheck:
       test:

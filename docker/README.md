@@ -92,11 +92,29 @@ npm run compose:license-server
 | `npm run compose:tls` | HTTPS stack + migrate + wait |
 | `npm run compose:staging` | UAT stack + migrate + wait |
 | `npm run docker:full` | cron + studio + monitoring |
+| `npm run docker:up -- --office` | + ONLYOFFICE Document Server |
 | `npm run docker:migrate` | SQL-миграции (default HTTP stack) |
 | `npm run docker:migrate -- --tls` / `--staging` | Миграции для другого stack |
 | `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
 
-Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--full`.
+Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--office`, `--full`.
+
+## ONLYOFFICE
+
+Document Server в профиле `office` (~2 GB RAM, первый старт 2–3 мин).
+
+```bash
+npm run docker:up -- --office
+curl http://localhost:8082/healthcheck
+```
+
+- Nginx: `/onlyoffice/` → контейнер `onlyoffice:80`
+- Порт `:8082` — прямой доступ (отладка)
+- В админке: **Интеграции → ONLYOFFICE** → `http://localhost/onlyoffice` (или `https://domain/onlyoffice`)
+- **Общие → app_url** = публичный URL ЕСЭДО
+
+Конфиг: `docker/onlyoffice/local.json` (доступ к private IP для Storage).  
+Подробнее: [docs/INTEGRATIONS.md](../docs/INTEGRATIONS.md#onlyoffice).
 
 ## Переменные окружения
 
@@ -115,6 +133,7 @@ npm run compose:license-server
 |---------|---------|
 | (default) | db, kong, rest, storage, app, nginx, db-migrate |
 | `cron` | Sidecar `scripts/cron-runner.sh` |
+| `office` | ONLYOFFICE Document Server |
 | `studio` | Supabase Studio :54323 |
 | `monitoring` | Prometheus, Grafana, exporters |
 

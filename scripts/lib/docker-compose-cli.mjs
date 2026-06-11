@@ -1,6 +1,6 @@
 /** Shared Docker Compose CLI args for Flowmaster stacks. */
 
-export const OPTIONAL_PROFILES = ["cron", "studio", "monitoring"];
+export const OPTIONAL_PROFILES = ["cron", "studio", "monitoring", "office"];
 
 /** Profiles started by `docker-full.mjs` / `compose:*:full`. */
 export const FULL_PROFILES = ["cron", "studio", "monitoring"];

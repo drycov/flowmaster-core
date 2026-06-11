@@ -41,6 +41,7 @@
     "docker:wait": "node scripts/docker-wait.mjs",
     "docker:full": "node scripts/docker-full.mjs",
     "docker:monitoring": "node scripts/docker-up.mjs --monitoring",
+    "docker:office": "node scripts/docker-up.mjs --office",
     "uat:preflight": "sh scripts/uat-preflight.sh",
     "uat:smoke": "node scripts/uat-smoke.mjs",
     "uat:smoke:db": "node scripts/uat-smoke.mjs --db-only",

@@ -58,6 +58,8 @@ server {
     location /mcp { proxy_pass $flowmaster_kong; }
     location /sso { proxy_pass $flowmaster_kong; }
 
+    include /etc/nginx/snippets/onlyoffice.conf;
+
     location / {
         proxy_set_header Host $http_host;
         proxy_pass $flowmaster_app;
@@ -119,6 +121,8 @@ server {
     location /functions { proxy_pass $flowmaster_kong; }
     location /mcp { proxy_pass $flowmaster_kong; }
     location /sso { proxy_pass $flowmaster_kong; }
+
+    include /etc/nginx/snippets/onlyoffice.conf;
 
     location / {
         proxy_set_header Host $http_host;

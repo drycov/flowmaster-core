@@ -96,7 +96,19 @@ export async function registerTelegramWebhook(secret?: string) {
   }
 
   await saveTelegramWebhookSecret(webhookSecret);
-  return { ok: true, webhook_url: url, webhook_secret: webhookSecret };
+
+  const { syncTelegramBotProfile } = await import("./bot-profile.server");
+  const profile = await syncTelegramBotProfile();
+  if (!profile.ok) {
+    console.warn("[telegram] bot profile sync failed:", profile.error);
+  }
+
+  return {
+    ok: true,
+    webhook_url: url,
+    webhook_secret: webhookSecret,
+    profile_synced: profile.ok,
+  };
 }
 
 export async function deleteTelegramWebhook() {

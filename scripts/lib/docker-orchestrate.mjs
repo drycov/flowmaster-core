@@ -62,7 +62,7 @@ export function orchestrateStack(root, options) {
   runProcess("node", ["scripts/docker-wait.mjs"], root);
 }
 
-export function printStackUrls(root, { stack, tls = false, dev = false, studio = false, monitoring = false } = {}) {
+export function printStackUrls(root, { stack, tls = false, dev = false, studio = false, monitoring = false, office = false } = {}) {
   const env = process.env;
   const nginxPort = env.NGINX_HTTP_PORT ?? "80";
   const stagingPort = env.STAGING_NGINX_PORT ?? "8080";
@@ -95,5 +95,12 @@ export function printStackUrls(root, { stack, tls = false, dev = false, studio =
   if (monitoring) {
     console.log(`  Grafana:      http://127.0.0.1:${env.GRAFANA_PORT ?? "3001"}`);
     console.log(`  Prometheus:   http://127.0.0.1:${env.PROMETHEUS_PORT ?? "9090"}`);
+  }
+  if (office) {
+    const officePort = env.ONLYOFFICE_HTTP_PORT ?? "8082";
+    console.log(`  ONLYOFFICE:   ${appUrl}/onlyoffice  (direct :${officePort})`);
+    console.log("  Admin:        Настройки → Интеграции → ONLYOFFICE → URL без / в конце");
+    console.log(`                office_url: ${appUrl}/onlyoffice`);
+    console.log("                app_url:    тот же публичный URL (для callback из браузера)");
   }
 }

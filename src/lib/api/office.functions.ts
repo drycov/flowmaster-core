@@ -69,8 +69,11 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
     const readOnly = !["draft", "returned_for_revision"].includes(doc.status);
 
     const key = officeDocumentKey(doc.id, version.version_no, doc.updated_at);
-    const appOrigin = await resolveAppOrigin();
-    const callbackUrl = appOrigin ? `${appOrigin}/api/public/hooks/office-callback` : "";
+    const { resolveOfficeCallbackBase, rewriteOfficeStorageUrl } = await import(
+      "@/lib/office/office-env.server"
+    );
+    const callbackBase = await resolveOfficeCallbackBase(resolveAppOrigin);
+    const callbackUrl = callbackBase ? `${callbackBase}/api/public/hooks/office-callback` : "";
 
     return {
       available: true as const,
@@ -81,7 +84,7 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
           fileType,
           key,
           title: doc.title_ru,
-          url: signedUrl,
+          url: rewriteOfficeStorageUrl(signedUrl),
         },
         documentType,
         editorConfig: {

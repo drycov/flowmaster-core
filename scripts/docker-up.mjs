@@ -10,6 +10,7 @@
  *   node scripts/docker-up.mjs --cron     # also start cron sidecar
  *   node scripts/docker-up.mjs --studio   # also start Supabase Studio
  *   node scripts/docker-up.mjs --monitoring
+ *   node scripts/docker-up.mjs --office    # ONLYOFFICE Document Server
  */
 
 import { loadEnvFiles } from "./lib/load-env.mjs";
@@ -25,6 +26,7 @@ const full = args.has("--full");
 const cron = full || args.has("--cron");
 const studio = full || args.has("--studio");
 const monitoring = full || args.has("--monitoring");
+const office = args.has("--office");
 
 loadEnvFiles([".env"]);
 
@@ -32,6 +34,7 @@ const profiles = [];
 if (cron && !dev) profiles.push("cron");
 if (studio) profiles.push("studio");
 if (monitoring && !dev) profiles.push("monitoring");
+if (office && !dev) profiles.push("office");
 
 orchestrateStack(root, {
   stack: dev ? "dev" : tls ? "tls" : "http",
@@ -48,4 +51,4 @@ orchestrateStack(root, {
   envHint: "npm run env:local",
 });
 
-printStackUrls(root, { tls, dev, studio, monitoring });
+printStackUrls(root, { tls, dev, studio, monitoring, office });

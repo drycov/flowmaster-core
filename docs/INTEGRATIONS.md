@@ -146,10 +146,22 @@ Authorization: Bearer <CRON_SECRET>
 
 **Настройки → Telegram:**
 
-1. Bot token от @BotFather
+1. Создайте бота у [@BotFather](https://t.me/BotFather) и скопируйте токен
 2. **Общие → app_url** (публичный HTTPS)
-3. Зарегистрировать webhook (генерирует secret)
+3. Зарегистрируйте webhook (генерирует secret и обновляет описание/команды бота)
 4. Пользователи привязывают бота в профиле
+
+### Профиль бота (BotFather)
+
+При регистрации webhook приложение автоматически выставляет **описание**, **About** и **команды** через Bot API (`setMyDescription`, `setMyShortDescription`, `setMyCommands`).
+
+Если нужно настроить вручную в BotFather → **Edit Bot**:
+
+| Поле | Текст |
+|------|-------|
+| **Description** | Официальный бот **ЕСЭДО** — системы электронного документооборота. Уведомления о задачах и согласованиях, заявки на отпуск, дежурства. Привязка: ЕСЭДО → Профиль → Telegram → «Подключить». |
+| **About** | Уведомления и быстрый доступ к задачам ЕСЭДО: согласования, отпуска, дежурства. |
+| **Commands** | `start` — главное меню или привязка; `newpassword` — новый пароль после сброса |
 
 Функции:
 - Уведомления (tasks, approvals)
@@ -173,10 +185,61 @@ Outbox обрабатывается cron `email-dispatch` (каждые 1–2 м
 
 ## ONLYOFFICE
 
-**Настройки → Интеграции → Office:**
+Встроенный редактор DOCX/XLSX на вкладке **Office Web** документа. Сохранение — через callback в новую версию файла.
 
-- Document server URL
-- Callback: `/api/public/hooks/office-callback`
+### Docker (рекомендуется)
+
+```bash
+npm run env:local   # или env:production — в .env уже ONLYOFFICE_* для Docker-сети
+npm run docker:up -- --office
+# первый запуск Document Server: 2–3 мин (healthcheck)
+curl -sf http://localhost:8082/healthcheck
+curl -sf http://localhost/onlyoffice/web-apps/apps/api/documents/api.js | head
+```
+
+| Компонент | URL |
+|-----------|-----|
+| Через nginx | `http://localhost/onlyoffice` |
+| Напрямую | `http://localhost:8082` |
+| Callback app | `{app_url}/api/public/hooks/office-callback` |
+
+Профиль Compose: `office`. RAM: **+2 GB** к минимуму.
+
+Переменные в `.env` (см. `.env.docker.example`):
+
+| Переменная | Назначение |
+|------------|------------|
+| `ONLYOFFICE_CALLBACK_BASE_URL` | Внутренний URL для Document Server → app (`http://nginx` в Docker) |
+| `ONLYOFFICE_STORAGE_INTERNAL_URL` | Kong для signed URL файлов (`http://kong:8000`) |
+| `ONLYOFFICE_JWT_ENABLED` | `false` (JWT в app пока не используется) |
+
+### Настройка в админке
+
+**Администрирование → Настройки → Интеграции:**
+
+1. Включить **ONLYOFFICE**
+2. **Document Server URL** — публичный адрес **без** завершающего `/`:
+   - local: `http://localhost/onlyoffice`
+   - production TLS: `https://esedo.example.kz/onlyoffice`
+3. **Настройки → Общие → app_url** — публичный URL ЕСЭДО (тот же origin, что у пользователей)
+
+### Требования к документу
+
+- Статус `draft` или `returned_for_revision` — редактирование; иначе только просмотр
+- На текущей версии должен быть файл **DOCX/XLSX** (вкладка «Версии»)
+
+### Production HTTPS
+
+Nginx TLS (`docker-compose.tls.yml`) проксирует `/onlyoffice/` автоматически. В интеграциях укажите `https://<domain>/onlyoffice`.
+
+### Bare metal / внешний Document Server
+
+Если ONLYOFFICE не в этом Compose — укажите URL внешнего сервера. Document Server должен достучаться до:
+
+- signed URL Supabase Storage (`/storage/v1/...`)
+- callback `{app_url}/api/public/hooks/office-callback`
+
+Подробнее: [docker/README.md](../docker/README.md#onlyoffice).
 
 ---
 
