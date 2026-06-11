@@ -37,6 +37,8 @@ import { applyBootstrapOrganizationSetup } from "@/lib/access/tenant-public.serv
 import { clearAuthCookies, publishAuthSession } from "@/lib/auth/server/publish-session.server";
 import { getRefreshSessionCookie } from "@/lib/auth/server/refresh-cookie.server";
 import { refreshAccessTokenFromOpaque } from "@/lib/auth/server/sessions";
+import { withAuthRateLimit } from "@/lib/auth/auth-rate-limit.middleware";
+import { assertAuthRateLimitForIdentity } from "@/lib/auth/rate-limit.server";
 
 async function issueSessionForUser(userId: string, email: string) {
   const settings = await loadSystemSettings();
@@ -76,6 +78,7 @@ const certInfoSchema = z.object({
 // ─── Email auth ─────────────────────────────────────────────────────────────
 
 export const registerWithEmail = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("register")])
   .inputValidator(
     z.object({
       email: z.string().email(),
@@ -97,6 +100,7 @@ export const registerWithEmail = createServerFn({ method: "POST" })
   )
 
   .handler(async ({ data }) => {
+    assertAuthRateLimitForIdentity("register", data.email);
     const { settings: authPolicy, bootstrap } = await assertEmailRegistrationAllowed(data.email);
     const pwdErr = validatePassword(data.password, authPolicy);
     if (pwdErr) throw new Error(pwdErr);
@@ -129,6 +133,7 @@ export const registerWithEmail = createServerFn({ method: "POST" })
   });
 
 export const loginWithEmail = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("login")])
   .inputValidator(
     z.object({
       email: z.string().trim().email(),
@@ -140,6 +145,7 @@ export const loginWithEmail = createServerFn({ method: "POST" })
   )
 
   .handler(async ({ data }) => {
+    assertAuthRateLimitForIdentity("login", data.email);
     const organizationId = await resolveAuthOrganizationId(data.tenant_slug);
 
     const row = await authenticateUser(data.email, data.password);
@@ -150,6 +156,7 @@ export const loginWithEmail = createServerFn({ method: "POST" })
   });
 
 export const loginWithLdap = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("ldap")])
   .inputValidator(
     z.object({
       username: z.string().min(1).max(255),
@@ -158,6 +165,7 @@ export const loginWithLdap = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    assertAuthRateLimitForIdentity("ldap", data.username);
     const settings = await loadSystemSettings();
     if (!settings.ldap.enabled) {
       throw new Error("Вход через Active Directory отключён.");
@@ -187,6 +195,7 @@ export const loginWithLdap = createServerFn({ method: "POST" })
 // ─── EDS auth ───────────────────────────────────────────────────────────────
 
 export const createAuthChallenge = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("eds-challenge")])
   .inputValidator(z.object({ purpose: z.enum(["login", "register", "link"]) }))
 
   .handler(async ({ data }) => {
@@ -216,6 +225,7 @@ export const createAuthChallenge = createServerFn({ method: "POST" })
   });
 
 export const completeEdsAuth = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("eds-complete")])
   .inputValidator(
     z.object({
       challenge_id: z.string().uuid(),
@@ -454,13 +464,15 @@ export const logout = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const refreshAccessToken = createServerFn({ method: "POST" }).handler(async () => {
-  const refreshToken = getRefreshSessionCookie();
-  if (!refreshToken) {
-    throw new Error("No refresh session");
-  }
-  return refreshAccessTokenFromOpaque(refreshToken);
-});
+export const refreshAccessToken = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("refresh")])
+  .handler(async () => {
+    const refreshToken = getRefreshSessionCookie();
+    if (!refreshToken) {
+      throw new Error("No refresh session");
+    }
+    return refreshAccessTokenFromOpaque(refreshToken);
+  });
 
 export const getCurrentSession = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();

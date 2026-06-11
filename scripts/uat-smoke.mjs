@@ -356,7 +356,7 @@ async function checkTenantIsolation(sb) {
   if (!tested) {
     skip(
       "cross-tenant document isolation",
-      "no cross-org user+document pair in seed data (need 2 orgs with profiles and documents)",
+      "no cross-org user+document pair — run: npm run uat:seed-fixture",
     );
   }
 }

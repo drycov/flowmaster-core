@@ -43,11 +43,19 @@ Hooks: `email-dispatch`, `webhook-dispatch`, `sla-tick`, `retention-tick`, `lice
 
 ## Подготовка данных
 
-1. `http://localhost:8080/auth` — первый admin
+1. `http://localhost:8080/auth` — первый admin (org A)
 2. **Настройки → Общие** — `app_url`
 3. Лицензия FM1 или trial
-4. Тестовые пользователи (registrar, approver, viewer)
-5. Справочники — через UI или `supabase/seeds/` ([supabase/seeds/README.md](../supabase/seeds/README.md), `scripts/import-*-csv.mjs`), не автоматически при migrate
+4. **Multi-tenant UAT fixture** (2 org + cross-tenant document для smoke/E2E):
+
+```bash
+npm run uat:seed-fixture
+npm run uat:seed-fixture -- --print-env   # строки для .env
+npm run uat:smoke:db
+```
+
+5. Тестовые пользователи (registrar, approver, viewer) — при необходимости через UI
+6. Справочники — через UI или `supabase/seeds/` ([supabase/seeds/README.md](../supabase/seeds/README.md), `scripts/import-*-csv.mjs`), не автоматически при migrate
 
 ## Приёмочное тестирование
 

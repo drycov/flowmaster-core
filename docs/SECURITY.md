@@ -33,6 +33,25 @@
 - TLS на nginx (`docker-compose.tls.yml`) или внешнем reverse proxy
 - `.env` / `.env.production` — только на сервере, в `.gitignore`
 
+### Rate limiting (app layer)
+
+In-memory лимиты на server functions аутентификации (`src/lib/auth/rate-limit.server.ts`):
+
+| Scope | По IP | По аккаунту (email/username) |
+|-------|-------|------------------------------|
+| login (email/LDAP/EDS/Telegram) | 10 / 15 мин | 5 / 15 мин |
+| register | 5 / час | 3 / час |
+| EDS challenge | 20 / 15 мин | — |
+| refresh token | 60 / 15 мин | — |
+| password reset (Telegram) | 5–10 / час | 3–5 / час |
+| vendor admin login | 5 / 15 мин | — |
+
+Ключ IP: `X-Forwarded-For` (первый hop) или `X-Real-IP`. При нескольких репликах счётчики **per-process** — для строгого лимита нужен shared store (Redis) или nginx `limit_req`.
+
+Отключение: `AUTH_RATE_LIMIT_ENABLED=false` (только для dev/test).
+
+GoTrue (Supabase Auth) имеет собственные лимиты на `/token` и email — см. `docker/supabase/CONFIG.md`.
+
 ## Авторизация
 
 ### RBAC
@@ -89,7 +108,7 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 
 ## Hardening checklist (production)
 
-- [ ] `CRON_SECRET` задан, anon key не используется для cron
+- [ ] `AUTH_RATE_LIMIT_ENABLED` не отключён на production (или nginx `limit_req` на `/auth`)
 - [ ] `ONLYOFFICE_JWT_ENABLED=true` на production (общий `ONLYOFFICE_JWT_SECRET` у app и Document Server)
 - [ ] Cron sidecar: `docker compose -f docker-compose.tls.yml --profile cron up -d`
 - [ ] Telegram webhook secret зарегистрирован

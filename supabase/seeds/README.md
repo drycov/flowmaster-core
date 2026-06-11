@@ -19,3 +19,14 @@ docker exec -i supabase-db psql -U postgres -d postgres -f - < supabase/seeds/se
 ```
 
 Автоматический `supabase/seed.sql` после migrate отключён по умолчанию (`APPLY_DB_SEED=0`).
+
+## UAT multi-tenant fixture
+
+Для cross-tenant smoke и Playwright (`e2e/tenant-isolation.spec.ts`):
+
+```bash
+npm run uat:seed-fixture
+npm run uat:seed-fixture -- --print-env
+```
+
+Создаёт org B (`uat-tenant-b`), пользователей `@fixture.local`, документ `UAT-FIXTURE-001` в org A. Идempotent — повторный запуск безопасен.

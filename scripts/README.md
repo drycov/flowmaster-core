@@ -102,6 +102,7 @@ Production генерирует согласованный набор: `APP_URL`
 | `npm run uat:smoke` | Automated smoke |
 | `npm run uat:smoke:db` | DB-only smoke |
 | `npm run uat:smoke:full` | Smoke + Playwright E2E |
+| `npm run uat:seed-fixture` | 2 tenants + cross-tenant doc for isolation tests |
 | `npm run test:e2e` | Playwright |
 | `npm run test:e2e:ui` | Playwright UI mode |
 | `npm run test:e2e:install` | Установить Chromium |

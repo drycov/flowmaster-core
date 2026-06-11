@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
+import { withAuthRateLimit } from "@/lib/auth/auth-rate-limit.middleware";
+import { assertAuthRateLimitForIdentity } from "@/lib/auth/rate-limit.server";
 import { publishAuthSession } from "@/lib/auth/server/publish-session.server";
 import { resolveAuthOrganizationFromRequest } from "@/lib/access/tenant-auth.server";
 import {
@@ -10,16 +12,19 @@ import {
   requestTelegramPasswordReset,
 } from "@/lib/telegram/auth.server";
 
-export const startTelegramLogin = createServerFn({ method: "POST" }).handler(async () => {
-  const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } =
-    await import("@/lib/telegram/polling.server");
-  if ((await getTelegramDeliveryMode()) === "polling") {
-    void pollTelegramUpdatesOnce(0);
-  }
-  return createTelegramLoginSession();
-});
+export const startTelegramLogin = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("telegram-start")])
+  .handler(async () => {
+    const { getTelegramDeliveryMode, pollTelegramUpdatesOnce } =
+      await import("@/lib/telegram/polling.server");
+    if ((await getTelegramDeliveryMode()) === "polling") {
+      void pollTelegramUpdatesOnce(0);
+    }
+    return createTelegramLoginSession();
+  });
 
 export const completeTelegramLogin = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("telegram-complete")])
   .inputValidator(
     z.object({
       token: z.string().min(16).max(64),
@@ -41,6 +46,7 @@ export const completeTelegramLogin = createServerFn({ method: "POST" })
   });
 
 export const requestPasswordResetTelegram = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("password-reset-request")])
   .inputValidator(
     z.object({
       email: z.string().trim().email(),
@@ -48,6 +54,7 @@ export const requestPasswordResetTelegram = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    assertAuthRateLimitForIdentity("password-reset-request", data.email);
     const request = getRequest();
     const organizationId = await resolveAuthOrganizationFromRequest({
       tenantSlug: data.tenant_slug,
@@ -57,6 +64,7 @@ export const requestPasswordResetTelegram = createServerFn({ method: "POST" })
   });
 
 export const confirmPasswordResetTelegram = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("password-reset-confirm")])
   .inputValidator(
     z.object({
       email: z.string().trim().email(),
@@ -66,6 +74,7 @@ export const confirmPasswordResetTelegram = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    assertAuthRateLimitForIdentity("password-reset-confirm", data.email);
     const request = getRequest();
     const organizationId = await resolveAuthOrganizationFromRequest({
       tenantSlug: data.tenant_slug,

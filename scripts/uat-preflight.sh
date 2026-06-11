@@ -49,10 +49,14 @@ printf '\n4. E2E smoke\n'
 if [ -n "${E2E_EMAIL:-}" ] && [ -n "${E2E_PASSWORD:-}" ]; then
   printf '  run: E2E_BASE_URL=%s npm run test:e2e\n' "$APP_URL"
 else
-  printf '  skip — set E2E_EMAIL and E2E_PASSWORD in .env\n'
+  printf '  skip — set E2E_EMAIL and E2E_PASSWORD (or: npm run uat:seed-fixture -- --print-env)\n'
 fi
 
-printf '\n5. Manual UAT\n'
+printf '\n5. Cross-tenant fixture\n'
+printf '  npm run uat:seed-fixture\n'
+printf '  npm run uat:seed-fixture -- --print-env\n'
+
+printf '\n6. Manual UAT\n'
 printf '  docs/UAT.md — checklist for acceptance with customer\n'
 printf '  docs/STAGING.md — staging environment guide\n'
 

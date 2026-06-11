@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { withAuthRateLimit } from "@/lib/auth/auth-rate-limit.middleware";
 import {
   clearVendorAdminSession,
   establishVendorAdminSession,
@@ -20,6 +21,7 @@ export const getVendorAdminSession = createServerFn({ method: "GET" }).handler(a
 }));
 
 export const loginVendorAdmin = createServerFn({ method: "POST" })
+  .middleware([withAuthRateLimit("vendor-admin-login")])
   .inputValidator(z.object({ support_code: z.string().min(6).max(32) }))
   .handler(async ({ data }) => {
     establishVendorAdminSession(data.support_code);
