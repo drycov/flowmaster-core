@@ -32,6 +32,12 @@ export function AdminLoginPage() {
     try {
       const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signErr) {
+        console.error("[admin-login] supabase auth failed", {
+          email,
+          status: signErr.status,
+          code: signErr.code,
+          message: signErr.message,
+        });
         setError(signErr.message);
         return;
       }

@@ -67,7 +67,8 @@ export async function bootstrapOwnerFromTelegramEnv(
     "Сохраните пароль. После входа подтвердите доступ в Telegram.",
   ].join("\n");
 
-  const password_sent = await sendVendorTelegramMessage(entry.chatId, text);
+  const sendResult = await sendVendorTelegramMessage(entry.chatId, text);
+  const password_sent = sendResult.ok;
   if (!password_sent) {
     console.error(`[vendor-staff] owner created but Telegram DM failed for chat ${entry.chatId}`);
   }
