@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveAppOrigin, resolveOfficeUrl } from "@/lib/app-origin.server";
 import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
-import { createSignedDownloadUrl } from "@/lib/storage/s3.server";
+import { createSignedDownloadUrl, createAdminSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
 import {
   officeDocumentKey,
@@ -64,6 +64,31 @@ function officeFileTypes(format: string) {
   return { fileType, documentType };
 }
 
+function officeDocumentPermissions(readOnly: boolean): Record<string, boolean> {
+  if (readOnly) {
+    return {
+      edit: false,
+      download: true,
+      print: true,
+      copy: true,
+      fillForms: true,
+      modifyFilter: false,
+      review: false,
+      comment: false,
+    };
+  }
+  return {
+    edit: true,
+    download: true,
+    print: true,
+    copy: true,
+    fillForms: true,
+    modifyFilter: true,
+    review: true,
+    comment: true,
+  };
+}
+
 async function buildEditorPayload(input: {
   supabase: Parameters<typeof createSignedDownloadUrl>[0];
   userId: string;
@@ -76,12 +101,8 @@ async function buildEditorPayload(input: {
   officeUrl: string;
 }) {
   const { fileType, documentType } = officeFileTypes(input.fileFormat);
-  const signedUrl = await createSignedDownloadUrl(
-    input.supabase,
-    input.bucket,
-    input.storagePath,
-    3600,
-  );
+  // ONLYOFFICE fetches files server-side — service-role URL avoids RLS/signed-url edge cases.
+  const signedUrl = await createAdminSignedDownloadUrl(input.bucket, input.storagePath, 3600);
 
   const { data: profile } = await input.supabase
     .from("profiles")
@@ -101,13 +122,7 @@ async function buildEditorPayload(input: {
       key: input.documentKey,
       title: input.title,
       url: rewriteOfficeStorageUrl(signedUrl),
-      permissions: {
-        edit: !input.readOnly,
-        download: true,
-        print: true,
-        review: false,
-        comment: false,
-      },
+      permissions: officeDocumentPermissions(input.readOnly),
     },
     documentType,
     editorConfig: {
@@ -120,6 +135,8 @@ async function buildEditorPayload(input: {
       },
       customization: {
         forcesave: !input.readOnly,
+        chat: false,
+        ...(input.readOnly ? { comments: false } : {}),
       },
     },
   };

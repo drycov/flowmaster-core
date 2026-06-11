@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileEdit, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { OfficeEditorConfigResponse } from "@/lib/api/office.functions";
 
 export type { OfficeEditorConfigResponse };
@@ -35,7 +36,29 @@ interface OnlyOfficeEmbedProps {
   queryFn: () => Promise<OfficeEditorConfigResponse>;
   editorId?: string;
   heightClass?: string;
+  /** Stretch editor to fill the parent flex column (document card). */
+  fill?: boolean;
   showPlaceholderWhenUnavailable?: boolean;
+}
+
+function notifyOfficeResize() {
+  window.dispatchEvent(new Event("resize"));
+}
+
+function waitForHostHeight(host: HTMLElement, minHeight = 200): Promise<number> {
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const tick = () => {
+      const height = host.clientHeight;
+      if (height >= minHeight || attempts >= 30) {
+        resolve(Math.max(height, minHeight));
+        return;
+      }
+      attempts += 1;
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
 }
 
 export function OnlyOfficeEmbed({
@@ -43,6 +66,7 @@ export function OnlyOfficeEmbed({
   queryFn,
   editorId = "office-editor",
   heightClass = "h-[600px]",
+  fill = false,
   showPlaceholderWhenUnavailable = true,
 }: OnlyOfficeEmbedProps) {
   const { t } = useI18n();
@@ -64,6 +88,11 @@ export function OnlyOfficeEmbed({
       ? JSON.stringify(officeConfig.config)
       : null;
 
+  const hostClassName = cn(
+    "relative w-full",
+    fill ? "min-h-[70vh] flex-1 h-full" : heightClass,
+  );
+
   useEffect(() => {
     if (!officeUrl || !officeConfig?.available || !officeConfig.document_server_url || !configKey) {
       return;
@@ -76,13 +105,38 @@ export function OnlyOfficeEmbed({
       try {
         await loadOnlyOfficeScript(officeConfig.document_server_url);
         if (cancelled || !window.DocsAPI || !hostRef.current) return;
+
+        const hostHeight = fill
+          ? await waitForHostHeight(hostRef.current)
+          : hostRef.current.clientHeight || 600;
+        if (cancelled || !hostRef.current) return;
+
         hostRef.current.innerHTML = "";
         const mount = document.createElement("div");
         mount.id = editorId;
-        mount.className = `w-full ${heightClass}`;
+        if (fill) {
+          Object.assign(mount.style, {
+            position: "absolute",
+            inset: "0",
+            width: "100%",
+            height: "100%",
+          });
+        } else {
+          mount.className = `w-full ${heightClass}`;
+        }
         hostRef.current.appendChild(mount);
-        window.DocsAPI.DocEditor(editorId, officeConfig.config);
+
+        const initConfig =
+          typeof officeConfig.config.token === "string"
+            ? { token: officeConfig.config.token }
+            : {
+                ...officeConfig.config,
+                width: "100%",
+                height: fill ? `${hostHeight}px` : "600px",
+              };
+        window.DocsAPI.DocEditor(editorId, initConfig);
         mountedKey.current = configKey;
+        requestAnimationFrame(() => notifyOfficeResize());
       } catch (e) {
         console.error(e);
         toast.error(t("office.loadError"));
@@ -92,7 +146,15 @@ export function OnlyOfficeEmbed({
     return () => {
       cancelled = true;
     };
-  }, [officeUrl, officeConfig, configKey, editorId, heightClass, t]);
+  }, [officeUrl, officeConfig, configKey, editorId, heightClass, fill, t]);
+
+  useEffect(() => {
+    if (!fill || !hostRef.current || !officeConfig?.available) return;
+    const node = hostRef.current;
+    const ro = new ResizeObserver(() => notifyOfficeResize());
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [fill, officeConfig?.available]);
 
   if (!officeUrl && !isLoading && !officeConfig) {
     return null;
@@ -100,7 +162,12 @@ export function OnlyOfficeEmbed({
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center ${heightClass} text-muted-foreground`}>
+      <div
+        className={cn(
+          "flex items-center justify-center text-muted-foreground",
+          fill ? hostClassName : heightClass,
+        )}
+      >
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
         {t("common.loading")}
       </div>
@@ -108,7 +175,7 @@ export function OnlyOfficeEmbed({
   }
 
   if (officeConfig?.available) {
-    return <div ref={hostRef} className="relative w-full" />;
+    return <div ref={hostRef} className={hostClassName} />;
   }
 
   if (!showPlaceholderWhenUnavailable) return null;

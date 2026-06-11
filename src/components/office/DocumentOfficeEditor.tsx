@@ -29,6 +29,7 @@ export function DocumentOfficeEditor({
         editorId={editorId}
         queryKey={queryKey}
         queryFn={() => getOfficeEditorConfig({ data: { document_id: documentId } })}
+        fill
       />
     );
   }
@@ -49,6 +50,7 @@ export function DocumentOfficeEditor({
       editorId={editorId}
       queryKey={queryKey}
       queryFn={() => getOfficeEditorConfig({ data: { document_id: documentId } })}
+      fill
       showPlaceholderWhenUnavailable={!isOfficeNotConfigured(officeConfig)}
     />
   );

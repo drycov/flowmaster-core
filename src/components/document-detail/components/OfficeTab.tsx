@@ -71,7 +71,11 @@ export function OfficeTab({
   }
 
   if (officeConfigured) {
-    return <DocumentOfficeEditor documentId={documentId} />;
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <DocumentOfficeEditor documentId={documentId} />
+      </div>
+    );
   }
 
   return (

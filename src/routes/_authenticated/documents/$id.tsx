@@ -284,8 +284,8 @@ function DocumentDetail() {
 
       <PageBody className="grid grid-cols-3 gap-4">
         {/* Левая сторона: Вкладки с содержимым и мета-данными */}
-        <div className="col-span-2 space-y-4">
-          <Tabs defaultValue="content">
+        <div className="col-span-2 flex min-h-0 flex-col space-y-4">
+          <Tabs defaultValue="content" className="flex min-h-0 flex-1 flex-col">
             <TabsList className="rounded-sm">
               <TabsTrigger value="content">
                 <FileEdit className="w-4 h-4 mr-1" />
@@ -338,9 +338,9 @@ function DocumentDetail() {
             </TabsContent>
 
             {/* Вкладка 2: Интеграция с редактором документов (ONLYOFFICE/MS Web) */}
-            <TabsContent value="office">
-              <Card className="rounded-sm">
-                <CardContent className="p-6">
+            <TabsContent value="office" className="mt-2 flex min-h-0 flex-1 flex-col">
+              <Card className="flex min-h-[70vh] flex-1 flex-col rounded-sm">
+                <CardContent className="flex min-h-0 flex-1 flex-col p-4 pt-6">
                   <OfficeTab
                     documentId={id}
                     initialContent={doc.body ?? ""}
