@@ -94,7 +94,7 @@ export function startAdminVerify() {
 }
 
 export function pollAdminVerify(token: string) {
-  return adminFetch<{ status: string; ok: boolean }>(
+  return adminFetch<{ status: string; ok: boolean; session_ready?: boolean }>(
     `/verify/poll?token=${encodeURIComponent(token)}`,
   );
 }

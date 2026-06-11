@@ -113,10 +113,11 @@ export async function handleTelegramWebhook(c: Context): Promise<Response> {
     return c.json({ ok: true });
   }
 
-  const reply =
-    "🛡 Бот вендора ZEUS — подтверждение входа в Cloud Admin.\n" +
-    "Откройте /admin на license server, войдите email+паролем и перейдите по ссылке из браузера.\n" +
-    "Это не бот клиентского EDMS.";
+  const     reply =
+      "🛡 Бот вендора ZEUS — подтверждение Cloud Admin.\n\n" +
+      "⚠️ Обычный /start не подтверждает вход.\n" +
+      "Вернитесь в браузер на /admin/verify и нажмите «Открыть Telegram» — откроется ссылка с кодом.\n\n" +
+      "Это не бот клиентского EDMS.";
 
   logWebhook("welcome", { chat_id: chatIdStr });
   await notifyChat(chatIdStr, reply);

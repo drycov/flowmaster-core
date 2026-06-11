@@ -64,7 +64,7 @@ export function setVerifySessionCookie(c: Context, userId: string): void {
   setCookie(c, VENDOR_VERIFY_COOKIE, token, {
     httpOnly: true,
     secure: cookieSecure(),
-    sameSite: "Strict",
+    sameSite: "Lax",
     path: "/",
     maxAge: Math.floor(VENDOR_VERIFY_TTL_MS / 1000),
   });
@@ -95,27 +95,18 @@ export type VerifyStartResult = {
   webhook: { enabled: boolean; dispatched: boolean };
 };
 
-export async function startVerifyChallenge(
+async function buildVerifyStartResult(
   supabase: SupabaseClient,
   user: PortalUser,
+  token: string,
+  expiresAt: string,
 ): Promise<VerifyStartResult> {
-  const token = generateChallengeToken();
-  const expiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
-
-  const { error } = await supabase.from("vendor_admin_verify_challenges").insert({
-    token,
-    user_id: user.id,
-    email: user.email,
-    expires_at: expiresAt,
-  });
-  if (error) throw new Error(error.message);
-
   const botUsername = getTelegramBotUsername();
   const startCommand = `vendor_admin_${token}`;
   const telegramEnabled = await isTelegramVerifyEnabledAsync(supabase);
   const deepLink =
     telegramEnabled && botUsername
-      ? `https://t.me/${botUsername}?start=${startCommand}`
+      ? `https://t.me/${botUsername}?start=${encodeURIComponent(startCommand)}`
       : null;
 
   let webhookDispatched = false;
@@ -159,6 +150,38 @@ export async function startVerifyChallenge(
   };
 }
 
+export async function startVerifyChallenge(
+  supabase: SupabaseClient,
+  user: PortalUser,
+): Promise<VerifyStartResult> {
+  const { data: existing } = await supabase
+    .from("vendor_admin_verify_challenges")
+    .select("token, expires_at")
+    .eq("user_id", user.id)
+    .is("confirmed_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.token) {
+    return buildVerifyStartResult(supabase, user, existing.token, existing.expires_at);
+  }
+
+  const token = generateChallengeToken();
+  const expiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
+
+  const { error } = await supabase.from("vendor_admin_verify_challenges").insert({
+    token,
+    user_id: user.id,
+    email: user.email,
+    expires_at: expiresAt,
+  });
+  if (error) throw new Error(error.message);
+
+  return buildVerifyStartResult(supabase, user, token, expiresAt);
+}
+
 export async function pollVerifyChallenge(
   supabase: SupabaseClient,
   token: string,
@@ -193,7 +216,8 @@ export async function confirmVerifyChallenge(
 
   if (via === "telegram") {
     const expectedChat = await getTelegramChatIdForStaff(supabase, row.email);
-    if (!expectedChat || !opts?.chatId || expectedChat !== opts.chatId) {
+    const chatId = opts?.chatId?.trim() ?? "";
+    if (!expectedChat?.trim() || !chatId || expectedChat.trim() !== chatId) {
       return { ok: false, error: "Telegram not linked for this vendor account" };
     }
   }

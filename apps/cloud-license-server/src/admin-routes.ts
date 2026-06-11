@@ -26,6 +26,7 @@ import { checkVendorTelegramWebhook, registerVendorTelegramWebhook } from "./lib
 import {
   clearVerifySessionCookie,
   getVerifyMethods,
+  hasValidVerifyCookie,
   pollVerifyChallenge,
   setVerifySessionCookie,
   startVerifyChallenge,
@@ -137,7 +138,11 @@ adminRoutes.get("/verify/poll", async (c) => {
   const status = await pollVerifyChallenge(getSupabase(), token);
   if (status === "confirmed") {
     setVerifySessionCookie(c, identity.id);
-    return c.json({ status, ok: true });
+    return c.json({
+      status,
+      ok: true,
+      session_ready: hasValidVerifyCookie(c, identity.id),
+    });
   }
   return c.json({ status, ok: false });
 });
