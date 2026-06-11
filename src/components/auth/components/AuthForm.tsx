@@ -2,6 +2,13 @@ import { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  sap,
+  sapButtonEmphasizedClass,
+  sapInputClass,
+  sapLabelClass,
+  sapLinkClass,
+} from "@/components/auth/styles/sap-tokens";
 import { useI18n } from "@/i18n";
 import type { AuthMode } from "../types";
 
@@ -69,32 +76,35 @@ export function AuthForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {showBootstrapOrg && mode === "signup" && (
-        <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("auth.tenant.bootstrapOrgTitle")}
-          </p>
+        <div
+          className="space-y-3 rounded-sm border p-4"
+          style={{ borderColor: sap.borderLight, backgroundColor: sap.pageBg }}
+        >
+          <p className={sapLabelClass}>{t("auth.tenant.bootstrapOrgTitle")}</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>{t("auth.tenant.orgNameRu")}</Label>
+            <div className="space-y-1">
+              <Label className={sapLabelClass}>{t("auth.tenant.orgNameRu")}</Label>
               <Input
                 value={orgNameRu}
                 onChange={(e) => onOrgNameRuChange(e.target.value)}
                 disabled={loading}
                 placeholder={t("auth.tenant.orgNamePlaceholder")}
+                className={sapInputClass}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label>{t("auth.tenant.orgNameKk")}</Label>
+            <div className="space-y-1">
+              <Label className={sapLabelClass}>{t("auth.tenant.orgNameKk")}</Label>
               <Input
                 value={orgNameKk}
                 onChange={(e) => onOrgNameKkChange(e.target.value)}
                 disabled={loading}
                 placeholder={t("auth.tenant.orgNameKkPlaceholder")}
+                className={sapInputClass}
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>{t("auth.tenant.slug")}</Label>
+          <div className="space-y-1">
+            <Label className={sapLabelClass}>{t("auth.tenant.slug")}</Label>
             <div className="flex items-center gap-2">
               <Input
                 value={tenantSlug}
@@ -102,20 +112,24 @@ export function AuthForm({
                 disabled={loading || tenantSlugReadOnly}
                 required
                 placeholder="acme"
-                className="font-mono"
+                className={`${sapInputClass} font-mono`}
               />
               {tenantBaseDomain && (
-                <span className="shrink-0 text-xs text-muted-foreground">.{tenantBaseDomain}</span>
+                <span className="shrink-0 text-xs" style={{ color: sap.textMuted }}>
+                  .{tenantBaseDomain}
+                </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">{t("auth.tenant.slugHint")}</p>
+            <p className="text-xs" style={{ color: sap.textMuted }}>
+              {t("auth.tenant.slugHint")}
+            </p>
           </div>
         </div>
       )}
 
       {showTenantSlug && !showBootstrapOrg && (
-        <div className="space-y-1.5">
-          <Label>{t("auth.tenant.slug")}</Label>
+        <div className="space-y-1">
+          <Label className={sapLabelClass}>{t("auth.tenant.slug")}</Label>
           <div className="flex items-center gap-2">
             <Input
               value={tenantSlug}
@@ -123,43 +137,49 @@ export function AuthForm({
               disabled={loading || tenantSlugReadOnly}
               required={showTenantSlug}
               placeholder="acme"
-              className="font-mono"
+              className={`${sapInputClass} font-mono`}
             />
             {tenantBaseDomain && (
-              <span className="shrink-0 text-xs text-muted-foreground">.{tenantBaseDomain}</span>
+              <span className="shrink-0 text-xs" style={{ color: sap.textMuted }}>
+                .{tenantBaseDomain}
+              </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{t("auth.tenant.slugLoginHint")}</p>
+          <p className="text-xs" style={{ color: sap.textMuted }}>
+            {t("auth.tenant.slugLoginHint")}
+          </p>
         </div>
       )}
 
       {mode === "signup" && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label>{t("auth.fullnameRu")}</Label>
+          <div className="space-y-1">
+            <Label className={sapLabelClass}>{t("auth.fullnameRu")}</Label>
             <Input
               value={fullNameRu}
               onChange={(e) => onFullNameRuChange(e.target.value)}
               required
               disabled={loading}
               placeholder={t("auth.placeholder.fullName")}
+              className={sapInputClass}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label>{t("auth.fullnameKk")}</Label>
+          <div className="space-y-1">
+            <Label className={sapLabelClass}>{t("auth.fullnameKk")}</Label>
             <Input
               value={fullNameKk}
               onChange={(e) => onFullNameKkChange(e.target.value)}
               required
               disabled={loading}
               placeholder={t("auth.placeholder.fullNameKk")}
+              className={sapInputClass}
             />
           </div>
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <Label>{t("auth.email")}</Label>
+      <div className="space-y-1">
+        <Label className={sapLabelClass}>{t("auth.email")}</Label>
         <Input
           type="email"
           value={email}
@@ -168,18 +188,15 @@ export function AuthForm({
           disabled={loading}
           autoComplete="email"
           placeholder={t("auth.placeholder.email")}
+          className={sapInputClass}
         />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <Label>{t("auth.password")}</Label>
+          <Label className={sapLabelClass}>{t("auth.password")}</Label>
           {mode === "signin" && showForgotPassword && onForgotPassword && (
-            <button
-              type="button"
-              className="text-xs text-primary hover:underline"
-              onClick={onForgotPassword}
-            >
+            <button type="button" className={sapLinkClass} onClick={onForgotPassword}>
               {t("auth.telegram.forgotPassword")}
             </button>
           )}
@@ -193,9 +210,10 @@ export function AuthForm({
           disabled={loading}
           autoComplete={mode === "signin" ? "current-password" : "new-password"}
           placeholder="••••••••"
+          className={sapInputClass}
         />
         {mode === "signup" && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: sap.textMuted }}>
             {requireStrongPassword
               ? `${t("auth.passwordHintStrong")}. ${t("auth.passwordHintMin").replace("{n}", String(minPasswordLength))}`
               : t("auth.passwordHint").replace("{n}", String(minPasswordLength))}
@@ -204,8 +222,8 @@ export function AuthForm({
       </div>
 
       {mode === "signup" && (
-        <div className="space-y-1.5">
-          <Label>{t("auth.passwordConfirm")}</Label>
+        <div className="space-y-1">
+          <Label className={sapLabelClass}>{t("auth.passwordConfirm")}</Label>
           <Input
             type="password"
             value={passwordConfirm}
@@ -215,11 +233,12 @@ export function AuthForm({
             disabled={loading}
             autoComplete="new-password"
             placeholder="••••••••"
+            className={sapInputClass}
           />
         </div>
       )}
 
-      <Button type="submit" className="w-full" size="lg" disabled={loading}>
+      <Button type="submit" className={sapButtonEmphasizedClass} size="lg" disabled={loading}>
         {loading ? t("common.loading") : mode === "signin" ? t("auth.signin") : t("auth.signup")}
       </Button>
     </form>

@@ -40,6 +40,8 @@ fi
 
 printf '\n3. UAT smoke script\n'
 printf '  run: APP_URL=%s npm run uat:smoke\n' "$APP_URL"
+printf '  db:  npm run uat:smoke:db\n'
+printf '  full: E2E_SKIP_SERVER=1 APP_URL=%s npm run uat:smoke:full\n' "$APP_URL"
 
 printf '\n4. E2E smoke\n'
 if [ -n "${E2E_EMAIL:-}" ] && [ -n "${E2E_PASSWORD:-}" ]; then

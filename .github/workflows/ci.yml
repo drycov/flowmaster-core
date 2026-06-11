@@ -33,6 +33,24 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
           SUPABASE_JWT_SECRET: placeholder-jwt-secret-for-ci-build-only
 
+  smoke-db:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.E2E_SUPABASE_URL != '' && secrets.E2E_SUPABASE_SERVICE_ROLE_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run uat:smoke:db
+        env:
+          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+
   e2e:
     runs-on: ubuntu-latest
     if: ${{ secrets.E2E_EMAIL != '' && secrets.E2E_PASSWORD != '' }}

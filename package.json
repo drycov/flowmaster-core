@@ -21,6 +21,9 @@
     "compose:staging:down": "docker compose -f docker-compose.staging.yml down",
     "uat:preflight": "sh scripts/uat-preflight.sh",
     "uat:smoke": "node scripts/uat-smoke.mjs",
+    "uat:smoke:db": "node scripts/uat-smoke.mjs --db-only",
+    "uat:smoke:full": "node scripts/uat-smoke.mjs --run-e2e",
+    "test:e2e:security": "playwright test e2e/health.spec.ts e2e/security-routes.spec.ts",
     "license:generate": "node scripts/generate-license-key.mjs",
     "license:server": "node scripts/license-server-admin.mjs"
   },

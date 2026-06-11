@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { updateDocumentRegistration } from "@/lib/documents/sidecars.server";
 
 async function resolvePrefix(journalId?: string | null): Promise<string> {
   if (journalId) {
@@ -25,19 +26,19 @@ export async function ensureDocumentRegNumber(
   documentId: string,
   journalId?: string | null,
 ): Promise<string> {
-  const { data: doc, error: readErr } = await supabaseAdmin
-    .from("documents")
+  const { data: regRow, error: readErr } = await supabaseAdmin
+    .from("document_registration")
     .select("reg_number, registration_journal_id")
-    .eq("id", documentId)
-    .single();
+    .eq("document_id", documentId)
+    .maybeSingle();
 
   if (readErr) throw new Error(readErr.message);
 
-  const row = doc as { reg_number?: string | null; registration_journal_id?: string | null };
-  const existing = row.reg_number?.trim();
+  const row = regRow as { reg_number?: string | null; registration_journal_id?: string | null } | null;
+  const existing = row?.reg_number?.trim();
   if (existing) return existing;
 
-  const effectiveJournalId = journalId ?? row.registration_journal_id ?? null;
+  const effectiveJournalId = journalId ?? row?.registration_journal_id ?? null;
   const prefix = await resolvePrefix(effectiveJournalId);
 
   const { data: regNumber, error: rpcErr } = await supabaseAdmin.rpc(
@@ -46,25 +47,19 @@ export async function ensureDocumentRegNumber(
   );
 
   if (!rpcErr && regNumber) {
-    const { data: updated, error: updErr } = await (supabaseAdmin.from("documents") as any)
-      .update({ reg_number: regNumber })
-      .eq("id", documentId)
-      .select("reg_number")
-      .single();
-
-    if (updErr) throw new Error(updErr.message);
-    return (updated as { reg_number: string }).reg_number;
+    await updateDocumentRegistration(supabaseAdmin, documentId, { reg_number: regNumber });
+    return String(regNumber);
   }
 
   const { data: retry, error: retryErr } = await supabaseAdmin
-    .from("documents")
+    .from("document_registration")
     .select("reg_number")
-    .eq("id", documentId)
-    .single();
+    .eq("document_id", documentId)
+    .maybeSingle();
 
   if (retryErr) throw new Error(retryErr.message);
 
-  const retried = (retry as { reg_number?: string | null }).reg_number?.trim();
+  const retried = (retry as { reg_number?: string | null } | null)?.reg_number?.trim();
   if (retried) return retried;
 
   throw new Error(rpcErr?.message ?? "Не удалось присвоить регистрационный номер документу");

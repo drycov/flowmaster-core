@@ -7,6 +7,25 @@ import { setSession } from "@/lib/auth/session-storage";
 import { resetSupabaseClient } from "@/integrations/supabase/client";
 import { parseServerValidationError } from "../validation";
 
+function isAuthNetworkError(err: unknown): boolean {
+  if (!(err instanceof TypeError)) return false;
+  const msg = err.message.toLowerCase();
+  return msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("load failed");
+}
+
+function resolveAuthErrorMessage(
+  err: unknown,
+  t: (key: string) => string,
+  fallbackKey: "auth.toast.signInError" | "auth.toast.signUpError",
+): string {
+  if (isAuthNetworkError(err)) return t("auth.toast.serverUnavailable");
+  const fallback = t(fallbackKey);
+  if (err instanceof Error) {
+    return parseServerValidationError(err.message, t) ?? err.message;
+  }
+  return fallback;
+}
+
 interface UseAuthReturn {
   loading: boolean;
   signIn: (email: string, password: string, tenantSlug?: string) => Promise<void>;
@@ -43,13 +62,7 @@ export function useAuth(): UseAuthReturn {
       toast.success(t("auth.toast.signInSuccessFull"));
       navigate({ to: "/dashboard" });
     } catch (err) {
-      const fallback = t("auth.toast.signInError");
-      const message =
-        err instanceof Error
-          ? (parseServerValidationError(err.message, t) ?? err.message)
-          : fallback;
-      toast.error(message);
-      throw err;
+      toast.error(resolveAuthErrorMessage(err, t, "auth.toast.signInError"));
     } finally {
       setLoading(false);
     }
@@ -87,13 +100,7 @@ export function useAuth(): UseAuthReturn {
       );
       navigate({ to: "/dashboard" });
     } catch (err) {
-      const fallback = t("auth.toast.signUpError");
-      const message =
-        err instanceof Error
-          ? (parseServerValidationError(err.message, t) ?? err.message)
-          : fallback;
-      toast.error(message);
-      throw err;
+      toast.error(resolveAuthErrorMessage(err, t, "auth.toast.signUpError"));
     } finally {
       setLoading(false);
     }

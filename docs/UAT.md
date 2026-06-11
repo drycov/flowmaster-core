@@ -10,8 +10,11 @@
 - [ ] `CRON_SECRET` задан, hooks работают (email, webhooks, SLA, retention, license-sync)
 - [ ] Лицензия `FM1.*` активирована
 - [ ] HTTPS, резервное копирование БД
-- [ ] Automated smoke: `npm run uat:smoke` (health, cron, DB/RLS regression)
-- [ ] E2E smoke: `E2E_EMAIL` / `E2E_PASSWORD` → `npm run test:e2e`
+- [ ] Automated smoke: `npm run uat:smoke` (health, cron, migrations, DB/RLS)
+- [ ] DB-only smoke: `npm run uat:smoke:db` (миграции + Supabase RPC без HTTP)
+- [ ] Full smoke + E2E guards: `E2E_SKIP_SERVER=1 APP_URL=... npm run uat:smoke:full`
+- [ ] Security routes E2E: `npm run test:e2e:security`
+- [ ] Workflow E2E: `E2E_EMAIL` / `E2E_PASSWORD` → `npm run test:e2e`
 
 ## Аутентификация
 

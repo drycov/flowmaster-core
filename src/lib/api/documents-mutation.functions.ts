@@ -12,6 +12,7 @@ import {
   ALLOWED_DIRECT_STATUS,
   applyDocumentStatusTransition,
 } from "@/lib/documents/status-transition.server";
+import { patchDocumentDomains } from "@/lib/documents/sidecars.server";
 
 export const createDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -191,11 +192,7 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     if (patchIn.correspondent_id !== undefined) patch.correspondent_id = refs.correspondent_id;
     if (patchIn.due_at !== undefined) patch.due_at = refs.due_at;
 
-    const { error } = await supabase
-      .from("documents")
-      .update(patch as never)
-      .eq("id", id);
-    if (error) throw new Error(error.message);
+    await patchDocumentDomains(supabaseAdmin, id, patch);
 
     if (patchIn.body !== undefined) {
       await registerBodyContentVersion(supabase, {

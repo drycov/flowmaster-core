@@ -3,18 +3,22 @@
  * UAT smoke — automated checks for staging / pre-acceptance.
  *
  * Usage:
- *   node scripts/uat-smoke.mjs
- *   APP_URL=http://localhost:3000 node scripts/uat-smoke.mjs
+ *   npm run uat:smoke
+ *   APP_URL=http://localhost:4000 npm run uat:smoke
+ *   npm run uat:smoke -- --db-only
+ *   npm run uat:smoke -- --run-e2e
+ *   npm run uat:smoke -- --json
  *
  * Env (from .env or shell):
- *   APP_URL              — default http://127.0.0.1:3000
- *   CRON_SECRET          — optional cron hook check
- *   SUPABASE_URL         — optional DB/RLS regression checks
+ *   APP_URL / E2E_BASE_URL     — default http://127.0.0.1:3000
+ *   CRON_SECRET                — cron hook auth
+ *   SUPABASE_URL / VITE_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
- *   E2E_EMAIL / E2E_PASSWORD — hint for Playwright smoke
+ *   E2E_EMAIL / E2E_PASSWORD   — for --run-e2e
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,31 +26,50 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 
+const args = new Set(process.argv.slice(2));
+const DB_ONLY = args.has("--db-only");
+const RUN_E2E = args.has("--run-e2e");
+const JSON_OUT = args.has("--json");
+
 loadDotEnv(resolve(root, ".env"));
 
-const APP_URL = (process.env.APP_URL ?? process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000").replace(
-  /\/$/,
-  "",
-);
-const SUPABASE_URL = process.env.SUPABASE_URL?.trim();
+const APP_URL = (
+  process.env.APP_URL ??
+  process.env.E2E_BASE_URL ??
+  "http://127.0.0.1:3000"
+).replace(/\/$/, "");
+
+const SUPABASE_URL = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)?.trim();
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 const CRON_SECRET = process.env.CRON_SECRET?.trim();
 
+const results = [];
 let failures = 0;
 let skips = 0;
 
-function pass(label) {
-  console.log(`  ok   ${label}`);
+function record(name, status, detail = "") {
+  results.push({ name, status, detail });
+  if (status === "fail") failures += 1;
+  if (status === "skip") skips += 1;
+}
+
+function pass(label, detail = "") {
+  if (!JSON_OUT) console.log(`  ok   ${label}${detail ? ` — ${detail}` : ""}`);
+  record(label, "pass", detail);
 }
 
 function fail(label, detail) {
-  console.error(`  FAIL ${label}${detail ? ` — ${detail}` : ""}`);
-  failures += 1;
+  if (!JSON_OUT) console.error(`  FAIL ${label}${detail ? ` — ${detail}` : ""}`);
+  record(label, "fail", detail);
 }
 
-function skip(label) {
-  console.log(`  skip ${label}`);
-  skips += 1;
+function skip(label, detail = "") {
+  if (!JSON_OUT) console.log(`  skip ${label}${detail ? ` — ${detail}` : ""}`);
+  record(label, "skip", detail);
+}
+
+function section(title) {
+  if (!JSON_OUT) console.log(`\n${title}`);
 }
 
 function loadDotEnv(path) {
@@ -69,7 +92,7 @@ function loadDotEnv(path) {
 }
 
 async function checkHealth() {
-  console.log("\n1. Application health");
+  section("1. Application health");
   try {
     const res = await fetch(`${APP_URL}/api/health`);
     const body = await res.json();
@@ -77,14 +100,17 @@ async function checkHealth() {
       fail("GET /api/health", JSON.stringify(body.checks ?? body));
       return;
     }
-    pass(`GET /api/health (database=${body.checks?.database}, license=${body.checks?.license})`);
+    pass("GET /api/health", `database=${body.checks?.database}, license=${body.checks?.license}`);
+    if (body.checks?.database !== "ok") {
+      fail("database check", body.checks?.database_error ?? body.checks?.database);
+    }
   } catch (e) {
     fail("GET /api/health", e instanceof Error ? e.message : String(e));
   }
 }
 
-async function checkAuthPage() {
-  console.log("\n2. Public routes");
+async function checkPublicRoutes() {
+  section("2. Public routes");
   try {
     const res = await fetch(`${APP_URL}/auth`, { redirect: "manual" });
     if (res.status >= 200 && res.status < 400) {
@@ -97,12 +123,44 @@ async function checkAuthPage() {
   }
 }
 
+async function checkRouteGuards() {
+  section("3. Route guards (SSR shell)");
+  const protectedPaths = ["/dashboard", "/documents/new", "/admin/settings"];
+  for (const path of protectedPaths) {
+    try {
+      const res = await fetch(`${APP_URL}${path}`, { redirect: "manual" });
+      // SPA may return 200 shell; client redirect happens in browser — E2E covers that.
+      if (res.status === 200 || res.status === 307 || res.status === 302) {
+        pass(`GET ${path}`, `status ${res.status}`);
+      } else {
+        fail(`GET ${path}`, `unexpected status ${res.status}`);
+      }
+    } catch (e) {
+      fail(`GET ${path}`, e instanceof Error ? e.message : String(e));
+    }
+  }
+  skip("client-side auth redirect", "covered by e2e/security-routes.spec.ts");
+}
+
 async function checkCronHooks() {
-  console.log("\n3. Cron hooks");
+  section("4. Cron hooks");
+
+  try {
+    const res = await fetch(`${APP_URL}/api/public/hooks/email-dispatch`, { method: "POST" });
+    if (res.status === 401 || res.status === 403) {
+      pass("cron rejects missing Authorization");
+    } else {
+      fail("cron rejects missing Authorization", `expected 401/403, got ${res.status}`);
+    }
+  } catch (e) {
+    fail("cron rejects missing Authorization", e instanceof Error ? e.message : String(e));
+  }
+
   if (!CRON_SECRET) {
-    skip("cron hooks — set CRON_SECRET");
+    skip("cron hooks with CRON_SECRET", "set CRON_SECRET in .env");
     return;
   }
+
   const hooks = ["email-dispatch", "webhook-dispatch", "telegram-dispatch"];
   for (const hook of hooks) {
     try {
@@ -121,10 +179,31 @@ async function checkCronHooks() {
   }
 }
 
+async function checkMigrations() {
+  section("5. Pending migrations");
+  const proc = spawnSync("npx", ["supabase", "migration", "list", "--linked"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: process.platform === "win32",
+  });
+  if (proc.status !== 0) {
+    skip("supabase migration list", proc.stderr?.trim() || "not linked / CLI unavailable");
+    return;
+  }
+  const pending = (proc.stdout ?? "")
+    .split(/\r?\n/)
+    .filter((line) => /^\s*\d{14}\s+\|\s+\|/.test(line));
+  if (pending.length === 0) {
+    pass("all migrations applied (linked project)");
+  } else {
+    fail("pending migrations", pending.join("; "));
+  }
+}
+
 async function checkDatabase() {
-  console.log("\n4. Database & security regression");
+  section("6. Database & security regression");
   if (!SUPABASE_URL || !SERVICE_KEY) {
-    skip("supabase checks — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+    skip("supabase RPC checks", "set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
     return;
   }
 
@@ -136,46 +215,85 @@ async function checkDatabase() {
   if (licErr) {
     fail("RPC get_license_status", licErr.message);
   } else {
-    pass(`RPC get_license_status (status=${license?.status ?? "?"})`);
+    pass("RPC get_license_status", `status=${license?.status ?? "?"}`);
+    if (license && !license.is_writable && license.status !== "grace") {
+      skip("license writable", `status=${license.status}`);
+    }
   }
 
   const fakeDoc = "00000000-0000-0000-0000-000000000099";
   const fakeUser = "00000000-0000-0000-0000-000000000088";
-  const { error: viewErr } = await sb.rpc("can_view_document", {
-    _doc_id: fakeDoc,
-    _user: fakeUser,
-  });
-  if (viewErr) {
-    fail("RPC can_view_document(_doc_id, _user)", viewErr.message);
-  } else {
-    pass("RPC can_view_document accepts (_doc_id, _user) signature");
+
+  for (const [label, fn] of [
+    ["can_view_document", "can_view_document"],
+    ["can_view_document_content", "can_view_document_content"],
+  ]) {
+    const { error } = await sb.rpc(fn, { _doc_id: fakeDoc, _user: fakeUser });
+    if (error) {
+      fail(`RPC ${label}`, error.message);
+    } else {
+      pass(`RPC ${label}(_doc_id, _user)`);
+    }
   }
 
-  const { error: contentErr } = await sb.rpc("can_view_document_content", {
-    _doc_id: fakeDoc,
-    _user: fakeUser,
+  const { data: swapped, error: swappedErr } = await sb.rpc("can_view_document", {
+    _doc_id: fakeUser,
+    _user: fakeDoc,
   });
-  if (contentErr) {
-    fail("RPC can_view_document_content", contentErr.message);
+  if (swappedErr) {
+    fail("RPC can_view_document swapped-args sanity", swappedErr.message);
+  } else if (swapped === true) {
+    fail(
+      "RLS can_view_document arg order",
+      "swapped UUID args returned true — check migration 20260613100000",
+    );
   } else {
-    pass("RPC can_view_document_content callable");
+    pass("RLS can_view_document arg order sanity");
   }
 }
 
-function checkE2eHint() {
-  console.log("\n5. E2E workflow smoke");
+async function runE2e() {
+  section("7. Playwright security E2E");
   const email = process.env.E2E_EMAIL?.trim();
   const password = process.env.E2E_PASSWORD?.trim();
-  if (email && password) {
-    console.log(`  run  E2E_BASE_URL=${APP_URL} npm run test:e2e`);
-    pass("E2E credentials configured");
+  if (!email || !password) {
+    skip("playwright E2E", "set E2E_EMAIL and E2E_PASSWORD");
+    return;
+  }
+
+  const proc = spawnSync(
+    "npm",
+    [
+      "run",
+      "test:e2e",
+      "--",
+      "e2e/health.spec.ts",
+      "e2e/security-routes.spec.ts",
+    ],
+    {
+      cwd: root,
+      stdio: JSON_OUT ? "pipe" : "inherit",
+      shell: process.platform === "win32",
+      env: {
+        ...process.env,
+        E2E_BASE_URL: APP_URL,
+        E2E_SKIP_SERVER: "1",
+        CI: process.env.CI ?? "",
+      },
+    },
+  );
+
+  if (proc.status === 0) {
+    pass("playwright health + security-routes");
   } else {
-    skip("E2E — set E2E_EMAIL and E2E_PASSWORD, then npm run test:e2e");
+    const detail = JSON_OUT ? proc.stdout?.slice(-500) ?? proc.stderr?.slice(-500) : "";
+    fail("playwright health + security-routes", detail || `exit ${proc.status}`);
   }
 }
 
 function printManualChecklist() {
-  console.log("\n6. Manual UAT (recent security fixes)");
+  if (JSON_OUT) return;
+  section("8. Manual UAT (remaining)");
   const items = [
     "KB publish blocked without document content access",
     "upsertDocumentCorrespondent requires document edit rights",
@@ -183,7 +301,6 @@ function printManualChecklist() {
     "Archive button hidden without archive_documents",
     "License settings read-only without admin_license.manage",
     "Integrations tab hidden without manage_integrations",
-    "/documents/new redirects without documents.write",
   ];
   for (const item of items) {
     console.log(`  [ ] ${item}`);
@@ -191,18 +308,48 @@ function printManualChecklist() {
   console.log("\n  Full checklist: docs/UAT.md");
 }
 
-console.log(`UAT smoke — ${APP_URL}`);
-
-await checkHealth();
-await checkAuthPage();
-await checkCronHooks();
-await checkDatabase();
-checkE2eHint();
-printManualChecklist();
-
-console.log("");
-if (failures > 0) {
-  console.error(`Smoke failed: ${failures} check(s), ${skips} skipped.`);
-  process.exit(1);
+function printSummary() {
+  if (JSON_OUT) {
+    console.log(
+      JSON.stringify(
+        {
+          app_url: APP_URL,
+          ok: failures === 0,
+          failures,
+          skips,
+          results,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+  console.log("");
+  if (failures > 0) {
+    console.error(`Smoke failed: ${failures} check(s), ${skips} skipped.`);
+  } else {
+    console.log(`Smoke passed (${skips} skipped).`);
+  }
 }
-console.log(`Smoke passed (${skips} skipped).`);
+
+if (!JSON_OUT) console.log(`UAT smoke — ${APP_URL}`);
+
+if (!DB_ONLY) {
+  await checkHealth();
+  await checkPublicRoutes();
+  await checkRouteGuards();
+  await checkCronHooks();
+}
+await checkMigrations();
+await checkDatabase();
+if (RUN_E2E && !DB_ONLY) {
+  await runE2e();
+} else if (!DB_ONLY) {
+  section("7. Playwright security E2E");
+  skip("playwright E2E", "pass --run-e2e to execute");
+}
+printManualChecklist();
+printSummary();
+
+process.exit(failures > 0 ? 1 : 0);

@@ -8,9 +8,9 @@ import { useAuth } from "@/components/auth/hooks/useAuth";
 import { useEdsAuth } from "@/components/auth/hooks/useEdsAuth";
 import { useLdapAuth } from "@/components/auth/hooks/useLdapAuth";
 import { useAuthForm } from "@/components/auth/hooks/useAuthForm";
-import { AuthLeftPanel } from "@/components/auth/components/AuthLeftPanel";
-import { LanguageSwitcher } from "@/components/auth/components/LanguageSwitcher";
-import { AuthRightPanel } from "@/components/auth/components/AuthRightPanel";
+import { AuthPageLayout } from "@/components/auth/layout/AuthPageLayout";
+import { AuthHeroPanel } from "@/components/auth/hero/AuthHeroPanel";
+import { AuthLoginPanel } from "@/components/auth/login/AuthLoginPanel";
 import { getPublicAuthConfigFn } from "@/lib/api/system.functions";
 import type { PublicAuthConfig } from "@/components/auth/types";
 import {
@@ -156,53 +156,46 @@ function AuthPage() {
   const authTenantSlug =
     config.resolved_tenant?.slug ?? (config.require_tenant_slug ? tenantSlug.trim() : undefined);
 
+  const loginPanelProps = {
+    mode,
+    config,
+    email,
+    password,
+    passwordConfirm,
+    fullNameRu,
+    fullNameKk,
+    tenantSlug,
+    orgNameRu,
+    orgNameKk,
+    loading: loading || edsLoading || ldapLoading,
+    onModeChange: setMode,
+    onEmailChange: setEmail,
+    onPasswordChange: setPassword,
+    onPasswordConfirmChange: setPasswordConfirm,
+    onFullNameRuChange: setFullNameRu,
+    onFullNameKkChange: setFullNameKk,
+    onTenantSlugChange: setTenantSlug,
+    onOrgNameRuChange: setOrgNameRu,
+    onOrgNameKkChange: setOrgNameKk,
+    onSubmit: handleSubmit,
+    onEdsAuth: () => {
+      const { linkEmail, linkPassword } = resolveEdsLinkCredentials(email, password);
+      return signInWithEds(
+        mode,
+        fullNameRu || undefined,
+        fullNameKk || undefined,
+        linkEmail,
+        linkPassword,
+        authTenantSlug,
+      );
+    },
+    edsLoading,
+    ldapLoading,
+    onLdapAuth: (username: string, ldapPassword: string) =>
+      signInWithLdap(username, ldapPassword, authTenantSlug),
+  };
+
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(380px,42%)_1fr]">
-      <AuthLeftPanel />
-
-      <div className="flex min-h-screen flex-col">
-        <div className="flex justify-end p-4">
-          <LanguageSwitcher />
-        </div>
-
-        <AuthRightPanel
-          mode={mode}
-          config={config}
-          email={email}
-          password={password}
-          passwordConfirm={passwordConfirm}
-          fullNameRu={fullNameRu}
-          fullNameKk={fullNameKk}
-          tenantSlug={tenantSlug}
-          orgNameRu={orgNameRu}
-          orgNameKk={orgNameKk}
-          loading={loading || edsLoading || ldapLoading}
-          onModeChange={setMode}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onPasswordConfirmChange={setPasswordConfirm}
-          onFullNameRuChange={setFullNameRu}
-          onFullNameKkChange={setFullNameKk}
-          onTenantSlugChange={setTenantSlug}
-          onOrgNameRuChange={setOrgNameRu}
-          onOrgNameKkChange={setOrgNameKk}
-          onSubmit={handleSubmit}
-          onEdsAuth={() => {
-            const { linkEmail, linkPassword } = resolveEdsLinkCredentials(email, password);
-            return signInWithEds(
-              mode,
-              fullNameRu || undefined,
-              fullNameKk || undefined,
-              linkEmail,
-              linkPassword,
-              authTenantSlug,
-            );
-          }}
-          edsLoading={edsLoading}
-          ldapLoading={ldapLoading}
-          onLdapAuth={(username, password) => signInWithLdap(username, password, authTenantSlug)}
-        />
-      </div>
-    </div>
+    <AuthPageLayout hero={<AuthHeroPanel />} login={<AuthLoginPanel {...loginPanelProps} />} />
   );
 }

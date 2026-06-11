@@ -1,3 +1,4 @@
+/** @deprecated Use documents_full + enrichDocumentFromFull (Phase 2c). */
 export const DOCUMENT_SELECT = `
   id, reg_number, doc_type, status, title_ru, title_kk, summary, body,
   nomenclature_id, template_id, current_version, created_by, assigned_to,
@@ -22,3 +23,20 @@ export const DOCUMENT_SELECT = `
 `;
 
 export const CONTENT_MASK = "[Гриф доступа: содержимое скрыто]";
+
+/** Flat columns from documents_full (Phase 2 read model). */
+export const DOCUMENT_FULL_BASE_SELECT = `
+  id, reg_number, doc_type, status, title_ru, title_kk, summary, body,
+  nomenclature_id, template_id, current_version, created_by, assigned_to,
+  department_id, due_at, sla_status, archived_at, legal_hold, legal_hold_note, legal_hold_at, legal_hold_by,
+  retention_period_id, retention_due_at,
+  created_at, updated_at, workflow_id, custom_route,
+  document_type_id, priority_id, correspondent_id,
+  registration_journal_id, delivery_method_id, access_level_id, archive_location_id,
+  received_at, sent_at, pages_count, copies_count, external_reg_number,
+  project_id
+`;
+
+/** List projection from documents_full. */
+export const DOCUMENT_FULL_LIST_SELECT =
+  "id, reg_number, title_ru, title_kk, status, doc_type, sla_status, due_at, created_at, created_by, assigned_to, current_version, received_at, sent_at, external_reg_number, legal_hold, retention_due_at, archived_at, document_type_id";

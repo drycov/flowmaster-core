@@ -39,7 +39,7 @@ export function TelegramLoginPanel({ tenantSlug }: TelegramLoginPanelProps) {
     <Button
       type="button"
       variant="outline"
-      className="w-full"
+      className="h-9 w-full rounded border border-[#BCC3CA] bg-white text-sm font-semibold text-[#0064D9] shadow-none hover:border-[#0070F2] hover:bg-[#EBF8FF]"
       disabled={loading}
       onClick={() => void beginLogin()}
     >

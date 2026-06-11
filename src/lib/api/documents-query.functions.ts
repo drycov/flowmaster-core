@@ -4,7 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enforceModuleLicense } from "./_helpers";
 import { assertCanManageDocumentAccessGrants } from "@/lib/api/document-access-grants.server";
-import { CONTENT_MASK, DOCUMENT_SELECT } from "./documents.shared.server";
+import { CONTENT_MASK, DOCUMENT_FULL_LIST_SELECT } from "./documents.shared.server";
+import {
+  enrichDocumentListRows,
+  fetchDocumentById,
+} from "@/lib/documents/documents-read.server";
 
 export const listDocuments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -44,25 +48,23 @@ export const listDocuments = createServerFn({ method: "POST" })
     }
 
     let q = supabase
-      .from("documents")
-      .select(
-        "id, reg_number, title_ru, title_kk, status, doc_type, sla_status, due_at, created_at, created_by, assigned_to, current_version, received_at, sent_at, external_reg_number, legal_hold, retention_due_at, archived_at, ref_document_types!documents_document_type_id_fkey(code)",
-      )
+      .from("documents_full" as never)
+      .select(DOCUMENT_FULL_LIST_SELECT)
       .order("created_at", { ascending: false })
       .limit(data?.limit ?? 100);
-    if (data?.status) q = q.eq("status", data.status as never);
-    if (data?.scope === "mine") q = q.eq("created_by", userId);
-    if (data?.scope === "assigned") q = q.eq("assigned_to", userId);
-    if (data?.scope === "archive") q = q.eq("status", "archived" as never);
-    if (data?.legal_hold_only) q = q.eq("legal_hold", true);
+    if (data?.status) q = q.eq("status" as never, data.status as never);
+    if (data?.scope === "mine") q = q.eq("created_by" as never, userId);
+    if (data?.scope === "assigned") q = q.eq("assigned_to" as never, userId);
+    if (data?.scope === "archive") q = q.eq("status" as never, "archived" as never);
+    if (data?.legal_hold_only) q = q.eq("legal_hold" as never, true);
     if (data?.retention_expiring) {
       const horizon = new Date();
       horizon.setDate(horizon.getDate() + 30);
       q = q
-        .eq("legal_hold", false)
-        .not("retention_due_at", "is", null)
-        .lte("retention_due_at", horizon.toISOString())
-        .in("status", ["approved", "signed", "in_review"]);
+        .eq("legal_hold" as never, false)
+        .not("retention_due_at" as never, "is", null)
+        .lte("retention_due_at" as never, horizon.toISOString())
+        .in("status" as never, ["approved", "signed", "in_review"]);
     }
     if (data?.document_type_code) {
       const { data: dt } = await supabase
@@ -71,14 +73,17 @@ export const listDocuments = createServerFn({ method: "POST" })
         .eq("code", data.document_type_code)
         .maybeSingle();
       if (dt?.id) {
-        q = q.eq("document_type_id", dt.id);
+        q = q.eq("document_type_id" as never, dt.id);
       } else {
-        q = q.eq("doc_type", data.document_type_code);
+        q = q.eq("doc_type" as never, data.document_type_code);
       }
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    return enrichDocumentListRows(
+      supabase,
+      (rows ?? []) as { document_type_id?: string | null }[],
+    );
   });
 
 export const getDocument = createServerFn({ method: "POST" })
@@ -86,9 +91,9 @@ export const getDocument = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const [doc, versions, sigs, comments, runs, events, tasks, contract, parties] =
+    const [docRow, versions, sigs, comments, runs, events, tasks, contract, parties] =
       await Promise.all([
-        supabase.from("documents").select(DOCUMENT_SELECT).eq("id", data.id).single(),
+        fetchDocumentById(supabase, data.id),
         supabase
           .from("document_versions")
           .select("*")
@@ -132,15 +137,14 @@ export const getDocument = createServerFn({ method: "POST" })
           .select("id, role, is_primary, ref_correspondents(id, code, name_ru, name_kk, bin)")
           .eq("document_id", data.id),
       ]);
-    if (doc.error) throw new Error(doc.error.message);
 
     const { data: canViewContent } = await supabaseAdmin.rpc(
       "can_view_document_content" as never,
       { _doc_id: data.id, _user: context.userId } as never,
     );
 
-    const document = {
-      ...doc.data!,
+    const document: Record<string, unknown> = {
+      ...docRow,
       content_restricted: !canViewContent,
     };
     if (!canViewContent) {
@@ -168,7 +172,7 @@ export const getDocument = createServerFn({ method: "POST" })
       document_correspondents: parties.data ?? [],
       content_restricted: !canViewContent,
       can_manage_access_grants,
-    };
+    } as never;
   });
 
 export const getDashboardStats = createServerFn({ method: "GET" })
@@ -184,14 +188,16 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         .order("due_at", { ascending: true, nullsFirst: false })
         .limit(10),
       supabase
-        .from("documents")
+        .from("documents_full" as never)
         .select("id, reg_number, title_ru, title_kk, status, sla_status, created_at", {
           count: "exact",
         })
-        .eq("created_by", userId)
+        .eq("created_by" as never, userId)
         .order("created_at", { ascending: false })
         .limit(5),
-      supabase.from("documents").select("status, sla_status", { count: "exact", head: false }),
+      supabase
+        .from("documents_full" as never)
+        .select("status, sla_status", { count: "exact", head: false }),
       supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
@@ -200,10 +206,10 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     ]);
     const byStatus: Record<string, number> = {};
     let overdue = 0;
-    (allDocs.data ?? []).forEach((d) => {
+    for (const d of (allDocs.data ?? []) as { status: string; sla_status: string }[]) {
       byStatus[d.status] = (byStatus[d.status] ?? 0) + 1;
       if (d.sla_status === "overdue") overdue += 1;
-    });
+    }
     return {
       tasks: tasks.data ?? [],
       tasksCount: tasks.count ?? 0,
