@@ -24,5 +24,23 @@ describe("buildProfileValues production", () => {
     assert.equal(values.INSTALLATION_ID, installationIdFromDomain("edms.satory.kz"));
     assert.equal(values.SMTP_ADMIN_EMAIL, "support@satory.kz");
     assert.equal(values.LICENSE_SERVER_ADMIN_SECRET, undefined);
+    assert.equal(values.LICENSE_SERVER_ENABLED, undefined);
+  });
+
+  it("enables embedded license server with --with-license-server", () => {
+    const values = buildProfileValues("production", {
+      domain: "edms.satory.kz",
+      certEmail: "support@satory.kz",
+      publicUrl: "https://edms.satory.kz",
+      withLicenseServer: true,
+      existing: new Map(),
+      rotateSecrets: true,
+      force: true,
+    });
+
+    assert.equal(values.LICENSE_SERVER_ENABLED, "true");
+    assert.match(values.LICENSE_SERVER_ADMIN_SECRET, /^[0-9a-f]{64}$/);
+    assert.match(values.LICENSE_SIGNING_SECRET, /^[0-9a-f]{64}$/);
+    assert.equal(values.LICENSE_MODE, "offline");
   });
 });

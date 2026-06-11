@@ -11,6 +11,8 @@
  *   --install            (production) copy output → .env
  *   --domain=HOST        production domain (default: esedo.example.kz)
  *   --email=ADDR         Let's Encrypt email
+ *   --with-license-server  production: встроенный license API (vendor)
+ *   --license-domain=HOST  production: также создать .env.license-server
  *   --output=PATH        custom output path
  *   --dry-run            print to stdout, do not write
  *   --help
@@ -60,6 +62,8 @@ Options:
   --email=ADDR      certbot email
   --license-secret=HEX   production: shared LICENSE_SIGNING_SECRET from vendor
   --license-server-url=URL production: online license URL for clients
+  --with-license-server  production: LICENSE_SERVER_ENABLED=true на этом же домене
+  --license-domain=HOST  production: дополнительно .env.license-server (другой VPS)
   --output=PATH     override output file
   --dry-run         stdout only
   --help            this message
@@ -143,6 +147,8 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   const publicUrl = `https://${domain}`;
   const licenseSecret = values.get("--license-secret") ?? null;
   const licenseServerUrl = values.get("--license-server-url") ?? null;
+  const withLicenseServer = flags.has("--with-license-server");
+  const licenseDomain = values.get("--license-domain")?.trim() || null;
 
   const inheritPaths = profile.inheritFrom.map((p) => resolve(root, p));
   const existingFromFiles = loadEnvValues(inheritPaths);
@@ -162,6 +168,8 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     publicUrl,
     licenseSecret,
     licenseServerUrl,
+    withLicenseServer,
+    licenseDomain,
     force,
     rotateSecrets,
     install,
@@ -189,6 +197,51 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   if (profileId === "production" || profileId === "license-server") {
     console.log(`  Domain:  ${domain}`);
     console.log(`  App URL: ${publicUrl}`);
+  }
+
+  if (profileId === "production" && licenseDomain && licenseDomain !== domain) {
+    const licenseOutput = resolve(root, PROFILES["license-server"].defaultOutput);
+    const licenseExisting = stripVendorSecrets(
+      mergeEnvMaps(
+        loadEnvValues(inheritPaths),
+        existsSync(licenseOutput) ? parseEnvValues(readFileSync(licenseOutput, "utf8")) : new Map(),
+      ),
+      "license-server",
+    );
+    const sharedSigning =
+      finalValues.get("LICENSE_SIGNING_SECRET") ??
+      licenseSecret ??
+      licenseExisting.get("LICENSE_SIGNING_SECRET");
+    if (sharedSigning) licenseExisting.set("LICENSE_SIGNING_SECRET", sharedSigning);
+
+    const licensePublicUrl = `https://${licenseDomain}`;
+    const licenseValues = buildProfileValues("license-server", {
+      profileId: "license-server",
+      domain: licenseDomain,
+      certEmail,
+      publicUrl: licensePublicUrl,
+      licenseSecret: sharedSigning,
+      licenseServerUrl: null,
+      withLicenseServer: false,
+      licenseDomain: null,
+      force,
+      rotateSecrets: false,
+      install: false,
+      existing: licenseExisting,
+    });
+    const licenseFinal = mergeEnvMaps(licenseExisting, licenseValues);
+    const licenseBody = renderEnvFromTemplate(template, licenseFinal);
+    const licenseHeader = buildHeader("license-server", {
+      ...ctx,
+      domain: licenseDomain,
+      publicUrl: licensePublicUrl,
+    });
+    const licenseContent = licenseHeader + licenseBody.replace(/^# Flowmaster[^\n]*\n(?:# [^\n]*\n)*/m, "");
+    writeFileSync(licenseOutput, licenseContent, "utf8");
+    console.log(`Created ${licenseOutput}`);
+    console.log(`  License domain: ${licenseDomain}`);
+    console.log(`  License URL:    ${licensePublicUrl}`);
+    console.log("  Запуск на отдельном VPS: npm run compose:license-server");
   }
 
   if (install) {

@@ -106,7 +106,12 @@ export function buildProfileValues(profileId, ctx) {
 
     case "production": {
       const { domain, certEmail, publicUrl } = ctx;
-      return {
+      const signingSecret =
+        ctx.licenseSecret ??
+        ctx.existing.get("LICENSE_SIGNING_SECRET") ??
+        base.LICENSE_SIGNING_SECRET ??
+        "";
+      const production = {
         ...base,
         NODE_ENV: "production",
         LOG_LEVEL: "info",
@@ -139,13 +144,7 @@ export function buildProfileValues(profileId, ctx) {
           ? certEmail
           : (ctx.existing.get("SMTP_ADMIN_EMAIL") ?? certEmail),
         MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3002",
-        LICENSE_MODE: ctx.licenseServerUrl
-          ? "online"
-          : (ctx.existing.get("LICENSE_MODE") ?? "offline"),
-        LICENSE_SIGNING_SECRET:
-          ctx.licenseSecret ??
-          ctx.existing.get("LICENSE_SIGNING_SECRET") ??
-          "",
+        LICENSE_SIGNING_SECRET: signingSecret,
         LICENSE_SERVER_URL: ctx.licenseServerUrl ?? ctx.existing.get("LICENSE_SERVER_URL") ?? "",
         INSTALLATION_ID:
           !ctx.rotateSecrets &&
@@ -154,6 +153,24 @@ export function buildProfileValues(profileId, ctx) {
             ? ctx.existing.get("INSTALLATION_ID")
             : installationIdFromDomain(domain),
       };
+
+      if (ctx.withLicenseServer || (ctx.licenseDomain && ctx.licenseDomain === domain)) {
+        production.LICENSE_SERVER_ENABLED = "true";
+        production.LICENSE_SERVER_ADMIN_SECRET = secrets.LICENSE_SERVER_ADMIN_SECRET;
+        production.LICENSE_MODE = "offline";
+        production.LICENSE_SERVER_URL = "";
+      } else if (ctx.licenseServerUrl || ctx.existing.get("LICENSE_MODE") === "online") {
+        production.LICENSE_MODE = "online";
+      } else {
+        production.LICENSE_MODE = ctx.existing.get("LICENSE_MODE") ?? "offline";
+      }
+
+      if (ctx.licenseDomain && ctx.licenseDomain !== domain) {
+        production.LICENSE_MODE = "online";
+        production.LICENSE_SERVER_URL = `https://${ctx.licenseDomain}`;
+      }
+
+      return production;
     }
 
     case "license-server": {
@@ -164,8 +181,10 @@ export function buildProfileValues(profileId, ctx) {
         LOG_LEVEL: "info",
         LICENSE_SERVER_ENABLED: "true",
         LICENSE_MODE: "offline",
-        LICENSE_SIGNING_SECRET: secrets.LICENSE_SIGNING_SECRET,
+        LICENSE_SIGNING_SECRET:
+          ctx.licenseSecret ?? secrets.LICENSE_SIGNING_SECRET,
         LICENSE_SERVER_ADMIN_SECRET: secrets.LICENSE_SERVER_ADMIN_SECRET,
+        CRON_SECRET: secrets.CRON_SECRET,
         APP_URL: publicUrl,
         PUBLIC_APP_URL: publicUrl,
         DISABLE_TELEGRAM_POLLING: "true",
@@ -189,7 +208,13 @@ export function buildProfileValues(profileId, ctx) {
         PROXY_DOMAIN: domain,
         CERTBOT_EMAIL: certEmail,
         SENTRY_ENVIRONMENT: "license-server",
-        SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? `admin@${domain}`,
+        SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? certEmail,
+        INSTALLATION_ID:
+          !ctx.rotateSecrets &&
+          ctx.existing.get("INSTALLATION_ID") &&
+          ctx.existing.get("PROXY_DOMAIN") === domain
+            ? ctx.existing.get("INSTALLATION_ID")
+            : installationIdFromDomain(domain),
       };
     }
 
@@ -250,9 +275,19 @@ export function buildHeader(profileId, ctx) {
         `# Regenerate: npm run env:production -- --domain=${ctx.domain} --force`,
         "# Установить как .env:",
         `#   npm run env:production -- --domain=${ctx.domain} --email=... --install`,
+        ...(ctx.withLicenseServer || ctx.licenseDomain === ctx.domain
+          ? [
+              "# Vendor (license API на этом же домене):",
+              `#   npm run env:production -- --domain=${ctx.domain} --with-license-server --install`,
+              `#   curl https://${ctx.domain}/api/v1/license/health`,
+            ]
+          : []),
+        ...(ctx.licenseDomain && ctx.licenseDomain !== ctx.domain
+          ? [`# License server (отдельный VPS): ${ctx.licenseDomain}`]
+          : []),
         "# Запуск:",
-        "#   npm run compose:tls",
-        "#   npm run compose:tls:cron",
+        "#   npm run docker:up -- --tls",
+        "#   npm run docker:up -- --tls --cron",
         `#   curl https://${ctx.domain}/api/health`,
         "#",
       );
@@ -298,15 +333,26 @@ export function printNextSteps(profileId, ctx) {
       console.log("Next steps:");
       console.log(`  1. DNS A-record: ${ctx.domain} → server IP`);
       if (!ctx.installed) {
-        console.log("  2. npm run env:production -- --install   (или cp .env.production .env)");
+        console.log(
+          ctx.withLicenseServer
+            ? "  2. npm run env:production -- --with-license-server --install"
+            : "  2. npm run env:production -- --install   (или cp .env.production .env)",
+        );
       }
-      console.log("  3. npm run compose:tls");
-      console.log("  4. npm run compose:tls:cron");
+      console.log("  3. npm run docker:up -- --tls");
+      console.log("  4. npm run docker:up -- --tls --cron");
       console.log("  5. npm run env:sync   (если compose ругается на docker/supabase/.env)");
       console.log("  6. curl http://127.0.0.1/api/health   (на сервере, до DNS)");
       console.log(`  7. curl https://${ctx.domain}/api/health   (после A-record DNS)`);
+      if (ctx.withLicenseServer || ctx.licenseDomain === ctx.domain) {
+        console.log(`  8. curl https://${ctx.domain}/api/v1/license/health`);
+        console.log("  9. npm run license:support-code   (vendor admin, на хосте)");
+      } else if (ctx.licenseDomain && ctx.licenseDomain !== ctx.domain) {
+        console.log(`  8. На VPS license: npm run compose:license-server`);
+        console.log(`  9. curl https://${ctx.licenseDomain}/api/v1/license/health`);
+      }
       console.log(
-        `  8. ONLYOFFICE: Настройки → Интеграции → URL ${ctx.publicUrl}/onlyoffice (compose:tls поднимает сервис автоматически)`,
+        `  ONLYOFFICE: Настройки → Интеграции → URL ${ctx.publicUrl}/onlyoffice`,
       );
       break;
     case "staging":

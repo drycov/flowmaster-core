@@ -76,15 +76,16 @@ Smoke-сценарий: вход → создание документа с ка
 ### Docker (on-prem, рекомендуется)
 
 ```bash
-# 1. Production .env с секретами и доменом
-npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
+# 1. Production .env с секретами, доменом и встроенным license API (vendor)
+npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --with-license-server --install
 
 # 2. HTTPS + cron
-npm run compose:tls
-npm run compose:tls:cron
+npm run docker:up -- --tls
+npm run docker:up -- --tls --cron
 
 # 3. Проверка
 curl https://esedo.example.kz/api/health
+curl https://esedo.example.kz/api/v1/license/health
 ```
 
 Env: `.env.docker.example` + `npm run env:production`. Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).

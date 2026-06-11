@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadEnvFiles } from "./load-env.mjs";
 import { syncSupabaseEnvOrExit } from "./sync-supabase-env.mjs";
 import { STACKS, buildComposeCommand } from "./docker-compose-cli.mjs";
 
@@ -62,6 +63,90 @@ export function orchestrateStack(root, options) {
   runProcess("node", ["scripts/docker-wait.mjs"], root);
 }
 
+/**
+ * Start vendor license server on a separate compose project (.env.license-server).
+ * Swaps root .env only for compose up, then restores EDMS .env.
+ */
+export function orchestrateLicenseServerStack(root) {
+  const mainEnv = resolve(root, ".env");
+  const licenseEnv = resolve(root, ".env.license-server");
+  const backupEnv = resolve(root, ".env.edms-backup");
+
+  if (!existsSync(licenseEnv)) {
+    console.error("Missing .env.license-server — run:");
+    console.error("  npm run env:license-server -- --domain=license.example.kz --install");
+    process.exit(1);
+  }
+
+  console.warn(
+    "External license server uses ports 80/443 — run only on a separate VPS (not alongside EDMS on the same host).",
+  );
+
+  copyFileSync(mainEnv, backupEnv);
+  try {
+    copyFileSync(licenseEnv, mainEnv);
+    syncSupabaseEnvOrExit(root, "npm run env:license-server -- --install");
+
+    console.log("Starting License server (HTTPS)…");
+    runProcess(
+      "docker",
+      buildComposeCommand({
+        stack: "licenseServer",
+        subcommand: ["up", "-d", "--build"],
+      }),
+      root,
+    );
+
+    console.log("Applying license server database migrations…");
+    runProcess(
+      "docker",
+      buildComposeCommand({
+        stack: "licenseServer",
+        subcommand: ["run", "--rm", "db-migrate"],
+      }),
+      root,
+    );
+
+    runProcess(
+      "docker",
+      buildComposeCommand({
+        stack: "licenseServer",
+        subcommand: ["up", "-d", "app", "nginx"],
+      }),
+      root,
+    );
+  } finally {
+    copyFileSync(backupEnv, mainEnv);
+    syncSupabaseEnvOrExit(root, "npm run env:local");
+  }
+}
+
+function isTruthyEnv(value) {
+  const v = String(value ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+export function printLicenseServerHints(root, { tls = false } = {}) {
+  loadEnvFiles([".env", ".env.license-server"]);
+  const domain = process.env.PROXY_DOMAIN?.trim();
+  const appUrl =
+    tls && domain
+      ? `https://${domain}`
+      : (process.env.APP_URL?.trim() || "http://localhost");
+
+  if (isTruthyEnv(process.env.LICENSE_SERVER_ENABLED)) {
+    console.log(`  License API:  ${appUrl}/api/v1/license/health`);
+    console.log("  Vendor admin: npm run license:support-code  (на хосте, SSH tunnel → license:admin)");
+    return;
+  }
+
+  const licenseDomain = process.env.LICENSE_SERVER_URL?.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  if (licenseDomain) {
+    console.log(`  License URL (client): ${process.env.LICENSE_SERVER_URL}`);
+    console.log("  License server stack: npm run compose:license-server  (отдельный VPS)");
+  }
+}
+
 export function printStackUrls(root, { stack, tls = false, dev = false, studio = false, monitoring = false, office = false } = {}) {
   const env = process.env;
   const nginxPort = env.NGINX_HTTP_PORT ?? "80";
@@ -103,4 +188,6 @@ export function printStackUrls(root, { stack, tls = false, dev = false, studio =
     console.log(`                office_url: ${appUrl}/onlyoffice`);
     console.log("                app_url:    тот же публичный URL (для callback из браузера)");
   }
+
+  printLicenseServerHints(root, { tls });
 }
