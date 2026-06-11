@@ -112,7 +112,7 @@ npx supabase db push
 
 | Команда | Результат |
 |---------|-----------|
-| `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=1` |
+| `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=0` |
 | `npm run env:production -- --domain=X --email=Y` | `.env.production` |
 | `npm run env:staging -- --install` | `.env` — UAT :8080 |
 | `npm run env:license-server -- --domain=X --install` | `.env` — license server |

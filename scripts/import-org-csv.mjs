@@ -194,6 +194,8 @@ FROM (VALUES
 WHERE n.id = v.nom_id;
 `;
 
-const out = path.join("supabase", "migrations", "20260610210000_seed_departments_positions.sql");
+const out = path.join("supabase", "seeds", "seed_departments_positions.sql");
+fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, sql);
-console.log(`Wrote migration: ${departments.length} departments, ${positions.length} positions -> ${out}`);
+console.log(`Wrote seed SQL: ${departments.length} departments, ${positions.length} positions -> ${out}`);
+console.log("Apply manually via psql (see supabase/seeds/README.md)");

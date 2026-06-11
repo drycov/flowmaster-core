@@ -58,7 +58,7 @@ for file in $(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' -print | LC_ALL=C
   applied=$((applied + 1))
 done
 
-if [ "${APPLY_DB_SEED:-1}" = "1" ] && [ -f /seed/seed.sql ]; then
+if [ "${APPLY_DB_SEED:-0}" = "1" ] && [ -f /seed/seed.sql ]; then
   seed_marker="__flowmaster_seed_applied__"
   seeded=$(psql "$DB_URL" -tAc "SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$seed_marker' LIMIT 1" | tr -d '[:space:]')
   if [ "$seeded" != "1" ]; then

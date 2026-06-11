@@ -102,6 +102,8 @@ ON CONFLICT (id) DO UPDATE SET
   updated_at = EXCLUDED.updated_at;
 `;
 
-const out = path.join("supabase", "migrations", "20260610220000_seed_organization.sql");
+const out = path.join("supabase", "seeds", "seed_organization.sql");
+fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, sql);
-console.log(`Wrote migration: organization "${org.name_ru}" -> ${out}`);
+console.log(`Wrote seed SQL: organization "${org.name_ru}" -> ${out}`);
+console.log("Apply manually: docker exec -i supabase-db psql -U postgres -d postgres -f - < supabase/seeds/seed_organization.sql");

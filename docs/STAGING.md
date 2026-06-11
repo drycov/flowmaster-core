@@ -45,7 +45,7 @@ Hooks: `email-dispatch`, `webhook-dispatch`, `sla-tick`, `retention-tick`, `lice
 2. **Настройки → Общие** — `app_url`
 3. Лицензия FM1 или trial
 4. Тестовые пользователи (registrar, approver, viewer)
-5. Seed: `APPLY_DB_SEED=1` при первом migrate
+5. Справочники — через UI или `supabase/seeds/` (см. `scripts/import-*-csv.mjs`), не автоматически при migrate
 
 ## Приёмочное тестирование
 
@@ -79,7 +79,7 @@ rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 | Up | `compose:tls` + `compose:tls:cron` | `compose:staging` |
 | HTTPS | Let's Encrypt | HTTP :8080 |
 | Cron | profile `cron` | always on |
-| Seed | `APPLY_DB_SEED=0` | `APPLY_DB_SEED=1` |
+| Seed | `APPLY_DB_SEED=0` | `APPLY_DB_SEED=0` |
 | Логи | `info` | `debug` |
 
 Production: [DEPLOYMENT.md](./DEPLOYMENT.md).

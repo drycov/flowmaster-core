@@ -56,6 +56,8 @@ ON CONFLICT (id) DO UPDATE SET
   updated_at = EXCLUDED.updated_at;
 `;
 
-const out = path.join("supabase", "migrations", "20260610200000_seed_nomenclature_items.sql");
+const out = path.join("supabase", "seeds", "seed_nomenclature_items.sql");
+fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, sql);
 console.log(`Wrote ${rows.length} rows to ${out}`);
+console.log("Apply manually via psql (see supabase/seeds/README.md)");

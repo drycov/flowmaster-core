@@ -18,7 +18,7 @@ services:
       DB_NAME: ${POSTGRES_DB:-postgres}
       DB_USER: postgres
       APPLY_DB_MIGRATIONS: ${APPLY_DB_MIGRATIONS:-1}
-      APPLY_DB_SEED: ${APPLY_DB_SEED:-1}
+      APPLY_DB_SEED: ${APPLY_DB_SEED:-0}
     volumes:
       - ./supabase/migrations:/migrations:ro
       - ./supabase/seed.sql:/seed/seed.sql:ro

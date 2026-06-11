@@ -71,8 +71,8 @@ function LeaveSchedulePage() {
 
   const branchDepartments = useMemo(
     () =>
-      (departments as { id: string; code?: string; name_ru: string; name_kk: string }[]).filter(
-        (d) => d.code?.startsWith("UKG-SAT-"),
+      (departments as { id: string; code?: string; name_ru: string; name_kk: string; kind?: string }[]).filter(
+        (d) => d.kind === "department" || d.kind === "branch",
       ),
     [departments],
   );

@@ -117,7 +117,7 @@ function DutySchedulePage() {
           name_kk: string;
           kind?: string;
         }[]
-      ).filter((d) => d.kind === "department" || d.code.startsWith("UKG-SAT-")),
+      ).filter((d) => d.kind === "department" || d.kind === "branch"),
 
     [departments],
   );
