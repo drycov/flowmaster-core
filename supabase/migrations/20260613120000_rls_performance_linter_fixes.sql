@@ -261,7 +261,7 @@ BEGIN
         AND p2.polcmd = 'r'
         AND public._rls_roles_overlap(p2.polroles, pol.polroles)
     ) THEN
-      skip_cmds := skip_cmds || 'SELECT';
+      skip_cmds := skip_cmds || ARRAY['SELECT'];
     END IF;
 
     IF EXISTS (
@@ -273,7 +273,7 @@ BEGIN
         AND p2.polcmd = 'w'
         AND public._rls_roles_overlap(p2.polroles, pol.polroles)
     ) THEN
-      skip_cmds := skip_cmds || 'UPDATE';
+      skip_cmds := skip_cmds || ARRAY['UPDATE'];
     END IF;
 
     IF EXISTS (
@@ -285,7 +285,7 @@ BEGIN
         AND p2.polcmd = 'a'
         AND public._rls_roles_overlap(p2.polroles, pol.polroles)
     ) THEN
-      skip_cmds := skip_cmds || 'INSERT';
+      skip_cmds := skip_cmds || ARRAY['INSERT'];
     END IF;
 
     IF EXISTS (
@@ -297,7 +297,7 @@ BEGIN
         AND p2.polcmd = 'd'
         AND public._rls_roles_overlap(p2.polroles, pol.polroles)
     ) THEN
-      skip_cmds := skip_cmds || 'DELETE';
+      skip_cmds := skip_cmds || ARRAY['DELETE'];
     END IF;
 
     IF cardinality(skip_cmds) = 0 THEN
