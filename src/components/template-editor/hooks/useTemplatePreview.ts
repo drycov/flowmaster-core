@@ -10,8 +10,10 @@ export function useTemplatePreview(options: {
   fields: Field[];
   nameRu?: string;
   nameKk?: string;
+  /** Skip client-side fetch when ONLYOFFICE preview is active. */
+  disabled?: boolean;
 }) {
-  const { filePath, fileFormat, body, fields, nameRu, nameKk } = options;
+  const { filePath, fileFormat, body, fields, nameRu, nameKk, disabled = false } = options;
   const [reloadToken, setReloadToken] = useState(0);
 
   const previewValues = useMemo(
@@ -24,7 +26,7 @@ export function useTemplatePreview(options: {
   );
 
   const result = useFilePreview({
-    filePath,
+    filePath: disabled ? null : filePath,
     fileFormat,
     body,
     bucket: "templates",

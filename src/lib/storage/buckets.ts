@@ -16,6 +16,15 @@ export function documentVersionPath(documentId: string, versionNo: number, filen
   return `${documentId}/v${versionNo}/${safe}`;
 }
 
+export function documentAttachmentPath(
+  documentId: string,
+  attachmentId: string,
+  filename: string,
+) {
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+  return `${documentId}/attachments/${attachmentId}/${safe}`;
+}
+
 export function templateFilePath(templateId: string, filename: string) {
   const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   return `${templateId}/${safe}`;

@@ -80,10 +80,12 @@ export function useDocumentData(id: string) {
       const fieldValues: Record<string, string> = {
         registration_number: document.reg_number || "",
         reg_number: document.reg_number || "",
+        document_number: document.reg_number || "",
         document_title: document.title_ru || document.title_kk || "",
         title_ru: document.title_ru || "",
         title_kk: document.title_kk || "",
         document_date: document.created_at?.slice(0, 10) || "",
+        content_body: document.body || document.summary || "",
         status: document.status || "",
         doc_type: document.doc_type || "",
       };

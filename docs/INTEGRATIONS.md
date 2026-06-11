@@ -211,7 +211,8 @@ curl -sf http://localhost/onlyoffice/web-apps/apps/api/documents/api.js | head
 |------------|------------|
 | `ONLYOFFICE_CALLBACK_BASE_URL` | Внутренний URL для Document Server → app (`http://nginx` в Docker) |
 | `ONLYOFFICE_STORAGE_INTERNAL_URL` | Kong для signed URL файлов (`http://kong:8000`) |
-| `ONLYOFFICE_JWT_ENABLED` | `false` (JWT в app пока не используется) |
+| `ONLYOFFICE_JWT_ENABLED` | `false`; если `true` — задайте одинаковый `ONLYOFFICE_JWT_SECRET` у Document Server **и** у app |
+| `ONLYOFFICE_JWT_SECRET` | Секрет HS256 для подписи конфига редактора (app → ONLYOFFICE) |
 
 ### Настройка в админке
 

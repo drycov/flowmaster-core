@@ -9,11 +9,15 @@ import { useI18n, interpolate } from "@/i18n";
 import type { Template, TemplateField } from "../types";
 import type { RouteValue } from "../components/RoutePickerCard";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
-import { isAuthorExecutorField, isAuthorSignatoryField } from "@/lib/templates/author-field-values";
+import {
+  isAutoFilledTemplateField,
+} from "@/lib/templates/template-field-source";
 import { buildModifiedDefinition } from "@/lib/workflow/route-builder";
 import { getWorkflow } from "@/lib/api/workflows.functions";
 import type { WorkflowDefinition } from "@/components/workflow-designer/types";
 import { toGraphRouteInput } from "@/lib/workflow/route-builder";
+import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments.client";
+import { formatAttachmentsListText } from "@/lib/documents/attachments-format";
 
 interface CreateDocumentParams {
   values: Record<string, string>;
@@ -23,6 +27,7 @@ interface CreateDocumentParams {
   authorDefaults?: Record<string, string>;
   route?: RouteValue;
   projectId?: string | null;
+  attachmentFiles?: File[];
 }
 
 interface UseDocumentCreationOptions {
@@ -47,6 +52,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       authorDefaults = {},
       route,
       projectId,
+      attachmentFiles = [],
     }: CreateDocumentParams) => {
       let titleRu = values.title_ru?.trim() ?? "";
       let titleKk = values.title_kk?.trim() ?? "";
@@ -132,14 +138,16 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
           ).trim();
           if (value) {
             templateValues[field.key] = value;
-          } else if (
-            field.required &&
-            !isAuthorExecutorField(field.key) &&
-            !isAuthorSignatoryField(field.key)
-          ) {
+          } else if (field.required && !isAutoFilledTemplateField(field)) {
             throw new Error(interpolate(t("doc.fieldRequired"), { field: field.label_ru }));
           }
         });
+
+        if (attachmentFiles.length > 0 && templateFields.some((f) => f.key === "attachments")) {
+          templateValues.attachments =
+            templateValues.attachments ||
+            formatAttachmentsListText(attachmentFiles.map((f) => ({ name: f.name })));
+        }
 
         created = await generateFromTemplate({
           data: {
@@ -174,6 +182,10 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
             project_id: projectId ?? null,
           },
         });
+      }
+
+      if (created?.id && attachmentFiles.length > 0) {
+        await uploadDocumentAttachments(created.id, attachmentFiles);
       }
 
       const shouldStart =
@@ -214,6 +226,12 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
         toast.success(t("doc.created"));
       }
 
+      if (document?.approval_sheet_id) {
+        toast.info(t("doc.approvalSheetCreated"), { duration: 4000 });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["document-attachments"] });
+
       onSuccess?.(document);
 
       if (redirectOnSuccess && document?.id) {
@@ -222,9 +240,11 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
     },
     onError: (error) => {
       console.error("Creation error:", error);
-      let errorMessage = t("doc.createError");
-      if (error instanceof Error) errorMessage = error.message;
-      toast.error(errorMessage, { duration: 5000 });
+      const raw = error instanceof Error ? error.message : String(error);
+      const isStampTriggerBug =
+        /source_document_id|stamp_organization_from_document/i.test(raw);
+      const errorMessage = isStampTriggerBug ? t("doc.createErrorDbTrigger") : raw || t("doc.createError");
+      toast.error(errorMessage, { duration: isStampTriggerBug ? 12000 : 5000 });
       onError?.(error as Error);
     },
   });

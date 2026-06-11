@@ -54,6 +54,8 @@ services:
       LICENSE_SERVER_ADMIN_SECRET: ${LICENSE_SERVER_ADMIN_SECRET:-}
       ONLYOFFICE_CALLBACK_BASE_URL: ${ONLYOFFICE_CALLBACK_BASE_URL:-http://nginx}
       ONLYOFFICE_STORAGE_INTERNAL_URL: ${ONLYOFFICE_STORAGE_INTERNAL_URL:-http://kong:8000}
+      ONLYOFFICE_JWT_ENABLED: ${ONLYOFFICE_JWT_ENABLED:-false}
+      ONLYOFFICE_JWT_SECRET: ${ONLYOFFICE_JWT_SECRET}
     restart: unless-stopped
     depends_on:
       db-migrate:
@@ -113,7 +115,7 @@ services:
     profiles: ["office"]
     environment:
       JWT_ENABLED: ${ONLYOFFICE_JWT_ENABLED:-false}
-      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:-flowmaster_onlyoffice_jwt_change_me}
+      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET}
       USE_UNAUTHORIZED_STORAGE: "true"
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data

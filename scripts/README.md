@@ -17,6 +17,8 @@
 
 Флаги `env-setup`: `--force`, `--rotate-secrets`, `--license-secret=`, `--license-server-url=`, `--dry-run`.
 
+Production генерирует согласованный набор: `APP_URL` / `PROXY_DOMAIN` / Supabase URLs по домену, `ONLYOFFICE_JWT_SECRET` (общий для app и onlyoffice), `ONLYOFFICE_CALLBACK_BASE_URL` / `ONLYOFFICE_STORAGE_INTERNAL_URL` для Docker-сети, `INSTALLATION_ID` по домену.
+
 ## Docker
 
 | Команда | Stack | migrate + wait |

@@ -44,6 +44,7 @@ import { DocumentAccessDenied } from "@/components/document-detail/components/Do
 import { DocumentQrCard } from "@/components/document-detail/components/DocumentQrCard";
 import { SlaBadgeSafe } from "@/components/document-detail/components/SlaBadgeSafe";
 import { VersionsTab } from "@/components/document-detail/components/VersionsTab";
+import { AttachmentsTab } from "@/components/document-detail/components/AttachmentsTab";
 import { WorkflowActions } from "@/components/document-detail/components/WorkflowActions";
 import { WorkflowCard } from "@/components/document-detail/components/WorkflowCard";
 // Инструменты и Иконки
@@ -75,6 +76,7 @@ import {
   History,
   Link2,
   MessageSquare,
+  Paperclip,
   Pencil,
   Send,
   Shield,
@@ -297,6 +299,10 @@ function DocumentDetail() {
                 <History className="w-4 h-4 mr-1" />
                 {t("doc.versions")}
               </TabsTrigger>
+              <TabsTrigger value="attachments">
+                <Paperclip className="w-4 h-4 mr-1" />
+                {t("doc.attachments")}
+              </TabsTrigger>
               <TabsTrigger value="links">
                 <Link2 className="w-4 h-4 mr-1" />
                 {t("doc.links")}
@@ -321,6 +327,10 @@ function DocumentDetail() {
                 isEditable={canEditMetadata}
                 onSave={saveContent}
               />
+            </TabsContent>
+
+            <TabsContent value="attachments">
+              <AttachmentsTab documentId={id} canUpload={canEditMetadata} />
             </TabsContent>
 
             <TabsContent value="links">

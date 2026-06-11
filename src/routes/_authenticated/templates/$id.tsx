@@ -180,6 +180,7 @@ function TemplateEditor() {
         <EditorPreviewLayout
           preview={
             <TemplatePreviewCard
+              templateId={id}
               filePath={filePath}
               fileFormat={fileFormat}
               body={body}
@@ -214,6 +215,7 @@ function TemplateEditor() {
             filePath={filePath}
             fileFormat={fileFormat}
             status={status}
+            editOnly
           />
 
           <Card className="rounded-sm">

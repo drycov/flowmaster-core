@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import {
+  TEMPLATE_BODY_PRESETS,
+  TEMPLATE_EXTENDED_PRESETS,
+} from "@/lib/templates/preset-fields";
+import {
   Bold,
   Italic,
   List,
@@ -28,12 +32,14 @@ import {
   Briefcase,
   Signature,
   File,
+  Phone,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -48,21 +54,61 @@ interface BodyTemplateCardProps {
   onEnsureField?: (key: string, labelRu: string) => void;
 }
 
-// Предустановленные поля с иконками из lucide-react
-const PRESET_PLACEHOLDERS = [
-  { key: "full_name", labelKey: "tpl.preset.fullName", icon: User },
-  { key: "document_date", labelKey: "tpl.preset.documentDate", icon: Calendar },
-  { key: "department", labelKey: "tpl.preset.department", icon: Building2 },
-  { key: "registration_number", labelKey: "tpl.preset.regNumber", icon: Hash },
-  { key: "document_title", labelKey: "tpl.preset.documentTitle", icon: FileText },
-  { key: "responsible_person", labelKey: "tpl.preset.responsible", icon: Briefcase },
-  { key: "signature_name", labelKey: "tpl.preset.signature", icon: Signature },
-  { key: "content_body", labelKey: "tpl.preset.content", icon: File },
-];
+const PRESET_ICONS: Record<string, typeof User> = {
+  full_name: User,
+  document_date: Calendar,
+  department: Building2,
+  registration_number: Hash,
+  document_title: FileText,
+  responsible_person: Briefcase,
+  signature_name: Signature,
+  content_body: File,
+  organization_name: Building2,
+  document_number: Hash,
+  position: Briefcase,
+  phone: Phone,
+  executor_name: User,
+  executor_position: Briefcase,
+  executor_phone: Phone,
+  sender_name: User,
+  sender_position: Briefcase,
+  sender_short_name: Signature,
+  signatory_line: Signature,
+  attachments: File,
+  document_subject: FileText,
+};
+
+function presetIcon(key: string) {
+  return PRESET_ICONS[key] ?? Code;
+}
+
+function PresetMenuItems({
+  items,
+  onInsert,
+  t,
+}: {
+  items: typeof TEMPLATE_BODY_PRESETS;
+  onInsert: (key: string) => void;
+  t: (key: string) => string;
+}) {
+  return items.map((item) => {
+    const IconComponent = presetIcon(item.key);
+    return (
+      <DropdownMenuItem
+        key={item.key}
+        onClick={() => onInsert(item.key)}
+        className="cursor-pointer whitespace-nowrap"
+      >
+        <IconComponent className="mr-2 h-4 w-4 flex-shrink-0" />
+        <span className="mr-4 flex-1">{t(item.labelKey)}</span>
+        <code className="text-xs text-muted-foreground">{`{{${item.key}}}`}</code>
+      </DropdownMenuItem>
+    );
+  });
+}
 
 export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) {
   const { t } = useI18n();
-  const presets = PRESET_PLACEHOLDERS.map((p) => ({ ...p, label: t(p.labelKey) }));
   const [showPlaceholders, setShowPlaceholders] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -154,20 +200,16 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
                     {t("tpl.presetFields")}
                   </div>
                   <DropdownMenuSeparator />
-                  {presets.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={item.key}
-                        onClick={() => insertPlaceholder(item.key)}
-                        className="cursor-pointer whitespace-nowrap"
-                      >
-                        <IconComponent className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="flex-1 mr-4">{item.label}</span>
-                        <code className="text-xs text-muted-foreground">{`{{${item.key}}}`}</code>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                  <PresetMenuItems items={TEMPLATE_BODY_PRESETS} onInsert={insertPlaceholder} t={t} />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    {t("tpl.presetExtended")}
+                  </DropdownMenuLabel>
+                  <PresetMenuItems
+                    items={TEMPLATE_EXTENDED_PRESETS}
+                    onInsert={insertPlaceholder}
+                    t={t}
+                  />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={insertCustomPlaceholder}
@@ -353,15 +395,15 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
               <div className="text-xs text-muted-foreground bg-muted/30 rounded-md p-3 mt-3 shrink-0">
                 <p className="font-medium mb-2">🔧 {t("tpl.popularFields")}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {presets.slice(0, 4).map((item) => {
-                    const IconComponent = item.icon;
+                  {TEMPLATE_BODY_PRESETS.slice(0, 4).map((item) => {
+                    const IconComponent = presetIcon(item.key);
                     return (
                       <div key={item.key} className="flex items-center gap-2">
-                        <IconComponent className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                        <code className="text-xs bg-muted px-1 rounded font-mono">
+                        <IconComponent className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                        <code className="rounded bg-muted px-1 font-mono text-xs">
                           {`{{${item.key}}}`}
                         </code>
-                        <span className="text-muted-foreground truncate">→ {item.label}</span>
+                        <span className="truncate text-muted-foreground">→ {t(item.labelKey)}</span>
                       </div>
                     );
                   })}

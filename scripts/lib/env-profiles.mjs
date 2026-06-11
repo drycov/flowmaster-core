@@ -1,6 +1,23 @@
-import { createSupabaseSecrets } from "./env-crypto.mjs";
+import { createSupabaseSecrets, installationIdFromDomain } from "./env-crypto.mjs";
 
 export const TEMPLATE_FILE = ".env.docker.example";
+
+/** ONLYOFFICE vars shared by app and documentserver containers (Docker network). */
+function onlyofficeDockerEnv(secrets) {
+  return {
+    ONLYOFFICE_CALLBACK_BASE_URL: "http://nginx",
+    ONLYOFFICE_STORAGE_INTERNAL_URL: "http://kong:8000",
+    ONLYOFFICE_HTTP_PORT: "8082",
+    ONLYOFFICE_JWT_ENABLED: "false",
+    ONLYOFFICE_JWT_SECRET: secrets.ONLYOFFICE_JWT_SECRET,
+  };
+}
+
+/** Client profiles must not inherit vendor-only license-server secrets. */
+function clientSecrets(secrets) {
+  const { LICENSE_SERVER_ADMIN_SECRET: _admin, ...rest } = secrets;
+  return rest;
+}
 
 export const PROFILES = {
   local: {
@@ -29,9 +46,22 @@ export const PROFILES = {
   },
 };
 
+const CLIENT_PROFILE_IDS = new Set(["local", "production", "staging"]);
+
+/** Keys that belong only to the vendor license-server profile. */
+const LICENSE_SERVER_ONLY_KEYS = ["LICENSE_SERVER_ADMIN_SECRET", "LICENSE_SERVER_ENABLED"];
+
+export function stripVendorSecrets(existing, profileId) {
+  if (!CLIENT_PROFILE_IDS.has(profileId)) return existing;
+  for (const key of LICENSE_SERVER_ONLY_KEYS) {
+    existing.delete(key);
+  }
+  return existing;
+}
+
 export function buildProfileValues(profileId, ctx) {
   const secrets = createSupabaseSecrets(ctx.existing, { rotate: ctx.rotateSecrets });
-  const base = { ...secrets };
+  const base = clientSecrets(secrets);
 
   switch (profileId) {
     case "local":
@@ -55,16 +85,19 @@ export function buildProfileValues(profileId, ctx) {
         APPLY_DB_MIGRATIONS: "1",
         APPLY_DB_SEED: "0",
         ENABLE_EMAIL_AUTOCONFIRM: "true",
-        ONLYOFFICE_CALLBACK_BASE_URL: "http://nginx",
-        ONLYOFFICE_STORAGE_INTERNAL_URL: "http://kong:8000",
-        ONLYOFFICE_HTTP_PORT: "8082",
-        ONLYOFFICE_JWT_ENABLED: "false",
+        ...onlyofficeDockerEnv(secrets),
         NGINX_HTTP_PORT: "80",
         NGINX_HTTPS_PORT: "443",
         PROXY_DOMAIN: "",
         CERTBOT_EMAIL: "",
         GRAFANA_ADMIN_PASSWORD: secrets.GRAFANA_ADMIN_PASSWORD,
         MONITORING_GRAFANA_URL: "http://127.0.0.1:3001",
+        INSTALLATION_ID:
+          !ctx.rotateSecrets &&
+          ctx.existing.get("INSTALLATION_ID") &&
+          !ctx.existing.get("PROXY_DOMAIN")
+            ? ctx.existing.get("INSTALLATION_ID")
+            : installationIdFromDomain("localhost"),
       };
 
     case "production": {
@@ -90,10 +123,7 @@ export function buildProfileValues(profileId, ctx) {
         POOLER_TENANT_ID: ctx.existing.get("POOLER_TENANT_ID") ?? "flowmaster-prod",
         APPLY_DB_MIGRATIONS: "1",
         APPLY_DB_SEED: "0",
-        ONLYOFFICE_CALLBACK_BASE_URL: "http://nginx",
-        ONLYOFFICE_STORAGE_INTERNAL_URL: "http://kong:8000",
-        ONLYOFFICE_HTTP_PORT: "8082",
-        ONLYOFFICE_JWT_ENABLED: "false",
+        ...onlyofficeDockerEnv(secrets),
         ENABLE_EMAIL_AUTOCONFIRM: "false",
         DISABLE_SIGNUP: "false",
         NGINX_HTTP_PORT: "80",
@@ -101,7 +131,9 @@ export function buildProfileValues(profileId, ctx) {
         PROXY_DOMAIN: domain,
         CERTBOT_EMAIL: certEmail,
         SENTRY_ENVIRONMENT: "production",
-        SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? `admin@${domain}`,
+        SMTP_ADMIN_EMAIL: ctx.force
+          ? certEmail
+          : (ctx.existing.get("SMTP_ADMIN_EMAIL") ?? certEmail),
         MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3002",
         LICENSE_MODE: ctx.licenseServerUrl
           ? "online"
@@ -111,6 +143,12 @@ export function buildProfileValues(profileId, ctx) {
           ctx.existing.get("LICENSE_SIGNING_SECRET") ??
           "",
         LICENSE_SERVER_URL: ctx.licenseServerUrl ?? ctx.existing.get("LICENSE_SERVER_URL") ?? "",
+        INSTALLATION_ID:
+          !ctx.rotateSecrets &&
+          ctx.existing.get("INSTALLATION_ID") &&
+          ctx.existing.get("PROXY_DOMAIN") === domain
+            ? ctx.existing.get("INSTALLATION_ID")
+            : installationIdFromDomain(domain),
       };
     }
 
@@ -204,9 +242,10 @@ export function buildHeader(profileId, ctx) {
     case "production":
       lines.push(
         `# Домен: ${ctx.domain}`,
+        `# ONLYOFFICE (админка): ${ctx.publicUrl}/onlyoffice`,
         `# Regenerate: npm run env:production -- --domain=${ctx.domain} --force`,
         "# Установить как .env:",
-        `#   npm run env:production -- --domain=${ctx.domain} --install`,
+        `#   npm run env:production -- --domain=${ctx.domain} --email=... --install`,
         "# Запуск:",
         "#   npm run compose:tls",
         "#   npm run compose:tls:cron",
@@ -262,6 +301,9 @@ export function printNextSteps(profileId, ctx) {
       console.log("  5. npm run env:sync   (если compose ругается на docker/supabase/.env)");
       console.log("  6. curl http://127.0.0.1/api/health   (на сервере, до DNS)");
       console.log(`  7. curl https://${ctx.domain}/api/health   (после A-record DNS)`);
+      console.log(
+        `  8. ONLYOFFICE: Настройки → Интеграции → URL ${ctx.publicUrl}/onlyoffice (compose:tls поднимает сервис автоматически)`,
+      );
       break;
     case "staging":
       console.log("Next steps:");

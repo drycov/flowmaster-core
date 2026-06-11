@@ -1,4 +1,5 @@
 import { resolveDocumentTitles } from "./document-title";
+import { harmonizeTemplateSubstitutionValues } from "./preset-fields";
 
 export type TemplateEditorField = {
   key: string;
@@ -42,15 +43,20 @@ export function buildPreviewTemplateValues(options: {
   fieldValues: Record<string, string>;
   authorDefaults?: Record<string, string>;
 }): Record<string, string> {
+  const today = new Date().toISOString().slice(0, 10);
   const merged = { ...(options.authorDefaults ?? {}), ...options.fieldValues };
   const titles = resolveDocumentTitles(options.template, merged);
-  const today = new Date().toISOString().slice(0, 10);
+  const subject = merged.document_subject?.trim() || titles.title_ru;
 
-  return {
+  return harmonizeTemplateSubstitutionValues({
     ...merged,
     document_title: titles.title_ru,
     title_ru: titles.title_ru,
     title_kk: titles.title_kk,
     document_date: today,
-  };
+    document_number: "000000000001",
+    registration_number: "000000000001",
+    reg_number: "000000000001",
+    document_subject: subject,
+  });
 }

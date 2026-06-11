@@ -6,7 +6,23 @@ import { assertCanViewDocumentContent } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
 import { createSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
-import { officeDocumentKey, officeTemplateKey } from "@/lib/office/keys.server";
+import {
+  officeDocumentKey,
+  officeTemplateKey,
+  officeTemplatePreviewKey,
+} from "@/lib/office/keys.server";
+import { signOnlyOfficeConfig } from "@/lib/office/jwt.server";
+import {
+  downloadTemplateBuffer,
+  renderTemplateFile,
+} from "@/lib/templates/file-processing.server";
+import {
+  supportsTemplateProcessing,
+  templateMimeType,
+  type TemplateFileFormat,
+} from "@/lib/templates/file-formats";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createHash } from "node:crypto";
 import {
   initializeDocumentOfficeFile,
   resolveOfficeInitOptions,
@@ -69,31 +85,40 @@ async function buildEditorPayload(input: {
   const callbackBase = await resolveOfficeCallbackBase(resolveAppOrigin);
   const callbackUrl = callbackBase ? `${callbackBase}/api/public/hooks/office-callback` : "";
 
+  const rawConfig = {
+    document: {
+      fileType,
+      key: input.documentKey,
+      title: input.title,
+      url: rewriteOfficeStorageUrl(signedUrl),
+      permissions: {
+        edit: !input.readOnly,
+        download: true,
+        print: true,
+        review: false,
+        comment: false,
+      },
+    },
+    documentType,
+    editorConfig: {
+      ...(callbackUrl && !input.readOnly ? { callbackUrl } : {}),
+      mode: input.readOnly ? "view" : "edit",
+      lang: "ru",
+      user: {
+        id: input.userId,
+        name: profile?.full_name_ru ?? profile?.email ?? input.userId,
+      },
+      customization: {
+        forcesave: !input.readOnly,
+      },
+    },
+  };
+
   return {
     available: true as const,
     office_url: input.officeUrl,
     document_server_url: input.officeUrl,
-    config: {
-      document: {
-        fileType,
-        key: input.documentKey,
-        title: input.title,
-        url: rewriteOfficeStorageUrl(signedUrl),
-      },
-      documentType,
-      editorConfig: {
-        callbackUrl,
-        mode: input.readOnly ? "view" : "edit",
-        lang: "ru",
-        user: {
-          id: input.userId,
-          name: profile?.full_name_ru ?? profile?.email ?? input.userId,
-        },
-        customization: {
-          forcesave: true,
-        },
-      },
-    },
+    config: signOnlyOfficeConfig(rawConfig),
   };
 }
 
@@ -215,6 +240,82 @@ export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
       title: tpl.name_ru,
       documentKey: key,
       readOnly,
+      officeUrl,
+    });
+  });
+
+function previewValuesHash(values: Record<string, string>): string {
+  return createHash("sha256").update(JSON.stringify(values)).digest("hex").slice(0, 16);
+}
+
+function templateOfficePreviewPath(templateId: string, format: string): string {
+  return `${templateId}/_office_preview/preview.${format}`;
+}
+
+export const getTemplateOfficePreviewConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      template_id: z.string().uuid(),
+      preview_values: z.record(z.string(), z.string()).default({}),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
+    const { supabase, userId } = context;
+    const officeUrl = await resolveOfficeUrl();
+
+    const { data: tpl, error } = await supabase
+      .from("document_templates")
+      .select("id, name_ru, file_path, file_format, updated_at")
+      .eq("id", data.template_id)
+      .single();
+    if (error || !tpl) throw new Error("Шаблон не найден");
+
+    if (!officeUrl) {
+      return {
+        available: false as const,
+        office_url: null,
+        reason: "office_not_configured" as const,
+      };
+    }
+
+    if (!tpl.file_path) {
+      return {
+        available: false as const,
+        office_url: officeUrl,
+        reason: "no_file_version" as const,
+      };
+    }
+
+    const format = (tpl.file_format ?? "docx") as TemplateFileFormat;
+    const valuesHash = previewValuesHash(data.preview_values);
+    const previewPath = templateOfficePreviewPath(data.template_id, format);
+
+    let previewBuffer = await downloadTemplateBuffer(tpl.file_path);
+    if (supportsTemplateProcessing(format) && Object.keys(data.preview_values).length > 0) {
+      previewBuffer = await renderTemplateFile(previewBuffer, format, data.preview_values);
+    }
+
+    const { error: uploadErr } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKETS.templates)
+      .upload(previewPath, previewBuffer, {
+        upsert: true,
+        contentType: templateMimeType(format),
+      });
+    if (uploadErr) throw new Error(`Не удалось подготовить предпросмотр: ${uploadErr.message}`);
+
+    const key = officeTemplatePreviewKey(data.template_id, `${tpl.updated_at}:${valuesHash}`);
+
+    return buildEditorPayload({
+      supabase,
+      userId,
+      bucket: STORAGE_BUCKETS.templates,
+      storagePath: previewPath,
+      fileFormat: format,
+      title: `${tpl.name_ru} — предпросмотр`,
+      documentKey: key,
+      readOnly: true,
       officeUrl,
     });
   });

@@ -22,6 +22,9 @@ import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 import { buildSystemTemplateValues } from "@/lib/templates/system-values";
+import { isAutoFilledTemplateField } from "@/lib/templates/template-field-source";
+import { attachApprovalSheetForDocument } from "@/lib/documents/approval-sheet.server";
+import { harmonizeTemplateSubstitutionValues } from "@/lib/templates/preset-fields";
 
 export const listTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -54,6 +57,7 @@ const fieldSchema = z.object({
   type: z.enum(["text", "textarea", "number", "date", "select", "user"]),
   required: z.boolean().default(false),
   options: z.array(z.string()).optional(),
+  source: z.enum(["user", "author", "signatory", "organization", "system"]).optional(),
 });
 
 export const upsertTemplate = createServerFn({ method: "POST" })
@@ -286,7 +290,7 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     const mergedValues = { ...authorDefaults, ...data.values };
 
     for (const field of schema.fields ?? []) {
-      if (field.required && !mergedValues[field.key]?.trim()) {
+      if (field.required && !isAutoFilledTemplateField(field) && !mergedValues[field.key]?.trim()) {
         throw new Error(`Поле «${field.key}» обязательно для заполнения`);
       }
     }
@@ -305,10 +309,17 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     const titleRu = resolvedTitles.title_ru || data.title_ru;
     const titleKk = resolvedTitles.title_kk || data.title_kk || titleRu;
 
-    const preValues = {
-      ...buildSystemTemplateValues({ title_ru: titleRu, title_kk: titleKk }),
-      ...mergedValues,
-    };
+    const preValues = harmonizeTemplateSubstitutionValues(
+      {
+        ...buildSystemTemplateValues({
+          title_ru: titleRu,
+          title_kk: titleKk,
+          document_subject: mergedValues.document_subject,
+        }),
+        ...mergedValues,
+      },
+      { summary: data.title_ru },
+    );
     let body = bodyTemplate ? substituteTemplateBody(bodyTemplate, preValues) : "";
 
     const doc = await insertDocumentWithRegistration({
@@ -335,24 +346,28 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
     });
 
     const regNumber = doc.reg_number;
-    const finalValues = {
-      ...preValues,
-      ...buildSystemTemplateValues({
-        title_ru: titleRu,
-        title_kk: titleKk,
-        reg_number: regNumber,
-      }),
-    };
+    const finalValues = harmonizeTemplateSubstitutionValues(
+      {
+        ...preValues,
+        ...buildSystemTemplateValues({
+          title_ru: titleRu,
+          title_kk: titleKk,
+          reg_number: regNumber,
+          document_subject: mergedValues.document_subject,
+        }),
+      },
+      { body },
+    );
 
-    if (
-      bodyTemplate &&
-      (bodyTemplate.includes("{{registration_number}}") || bodyTemplate.includes("{{reg_number}}"))
-    ) {
-      body = substituteTemplateBody(bodyTemplate, finalValues);
-      await supabaseAdmin
-        .from("documents")
-        .update({ body } as never)
-        .eq("id", doc.id);
+    if (bodyTemplate) {
+      const resubstituted = substituteTemplateBody(bodyTemplate, finalValues);
+      if (resubstituted !== body) {
+        body = resubstituted;
+        await supabaseAdmin
+          .from("documents")
+          .update({ body } as never)
+          .eq("id", doc.id);
+      }
     }
 
     const fileFormat = tplRow.file_format as TemplateFileFormat | null;
@@ -369,5 +384,16 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       });
     }
 
-    return { id: doc.id, reg_number: regNumber, body };
+    let approval_sheet_id: string | undefined;
+    try {
+      const sheet = await attachApprovalSheetForDocument({
+        parentDocumentId: doc.id,
+        userId,
+      });
+      approval_sheet_id = sheet?.sheetDocumentId;
+    } catch (err) {
+      console.warn("[approval-sheet] generateFromTemplate:", err);
+    }
+
+    return { id: doc.id, reg_number: regNumber, body, approval_sheet_id };
   });

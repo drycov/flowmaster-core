@@ -35,3 +35,11 @@ export function parseOfficeTemplateKey(key: string): string | null {
   const m = key.match(new RegExp(`^tpl:(${UUID}):[0-9a-f]{16}$`, "i"));
   return m?.[1]?.toLowerCase() ?? null;
 }
+
+export function officeTemplatePreviewKey(templateId: string, previewHash: string): string {
+  const hash = createHash("sha256")
+    .update(`${templateId}:preview:${previewHash}`)
+    .digest("hex")
+    .slice(0, 16);
+  return `tpl-preview:${templateId}:${hash}`;
+}

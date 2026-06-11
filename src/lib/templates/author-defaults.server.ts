@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { fetchProfileById, type ProfileRow } from "@/lib/auth/server/profiles";
 import {
   buildAuthorTemplateDefaults,
+  buildOrganizationTemplateDefaults,
   resolveSignatoryUserId,
   type DepartmentHeadSource,
 } from "./author-field-values";
@@ -59,5 +60,16 @@ export async function buildTemplateAuthorDefaultsForUser(
     signatoryProfile = await fetchProfileById(signatoryUserId);
   }
 
-  return buildAuthorTemplateDefaults(authorProfile, signatoryProfile);
+  const { data: orgRow, error: orgErr } = await supabaseAdmin
+    .from("organization")
+    .select("name_ru, name_kk")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (orgErr) throw new Error(orgErr.message);
+
+  return {
+    ...buildOrganizationTemplateDefaults(orgRow),
+    ...buildAuthorTemplateDefaults(authorProfile, signatoryProfile),
+  };
 }

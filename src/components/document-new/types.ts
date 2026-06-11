@@ -7,6 +7,7 @@ export interface TemplateField {
   label_kk: string;
   type: "text" | "textarea" | "number" | "date";
   required?: boolean;
+  source?: "user" | "author" | "signatory" | "organization" | "system";
 }
 
 export interface TemplateSchema {

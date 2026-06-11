@@ -38,6 +38,7 @@ import {
   buildHeader,
   buildProfileValues,
   printNextSteps,
+  stripVendorSecrets,
 } from "./lib/env-profiles.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -149,7 +150,10 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     ? parseEnvValues(readFileSync(outputPath, "utf8"))
     : new Map();
 
-  const existing = mergeEnvMaps(existingFromFiles, existingFromOutput);
+  const existing = stripVendorSecrets(
+    mergeEnvMaps(existingFromFiles, existingFromOutput),
+    profileId,
+  );
 
   const ctx = {
     profileId,

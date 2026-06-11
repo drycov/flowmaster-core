@@ -27,6 +27,7 @@ import { useDocumentCreation } from "@/components/document-new/hooks/useDocument
 import { MetadataCard } from "@/components/document-new/components/MetadataCard";
 
 import { TemplateFieldsCard } from "@/components/document-new/components/TemplateFieldsCard";
+import { PendingAttachmentsCard } from "@/components/document-new/components/PendingAttachmentsCard";
 import { DocumentPreviewCard } from "@/components/document-new/components/DocumentPreviewCard";
 import { EditorPreviewLayout } from "@/components/shared/EditorPreviewLayout";
 
@@ -132,6 +133,7 @@ function NewDocument() {
   const templateAllowCustom = selectedTemplate?.allow_custom_route ?? true;
 
   const [route, setRoute] = useState<RouteValue>({ kind: "none" });
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
 
   useEffect(() => {
     if (templateDefaultWf) {
@@ -242,6 +244,7 @@ function NewDocument() {
         authorDefaults,
         route,
         projectId: projectId ?? null,
+        attachmentFiles: pendingAttachments,
       });
     },
     (errors) => {
@@ -320,7 +323,23 @@ function NewDocument() {
               isLoading={isLoading}
             />
 
-            {showTemplateFields && <TemplateFieldsCard form={form} fields={templateFields} />}
+            {showTemplateFields && (
+              <TemplateFieldsCard
+                form={form}
+                fields={templateFields}
+                authorDefaults={authorDefaults}
+              />
+            )}
+
+            <PendingAttachmentsCard
+              files={pendingAttachments}
+              onChange={setPendingAttachments}
+              onAttachmentsText={(text) => {
+                if (templateFields.some((field) => field.key === "attachments")) {
+                  form.setValue("attachments", text);
+                }
+              }}
+            />
 
             <RoutePickerCard
               templateDefaultWorkflowId={templateDefaultWf}

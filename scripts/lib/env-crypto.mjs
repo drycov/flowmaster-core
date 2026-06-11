@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 
 export function b64url(input) {
   return Buffer.from(input)
@@ -24,6 +24,16 @@ export function genSupabaseJwt(role, jwtSecret) {
 
 export function hex(bytes) {
   return randomBytes(bytes).toString("hex");
+}
+
+/** Stable installation UUID for a domain (matches runtime seeding strategy). */
+export function installationIdFromDomain(domain) {
+  const hash = createHash("sha256").update(`flowmaster-install:${domain}`).digest();
+  const bytes = Buffer.from(hash.subarray(0, 16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hexStr = bytes.toString("hex");
+  return `${hexStr.slice(0, 8)}-${hexStr.slice(8, 12)}-${hexStr.slice(12, 16)}-${hexStr.slice(16, 20)}-${hexStr.slice(20, 32)}`;
 }
 
 export function b64(bytes) {
@@ -53,6 +63,7 @@ export const SECRET_KEYS = [
   "GRAFANA_ADMIN_PASSWORD",
   "LICENSE_SIGNING_SECRET",
   "INSTALLATION_ID",
+  "ONLYOFFICE_JWT_SECRET",
 ];
 
 export function createSupabaseSecrets(existing = new Map(), { rotate = false } = {}) {
@@ -87,5 +98,6 @@ export function createSupabaseSecrets(existing = new Map(), { rotate = false } =
     GRAFANA_ADMIN_PASSWORD: pick("GRAFANA_ADMIN_PASSWORD", () => hex(16)),
     LICENSE_SIGNING_SECRET: pick("LICENSE_SIGNING_SECRET", () => hex(32)),
     LICENSE_SERVER_ADMIN_SECRET: pick("LICENSE_SERVER_ADMIN_SECRET", () => hex(32)),
+    ONLYOFFICE_JWT_SECRET: pick("ONLYOFFICE_JWT_SECRET", () => hex(32)),
   };
 }

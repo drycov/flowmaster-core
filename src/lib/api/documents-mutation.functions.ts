@@ -13,6 +13,7 @@ import {
   applyDocumentStatusTransition,
 } from "@/lib/documents/status-transition.server";
 import { patchDocumentDomains } from "@/lib/documents/sidecars.server";
+import { attachApprovalSheetForDocument } from "@/lib/documents/approval-sheet.server";
 
 export const createDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -72,7 +73,7 @@ export const createDocument = createServerFn({ method: "POST" })
       project_id,
     } = data;
 
-    return insertDocumentWithRegistration({
+    const created = await insertDocumentWithRegistration({
       title_ru,
       title_kk,
       summary,
@@ -98,6 +99,19 @@ export const createDocument = createServerFn({ method: "POST" })
       project_id,
       created_by: userId,
     });
+
+    let approval_sheet_id: string | undefined;
+    try {
+      const sheet = await attachApprovalSheetForDocument({
+        parentDocumentId: created.id,
+        userId,
+      });
+      approval_sheet_id = sheet?.sheetDocumentId;
+    } catch (err) {
+      console.warn("[approval-sheet] createDocument:", err);
+    }
+
+    return { ...created, approval_sheet_id };
   });
 
 export const updateDocumentMetadata = createServerFn({ method: "POST" })

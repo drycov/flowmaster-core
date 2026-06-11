@@ -10,6 +10,8 @@ interface Props {
   filePath?: string | null;
   fileFormat?: string | null;
   status: string;
+  /** Hide when ONLYOFFICE is used only for preview (non-draft templates). */
+  editOnly?: boolean;
 }
 
 function supportsOfficeEditing(format: string | null | undefined): boolean {
@@ -17,7 +19,13 @@ function supportsOfficeEditing(format: string | null | undefined): boolean {
   return (TEMPLATE_FILE_EXTENSIONS as readonly string[]).includes(format.toLowerCase());
 }
 
-export function TemplateOfficeCard({ templateId, filePath, fileFormat, status }: Props) {
+export function TemplateOfficeCard({
+  templateId,
+  filePath,
+  fileFormat,
+  status,
+  editOnly = false,
+}: Props) {
   const { t } = useI18n();
   const queryKey = ["office-config", "template", templateId, filePath, status] as const;
   const enabled = Boolean(filePath && supportsOfficeEditing(fileFormat));
@@ -31,6 +39,7 @@ export function TemplateOfficeCard({ templateId, filePath, fileFormat, status }:
 
   if (!enabled) return null;
   if (officeConfig?.reason === "office_not_configured") return null;
+  if (editOnly && status !== "draft") return null;
 
   return (
     <Card className="rounded-sm">

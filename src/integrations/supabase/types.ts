@@ -727,6 +727,67 @@ export type Database = {
           },
         ]
       }
+      document_attachments: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          organization_id: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          document_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          organization_id?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          organization_id?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_attachments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_correspondents: {
         Row: {
           correspondent_id: string

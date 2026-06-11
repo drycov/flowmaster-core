@@ -40,6 +40,8 @@ export type TemplateFieldDef = {
   type: "text" | "textarea" | "number" | "date" | "select" | "user";
   required?: boolean;
   options?: string[];
+  /** user — manual input; author/signatory/organization/system — auto-filled */
+  source?: "user" | "author" | "signatory" | "organization" | "system";
 };
 
 export function extractPlaceholderKeys(text: string): string[] {
