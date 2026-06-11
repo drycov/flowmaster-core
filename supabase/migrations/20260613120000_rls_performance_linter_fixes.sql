@@ -59,6 +59,7 @@ $$;
 -- profiles: one SELECT, one UPDATE
 DROP POLICY IF EXISTS "profiles_select_directory" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_select_tenant" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_merged" ON public.profiles;
 CREATE POLICY "profiles_select_merged" ON public.profiles
   FOR SELECT TO authenticated
   USING (
@@ -93,6 +94,7 @@ CREATE POLICY "profiles_select_merged" ON public.profiles
 
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_tenant" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_merged" ON public.profiles;
 CREATE POLICY "profiles_update_merged" ON public.profiles
   FOR UPDATE TO authenticated
   USING (
@@ -119,6 +121,9 @@ CREATE POLICY "profiles_update_merged" ON public.profiles
 -- organization: single UPDATE; platform INSERT/DELETE (SELECT stays "org read all auth")
 DROP POLICY IF EXISTS "org_platform_manage" ON public.organization;
 DROP POLICY IF EXISTS "org_tenant_update" ON public.organization;
+DROP POLICY IF EXISTS "org_platform_insert" ON public.organization;
+DROP POLICY IF EXISTS "org_platform_delete" ON public.organization;
+DROP POLICY IF EXISTS "org_update_merged" ON public.organization;
 
 CREATE POLICY "org_platform_insert" ON public.organization
   FOR INSERT TO authenticated
@@ -147,6 +152,8 @@ CREATE POLICY "org_update_merged" ON public.organization
 
 -- user_notification_preferences: split upsert away from SELECT
 DROP POLICY IF EXISTS "unp_upsert_own" ON public.user_notification_preferences;
+DROP POLICY IF EXISTS "unp_insert_own" ON public.user_notification_preferences;
+DROP POLICY IF EXISTS "unp_update_own" ON public.user_notification_preferences;
 CREATE POLICY "unp_insert_own" ON public.user_notification_preferences
   FOR INSERT TO authenticated
   WITH CHECK (user_id = (select auth.uid()));
@@ -157,6 +164,9 @@ CREATE POLICY "unp_update_own" ON public.user_notification_preferences
 
 -- user_roles: split manage away from SELECT
 DROP POLICY IF EXISTS "user_roles_manage_tenant" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_manage_tenant_insert" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_manage_tenant_update" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_manage_tenant_delete" ON public.user_roles;
 CREATE POLICY "user_roles_manage_tenant_insert" ON public.user_roles
   FOR INSERT TO authenticated
   WITH CHECK (
