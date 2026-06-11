@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hashLicenseKey, parseLicenseKey } from "../keys.server";
+import { persistUsageTelemetry, sanitizeUsageTelemetry } from "./telemetry.server";
 import type {
   LicenseActivateRequest,
   LicenseActivateResponse,
@@ -249,7 +250,7 @@ export async function connectOnLicenseServer(
   supabase: SupabaseClient,
   req: LicenseConnectRequest,
 ): Promise<LicenseActivateResponse> {
-  const { data: provision, error } = await supabase
+  let { data: provision, error } = await supabase
     .from("license_server_provisions" as never)
     .select("*")
     .eq("installation_id", req.installation_id)
@@ -257,7 +258,20 @@ export async function connectOnLicenseServer(
 
   if (error) throw new Error(error.message);
   if (!provision) {
-    throw new Error("Установка не зарегистрирована на облачном license server");
+    const { getLicenseUpstreamUrl } = await import("./config.server");
+    const { syncInstallationFromUpstream } = await import("./upstream-sync.server");
+    if (getLicenseUpstreamUrl()) {
+      await syncInstallationFromUpstream(supabase, req.installation_id);
+      ({ data: provision, error } = await supabase
+        .from("license_server_provisions" as never)
+        .select("*")
+        .eq("installation_id", req.installation_id)
+        .maybeSingle());
+      if (error) throw new Error(error.message);
+    }
+  }
+  if (!provision) {
+    throw new Error("Установка не зарегистрирована на license server");
   }
 
   const row = provision as Record<string, unknown>;
@@ -353,8 +367,20 @@ export async function heartbeatOnLicenseServer(
       last_seen_at: new Date().toISOString(),
       hostname: req.hostname ?? act.hostname,
       app_version: req.app_version ?? act.app_version,
+      last_active_users: req.active_users ?? req.telemetry?.active_users ?? 0,
     } as never)
     .eq("id", act.id);
+
+  const telemetry = sanitizeUsageTelemetry(req.telemetry);
+  if (telemetry) {
+    await persistUsageTelemetry(supabase, {
+      installation_id: req.installation_id,
+      activation_id: String(act.id),
+      telemetry,
+      active_users: req.active_users ?? telemetry.active_users,
+      app_version: req.app_version ?? telemetry.app_version,
+    });
+  }
 
   return {
     status: "active",

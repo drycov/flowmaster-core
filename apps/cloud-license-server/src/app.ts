@@ -8,6 +8,7 @@ import { PLAN_PRESETS } from "./lib/plans.js";
 import { getPortalUserFromRequest } from "./lib/portal-auth.js";
 import { bootstrapPortalAccount, buildPublicPlans, getPortalAccount } from "./lib/portal.js";
 import { buildPricingConfig, calculateQuote, type BillingPeriod } from "./lib/pricing.js";
+import { sanitizeUsageTelemetry } from "./lib/telemetry.js";
 import {
   activateOnLicenseServer,
   connectOnLicenseServer,
@@ -29,12 +30,28 @@ const connectSchema = z.object({
 const activateSchema = connectSchema.extend({
   license_key: z.string().min(20),
 });
+const usageTelemetrySchema = z
+  .object({
+    total_users: z.number().int().min(0).max(999_999).optional(),
+    active_users: z.number().int().min(0).max(999_999).optional(),
+    max_users_allowed: z.number().int().min(0).max(999_999).optional(),
+    documents_total: z.number().int().min(0).max(99_999_999).optional(),
+    documents_30d: z.number().int().min(0).max(99_999_999).optional(),
+    workflows_published: z.number().int().min(0).max(999_999).optional(),
+    app_version: z.string().max(64).optional(),
+    environment: z.string().max(32).optional(),
+    platform: z.string().max(64).optional(),
+  })
+  .strict()
+  .optional();
+
 const heartbeatSchema = z.object({
   token: z.string().min(10),
   installation_id: installationIdSchema,
   active_users: z.number().int().min(0).optional(),
   hostname: z.string().optional(),
   app_version: z.string().optional(),
+  telemetry: usageTelemetrySchema,
 });
 const registerKeySchema = z.object({
   license_key: z.string().min(20),
@@ -173,7 +190,11 @@ app.post("/api/v1/license/activate", zValidator("json", activateSchema), async (
 app.post("/api/v1/license/heartbeat", zValidator("json", heartbeatSchema), async (c) => {
   try {
     const body = c.req.valid("json");
-    const result = await heartbeatOnLicenseServer(getSupabase(), body);
+    const telemetry = sanitizeUsageTelemetry(body.telemetry) ?? undefined;
+    const result = await heartbeatOnLicenseServer(getSupabase(), {
+      ...body,
+      telemetry,
+    });
     return c.json(result);
   } catch (e) {
     return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);

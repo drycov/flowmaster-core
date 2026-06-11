@@ -35,6 +35,20 @@ export type LicenseHeartbeatRequest = {
   active_users?: number;
   hostname?: string;
   app_version?: string;
+  telemetry?: LicenseUsageTelemetry;
+};
+
+/** Aggregated usage metrics sent during license sync (no PII). */
+export type LicenseUsageTelemetry = {
+  total_users: number;
+  active_users: number;
+  max_users_allowed: number;
+  documents_total: number;
+  documents_30d: number;
+  workflows_published: number;
+  app_version: string;
+  environment: string;
+  platform: string;
 };
 
 export type LicenseHeartbeatResponse = {

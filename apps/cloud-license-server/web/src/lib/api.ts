@@ -10,6 +10,36 @@ export type PublicPlan = {
   features: { key: string; label: string }[];
 };
 
+export type PortalInstallationTariff = {
+  title: string;
+  subtitle: string;
+  price_label: string;
+  days_remaining: number | null;
+  is_trial: boolean;
+  features: { key: string; label: string }[];
+  pricing: {
+    currency_label: string;
+    monthly: number;
+    yearly_total: number;
+    custom_quote: boolean;
+    extra_users: number;
+    yearly_months_paid: number;
+  } | null;
+};
+
+export type PortalUsageTelemetry = {
+  reported_at: string | null;
+  app_version: string;
+  total_users: number;
+  active_users: number;
+  max_users_allowed: number;
+  documents_total: number;
+  documents_30d: number;
+  workflows_published: number;
+  environment: string;
+  platform: string;
+};
+
 export type PortalInstallation = {
   installation_id: string;
   plan: string | null;
@@ -20,6 +50,8 @@ export type PortalInstallation = {
   last_seen_at: string | null;
   hostname: string | null;
   app_version: string | null;
+  tariff: PortalInstallationTariff | null;
+  telemetry: PortalUsageTelemetry | null;
 };
 
 export type PortalMe = {

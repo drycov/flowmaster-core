@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
+import { TariffSummary } from "../components/TariffSummary";
+import { UsageTelemetrySummary } from "../components/UsageTelemetrySummary";
 import { useAuth } from "../hooks/useAuth";
 import { fetchPortalMe, salesContactHref, type PortalInstallation, type PortalMe } from "../lib/api";
 import { getAccessToken } from "../lib/supabase";
@@ -30,17 +32,6 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 function InstallationCard({ item, licenseServerUrl }: { item: PortalInstallation; licenseServerUrl: string }) {
-  const planLabel =
-    item.plan === "trial"
-      ? "Пробный"
-      : item.plan === "standard"
-        ? "Стандарт"
-        : item.plan === "professional"
-          ? "Professional"
-          : item.plan === "enterprise"
-            ? "Enterprise"
-            : "—";
-
   const statusTone =
     item.status === "active"
       ? "text-emerald-400"
@@ -48,22 +39,29 @@ function InstallationCard({ item, licenseServerUrl }: { item: PortalInstallation
         ? "text-red-400"
         : "text-amber-400";
 
+  const statusLabel =
+    item.status === "active"
+      ? "Активна"
+      : item.status === "revoked"
+        ? "Отозвана"
+        : item.status === "suspended"
+          ? "Приостановлена"
+          : item.status;
+
   return (
     <article className="card space-y-5 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">{item.customer_name || "Установка"}</h3>
-          <p className={`mt-1 text-sm ${statusTone}`}>
-            {item.status === "active" ? "Активна" : item.status}
-            {item.plan ? ` · ${planLabel}` : ""}
-          </p>
+          <p className={`mt-1 text-sm ${statusTone}`}>{statusLabel}</p>
         </div>
-        {item.max_users ? (
-          <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
-            до {item.max_users} пользователей
-          </span>
-        ) : null}
       </div>
+
+      {item.tariff ? (
+        <TariffSummary tariff={item.tariff} planCode={item.plan} maxUsers={item.max_users} />
+      ) : null}
+
+      {item.telemetry ? <UsageTelemetrySummary telemetry={item.telemetry} /> : null}
 
       <CopyField label="Installation ID" value={item.installation_id} />
       <CopyField label="LICENSE_SERVER_URL" value={licenseServerUrl} />
@@ -181,11 +179,17 @@ export function CabinetPage() {
         <div className="card mt-10 p-6">
           <h2 className="font-semibold">Нужен другой тариф?</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Свяжитесь с отделом продаж для перехода на Standard, Professional или Enterprise.
+            Сравните планы в калькуляторе или напишите в отдел продаж — поможем подобрать Standard,
+            Professional или Enterprise.
           </p>
-          <a href={salesContactHref("Смена тарифа ЕСЭДО")} className="btn-primary mt-4 inline-flex">
-            Написать в продажи
-          </a>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/#calculator" className="btn-primary">
+              Калькулятор тарифов
+            </Link>
+            <a href={salesContactHref("Смена тарифа ЕСЭДО")} className="btn-secondary">
+              Написать в продажи
+            </a>
+          </div>
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-500">

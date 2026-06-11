@@ -10,6 +10,9 @@ import {
   isOnlineLicenseRequired,
   shouldUseLicenseServer,
 } from "./config.server";
+import {
+  collectLicenseUsageTelemetry,
+} from "./telemetry.server";
 import type {
   LicenseActivateResponse,
   LicenseHeartbeatResponse,
@@ -174,14 +177,15 @@ async function runHeartbeatSync(
     installation_id: string;
   },
 ): Promise<LicenseStatusResponse> {
-  const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+  const telemetry = await collectLicenseUsageTelemetry(supabase);
 
   const result = await postJson<LicenseHeartbeatResponse>("/api/v1/license/heartbeat", {
     token: license.license_server_token,
     installation_id: license.installation_id,
-    active_users: count ?? 0,
+    active_users: telemetry.active_users,
     hostname: process.env.PUBLIC_APP_URL?.trim() || "",
-    app_version: getAppVersion(),
+    app_version: telemetry.app_version || getAppVersion(),
+    telemetry,
   });
 
   const serverRevoked = result.status === "revoked" || result.status === "suspended";

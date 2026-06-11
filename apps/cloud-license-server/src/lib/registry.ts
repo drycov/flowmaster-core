@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hashLicenseKey, parseLicenseKey } from "./keys.js";
+import { persistUsageTelemetry, sanitizeUsageTelemetry } from "./telemetry.js";
 import type {
   LicenseActivateRequest,
   LicenseActivateResponse,
@@ -351,8 +352,20 @@ export async function heartbeatOnLicenseServer(
       last_seen_at: new Date().toISOString(),
       hostname: req.hostname ?? act.hostname,
       app_version: req.app_version ?? act.app_version,
+      last_active_users: req.active_users ?? req.telemetry?.active_users ?? 0,
     })
     .eq("id", act.id);
+
+  const telemetry = sanitizeUsageTelemetry(req.telemetry);
+  if (telemetry) {
+    await persistUsageTelemetry(supabase, {
+      installation_id: req.installation_id,
+      activation_id: String(act.id),
+      telemetry,
+      active_users: req.active_users ?? telemetry.active_users,
+      app_version: req.app_version ?? telemetry.app_version,
+    });
+  }
 
   return {
     status: "active",

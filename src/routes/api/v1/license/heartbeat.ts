@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { heartbeatOnLicenseServer } from "@/lib/license/server/registry.server";
 import { assertLicenseServerEnabled } from "@/lib/license/server/route-auth.server";
+import type { LicenseUsageTelemetry } from "@/lib/license/server/types";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -31,12 +32,15 @@ export const Route = createFileRoute("/api/v1/license/heartbeat")({
         }
 
         try {
+          const telemetry =
+            body.telemetry && typeof body.telemetry === "object" ? body.telemetry : undefined;
           const result = await heartbeatOnLicenseServer(supabaseAdmin, {
             token,
             installation_id,
             active_users: body.active_users !== undefined ? Number(body.active_users) : undefined,
             hostname: body.hostname ? String(body.hostname) : undefined,
             app_version: body.app_version ? String(body.app_version) : undefined,
+            telemetry: telemetry as LicenseUsageTelemetry | undefined,
           });
           return json(result);
         } catch (e) {

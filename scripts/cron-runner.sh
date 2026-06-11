@@ -32,6 +32,7 @@ run_batch() {
   run_hook "sla-tick" "/api/public/hooks/sla-tick"
   run_hook "retention-tick" "/api/public/hooks/retention-tick"
   run_hook "license-sync" "/api/public/hooks/license-sync"
+  run_hook "license-upstream-sync" "/api/public/hooks/license-upstream-sync"
   if [ "$ENABLE_TELEGRAM_POLL" = "1" ]; then
     run_hook "telegram-poll" "/api/public/hooks/telegram-poll"
   fi

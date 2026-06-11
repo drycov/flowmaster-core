@@ -71,6 +71,20 @@ export type LicenseHeartbeatRequest = {
   active_users?: number;
   hostname?: string;
   app_version?: string;
+  telemetry?: LicenseUsageTelemetry;
+};
+
+/** Aggregated usage metrics sent during license sync (no PII). */
+export type LicenseUsageTelemetry = {
+  total_users: number;
+  active_users: number;
+  max_users_allowed: number;
+  documents_total: number;
+  documents_30d: number;
+  workflows_published: number;
+  app_version: string;
+  environment: string;
+  platform: string;
 };
 
 export type LicenseHeartbeatResponse = {
@@ -96,6 +110,36 @@ export type LicenseProvisionRequest = {
   features?: LicenseFeatures;
 };
 
+export type PortalUsageTelemetry = {
+  reported_at: string | null;
+  app_version: string;
+  total_users: number;
+  active_users: number;
+  max_users_allowed: number;
+  documents_total: number;
+  documents_30d: number;
+  workflows_published: number;
+  environment: string;
+  platform: string;
+};
+
+export type PortalInstallationTariff = {
+  title: string;
+  subtitle: string;
+  price_label: string;
+  days_remaining: number | null;
+  is_trial: boolean;
+  features: { key: string; label: string }[];
+  pricing: {
+    currency_label: string;
+    monthly: number;
+    yearly_total: number;
+    custom_quote: boolean;
+    extra_users: number;
+    yearly_months_paid: number;
+  } | null;
+};
+
 export type PortalInstallationView = {
   installation_id: string;
   plan: LicensePlan | null;
@@ -106,4 +150,6 @@ export type PortalInstallationView = {
   last_seen_at: string | null;
   hostname: string | null;
   app_version: string | null;
+  tariff: PortalInstallationTariff | null;
+  telemetry: PortalUsageTelemetry | null;
 };

@@ -15,6 +15,13 @@ export function getLicenseServerUrl(): string | null {
   return url ? url.replace(/\/$/, "") : null;
 }
 
+/** Cloud master URL for local license server replica (Phase 2). */
+export function getLicenseUpstreamUrl(): string | null {
+  loadServerEnv();
+  const url = process.env.LICENSE_UPSTREAM_URL?.trim();
+  return url ? url.replace(/\/$/, "") : null;
+}
+
 /** Client is bound to vendor cloud when LICENSE_SERVER_URL is set (any env profile). */
 export function usesCloudLicense(): boolean {
   return !!getLicenseServerUrl();

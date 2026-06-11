@@ -3,7 +3,7 @@ import {
   unauthorizedHookResponse,
   verifyInternalHookRequest,
 } from "@/lib/internal-hook-auth.server";
-import { licenseServerAvailable, syncLicenseWithServer } from "@/lib/license/server/client.server";
+import { licenseServerAvailable, syncLicenseWithServerSoft } from "@/lib/license/server/client.server";
 
 export const Route = createFileRoute("/api/public/hooks/license-sync")({
   server: {

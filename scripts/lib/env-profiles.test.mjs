@@ -64,4 +64,42 @@ describe("buildProfileValues production", () => {
     assert.equal(values.INSTALLATION_ID, installationId);
     assert.equal(values.LICENSE_SERVER_ADMIN_SECRET, undefined);
   });
+
+  it("configures local replica + cloud upstream", () => {
+    const installationId = "da23803d-1048-4526-b5d8-09c9e95c2999";
+    const edms = buildProfileValues("production", {
+      domain: "edms.client.kz",
+      certEmail: "admin@client.kz",
+      publicUrl: "https://edms.client.kz",
+      withLicenseServer: true,
+      licenseReplica: true,
+      licenseDomain: "license.client.kz",
+      licenseServerUrl: "https://z-edms.vercel.app",
+      installationId,
+      existing: new Map(),
+      rotateSecrets: true,
+      force: true,
+    });
+
+    assert.equal(edms.LICENSE_MODE, "online");
+    assert.equal(edms.LICENSE_SERVER_URL, "https://license.client.kz");
+    assert.equal(edms.LICENSE_SERVER_ENABLED, "false");
+    assert.equal(edms.INSTALLATION_ID, installationId);
+
+    const local = buildProfileValues("license-server", {
+      domain: "license.client.kz",
+      certEmail: "admin@client.kz",
+      publicUrl: "https://license.client.kz",
+      licenseReplica: true,
+      licenseServerUrl: "https://z-edms.vercel.app",
+      installationId,
+      existing: new Map(),
+      rotateSecrets: true,
+      force: true,
+    });
+
+    assert.equal(local.LICENSE_UPSTREAM_URL, "https://z-edms.vercel.app");
+    assert.equal(local.LICENSE_SERVER_ENABLED, "true");
+    assert.equal(local.INSTALLATION_ID, installationId);
+  });
 });

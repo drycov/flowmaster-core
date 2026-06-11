@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { planLabel } from "./plans.js";
+import { sanitizeUsageTelemetry } from "./telemetry.js";
 import type { LicensePlan } from "./types.js";
 
 export type LicenseServerKeySummary = {
@@ -25,6 +26,9 @@ export type LicenseServerActivationSummary = {
   last_seen_at: string;
   customer_name: string;
   plan: LicensePlan | null;
+  active_users: number;
+  total_users: number;
+  documents_total: number;
 };
 
 export type LicenseServerProvisionSummary = {
@@ -155,6 +159,7 @@ export async function listLicenseServerActivations(
   const items: LicenseServerActivationSummary[] = ((data ?? []) as Record<string, unknown>[]).map(
     (row) => {
       const key = row.license_server_keys as Record<string, unknown> | null;
+      const telemetry = sanitizeUsageTelemetry(row.telemetry);
       return {
         id: String(row.id),
         installation_id: String(row.installation_id),
@@ -164,6 +169,9 @@ export async function listLicenseServerActivations(
         last_seen_at: String(row.last_seen_at),
         customer_name: key?.customer_name ? String(key.customer_name) : "",
         plan: key?.plan ? (String(key.plan) as LicensePlan) : null,
+        active_users: Number(row.last_active_users ?? telemetry?.active_users ?? 0),
+        total_users: telemetry?.total_users ?? 0,
+        documents_total: telemetry?.documents_total ?? 0,
       };
     },
   );

@@ -168,7 +168,12 @@ export function buildProfileValues(profileId, ctx) {
       const wantsLicense =
         ctx.withLicenseServer || Boolean(externalLicenseUrl) || Boolean(ctx.installationId);
 
-      if (externalLicenseUrl) {
+      if (ctx.licenseReplica && ctx.licenseDomain && externalLicenseUrl) {
+        // Фаза 2: EDMS → Local LS (replica) → Cloud master
+        production.LICENSE_MODE = "online";
+        production.LICENSE_SERVER_URL = `https://${ctx.licenseDomain}`.replace(/\/$/, "");
+        production.LICENSE_SERVER_ENABLED = "false";
+      } else if (externalLicenseUrl) {
         // Связка EDMS (on-prem Docker) ↔ license server (Vercel / облако)
         production.LICENSE_MODE = "online";
         production.LICENSE_SERVER_URL = externalLicenseUrl.replace(/\/$/, "");
@@ -198,12 +203,23 @@ export function buildProfileValues(profileId, ctx) {
 
     case "license-server": {
       const { domain, certEmail, publicUrl } = ctx;
+      const upstreamUrl = ctx.licenseReplica
+        ? (ctx.licenseServerUrl ?? "").trim().replace(/\/$/, "")
+        : "";
+      const installationId =
+        ctx.installationId?.trim() ||
+        (!ctx.rotateSecrets &&
+        ctx.existing.get("INSTALLATION_ID") &&
+        ctx.existing.get("PROXY_DOMAIN") === domain
+          ? ctx.existing.get("INSTALLATION_ID")
+          : installationIdFromDomain(domain));
       return {
         ...base,
         NODE_ENV: "production",
         LOG_LEVEL: "info",
         LICENSE_SERVER_ENABLED: "true",
-        LICENSE_MODE: "offline",
+        LICENSE_MODE: ctx.licenseReplica ? "online" : "offline",
+        LICENSE_UPSTREAM_URL: upstreamUrl,
         LICENSE_SIGNING_SECRET:
           ctx.licenseSecret ?? secrets.LICENSE_SIGNING_SECRET,
         LICENSE_SERVER_ADMIN_SECRET: secrets.LICENSE_SERVER_ADMIN_SECRET,
@@ -232,12 +248,7 @@ export function buildProfileValues(profileId, ctx) {
         CERTBOT_EMAIL: certEmail,
         SENTRY_ENVIRONMENT: "license-server",
         SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? certEmail,
-        INSTALLATION_ID:
-          !ctx.rotateSecrets &&
-          ctx.existing.get("INSTALLATION_ID") &&
-          ctx.existing.get("PROXY_DOMAIN") === domain
-            ? ctx.existing.get("INSTALLATION_ID")
-            : installationIdFromDomain(domain),
+        INSTALLATION_ID: installationId,
       };
     }
 

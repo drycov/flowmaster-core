@@ -68,7 +68,8 @@ Options:
   --installation-id=UUID production: INSTALLATION_ID из кабинета vendor
   --with-license-server  production: включить лицензирование
   --cloud-license        alias для --with-license-server (облачная связка с --license-server-url)
-  --license-domain=HOST  production: дополнительно .env.license-server (self-hosted VPS)
+  --license-domain=HOST  production: локальный license server (replica или отдельный VPS)
+  --license-replica      production: Local LS у клиента + cloud master (--license-server-url)
   --output=PATH     override output file
   --dry-run         stdout only
   --help            this message
@@ -155,7 +156,13 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   const installationId = values.get("--installation-id")?.trim() || null;
   const withLicenseServer =
     flags.has("--with-license-server") || flags.has("--cloud-license");
+  const licenseReplica = flags.has("--license-replica");
   const licenseDomain = values.get("--license-domain")?.trim() || null;
+
+  if (licenseReplica && (!licenseDomain || !licenseServerUrl)) {
+    console.error("--license-replica requires --license-domain and --license-server-url (cloud master)");
+    return 1;
+  }
 
   if (installationId && !/^[0-9a-f-]{36}$/i.test(installationId)) {
     console.error(`Invalid --installation-id (expected UUID): ${installationId}`);
@@ -183,6 +190,7 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     installationId,
     withLicenseServer,
     licenseDomain,
+    licenseReplica,
     force,
     rotateSecrets,
     install,
@@ -211,7 +219,12 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     console.log(`  Domain:  ${domain}`);
     console.log(`  App URL: ${publicUrl}`);
     if (licenseServerUrl) {
-      console.log(`  License: ${licenseServerUrl} (online)`);
+      if (licenseReplica && licenseDomain) {
+        console.log(`  Local LS:  https://${licenseDomain} (replica)`);
+        console.log(`  Cloud:     ${licenseServerUrl} (upstream master)`);
+      } else {
+        console.log(`  License: ${licenseServerUrl} (online)`);
+      }
       if (installationId) console.log(`  Installation: ${installationId}`);
     }
   }
@@ -238,7 +251,9 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
       certEmail,
       publicUrl: licensePublicUrl,
       licenseSecret: sharedSigning,
-      licenseServerUrl: null,
+      licenseServerUrl: licenseReplica ? licenseServerUrl : null,
+      licenseReplica,
+      installationId,
       withLicenseServer: false,
       licenseDomain: null,
       force,
@@ -258,7 +273,13 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     console.log(`Created ${licenseOutput}`);
     console.log(`  License domain: ${licenseDomain}`);
     console.log(`  License URL:    ${licensePublicUrl}`);
-    console.log("  Запуск на отдельном VPS: npm run compose:license-server");
+    if (licenseReplica) {
+      console.log(`  Upstream cloud: ${licenseServerUrl}`);
+      console.log("  Запуск local replica: npm run compose:license-server");
+      console.log("  Cron upstream sync:   npm run compose:license-server (+ cron profile)");
+    } else {
+      console.log("  Запуск на отдельном VPS: npm run compose:license-server");
+    }
   }
 
   if (install) {

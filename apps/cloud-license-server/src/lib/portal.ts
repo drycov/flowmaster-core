@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PLAN_PRESETS } from "./plans.js";
+import { calculateQuote, PRICING_CONFIG } from "./pricing.js";
 import { upsertProvisionOnServer } from "./registry.js";
-import type { LicensePlan, PortalInstallationView } from "./types.js";
+import { telemetryFromRow } from "./telemetry.js";
+import type { LicenseFeatures, LicensePlan, PortalInstallationTariff, PortalInstallationView, PortalUsageTelemetry } from "./types.js";
 
 export const FEATURE_LABELS: Record<string, string> = {
   workflows: "Маршруты согласования",
@@ -78,6 +80,67 @@ export function buildPublicPlans() {
   });
 }
 
+export function buildInstallationTariff(input: {
+  plan: LicensePlan;
+  max_users: number;
+  features: LicenseFeatures;
+  expires_at: string | null;
+}): PortalInstallationTariff {
+  const marketing = PLAN_MARKETING[input.plan];
+  const enabledFeatures = Object.entries(input.features)
+    .filter(([, v]) => v)
+    .map(([k]) => ({ key: k, label: FEATURE_LABELS[k] ?? k }));
+
+  const days_remaining = input.expires_at
+    ? Math.max(0, Math.ceil((new Date(input.expires_at).getTime() - Date.now()) / 86400000))
+    : null;
+
+  if (input.plan === "trial") {
+    return {
+      title: marketing.title,
+      subtitle: marketing.subtitle,
+      price_label: marketing.priceLabel,
+      days_remaining,
+      is_trial: true,
+      features: enabledFeatures,
+      pricing: null,
+    };
+  }
+
+  const quote = calculateQuote({
+    users: input.max_users,
+    period: "monthly",
+    plan: input.plan,
+  });
+
+  return {
+    title: marketing.title,
+    subtitle: marketing.subtitle,
+    price_label: marketing.priceLabel,
+    days_remaining,
+    is_trial: false,
+    features: enabledFeatures,
+    pricing: {
+      currency_label: PRICING_CONFIG.currency_label,
+      monthly: quote.monthly,
+      yearly_total: quote.monthly * PRICING_CONFIG.yearly_months_paid,
+      custom_quote: quote.custom_quote,
+      extra_users: quote.extra_users,
+      yearly_months_paid: PRICING_CONFIG.yearly_months_paid,
+    },
+  };
+}
+
+function parseProvisionFeatures(
+  raw: unknown,
+  plan: LicensePlan,
+): LicenseFeatures {
+  if (raw && typeof raw === "object" && Object.keys(raw as object).length > 0) {
+    return raw as LicenseFeatures;
+  }
+  return PLAN_PRESETS[plan].features;
+}
+
 async function loadInstallationViews(
   supabase: SupabaseClient,
   installationIds: string[],
@@ -93,13 +156,18 @@ async function loadInstallationViews(
 
   const { data: activations } = await supabase
     .from("license_server_activations")
-    .select("installation_id, last_seen_at, hostname, app_version, status")
+    .select(
+      "installation_id, last_seen_at, hostname, app_version, status, last_active_users, telemetry, telemetry_at",
+    )
     .in("installation_id", installationIds)
-    .eq("status", "active");
+    .eq("status", "active")
+    .order("last_seen_at", { ascending: false });
 
-  const actMap = new Map(
-    (activations ?? []).map((a) => [String(a.installation_id), a as Record<string, unknown>]),
-  );
+  const actMap = new Map<string, Record<string, unknown>>();
+  for (const row of activations ?? []) {
+    const id = String((row as { installation_id: string }).installation_id);
+    if (!actMap.has(id)) actMap.set(id, row as Record<string, unknown>);
+  }
 
   const provMap = new Map(
     (provisions ?? []).map((p) => [String(p.installation_id), p as Record<string, unknown>]),
@@ -108,16 +176,32 @@ async function loadInstallationViews(
   return installationIds.map((installationId) => {
     const prov = provMap.get(installationId);
     const act = actMap.get(installationId);
+    const plan = prov ? (String(prov.plan) as LicensePlan) : null;
+    const max_users = prov ? Number(prov.max_users) : null;
+    const expires_at = prov?.expires_at ? String(prov.expires_at) : null;
+
+    const tariff =
+      plan && max_users
+        ? buildInstallationTariff({
+            plan,
+            max_users,
+            features: parseProvisionFeatures(prov?.features, plan),
+            expires_at,
+          })
+        : null;
+
     return {
       installation_id: installationId,
-      plan: prov ? (String(prov.plan) as LicensePlan) : null,
-      max_users: prov ? Number(prov.max_users) : null,
+      plan,
+      max_users,
       status: prov ? String(prov.status) : "pending",
       customer_name: prov ? String(prov.customer_name ?? "") : "",
-      expires_at: prov?.expires_at ? String(prov.expires_at) : null,
+      expires_at,
       last_seen_at: act?.last_seen_at ? String(act.last_seen_at) : null,
       hostname: act?.hostname ? String(act.hostname) : null,
       app_version: act?.app_version ? String(act.app_version) : null,
+      tariff,
+      telemetry: telemetryFromRow(act),
     };
   });
 }

@@ -67,6 +67,143 @@ curl https://z-edms.vercel.app/api/v1/license/health
 
 ---
 
+## Фаза 2: Local License Server (replica) + Cloud master
+
+Для Enterprise / КИИ / закрытых контуров: **EDMS не ходит в интернет напрямую**, только в локальный License Server; тот синхронизируется с облаком vendor.
+
+```mermaid
+sequenceDiagram
+  participant EDMS as EDMS
+  participant Local as Local License Server
+  participant Cloud as Vercel (master)
+  participant Cron as cron (local LS)
+
+  EDMS->>Local: POST /api/v1/license/connect
+  Local->>Cloud: connect (если кэш пуст)
+  Cloud-->>Local: entitlement + token
+  Local-->>EDMS: entitlement + token
+  Cron->>Local: /hooks/license-upstream-sync
+  Local->>Cloud: heartbeat (телеметрия)
+```
+
+| Компонент | Переменные |
+|-----------|------------|
+| **Cloud (master)** | Vercel, кабинет, `installation_id` |
+| **Local LS (replica)** | `LICENSE_SERVER_ENABLED=true`, `LICENSE_UPSTREAM_URL`, `INSTALLATION_ID` |
+| **EDMS** | `LICENSE_SERVER_URL=https://license.client.kz`, `LICENSE_SERVER_ENABLED=false` |
+
+### Генерация env (оба стека)
+
+```bash
+npm run env:production -- \
+  --domain=edms.client.kz \
+  --email=admin@client.kz \
+  --license-domain=license.client.kz \
+  --license-replica \
+  --license-server-url=https://z-edms.vercel.app \
+  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --with-license-server \
+  --force \
+  --install
+```
+
+Создаёт:
+- `.env` — EDMS → `https://license.client.kz`
+- `.env.license-server` — replica с `LICENSE_UPSTREAM_URL=https://z-edms.vercel.app`
+
+### Деплой
+
+```bash
+# 1. Local License Server (в контуре клиента)
+cp .env.license-server .env
+npm run compose:license-server
+curl https://license.client.kz/api/v1/license/health
+
+# 2. EDMS (тот же или другой хост)
+cp .env.production .env   # если не --install
+npm run docker:up -- --tls --cron
+```
+
+Local LS при первом `connect` от EDMS подтягивает entitlement с облака. Cron на replica: `POST /api/public/hooks/license-upstream-sync` → heartbeat в Vercel.
+
+### Закрытый контур (EDMS без выхода в интернет)
+
+**Когда применять:** заказчик запрещает прямой HTTPS из EDMS наружу (КИИ, госсектор, промышленная сеть). EDMS видит только внутренний DNS; в `.env` **нет** URL Vercel.
+
+```text
+                    Интернет / DMZ
+                           │
+              исходящий HTTPS (443) — только с хоста Local LS
+                           │
+    ┌──────────────────────┼──────────────────────┐
+    │   Контур заказчика   │                      │
+    │                      ▼                      │
+    │         Local License Server                │
+    │         license.internal (443)              │
+    │                      │                      │
+    │         ┌────────────┴────────────┐         │
+    │         ▼                         ▼         │
+    │      EDMS app              cron (local LS)  │
+    │   edms.internal          upstream-sync     │
+    │   LICENSE_SERVER_URL=      LICENSE_UPSTREAM │
+    │   https://license...       _URL → Vercel    │
+    │   ❌ нет Vercel URL        ✅ один шлюз     │
+    └─────────────────────────────────────────────┘
+```
+
+| Правило | EDMS | Local LS |
+|---------|------|----------|
+| Исходящий интернет | **Запрещён** | Разрешён (443 → Vercel) или через корп. proxy |
+| Входящий из интернета | Не нужен | Не нужен |
+| Маршрут лицензии | → `LICENSE_SERVER_URL` (внутренний) | → `LICENSE_UPSTREAM_URL` (облако) |
+| Данные документов наружу | Нет | Нет — только агрегированная телеметрия (см. ниже) |
+
+**`.env` EDMS (важно):**
+
+```env
+LICENSE_SERVER_URL=https://license.internal.client.kz
+LICENSE_MODE=online
+LICENSE_SERVER_ENABLED=false
+# LICENSE_UPSTREAM_URL — не задавать на EDMS
+# URL Vercel — только в .env.license-server
+```
+
+**`.env` Local LS:**
+
+```env
+LICENSE_SERVER_ENABLED=true
+LICENSE_UPSTREAM_URL=https://z-edms.vercel.app
+INSTALLATION_ID=da23803d-1048-4526-b5d8-09c9e95c2999
+```
+
+**Поведение при обрыве связи Local LS ↔ облако:**
+
+- EDMS продолжает ходить только во **внутренний** LS;
+- Local LS отдаёт **закэшированную** entitlement (таблицы `license_server_provisions`, `license_server_upstream_cache`);
+- бизнес EDMS не останавливается, пока не истечёт срок лицензии или не придёт отзыв при следующем успешном sync.
+
+**Полностью изолированная сеть** (Local LS тоже без интернета, даже через DMZ) — в roadmap: offline activation (request/license file). До этого нужен хотя бы периодический исходящий канал с **одного** хоста Local LS.
+
+**Фаза 1 vs Фаза 2:**
+
+| | Фаза 1 | Фаза 2 |
+|---|--------|--------|
+| EDMS → интернет | Да (`LICENSE_SERVER_URL` = Vercel) | **Нет** |
+| Подходит для | Обычный on-prem с исходящим HTTPS | КИИ / закрытый контур |
+| Сложность | Минимальная | +1 Docker-стек (Local LS) |
+
+### Roadmap (после MVP replica)
+
+| Функция | Статус |
+|---------|--------|
+| Replica sync (connect + upstream heartbeat) | ✅ MVP |
+| Floating licenses | 🔜 |
+| Offline activation (request/license file) | 🔜 |
+| JWT license tokens для desktop/API nodes | 🔜 |
+| Grace 30–90 дней (настраиваемый) | 🔜 |
+
+---
+
 ## Быстрый старт (Vercel)
 
 Публикуется как **единый проект**: landing + кабинет клиента + license API.
@@ -134,6 +271,8 @@ ssh -L 3847:127.0.0.1:3847 user@license-server
 |------|-----|------------|-------|
 | **License server (Vercel)** | `apps/cloud-license-server` | Supabase, `LICENSE_SERVER_ADMIN_SECRET` | Принимает `connect` / `heartbeat` |
 | **Клиент EDMS (облако)** | Docker on-prem | `LICENSE_SERVER_URL`, `INSTALLATION_ID`, `LICENSE_MODE=online` | → Vercel API |
+| **Клиент EDMS (replica)** | Docker on-prem | `LICENSE_SERVER_URL` → local LS | → Local LS → Cloud |
+| **Local LS (replica)** | Docker у клиента | `LICENSE_UPSTREAM_URL`, `INSTALLATION_ID` | → Vercel (sync) |
 | **License server (Docker vendor)** | `compose:license-server` | `LICENSE_SERVER_ENABLED=true` | Self-hosted, FM1/CLI |
 | **Клиент (legacy offline)** | on-prem | `LICENSE_MODE=offline`, FM1-ключ | Без облака |
 
@@ -172,6 +311,31 @@ npm run env:production -- \
 Статус на клиенте: **Администрирование → Настройки → Лицензия** (просмотр и «Синхронизировать»).
 
 При потере связи с облаком EDMS переходит в **offline mode** — лицензия остаётся активной по последней синхронизации (кроме явного отзыва или истечения срока).
+
+## Телеметрия использования
+
+При синхронизации (`POST /api/v1/license/heartbeat`, cron `license-sync`) локальный EDMS отправляет **только агрегированные** показатели в поле `telemetry`. Конфиденциальные данные (содержимое документов, ФИО, email, номера, тексты) **не передаются**.
+
+| Поле | Описание |
+|------|----------|
+| `total_users` | Число учётных записей (`profiles`) |
+| `active_users` | Пользователей по лимиту лицензии (`license_active_user_count`) |
+| `max_users_allowed` | Лимит из локальной лицензии |
+| `documents_total` | Всего документов (count) |
+| `documents_30d` | Новых документов за 30 дней |
+| `workflows_published` | Опубликованных маршрутов |
+| `app_version` | Версия ЕСЭДО |
+| `environment` | `production` / `development` / … |
+| `platform` | Версия Node.js |
+
+Дополнительно в heartbeat: `installation_id`, `hostname`, `app_version`, `active_users` (legacy-поле).
+
+На license server данные сохраняются в `license_server_activations.telemetry` (последний снимок) и `license_server_telemetry_snapshots` (история). Отображение:
+
+- **Кабинет клиента** (`/cabinet`) — блок «Телеметрия использования»
+- **Vendor Admin** (`/admin/console` → Активации) — пользователи, документы, версия
+
+Миграции: `apps/cloud-license-server/supabase/migrations/003_usage_telemetry.sql` (облако), `supabase/migrations/20260617100000_license_server_usage_telemetry.sql` (self-hosted LS / replica).
 
 ## API
 

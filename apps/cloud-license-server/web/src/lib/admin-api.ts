@@ -96,6 +96,9 @@ export type ActivationRow = {
   last_seen_at: string;
   customer_name: string;
   plan: LicensePlan | null;
+  active_users: number;
+  total_users: number;
+  documents_total: number;
 };
 
 export type ProvisionRow = {
