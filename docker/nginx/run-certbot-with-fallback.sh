@@ -2,7 +2,7 @@
 set -e
 
 . /scripts/util.sh
-. /etc/nginx/ensure-self-signed-cert.sh
+. "$(cd "$(dirname "$0")" && pwd)/ensure-self-signed-cert.sh"
 
 domain="${CERTBOT_DOMAIN:-${PROXY_DOMAIN:-}}"
 live="/etc/letsencrypt/live/${domain}"
