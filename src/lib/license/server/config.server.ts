@@ -15,14 +15,17 @@ export function getLicenseServerUrl(): string | null {
   return url ? url.replace(/\/$/, "") : null;
 }
 
+/** Client is bound to vendor cloud when LICENSE_SERVER_URL is set (any env profile). */
+export function usesCloudLicense(): boolean {
+  return !!getLicenseServerUrl();
+}
+
 export function isOnlineLicenseRequired(): boolean {
-  return getLicenseMode() === "online";
+  return usesCloudLicense() || getLicenseMode() === "online";
 }
 
 export function shouldUseLicenseServer(): boolean {
-  const mode = getLicenseMode();
-  if (mode === "offline") return false;
-  return !!getLicenseServerUrl();
+  return usesCloudLicense();
 }
 
 export function getLicenseServerAdminSecret(): string | null {
@@ -34,6 +37,13 @@ export function getLicenseServerAdminSecret(): string | null {
 export function isLicenseServerEnabled(): boolean {
   loadServerEnv();
   const raw = process.env.LICENSE_SERVER_ENABLED?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+/** Local vendor console (loopback + support code). Never set on public deploy. */
+export function isLicenseServerLocalAdminEnabled(): boolean {
+  loadServerEnv();
+  const raw = process.env.LICENSE_SERVER_LOCAL_ADMIN?.trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
 }
 

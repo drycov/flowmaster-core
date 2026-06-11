@@ -21,12 +21,13 @@ export const Route = createFileRoute("/api/public/hooks/license-sync")({
         }
 
         try {
-          const status = await syncLicenseWithServer();
+          const status = await syncLicenseWithServerSoft();
           return new Response(
             JSON.stringify({
               ok: true,
               status: status.status,
               last_sync_ok: status.last_sync_ok,
+              offline_mode: status.offline_mode,
               server_revoked: status.server_revoked,
             }),
             { status: 200, headers: { "Content-Type": "application/json" } },
@@ -34,7 +35,8 @@ export const Route = createFileRoute("/api/public/hooks/license-sync")({
         } catch (e) {
           return new Response(
             JSON.stringify({
-              ok: false,
+              ok: true,
+              offline: true,
               error: e instanceof Error ? e.message : String(e),
             }),
             { status: 200, headers: { "Content-Type": "application/json" } },

@@ -4,6 +4,7 @@ import { hashLicenseKey, parseLicenseKey } from "../keys.server";
 import type {
   LicenseActivateRequest,
   LicenseActivateResponse,
+  LicenseConnectRequest,
   LicenseHeartbeatRequest,
   LicenseHeartbeatResponse,
   LicenseRevokeRequest,
@@ -89,26 +90,61 @@ async function ensureKeyRegistered(
   return { id: String((inserted as { id: string }).id), row: inserted as Record<string, unknown> };
 }
 
-export async function registerLicenseKeyOnServer(
-  supabase: SupabaseClient,
-  licenseKey: string,
-): Promise<{ key_id: string; key_hash: string }> {
-  const { id } = await ensureKeyRegistered(supabase, licenseKey);
-  return { key_id: id, key_hash: hashLicenseKey(licenseKey) };
+function provisionKeyHash(installationId: string): string {
+  return sha256Hex(`provision:v1:${installationId}`);
 }
 
-export async function activateOnLicenseServer(
+async function upsertProvisionKey(
   supabase: SupabaseClient,
-  req: LicenseActivateRequest,
-): Promise<LicenseActivateResponse> {
-  const { id: keyId, row: keyRow } = await ensureKeyRegistered(supabase, req.license_key);
+  provision: Record<string, unknown>,
+  installationId: string,
+): Promise<{ id: string; row: Record<string, unknown> }> {
+  const keyHash = provisionKeyHash(installationId);
+  const patch = {
+    key_hash: keyHash,
+    plan: provision.plan,
+    max_users: provision.max_users,
+    features: provision.features,
+    customer_name: provision.customer_name,
+    installation_id: installationId,
+    expires_at: provision.expires_at,
+    issued_at: provision.issued_at,
+    status: "active",
+  };
 
-  if (keyRow.installation_id && req.installation_id) {
-    if (String(keyRow.installation_id) !== req.installation_id) {
-      throw new Error("Ключ привязан к другой установке");
-    }
+  const { data: existing, error: loadErr } = await supabase
+    .from("license_server_keys" as never)
+    .select("*")
+    .eq("key_hash", keyHash)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+
+  if (existing) {
+    const { data: updated, error: updErr } = await supabase
+      .from("license_server_keys" as never)
+      .update(patch as never)
+      .eq("id", (existing as { id: string }).id)
+      .select("*")
+      .single();
+    if (updErr) throw new Error(updErr.message);
+    return { id: String((updated as { id: string }).id), row: updated as Record<string, unknown> };
   }
 
+  const { data: inserted, error: insErr } = await supabase
+    .from("license_server_keys" as never)
+    .insert(patch as never)
+    .select("*")
+    .single();
+  if (insErr) throw new Error(insErr.message);
+  return { id: String((inserted as { id: string }).id), row: inserted as Record<string, unknown> };
+}
+
+async function activateKeyForInstallation(
+  supabase: SupabaseClient,
+  keyId: string,
+  keyRow: Record<string, unknown>,
+  req: { installation_id: string; hostname?: string; app_version?: string },
+): Promise<LicenseActivateResponse> {
   if (keyRow.expires_at) {
     const exp = new Date(String(keyRow.expires_at)).getTime();
     if (!Number.isNaN(exp) && exp < Date.now()) {
@@ -173,6 +209,98 @@ export async function activateOnLicenseServer(
     entitlement: rowToEntitlement(keyRow as Parameters<typeof rowToEntitlement>[0]),
     next_heartbeat_hours: DEFAULT_HEARTBEAT_HOURS,
   };
+}
+
+export async function upsertProvisionOnServer(
+  supabase: SupabaseClient,
+  input: {
+    installation_id: string;
+    plan: string;
+    max_users: number;
+    features: Record<string, boolean>;
+    customer_name: string;
+    expires_at: string | null;
+  },
+): Promise<{ id: string; installation_id: string }> {
+  const { data, error } = await supabase
+    .from("license_server_provisions" as never)
+    .upsert(
+      {
+        installation_id: input.installation_id,
+        plan: input.plan,
+        max_users: input.max_users,
+        features: input.features,
+        customer_name: input.customer_name,
+        expires_at: input.expires_at,
+        status: "active",
+        revoked_at: null,
+        revoked_reason: "",
+      } as never,
+      { onConflict: "installation_id" },
+    )
+    .select("id, installation_id")
+    .single();
+  if (error) throw new Error(error.message);
+  const row = data as { id: string; installation_id: string };
+  return row;
+}
+
+export async function connectOnLicenseServer(
+  supabase: SupabaseClient,
+  req: LicenseConnectRequest,
+): Promise<LicenseActivateResponse> {
+  const { data: provision, error } = await supabase
+    .from("license_server_provisions" as never)
+    .select("*")
+    .eq("installation_id", req.installation_id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!provision) {
+    throw new Error("Установка не зарегистрирована на облачном license server");
+  }
+
+  const row = provision as Record<string, unknown>;
+  if (row.status === "revoked" || row.status === "suspended") {
+    throw new Error(String(row.revoked_reason || "Лицензия приостановлена поставщиком"));
+  }
+
+  if (row.expires_at) {
+    const exp = new Date(String(row.expires_at)).getTime();
+    if (!Number.isNaN(exp) && exp < Date.now()) {
+      throw new Error("Срок действия лицензии истёк");
+    }
+  }
+
+  const { id: keyId, row: keyRow } = await upsertProvisionKey(
+    supabase,
+    row,
+    req.installation_id,
+  );
+  return activateKeyForInstallation(supabase, keyId, keyRow, req);
+}
+
+export async function registerLicenseKeyOnServer(
+  supabase: SupabaseClient,
+  licenseKey: string,
+): Promise<{ key_id: string; key_hash: string }> {
+  const { id } = await ensureKeyRegistered(supabase, licenseKey);
+  return { key_id: id, key_hash: hashLicenseKey(licenseKey) };
+}
+
+export async function activateOnLicenseServer(
+  supabase: SupabaseClient,
+  req: LicenseActivateRequest,
+): Promise<LicenseActivateResponse> {
+  const { id: keyId, row: keyRow } = await ensureKeyRegistered(supabase, req.license_key);
+
+  if (keyRow.installation_id && req.installation_id) {
+    if (String(keyRow.installation_id) !== req.installation_id) {
+      throw new Error("Ключ привязан к другой установке");
+    }
+  }
+
+  return activateKeyForInstallation(supabase, keyId, keyRow, req);
 }
 
 export async function heartbeatOnLicenseServer(
@@ -273,6 +401,15 @@ export async function revokeOnLicenseServer(
   }
 
   if (req.installation_id) {
+    await supabase
+      .from("license_server_provisions" as never)
+      .update({
+        status: "revoked",
+        revoked_at: now,
+        revoked_reason: reason,
+      } as never)
+      .eq("installation_id", req.installation_id);
+
     const { data: acts, error: actErr } = await supabase
       .from("license_server_activations" as never)
       .update({ status: "revoked", revoked_at: now, revoked_reason: reason } as never)

@@ -49,7 +49,11 @@ export const PROFILES = {
 const CLIENT_PROFILE_IDS = new Set(["local", "production", "staging"]);
 
 /** Keys that belong only to the vendor license-server profile. */
-const LICENSE_SERVER_ONLY_KEYS = ["LICENSE_SERVER_ADMIN_SECRET", "LICENSE_SERVER_ENABLED"];
+const LICENSE_SERVER_ONLY_KEYS = [
+  "LICENSE_SERVER_ADMIN_SECRET",
+  "LICENSE_SERVER_ENABLED",
+  "LICENSE_SERVER_LOCAL_ADMIN",
+];
 
 export function stripVendorSecrets(existing, profileId) {
   if (!CLIENT_PROFILE_IDS.has(profileId)) return existing;

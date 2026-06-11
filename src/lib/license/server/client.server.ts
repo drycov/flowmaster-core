@@ -1,7 +1,8 @@
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getInstallationId } from "@/lib/env.server";
 import { fetchLicenseStatus } from "../enforcement";
-import { hashLicenseKey } from "../keys.server";
 import type { LicenseStatusResponse } from "../types";
 import {
   getAppVersion,
@@ -21,6 +22,10 @@ function serverUrl(): string {
     throw new Error("LICENSE_SERVER_URL не задан");
   }
   return url;
+}
+
+export function installationBindingHash(installationId: string): string {
+  return createHash("sha256").update(`installation:${installationId}`).digest("hex");
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
@@ -46,11 +51,20 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return payload as T;
 }
 
+export function shouldSyncLicense(
+  lastSyncAt: string | null | undefined,
+  intervalHours: number,
+): boolean {
+  if (!lastSyncAt) return true;
+  const hours = (Date.now() - new Date(lastSyncAt).getTime()) / 3_600_000;
+  return hours >= Math.max(1, intervalHours);
+}
+
 async function applyEntitlementLocally(
   entitlement: LicenseServerEntitlement,
   opts: {
     installationId: string;
-    licenseKey: string;
+    licenseKeyHash: string;
     token: string;
     keyId: string;
     activatedBy?: string;
@@ -59,12 +73,10 @@ async function applyEntitlementLocally(
     serverRevoked?: boolean;
   },
 ): Promise<LicenseStatusResponse> {
-  const keyHash = hashLicenseKey(opts.licenseKey);
-
   const patch = {
     plan: entitlement.plan,
     status: opts.serverRevoked ? "suspended" : "active",
-    license_key_hash: keyHash,
+    license_key_hash: opts.licenseKeyHash,
     installation_id: opts.installationId,
     max_users: entitlement.max_users,
     features: entitlement.features,
@@ -102,11 +114,47 @@ async function applyEntitlementLocally(
   return fetchLicenseStatus(supabaseAdmin);
 }
 
+function applyActivationResult(
+  result: LicenseActivateResponse,
+  installationId: string,
+  licenseKeyHash: string,
+  activatedBy?: string,
+): Promise<LicenseStatusResponse> {
+  return applyEntitlementLocally(result.entitlement, {
+    installationId,
+    licenseKeyHash,
+    token: result.token,
+    keyId: result.key_id,
+    activatedBy,
+    syncOk: true,
+  });
+}
+
+export async function connectWithLicenseServer(
+  installationId: string,
+  activatedBy?: string,
+): Promise<LicenseStatusResponse> {
+  const hostname = process.env.PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "";
+  const result = await postJson<LicenseActivateResponse>("/api/v1/license/connect", {
+    installation_id: installationId,
+    hostname,
+    app_version: getAppVersion(),
+  });
+
+  return applyActivationResult(
+    result,
+    installationId,
+    installationBindingHash(installationId),
+    activatedBy,
+  );
+}
+
 export async function activateWithLicenseServer(
   licenseKey: string,
   installationId: string,
   activatedBy?: string,
 ): Promise<LicenseStatusResponse> {
+  const { hashLicenseKey } = await import("../keys.server");
   const hostname = process.env.PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "";
   const result = await postJson<LicenseActivateResponse>("/api/v1/license/activate", {
     license_key: licenseKey.trim(),
@@ -115,14 +163,66 @@ export async function activateWithLicenseServer(
     app_version: getAppVersion(),
   });
 
-  return applyEntitlementLocally(result.entitlement, {
-    installationId,
-    licenseKey,
-    token: result.token,
-    keyId: result.key_id,
-    activatedBy,
-    syncOk: true,
+  return applyActivationResult(result, installationId, hashLicenseKey(licenseKey), activatedBy);
+}
+
+async function runHeartbeatSync(
+  supabase: SupabaseClient,
+  license: {
+    id: string;
+    license_server_token: string;
+    installation_id: string;
+  },
+): Promise<LicenseStatusResponse> {
+  const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+
+  const result = await postJson<LicenseHeartbeatResponse>("/api/v1/license/heartbeat", {
+    token: license.license_server_token,
+    installation_id: license.installation_id,
+    active_users: count ?? 0,
+    hostname: process.env.PUBLIC_APP_URL?.trim() || "",
+    app_version: getAppVersion(),
   });
+
+  const serverRevoked = result.status === "revoked" || result.status === "suspended";
+  const patch: Record<string, unknown> = {
+    last_sync_at: new Date().toISOString(),
+    last_sync_ok: true,
+    last_sync_error: "",
+    server_revoked: serverRevoked,
+    status: serverRevoked ? "suspended" : "active",
+  };
+
+  if (result.entitlement) {
+    patch.plan = result.entitlement.plan;
+    patch.max_users = result.entitlement.max_users;
+    patch.features = result.entitlement.features;
+    patch.expires_at = result.entitlement.expires_at;
+    patch.customer_name = result.entitlement.customer_name;
+    patch.issued_at = result.entitlement.issued_at;
+  }
+
+  if (result.message && serverRevoked) {
+    patch.last_sync_error = result.message;
+  }
+
+  const { error: updErr } = await supabase
+    .from("installation_license")
+    .update(patch as never)
+    .eq("id", license.id);
+  if (updErr) throw new Error(updErr.message);
+
+  return fetchLicenseStatus(supabase);
+}
+
+export async function syncLicenseWithServerSoft(
+  supabase: SupabaseClient = supabaseAdmin,
+): Promise<LicenseStatusResponse> {
+  try {
+    return await syncLicenseWithServer(supabase);
+  } catch {
+    return fetchLicenseStatus(supabase);
+  }
 }
 
 export async function syncLicenseWithServer(
@@ -145,55 +245,28 @@ export async function syncLicenseWithServer(
   } | null;
 
   if (!license || license.activation_mode !== "online" || !license.license_server_token) {
+    if (shouldUseLicenseServer()) {
+      const installationId = getInstallationId();
+      if (installationId) {
+        return connectWithLicenseServer(installationId);
+      }
+      throw new Error("INSTALLATION_ID не задан");
+    }
     if (isOnlineLicenseRequired()) {
       throw new Error("Онлайн-лицензия не активирована");
     }
     return fetchLicenseStatus(supabase);
   }
 
-  const installationId = license.installation_id ?? process.env.INSTALLATION_ID ?? "";
+  const installationId = license.installation_id ?? getInstallationId();
   if (!installationId) throw new Error("INSTALLATION_ID не задан");
 
-  const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
-
   try {
-    const result = await postJson<LicenseHeartbeatResponse>("/api/v1/license/heartbeat", {
-      token: license.license_server_token,
+    return await runHeartbeatSync(supabase, {
+      id: license.id,
+      license_server_token: license.license_server_token,
       installation_id: installationId,
-      active_users: count ?? 0,
-      hostname: process.env.PUBLIC_APP_URL?.trim() || "",
-      app_version: getAppVersion(),
     });
-
-    const serverRevoked = result.status === "revoked" || result.status === "suspended";
-    const patch: Record<string, unknown> = {
-      last_sync_at: new Date().toISOString(),
-      last_sync_ok: true,
-      last_sync_error: "",
-      server_revoked: serverRevoked,
-      status: serverRevoked ? "suspended" : "active",
-    };
-
-    if (result.entitlement) {
-      patch.plan = result.entitlement.plan;
-      patch.max_users = result.entitlement.max_users;
-      patch.features = result.entitlement.features;
-      patch.expires_at = result.entitlement.expires_at;
-      patch.customer_name = result.entitlement.customer_name;
-      patch.issued_at = result.entitlement.issued_at;
-    }
-
-    if (result.message && serverRevoked) {
-      patch.last_sync_error = result.message;
-    }
-
-    const { error: updErr } = await supabase
-      .from("installation_license")
-      .update(patch as never)
-      .eq("id", license.id);
-    if (updErr) throw new Error(updErr.message);
-
-    return fetchLicenseStatus(supabase);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     await supabase
@@ -204,7 +277,7 @@ export async function syncLicenseWithServer(
         last_sync_error: message,
       } as never)
       .eq("id", license.id);
-    throw e;
+    return fetchLicenseStatus(supabase);
   }
 }
 

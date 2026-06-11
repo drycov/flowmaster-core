@@ -37,6 +37,7 @@ import {
   Briefcase,
   Network,
   Settings,
+  Activity,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -234,6 +235,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     audit: ShieldCheck,
     settings: Settings,
     integrations: Network,
+    monitoring: Activity,
   };
 
   const toNavItem = (def: NavItemDef): NavItem => ({
@@ -288,7 +290,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (license.server_revoked) {
       return { tone: "destructive" as const, text: t("license.banner.serverRevoked") };
     }
-    if (license.sync_stale && license.activation_mode === "online") {
+    if (license.offline_mode && license.activation_mode === "online" && !license.server_revoked) {
+      return {
+        tone: "warning" as const,
+        text: t("license.banner.offlineMode"),
+      };
+    }
+    if (license.sync_stale && license.activation_mode === "online" && !license.offline_mode) {
       return {
         tone: "warning" as const,
         text: t("license.banner.syncStale").replace(

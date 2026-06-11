@@ -9,6 +9,12 @@ export type LicenseServerEntitlement = {
   issued_at: string | null;
 };
 
+export type LicenseConnectRequest = {
+  installation_id: string;
+  hostname?: string;
+  app_version?: string;
+};
+
 export type LicenseActivateRequest = {
   license_key: string;
   installation_id: string;

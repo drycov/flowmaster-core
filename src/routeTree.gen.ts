@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as VendorRouteRouteImport } from './routes/vendor/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
@@ -25,6 +26,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedArchiveRouteImport } from './routes/_authenticated/archive'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
+import { Route as VendorLicenseIndexRouteImport } from './routes/vendor/license/index'
 import { Route as AuthenticatedWorkflowsIndexRouteImport } from './routes/_authenticated/workflows/index'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates/index'
 import { Route as AuthenticatedReferencesIndexRouteImport } from './routes/_authenticated/references/index'
@@ -33,6 +35,7 @@ import { Route as AuthenticatedKnowledgeIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
 import { Route as AuthenticatedCounterpartiesIndexRouteImport } from './routes/_authenticated/counterparties/index'
 import { Route as AuthenticatedContractsIndexRouteImport } from './routes/_authenticated/contracts/index'
+import { Route as VendorLicenseConsoleRouteImport } from './routes/vendor/license/console'
 import { Route as ApiV1TasksRouteImport } from './routes/api/v1/tasks'
 import { Route as ApiV1DocumentsRouteImport } from './routes/api/v1/documents'
 import { Route as ApiV1ContractsRouteImport } from './routes/api/v1/contracts'
@@ -71,6 +74,7 @@ import { Route as ApiV1LicenseRevokeRouteImport } from './routes/api/v1/license/
 import { Route as ApiV1LicenseRegisterKeyRouteImport } from './routes/api/v1/license/register-key'
 import { Route as ApiV1LicenseHeartbeatRouteImport } from './routes/api/v1/license/heartbeat'
 import { Route as ApiV1LicenseHealthRouteImport } from './routes/api/v1/license/health'
+import { Route as ApiV1LicenseConnectRouteImport } from './routes/api/v1/license/connect'
 import { Route as ApiV1LicenseActivateRouteImport } from './routes/api/v1/license/activate'
 import { Route as ApiV1ImportIncomingRouteImport } from './routes/api/v1/import/incoming'
 import { Route as ApiV1DocumentsIdRouteImport } from './routes/api/v1/documents.$id'
@@ -95,6 +99,11 @@ import { Route as ApiV1DocumentsIdStatusRouteImport } from './routes/api/v1/docu
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorRouteRoute = VendorRouteRouteImport.update({
+  id: '/vendor',
+  path: '/vendor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -174,6 +183,11 @@ const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const VendorLicenseIndexRoute = VendorLicenseIndexRouteImport.update({
+  id: '/license/',
+  path: '/license/',
+  getParentRoute: () => VendorRouteRoute,
+} as any)
 const AuthenticatedWorkflowsIndexRoute =
   AuthenticatedWorkflowsIndexRouteImport.update({
     id: '/workflows/',
@@ -222,6 +236,11 @@ const AuthenticatedContractsIndexRoute =
     path: '/contracts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const VendorLicenseConsoleRoute = VendorLicenseConsoleRouteImport.update({
+  id: '/license/console',
+  path: '/license/console',
+  getParentRoute: () => VendorRouteRoute,
+} as any)
 const ApiV1TasksRoute = ApiV1TasksRouteImport.update({
   id: '/api/v1/tasks',
   path: '/api/v1/tasks',
@@ -440,6 +459,11 @@ const ApiV1LicenseHealthRoute = ApiV1LicenseHealthRouteImport.update({
   path: '/api/v1/license/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1LicenseConnectRoute = ApiV1LicenseConnectRouteImport.update({
+  id: '/api/v1/license/connect',
+  path: '/api/v1/license/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1LicenseActivateRoute = ApiV1LicenseActivateRouteImport.update({
   id: '/api/v1/license/activate',
   path: '/api/v1/license/activate',
@@ -556,6 +580,7 @@ const ApiV1DocumentsIdStatusRoute = ApiV1DocumentsIdStatusRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/vendor': typeof VendorRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/archive': typeof AuthenticatedArchiveRoute
@@ -597,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/vendor/license/console': typeof VendorLicenseConsoleRoute
   '/contracts/': typeof AuthenticatedContractsIndexRoute
   '/counterparties/': typeof AuthenticatedCounterpartiesIndexRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -605,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/references/': typeof AuthenticatedReferencesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflows/': typeof AuthenticatedWorkflowsIndexRoute
+  '/vendor/license/': typeof VendorLicenseIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
   '/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
   '/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
@@ -622,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/connect': typeof ApiV1LicenseConnectRoute
   '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
@@ -639,6 +667,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/vendor': typeof VendorRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/archive': typeof AuthenticatedArchiveRoute
@@ -680,6 +709,7 @@ export interface FileRoutesByTo {
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/vendor/license/console': typeof VendorLicenseConsoleRoute
   '/contracts': typeof AuthenticatedContractsIndexRoute
   '/counterparties': typeof AuthenticatedCounterpartiesIndexRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
@@ -688,6 +718,7 @@ export interface FileRoutesByTo {
   '/references': typeof AuthenticatedReferencesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflows': typeof AuthenticatedWorkflowsIndexRoute
+  '/vendor/license': typeof VendorLicenseIndexRoute
   '/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
   '/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
   '/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
@@ -705,6 +736,7 @@ export interface FileRoutesByTo {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/connect': typeof ApiV1LicenseConnectRoute
   '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
@@ -724,6 +756,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/vendor': typeof VendorRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/archive': typeof AuthenticatedArchiveRoute
@@ -765,6 +798,7 @@ export interface FileRoutesById {
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
+  '/vendor/license/console': typeof VendorLicenseConsoleRoute
   '/_authenticated/contracts/': typeof AuthenticatedContractsIndexRoute
   '/_authenticated/counterparties/': typeof AuthenticatedCounterpartiesIndexRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -773,6 +807,7 @@ export interface FileRoutesById {
   '/_authenticated/references/': typeof AuthenticatedReferencesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflows/': typeof AuthenticatedWorkflowsIndexRoute
+  '/vendor/license/': typeof VendorLicenseIndexRoute
   '/_authenticated/admin/users/$id': typeof AuthenticatedAdminUsersIdRoute
   '/_authenticated/hr/gantt/$id': typeof AuthenticatedHrGanttIdRoute
   '/_authenticated/hr/leave/approvals': typeof AuthenticatedHrLeaveApprovalsRoute
@@ -790,6 +825,7 @@ export interface FileRoutesById {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/connect': typeof ApiV1LicenseConnectRoute
   '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
@@ -809,6 +845,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/vendor'
     | '/auth'
     | '/approvals'
     | '/archive'
@@ -850,6 +887,7 @@ export interface FileRouteTypes {
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
+    | '/vendor/license/console'
     | '/contracts/'
     | '/counterparties/'
     | '/documents/'
@@ -858,6 +896,7 @@ export interface FileRouteTypes {
     | '/references/'
     | '/templates/'
     | '/workflows/'
+    | '/vendor/license/'
     | '/admin/users/$id'
     | '/hr/gantt/$id'
     | '/hr/leave/approvals'
@@ -875,6 +914,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/connect'
     | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
@@ -892,6 +932,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/vendor'
     | '/auth'
     | '/approvals'
     | '/archive'
@@ -933,6 +974,7 @@ export interface FileRouteTypes {
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
+    | '/vendor/license/console'
     | '/contracts'
     | '/counterparties'
     | '/documents'
@@ -941,6 +983,7 @@ export interface FileRouteTypes {
     | '/references'
     | '/templates'
     | '/workflows'
+    | '/vendor/license'
     | '/admin/users/$id'
     | '/hr/gantt/$id'
     | '/hr/leave/approvals'
@@ -958,6 +1001,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/connect'
     | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
@@ -976,6 +1020,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/vendor'
     | '/auth'
     | '/_authenticated/approvals'
     | '/_authenticated/archive'
@@ -1017,6 +1062,7 @@ export interface FileRouteTypes {
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
+    | '/vendor/license/console'
     | '/_authenticated/contracts/'
     | '/_authenticated/counterparties/'
     | '/_authenticated/documents/'
@@ -1025,6 +1071,7 @@ export interface FileRouteTypes {
     | '/_authenticated/references/'
     | '/_authenticated/templates/'
     | '/_authenticated/workflows/'
+    | '/vendor/license/'
     | '/_authenticated/admin/users/$id'
     | '/_authenticated/hr/gantt/$id'
     | '/_authenticated/hr/leave/approvals'
@@ -1042,6 +1089,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/connect'
     | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
@@ -1061,6 +1109,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  VendorRouteRoute: typeof VendorRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiHealthRoute: typeof ApiHealthRouteWithChildren
   ApiV1ContractsRoute: typeof ApiV1ContractsRoute
@@ -1077,6 +1126,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWebhookDispatchRoute: typeof ApiPublicHooksWebhookDispatchRoute
   ApiV1ImportIncomingRoute: typeof ApiV1ImportIncomingRoute
   ApiV1LicenseActivateRoute: typeof ApiV1LicenseActivateRoute
+  ApiV1LicenseConnectRoute: typeof ApiV1LicenseConnectRoute
   ApiV1LicenseHealthRoute: typeof ApiV1LicenseHealthRoute
   ApiV1LicenseHeartbeatRoute: typeof ApiV1LicenseHeartbeatRoute
   ApiV1LicenseRegisterKeyRoute: typeof ApiV1LicenseRegisterKeyRoute
@@ -1090,6 +1140,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendor': {
+      id: '/vendor'
+      path: '/vendor'
+      fullPath: '/vendor'
+      preLoaderRoute: typeof VendorRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1197,6 +1254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/vendor/license/': {
+      id: '/vendor/license/'
+      path: '/license'
+      fullPath: '/vendor/license/'
+      preLoaderRoute: typeof VendorLicenseIndexRouteImport
+      parentRoute: typeof VendorRouteRoute
+    }
     '/_authenticated/workflows/': {
       id: '/_authenticated/workflows/'
       path: '/workflows'
@@ -1252,6 +1316,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/contracts/'
       preLoaderRoute: typeof AuthenticatedContractsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/vendor/license/console': {
+      id: '/vendor/license/console'
+      path: '/license/console'
+      fullPath: '/vendor/license/console'
+      preLoaderRoute: typeof VendorLicenseConsoleRouteImport
+      parentRoute: typeof VendorRouteRoute
     }
     '/api/v1/tasks': {
       id: '/api/v1/tasks'
@@ -1517,6 +1588,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/license/health'
       fullPath: '/api/v1/license/health'
       preLoaderRoute: typeof ApiV1LicenseHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/license/connect': {
+      id: '/api/v1/license/connect'
+      path: '/api/v1/license/connect'
+      fullPath: '/api/v1/license/connect'
+      preLoaderRoute: typeof ApiV1LicenseConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/license/activate': {
@@ -1795,6 +1873,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface VendorRouteRouteChildren {
+  VendorLicenseConsoleRoute: typeof VendorLicenseConsoleRoute
+  VendorLicenseIndexRoute: typeof VendorLicenseIndexRoute
+}
+
+const VendorRouteRouteChildren: VendorRouteRouteChildren = {
+  VendorLicenseConsoleRoute: VendorLicenseConsoleRoute,
+  VendorLicenseIndexRoute: VendorLicenseIndexRoute,
+}
+
+const VendorRouteRouteWithChildren = VendorRouteRoute._addFileChildren(
+  VendorRouteRouteChildren,
+)
+
 interface ApiHealthRouteChildren {
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
 }
@@ -1847,6 +1939,7 @@ const ApiV1TasksRouteWithChildren = ApiV1TasksRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  VendorRouteRoute: VendorRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiHealthRoute: ApiHealthRouteWithChildren,
   ApiV1ContractsRoute: ApiV1ContractsRoute,
@@ -1863,6 +1956,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWebhookDispatchRoute: ApiPublicHooksWebhookDispatchRoute,
   ApiV1ImportIncomingRoute: ApiV1ImportIncomingRoute,
   ApiV1LicenseActivateRoute: ApiV1LicenseActivateRoute,
+  ApiV1LicenseConnectRoute: ApiV1LicenseConnectRoute,
   ApiV1LicenseHealthRoute: ApiV1LicenseHealthRoute,
   ApiV1LicenseHeartbeatRoute: ApiV1LicenseHeartbeatRoute,
   ApiV1LicenseRegisterKeyRoute: ApiV1LicenseRegisterKeyRoute,

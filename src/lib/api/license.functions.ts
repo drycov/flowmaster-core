@@ -6,12 +6,14 @@ import { getInstallationId } from "@/lib/env.server";
 import { ensureInstallationEnv } from "@/lib/installation.server";
 import { fetchLicenseStatus } from "@/lib/license/enforcement";
 import { hashLicenseKey, parseLicenseKey } from "@/lib/license/keys.server";
+import { ensureCloudLicense } from "@/lib/license/server/cloud-bootstrap.server";
 import {
   activateWithLicenseServer,
   licenseServerAvailable,
   syncLicenseWithServer,
+  syncLicenseWithServerSoft,
 } from "@/lib/license/server/client.server";
-import { getLicenseMode, isOnlineLicenseRequired } from "@/lib/license/server/config.server";
+import { getLicenseMode, isOnlineLicenseRequired, usesCloudLicense } from "@/lib/license/server/config.server";
 import type { LicenseStatusResponse } from "@/lib/license/types";
 import { requireModuleAccess } from "./_helpers";
 
@@ -47,6 +49,7 @@ const SCHEMA_MISSING_STATUS: LicenseStatusResponse = {
   last_sync_error: "",
   server_revoked: false,
   sync_stale: false,
+  offline_mode: false,
   offline_grace_hours: 72,
   sync_interval_hours: 6,
 };
@@ -68,6 +71,10 @@ export const getLicenseStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     ensureInstallationEnv();
     const autoId = getInstallationId();
+
+    if (usesCloudLicense()) {
+      await ensureCloudLicense();
+    }
 
     const { data, error } = await supabaseAdmin.rpc("get_license_status" as never);
     if (error) {
@@ -164,6 +171,12 @@ export const activateLicenseKey = createServerFn({ method: "POST" })
     await requireModuleAccess(supabaseAdmin, context.userId, "admin_license", { action: "manage" });
     ensureInstallationEnv();
 
+    if (usesCloudLicense()) {
+      throw new Error(
+        "Облачная лицензия подключается автоматически по ID установки. Ввод ключа не требуется.",
+      );
+    }
+
     const installationId = getInstallationId();
     const mode = getLicenseMode();
 
@@ -196,16 +209,18 @@ export const syncLicenseNow = createServerFn({ method: "POST" })
     if (!licenseServerAvailable()) {
       throw new Error("LICENSE_SERVER_URL не задан");
     }
-    return syncLicenseWithServer(supabaseAdmin);
+    return syncLicenseWithServerSoft(supabaseAdmin);
   });
 
 export const getLicenseServerConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireModuleAccess(supabaseAdmin, context.userId, "admin_license", { action: "manage" });
+    const cloud = usesCloudLicense();
     return {
       mode: getLicenseMode(),
-      server_configured: licenseServerAvailable(),
+      server_configured: cloud,
+      cloud_license: cloud,
       server_url: process.env.LICENSE_SERVER_URL?.trim() || null,
     };
   });

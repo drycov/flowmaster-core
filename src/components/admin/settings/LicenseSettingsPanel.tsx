@@ -103,6 +103,7 @@ export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean
     : t("license.perpetual");
 
   const isOnline = status.activation_mode === "online";
+  const isCloud = !!serverConfig?.cloud_license;
   const lastSyncLabel = status.last_sync_at
     ? new Date(status.last_sync_at).toLocaleString(locale === "kk" ? "kk-KZ" : "ru-RU")
     : "—";
@@ -120,9 +121,16 @@ export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean
               {t(`license.online.mode.${serverConfig.mode}` as "license.online.mode.online")}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">{t("license.online.description")}</p>
-          {isOnline && (
+          <p className="text-xs text-muted-foreground">
+            {isCloud ? t("license.cloud.description") : t("license.online.description")}
+          </p>
+          {(isOnline || isCloud) && (
             <div className="grid gap-2 text-sm sm:grid-cols-2">
+              {status.offline_mode ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400 sm:col-span-2">
+                  {t("license.offline.description")}
+                </p>
+              ) : null}
               <div>
                 <span className="text-muted-foreground">{t("license.online.lastSync")}: </span>
                 <span>{lastSyncLabel}</span>
@@ -141,7 +149,7 @@ export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean
                   {t("license.online.revoked")}
                 </p>
               ) : null}
-              {status.sync_stale ? (
+              {status.sync_stale && !status.offline_mode ? (
                 <p className="text-xs text-amber-600 dark:text-amber-400 sm:col-span-2">
                   {t("license.online.syncStale").replace(
                     "{h}",
@@ -155,7 +163,7 @@ export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean
             <Button
               variant="outline"
               size="sm"
-              disabled={syncMutation.isPending || !isOnline}
+              disabled={syncMutation.isPending}
               onClick={() => syncMutation.mutate()}
             >
               {syncMutation.isPending ? (
@@ -280,7 +288,7 @@ export function LicenseSettingsPanel({ canManage = true }: { canManage?: boolean
         </div>
       ) : null}
 
-      {canManage && (
+      {canManage && !isCloud && (
         <div className="space-y-4 rounded-xl border bg-card p-5">
           <div className="flex items-center gap-2 font-semibold">
             <KeyRound className="h-4 w-4" />

@@ -49,7 +49,14 @@
     "uat:smoke:full": "node scripts/uat-smoke.mjs --run-e2e",
     "test:e2e:security": "playwright test e2e/health.spec.ts e2e/security-routes.spec.ts",
     "license:generate": "node scripts/generate-license-key.mjs",
-    "license:server": "node scripts/license-server-admin.mjs"
+    "license:server": "node scripts/license-server-admin.mjs",
+    "license:support-code": "node scripts/license-support-code.mjs",
+    "license:admin": "node scripts/license-admin-local.mjs",
+    "license:cloud:dev": "npm run dev --prefix apps/cloud-license-server",
+    "license:cloud:web": "npm run dev:web --prefix apps/cloud-license-server",
+    "license:cloud:build": "npm run build --prefix apps/cloud-license-server",
+    "license:cloud:support-code": "npm run support-code --prefix apps/cloud-license-server",
+    "license:cloud:typecheck": "npm run typecheck --prefix apps/cloud-license-server"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

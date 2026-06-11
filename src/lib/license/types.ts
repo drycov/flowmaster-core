@@ -64,6 +64,7 @@ export type LicenseStatusResponse = {
   last_sync_error?: string;
   server_revoked?: boolean;
   sync_stale?: boolean;
+  offline_mode?: boolean;
   offline_grace_hours?: number;
   sync_interval_hours?: number;
 };
