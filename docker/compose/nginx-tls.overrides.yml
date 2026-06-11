@@ -30,7 +30,7 @@ services:
         envsubst '$${PROXY_DOMAIN}' < /etc/nginx/flowmaster-nginx.conf.tpl > /etc/nginx/user_conf.d/flowmaster.conf && \
         /scripts/start_nginx_certbot.sh
     volumes:
-      - ./docker/nginx/flowmaster-nginx.conf.tpl:/etc/nginx/flowmaster-nginx.conf.tpl:ro
+      - ../../docker/nginx/flowmaster-nginx.conf.tpl:/etc/nginx/flowmaster-nginx.conf.tpl:ro
       - nginx_letsencrypt:/etc/letsencrypt
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]

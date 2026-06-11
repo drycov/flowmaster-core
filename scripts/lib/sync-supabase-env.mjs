@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
 const SUPABASE_ENV = "docker/supabase/.env";
 
@@ -12,7 +12,8 @@ export function syncSupabaseEnv(root) {
     return { ok: false, reason: "missing-root-env", source, target };
   }
 
-  copyFileSync(source, target, { force: true });
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(source, target);
   return { ok: true, source, target };
 }
 
