@@ -110,8 +110,28 @@ Healthcheck nginx: `GET /api/health` через proxy.
 |---------|---------|
 | (default) | db, kong, rest, storage, realtime, auth, db-migrate, app, **nginx** |
 | `cron` | фоновые hooks (`scripts/cron-runner.sh`) |
-| `monitoring` | Prometheus, Grafana, cAdvisor, node/postgres/blackbox exporters |
-| `studio` | Supabase Studio + meta + edge functions |
+| `studio` | Supabase Studio + meta + edge functions (`:54323`) |
+| `monitoring` | Prometheus, Grafana, cAdvisor, exporters |
+| **`full`** | `cron` + `studio` + `monitoring` (см. `npm run docker:full`) |
+
+### Full stack (app + cron + studio + monitoring)
+
+```bash
+npm run env:local && npm run env:sync
+npm run docker:full                    # HTTP localhost
+
+npm run env:production -- --domain=edms.satory.kz --install
+npm run env:sync
+npm run compose:tls:full              # HTTPS production
+```
+
+Или одной compose-командой (TLS):
+
+```bash
+docker compose -f docker-compose.tls.yml -f docker-compose.monitoring.yml \
+  --profile cron --profile studio --profile monitoring \
+  up -d --build
+```
 
 ## Мониторинг
 

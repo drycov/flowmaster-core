@@ -29,6 +29,8 @@ services:
 
   studio:
     profiles: ["studio"]
+    ports:
+      - "127.0.0.1:${STUDIO_PORT:-54323}:3000"
 
   meta:
     profiles: ["studio"]
