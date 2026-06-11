@@ -9,7 +9,23 @@
 | **[Vercel — `apps/cloud-license-server`](../apps/cloud-license-server/README.md)** | Облако без своего Docker, serverless |
 | **Docker — `compose:license-server`** | Self-hosted на своём VPS |
 
-**Админка vendor не входит в EDMS**. Для Docker: локально через support code и SSH tunnel. Для **Vercel**: `/admin` на том же домене (support code + httpOnly cookie). Bearer API — для автomation.
+**Интерфейсы вендора не для клиентов** (клиенты — `/cabinet` на Vercel). Разные UI и **разные типы входа**:
+
+| Интерфейс | Деплой | URL | Вход |
+|-----------|--------|-----|------|
+| **Console** | Локальный license server (Docker self-hosted) | `/vendor/license` на `127.0.0.1:3847` | **Support code** (8 цифр, 15 мин) + SSH tunnel |
+| **Admin** | Облачный license server (Vercel) | `/admin` → `/admin/verify` → `/admin/app` | **Email + пароль** (Supabase) + **Telegram** или **webhook** |
+| **Кабинет** | Vercel | `/cabinet` | Email + пароль клиента (Supabase Auth) |
+
+Bearer API (`LICENSE_SERVER_ADMIN_SECRET`) — для automation, не для браузерного входа.
+
+**Telegram для Cloud Admin** — **отдельный бот вендора** (`VENDOR_TELEGRAM_*` на Vercel), не бот EDMS у клиента (`TELEGRAM_BOT_TOKEN` в Docker EDMS).
+
+| | Бот вендора | Бот EDMS (клиент) |
+|---|-------------|-------------------|
+| Назначение | Подтверждение `/admin` | Уведомления, вход в EDMS |
+| Env | `VENDOR_TELEGRAM_BOT_TOKEN` | `TELEGRAM_BOT_TOKEN` |
+| Webhook | `{license-server}/api/v1/hooks/telegram` | `{edms}/api/public/hooks/telegram-webhook` |
 
 ## Связка EDMS (on-prem) + Vercel (облако)
 
@@ -234,7 +250,7 @@ npm run compose:license-server
 curl -k https://license.satory.kz/api/v1/license/health
 ```
 
-## Локальная админка (support code + SSH)
+## Console — локальный сервер (support code + SSH)
 
 На **хосте license server** (по SSH), в каталоге с `.env`:
 
@@ -253,7 +269,9 @@ npm run license:support-code
 ssh -L 3847:127.0.0.1:3847 user@license-server
 ```
 
-Браузер: `http://127.0.0.1:3847/vendor/license` → ввести support code.
+Браузер: `http://127.0.0.1:3847/vendor/license` → **Console** → ввести support code.
+
+Для **облачного** сервера на Vercel используйте **Admin**: `https://<project>.vercel.app/admin` (email + пароль сотрудника вендора из `LICENSE_SERVER_VENDOR_ADMIN_EMAILS`). См. [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
 
 Переменные (только при `npm run license:admin`, **не** в docker compose):
 
@@ -289,7 +307,7 @@ npm run license:server -- register --key "FM1...."
 npm run license:server -- revoke --installation-id <uuid>
 ```
 
-Или через локальную админку после входа по support code.
+Или через **Console** (локальный сервер, support code) или **Admin** (Vercel, email + пароль).
 
 ## Подключение клиента (облачная схема)
 
@@ -333,7 +351,8 @@ npm run env:production -- \
 На license server данные сохраняются в `license_server_activations.telemetry` (последний снимок) и `license_server_telemetry_snapshots` (история). Отображение:
 
 - **Кабинет клиента** (`/cabinet`) — блок «Телеметрия использования»
-- **Vendor Admin** (`/admin/console` → Активации) — пользователи, документы, версия
+- **Cloud Admin** (`/admin/app` → Активации) — пользователи, документы, версия
+- **Console** (локальный LS) — те же данные в разделе активаций
 
 Миграции: `apps/cloud-license-server/supabase/migrations/003_usage_telemetry.sql` (облако), `supabase/migrations/20260617100000_license_server_usage_telemetry.sql` (self-hosted LS / replica).
 

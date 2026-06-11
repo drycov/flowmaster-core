@@ -91,7 +91,7 @@ export function AdminWorkspaceProvider({ children }: { children: React.ReactNode
     async (installationId: string) => {
       const result = await revokeTarget({
         installation_id: installationId,
-        reason: "Отозвано сотрудником ZEUS",
+        reason: "Отозвано вендором",
       });
       setMessage(`Отозвано: ключей ${result.revoked_keys}, активаций ${result.revoked_activations}`);
       await reload();

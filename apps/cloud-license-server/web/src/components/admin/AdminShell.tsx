@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { COMPANY } from "../../lib/company";
 import { adminLogout } from "../../lib/admin-api";
 import { useAdminSession } from "../../hooks/useAdminSession";
+import { supabase } from "../../lib/supabase";
 
 const NAV: { to: string; end?: boolean; label: string; icon: string }[] = [
   { to: "/admin/app", end: true, label: "Обзор", icon: "◫" },
@@ -18,6 +18,7 @@ export function AdminShell() {
 
   async function logout() {
     await adminLogout();
+    if (supabase) await supabase.auth.signOut();
     await refresh();
     navigate("/admin");
   }
@@ -30,8 +31,8 @@ export function AdminShell() {
             Z
           </span>
           <div>
-            <p className="text-sm font-semibold">{COMPANY.brand}</p>
-            <p className="text-xs text-slate-500">Админка сотрудника</p>
+            <p className="text-xs uppercase tracking-widest text-sky-400">Cloud</p>
+            <p className="text-xs text-slate-500">Админка облачного сервера</p>
           </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-2 pb-3 lg:flex-col lg:overflow-visible lg:px-3 lg:pb-6">
@@ -62,7 +63,7 @@ export function AdminShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 lg:hidden">
-          <p className="text-sm font-medium">{COMPANY.brand} · Admin</p>
+          <p className="text-sm font-medium">Cloud Admin</p>
           <button type="button" onClick={() => void logout()} className="btn-secondary text-xs">
             Выйти
           </button>

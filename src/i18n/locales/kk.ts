@@ -231,8 +231,8 @@ export const kkDictionary: Dictionary = {
   "licenseServer.revokeDefaultReason": "Жеткізуші бас тартты",
   "licenseServer.revokeSuccess": "Кілт: {keys}, белсенділік: {acts} бас тартылды",
 
-  "vendorAuth.title": "Vendor license admin",
-  "vendorAuth.description": "Жеткізушінің локальді консолі. SSH tunnel арқылы ғана.",
+  "vendorAuth.title": "License Server Console",
+  "vendorAuth.description": "Жеткізушінің локальді консолі. Support code + SSH tunnel.",
   "vendorAuth.hint": "Support code: npm run license:support-code (15 минут).",
   "vendorAuth.codeLabel": "Support code",
   "vendorAuth.loginBtn": "Кіру",

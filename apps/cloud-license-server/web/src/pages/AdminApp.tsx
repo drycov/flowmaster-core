@@ -21,6 +21,9 @@ export function AdminApp() {
   }
 
   if (!session?.authenticated) {
+    if (session?.step === "verify") {
+      return <Navigate to="/admin/verify" replace />;
+    }
     return <Navigate to="/admin" replace />;
   }
 

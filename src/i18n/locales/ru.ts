@@ -230,8 +230,8 @@ export const ruDictionary: Dictionary = {
   "licenseServer.revokeDefaultReason": "Отозвано поставщиком",
   "licenseServer.revokeSuccess": "Отозвано ключей: {keys}, активаций: {acts}",
 
-  "vendorAuth.title": "Vendor license admin",
-  "vendorAuth.description": "Локальная консоль поставщика. Доступ только через SSH tunnel.",
+  "vendorAuth.title": "License Server Console",
+  "vendorAuth.description": "Локальная консоль вендора. Support code + доступ только через SSH tunnel.",
   "vendorAuth.hint":
     "Сгенерируйте support code: npm run license:support-code. Код действует 15 минут.",
   "vendorAuth.codeLabel": "Support code",

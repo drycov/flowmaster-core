@@ -1,11 +1,15 @@
+import { getAccessToken } from "./supabase";
+
 const BASE = "/api/v1/admin";
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await getAccessToken();
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
@@ -14,7 +18,34 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-export type AdminSession = { configured: boolean; authenticated: boolean };
+export type AdminVerifyMethods = {
+  required: boolean;
+  telegram: boolean;
+  webhook: boolean;
+};
+
+export type AdminSession = {
+  configured: boolean;
+  authenticated: boolean;
+  identity: { email: string } | null;
+  step: "none" | "password" | "verify" | "ready";
+  verify: AdminVerifyMethods;
+};
+
+export type VerifyStartResponse = {
+  ok: true;
+  skipped?: boolean;
+  token?: string;
+  expires_at?: string;
+  telegram?: {
+    enabled: boolean;
+    bot_username: string | null;
+    deep_link: string | null;
+    start_command: string;
+  };
+  webhook?: { enabled: boolean; dispatched: boolean };
+  verify: AdminVerifyMethods;
+};
 
 export type AdminOverview = {
   keys_total: number;
@@ -45,11 +76,14 @@ export function fetchAdminSession() {
   return adminFetch<AdminSession>("/session");
 }
 
-export function adminLogin(supportCode: string) {
-  return adminFetch<{ ok: true }>("/login", {
-    method: "POST",
-    body: JSON.stringify({ support_code: supportCode }),
-  });
+export function startAdminVerify() {
+  return adminFetch<VerifyStartResponse>("/verify/start", { method: "POST" });
+}
+
+export function pollAdminVerify(token: string) {
+  return adminFetch<{ status: string; ok: boolean }>(
+    `/verify/poll?token=${encodeURIComponent(token)}`,
+  );
 }
 
 export function adminLogout() {

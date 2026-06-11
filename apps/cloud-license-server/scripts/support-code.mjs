@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Support code for Vercel admin UI (/admin).
- * Uses LICENSE_SERVER_ADMIN_SECRET from env or .env in cwd.
+ * Legacy helper — rotating support code from LICENSE_SERVER_ADMIN_SECRET.
+ * Cloud Admin (/admin on Vercel) uses email + password, not support code.
+ * For local Console use the main repo: npm run license:support-code
  *
  *   npm run support-code
  */
@@ -48,4 +49,4 @@ const code = codeForSlot(secret, slot);
 
 console.log(code);
 console.error(`valid_until=${new Date((slot + 1) * TTL_MS).toISOString()}`);
-console.error("Open https://your-app.vercel.app/admin and enter this code");
+console.error("Note: for local Console use npm run license:support-code in the main repo");

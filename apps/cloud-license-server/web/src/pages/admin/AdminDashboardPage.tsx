@@ -17,7 +17,7 @@ export function AdminDashboardPage() {
     <>
       <AdminPageHeader
         title="Обзор"
-        description="Лицензирование ЕСЭДО — панель сотрудника ZEUS"
+        description="Облачный license server — лицензирование и установки клиентов"
       />
       <AdminAlerts />
 

@@ -20,6 +20,7 @@ import {
 import { getAppVersion, getSupabase } from "./lib/supabase.js";
 import { LICENSE_PLANS } from "./lib/types.js";
 import { adminRoutes } from "./admin-routes.js";
+import { handleTelegramWebhook } from "./lib/telegram-webhook.js";
 
 const installationIdSchema = z.string().uuid();
 const connectSchema = z.object({
@@ -100,6 +101,8 @@ app.use(
 );
 
 app.route("/api/v1/admin", adminRoutes);
+
+app.post("/api/v1/hooks/telegram", (c) => handleTelegramWebhook(c));
 
 app.get("/api/v1/portal/plans", (c) => c.json({ plans: buildPublicPlans() }));
 

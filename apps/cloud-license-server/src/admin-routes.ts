@@ -9,12 +9,20 @@ import {
   listPortalClients,
 } from "./lib/admin.server.js";
 import {
-  clearAdminSessionCookie,
-  createAdminSessionToken,
-  hasAdminSession,
-  requireAdminSession,
-  setAdminSessionCookie,
-} from "./lib/admin-session.js";
+  getVendorAdminIdentity,
+  isVendorAdminFullyAuthenticated,
+  isVendorAdminUiConfigured,
+  requireVendorAdminSession,
+} from "./lib/vendor-admin-auth.js";
+import {
+  clearVerifySessionCookie,
+  getVerifyMethods,
+  pollVerifyChallenge,
+  setVerifySessionCookie,
+  startVerifyChallenge,
+  confirmVerifyChallenge,
+} from "./lib/vendor-admin-verify.js";
+import { getVendorApprovalSecret } from "./lib/vendor-admin-config.js";
 import { generateLicenseKey, hashLicenseKey } from "./lib/keys.js";
 import { PLAN_PRESETS } from "./lib/plans.js";
 import {
@@ -22,13 +30,8 @@ import {
   revokeOnLicenseServer,
   upsertProvisionOnServer,
 } from "./lib/registry.js";
-import { getAdminSecret, verifyVendorSupportCode } from "./lib/support-code.js";
 import { getAppVersion, getSupabase } from "./lib/supabase.js";
 import { LICENSE_PLANS } from "./lib/types.js";
-
-const loginSchema = z.object({
-  support_code: z.string().min(8).max(12),
-});
 
 const listQuerySchema = z.object({
   status: z.enum(["active", "revoked", "all"]).optional(),
@@ -37,32 +40,96 @@ const listQuerySchema = z.object({
 
 export const adminRoutes = new Hono();
 
-adminRoutes.get("/session", (c) => {
-  const configured = !!getAdminSecret();
-  return c.json({ configured, authenticated: configured && hasAdminSession(c) });
-});
+adminRoutes.get("/session", async (c) => {
+  const configured = isVendorAdminUiConfigured();
+  const verify = getVerifyMethods();
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
 
-adminRoutes.post("/login", zValidator("json", loginSchema), (c) => {
-  const secret = getAdminSecret();
-  if (!secret) {
-    return c.json({ error: "LICENSE_SERVER_ADMIN_SECRET не задан" }, 503);
+  if (!configured || !identity) {
+    return c.json({
+      configured,
+      authenticated: false,
+      identity: null,
+      step: configured ? "password" : "none",
+      verify,
+    });
   }
-  const { support_code } = c.req.valid("json");
-  if (!verifyVendorSupportCode(secret, support_code)) {
-    return c.json({ error: "Неверный или просроченный support code" }, 401);
-  }
-  const token = createAdminSessionToken();
-  setAdminSessionCookie(c, token);
-  return c.json({ ok: true });
+
+  const authenticated = await isVendorAdminFullyAuthenticated(c);
+  return c.json({
+    configured: true,
+    authenticated,
+    identity: { email: identity.email },
+    step: authenticated ? "ready" : "verify",
+    verify,
+  });
 });
 
 adminRoutes.post("/logout", (c) => {
-  clearAdminSessionCookie(c);
+  clearVerifySessionCookie(c);
   return c.json({ ok: true });
 });
 
+adminRoutes.post("/verify/start", async (c) => {
+  if (!isVendorAdminUiConfigured()) {
+    return c.json({ error: "Admin UI не настроен" }, 503);
+  }
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!identity) return c.json({ error: "Unauthorized" }, 401);
+
+  const verify = getVerifyMethods();
+  if (!verify.required) {
+    setVerifySessionCookie(c, identity.id);
+    return c.json({ ok: true, skipped: true, verify });
+  }
+
+  try {
+    const challenge = await startVerifyChallenge(getSupabase(), identity);
+    return c.json({ ok: true, ...challenge, verify });
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+adminRoutes.get("/verify/poll", async (c) => {
+  const token = c.req.query("token")?.trim();
+  if (!token) return c.json({ error: "token required" }, 400);
+
+  const identity = await getVendorAdminIdentity(c.req.header("Authorization"));
+  if (!identity) return c.json({ error: "Unauthorized" }, 401);
+
+  const status = await pollVerifyChallenge(getSupabase(), token);
+  if (status === "confirmed") {
+    setVerifySessionCookie(c, identity.id);
+    return c.json({ status, ok: true });
+  }
+  return c.json({ status, ok: false });
+});
+
+adminRoutes.post(
+  "/verify/approve",
+  zValidator(
+    "json",
+    z.object({
+      challenge_token: z.string().min(16),
+      secret: z.string().min(8),
+    }),
+  ),
+  async (c) => {
+    const expected = getVendorApprovalSecret();
+    if (!expected) return c.json({ error: "Webhook approval not configured" }, 503);
+
+    const body = c.req.valid("json");
+    if (body.secret !== expected) return c.json({ error: "Unauthorized" }, 401);
+
+    const result = await confirmVerifyChallenge(getSupabase(), body.challenge_token, "webhook");
+    if (!result.ok) return c.json({ error: result.error }, 400);
+    return c.json({ ok: true, user_id: result.user_id });
+  },
+);
+
 adminRoutes.get("/overview", async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   try {
     return c.json(await fetchLicenseServerOverview(getSupabase()));
@@ -72,7 +139,7 @@ adminRoutes.get("/overview", async (c) => {
 });
 
 adminRoutes.get("/keys", async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   const query = listQuerySchema.safeParse({
     status: c.req.query("status"),
@@ -88,7 +155,7 @@ adminRoutes.get("/keys", async (c) => {
 });
 
 adminRoutes.get("/activations", async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   const query = listQuerySchema.safeParse({
     status: c.req.query("status"),
@@ -104,7 +171,7 @@ adminRoutes.get("/activations", async (c) => {
 });
 
 adminRoutes.get("/provisions", async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   const query = listQuerySchema.safeParse({
     status: c.req.query("status"),
@@ -120,7 +187,7 @@ adminRoutes.get("/provisions", async (c) => {
 });
 
 adminRoutes.get("/clients", async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   const query = listQuerySchema.safeParse({ limit: c.req.query("limit") });
   try {
@@ -139,7 +206,7 @@ const provisionSchema = z.object({
 });
 
 adminRoutes.post("/provision", zValidator("json", provisionSchema), async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   try {
     const body = c.req.valid("json");
@@ -162,7 +229,7 @@ adminRoutes.post(
   "/register-key",
   zValidator("json", z.object({ license_key: z.string().min(20) })),
   async (c) => {
-    const denied = requireAdminSession(c);
+    const denied = await requireVendorAdminSession(c);
     if (denied) return denied;
     try {
       const { license_key } = c.req.valid("json");
@@ -180,7 +247,7 @@ adminRoutes.post("/revoke", zValidator("json", z.object({
   key_hash: z.string().min(16).optional(),
   reason: z.string().max(500).optional(),
 })), async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   const body = c.req.valid("json");
   if (!body.key_id && !body.installation_id && !body.key_hash) {
@@ -201,7 +268,7 @@ adminRoutes.post("/generate-key", zValidator("json", z.object({
   customer: z.string().max(200).optional(),
   expires_at: z.string().nullable().optional(),
 })), async (c) => {
-  const denied = requireAdminSession(c);
+  const denied = await requireVendorAdminSession(c);
   if (denied) return denied;
   try {
     const body = c.req.valid("json");

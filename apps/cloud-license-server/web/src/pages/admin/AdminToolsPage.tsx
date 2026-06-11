@@ -43,14 +43,16 @@ export function AdminToolsPage() {
       </form>
 
       <div className="card mt-6 max-w-xl p-6 text-sm text-slate-400">
-        <h2 className="font-semibold text-white">Support code для входа</h2>
+        <h2 className="font-semibold text-white">Machine API (CI / скрипты)</h2>
         <p className="mt-2 leading-relaxed">
-          На машине с <code className="text-sky-300">LICENSE_SERVER_ADMIN_SECRET</code>:
+          Для automation используйте Bearer{" "}
+          <code className="text-sky-300">LICENSE_SERVER_ADMIN_SECRET</code> — не для входа в
+          браузер. Пример: <code className="text-sky-300">POST /api/v1/license/provision</code>.
         </p>
-        <pre className="mt-3 rounded-lg bg-black/30 p-3 text-xs text-slate-300">
-          npm run support-code
-        </pre>
-        <p className="mt-3">Код действует 15 минут. Сессия в браузере — 4 часа.</p>
+        <p className="mt-3">
+          Локальный self-hosted сервер — отдельный интерфейс <strong>Console</strong> (support code
+          + SSH, <code className="text-sky-300">npm run license:admin</code>).
+        </p>
       </div>
     </>
   );
