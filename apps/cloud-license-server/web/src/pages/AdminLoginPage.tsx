@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { COMPANY } from "../lib/company";
 import { adminLogin } from "../lib/admin-api";
 import { useAdminSession } from "../hooks/useAdminSession";
 
@@ -11,7 +12,7 @@ export function AdminLoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && session?.authenticated) {
-    return <Navigate to="/admin/console" replace />;
+    return <Navigate to="/admin/app" replace />;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -21,7 +22,7 @@ export function AdminLoginPage() {
     try {
       await adminLogin(code.replace(/\s/g, ""));
       await refresh();
-      navigate("/admin/console");
+      navigate("/admin/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -33,10 +34,14 @@ export function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-widest text-sky-400">Vendor</p>
-          <h1 className="mt-2 text-2xl font-bold">Админка License Server</h1>
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/30 to-violet-500/20 text-xl font-bold text-sky-200">
+            Z
+          </span>
+          <p className="mt-4 text-xs uppercase tracking-widest text-sky-400">{COMPANY.brand}</p>
+          <h1 className="mt-2 text-2xl font-bold">Админка сотрудника</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Вход по одноразовому support code (15 мин). Секрет не вводится в браузер.
+            Управление лицензиями, клиентами и установками {COMPANY.product}. Вход по support code
+            (15 мин) — секрет не вводится в браузер.
           </p>
         </div>
 
@@ -60,13 +65,15 @@ export function AdminLoginPage() {
               />
             </div>
             <p className="text-xs text-slate-500">
-              Получите код:{" "}
-              <code className="text-slate-400">npm run support-code</code> (локально с тем же
-              секретом)
+              Получите код: <code className="text-slate-400">npm run support-code</code>
             </p>
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
-            <button type="submit" disabled={submitting || code.length < 8} className="btn-primary w-full">
-              {submitting ? "Проверка…" : "Войти"}
+            <button
+              type="submit"
+              disabled={submitting || code.length < 8}
+              className="btn-primary w-full"
+            >
+              {submitting ? "Проверка…" : "Войти в админку"}
             </button>
           </form>
         )}

@@ -10,7 +10,7 @@
 | Регистрация | `/register` | Пробный период 30 дней |
 | Кабинет | `/cabinet` | installation_id, статус лицензии, инструкция `.env` |
 | Vendor Admin | `/admin` | Вход по support code (8 цифр, 15 мин) |
-| Admin Console | `/admin/console` | Установки, ключи FM1, активации, отзыв |
+| Админка ZEUS | `/admin/app` | Обзор, клиенты, установки, активации, FM1 |
 | API | `/api/v1/license/*` | Подключение клиентских EDMS |
 
 ## Стек
@@ -84,7 +84,15 @@ cd apps/cloud-license-server
 npm run support-code
 ```
 
-Откройте `/admin` → введите код → `/admin/console`.
+Откройте `/admin` → введите код → `/admin/app`.
+
+Разделы админки:
+- **Обзор** — KPI, trial на исходе, последние клиенты
+- **Клиенты** — аккаунты личного кабинета
+- **Установки** — provision, телеметрия, отзыв
+- **Активации** — phone-home от EDMS
+- **Ключи FM1** — legacy
+- **Инструменты** — pre-register FM1, подсказка support code
 
 Для CI/скриптов Bearer API (`/api/v1/license/provision`, …) остаётся доступен.
 
@@ -100,7 +108,7 @@ npm run support-code
 | GET | `/api/v1/portal/me` | Supabase JWT |
 | POST | `/api/v1/portal/bootstrap` | Supabase JWT |
 
-Admin UI session API (`/api/v1/admin/*`) — cookie после `/admin/login`.  
+Admin UI (`/api/v1/admin/*`) — cookie после `/admin/login`. В том числе `GET /clients`.
 Machine API (`/api/v1/license/provision`, …) — Bearer `LICENSE_SERVER_ADMIN_SECRET`.
 
 См. также: [docs/LICENSE-SERVER.md](../../docs/LICENSE-SERVER.md)

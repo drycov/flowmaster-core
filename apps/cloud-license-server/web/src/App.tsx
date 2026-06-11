@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
-import { AdminConsolePage } from "./pages/AdminConsolePage";
+import { AdminApp } from "./pages/AdminApp";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { CabinetPage } from "./pages/CabinetPage";
 import { LandingPage } from "./pages/LandingPage";
@@ -44,7 +44,8 @@ export function App() {
         }
       />
       <Route path="/admin" element={<AdminLoginPage />} />
-      <Route path="/admin/console" element={<AdminConsolePage />} />
+      <Route path="/admin/app/*" element={<AdminApp />} />
+      <Route path="/admin/console" element={<Navigate to="/admin/app" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

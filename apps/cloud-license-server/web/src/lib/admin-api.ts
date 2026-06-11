@@ -25,6 +25,9 @@ export type AdminOverview = {
   activations_revoked: number;
   provisions_total: number;
   provisions_active: number;
+  portal_clients_total: number;
+  trials_expiring_7d: number;
+  online_last_7d: number;
   checked_at: string;
 };
 
@@ -73,6 +76,10 @@ export function fetchAdminProvisions() {
   );
 }
 
+export function fetchAdminClients() {
+  return adminFetch<{ items: ClientRow[]; total: number }>("/clients?limit=100");
+}
+
 export type KeyRow = {
   id: string;
   key_hash_short: string;
@@ -110,6 +117,20 @@ export type ProvisionRow = {
   customer_name: string;
   expires_at: string | null;
   status: string;
+  last_seen_at: string | null;
+  active_users: number;
+  documents_total: number;
+  days_until_expiry: number | null;
+  account_email: string | null;
+};
+
+export type ClientRow = {
+  id: string;
+  email: string;
+  company_name: string;
+  created_at: string;
+  installations_count: number;
+  installation_ids: string[];
 };
 
 export function provisionInstallation(body: {

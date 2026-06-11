@@ -6,6 +6,7 @@ import {
   listLicenseServerActivations,
   listLicenseServerKeys,
   listLicenseServerProvisions,
+  listPortalClients,
 } from "./lib/admin.server.js";
 import {
   clearAdminSessionCookie,
@@ -113,6 +114,17 @@ adminRoutes.get("/provisions", async (c) => {
     return c.json(
       await listLicenseServerProvisions(getSupabase(), query.success ? query.data : {}),
     );
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+adminRoutes.get("/clients", async (c) => {
+  const denied = requireAdminSession(c);
+  if (denied) return denied;
+  const query = listQuerySchema.safeParse({ limit: c.req.query("limit") });
+  try {
+    return c.json(await listPortalClients(getSupabase(), query.success ? query.data : {}));
   } catch (e) {
     return c.json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
