@@ -28,11 +28,6 @@ export function resolveComposeFiles({ stack, tls = false, dev = false, monitorin
   return files;
 }
 
-/** @deprecated Use resolveComposeFiles({ stack: 'tls' }) — kept for callers passing tls/dev booleans. */
-export function resolveComposeFilesLegacy({ tls = false, dev = false, monitoring = false } = {}) {
-  return resolveComposeFiles({ tls, dev, monitoring });
-}
-
 export function composeBaseArgs(files) {
   const args = ["compose"];
   for (const file of files) {

@@ -9,7 +9,7 @@
 | `npm run env:local` | `.env` | Local Docker, nginx, seed |
 | `npm run env:production -- --domain=X --email=Y` | `.env.production` | Production HTTPS |
 | `npm run env:production -- --domain=X --install` | `.env` | Production → активный env |
-| `npm run env:staging` | `.env` | UAT (:8080 nginx) |
+| `npm run env:staging` | `.env.staging` | UAT (:8080 nginx); `--install` → `.env` |
 | `npm run env:license-server -- --domain=X --install` | `.env` | Vendor license server |
 | `npm run env:sync` | `docker/supabase/.env` | Копия root `.env` для Compose |
 

@@ -11,31 +11,13 @@ import { useAuthForm } from "@/components/auth/hooks/useAuthForm";
 import { AuthPageLayout } from "@/components/auth/layout/AuthPageLayout";
 import { AuthLoginPanel } from "@/components/auth/login/AuthLoginPanel";
 import { getPublicAuthConfigFn } from "@/lib/api/system.functions";
-import type { PublicAuthConfig } from "@/components/auth/types";
+import { DEFAULT_PUBLIC_AUTH_CONFIG } from "@/lib/auth/public-auth-config";
 import {
   formatAuthValidationIssues,
   resolveEdsLinkCredentials,
   signInInputSchema,
   signUpInputSchema,
 } from "@/components/auth/validation";
-
-const DEFAULT_CONFIG: PublicAuthConfig = {
-  bootstrap_needed: true,
-  allow_public_signup: true,
-  allow_eds_signup: true,
-  allow_ldap_login: false,
-  telegram_bot_configured: false,
-  telegram_notifications_enabled: false,
-  allow_telegram_login: false,
-  allow_telegram_password_reset: false,
-  min_password_length: 8,
-  require_strong_password: false,
-  multi_tenant: false,
-  organization_count: 0,
-  resolved_tenant: null,
-  require_tenant_slug: false,
-  tenant_base_domain: null,
-};
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -52,10 +34,11 @@ function AuthPage() {
   const { loading, signIn, signUp } = useAuth();
   const { loading: edsLoading, signInWithEds } = useEdsAuth();
   const { loading: ldapLoading, signInWithLdap } = useLdapAuth();
-  const { data: config = DEFAULT_CONFIG, isPending: configLoading } = useQuery({
+  const { data: config = DEFAULT_PUBLIC_AUTH_CONFIG, isPending: configLoading } = useQuery({
     queryKey: ["public-auth-config"],
     queryFn: getPublicAuthConfigFn,
     staleTime: 60_000,
+    placeholderData: DEFAULT_PUBLIC_AUTH_CONFIG,
   });
 
   const {

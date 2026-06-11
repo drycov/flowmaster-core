@@ -2,7 +2,8 @@
 
 ## Модель угроз
 
-- **Single-tenant:** одна организация на инсталляцию
+- **Single-tenant (по умолчанию):** одна организация на инсталляцию
+- **Multi-tenant:** несколько org на одной БД; изоляция через `organization_id`, RLS `tenant_matches`, JWT `org_id` — см. [MULTI-TENANT.md](./MULTI-TENANT.md)
 - **Доступ:** аутентифицированные пользователи + API keys + cron secret
 - **Данные:** грифы доступа, RLS, audit log
 
@@ -51,12 +52,17 @@
 
 ## RLS
 
-PostgreSQL RLS на:
-- `documents`, `document_versions`, `workflow_tasks`
-- `profiles`, `audit_logs`, `api_keys`
-- `kb_articles`, `contract_details`
+PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matches(organization_id)`:
+
+- `documents`, `document_versions`, `workflow_tasks`, sidecars
+- `profiles`, `audit_logs`, `api_keys`, `webhook_subscriptions`, `import_jobs`
+- `kb_articles`, `departments`, `leave_requests`, …
+
+**Multi-tenant:** пользователь видит только строки своей org; `manage_platform` — исключение для platform admin. Email/ИИН уникальны per-org.
 
 Опасные RPC отозваны у `anon`/`authenticated` — только `service_role` на сервере.
+
+Подробнее: [MULTI-TENANT.md](./MULTI-TENANT.md#изоляция-в-postgresql).
 
 ## Интеграции
 
@@ -87,7 +93,8 @@ PostgreSQL RLS на:
 - [ ] `PROXY_DOMAIN` / Let's Encrypt или корпоративный сертификат
 - [ ] `APPLY_DB_SEED=0` на production
 - [ ] `ENABLE_EMAIL_AUTOCONFIRM=false` на production
-- [ ] Supabase RLS policies применены (миграции phase 8+)
+- [ ] Supabase RLS policies применены (миграции phase 8+, tenant phase 3: `20260614000000`)
+- [ ] Multi-tenant: `TENANT_BASE_DOMAIN` и wildcard DNS настроены; platform admin только у primary org — [MULTI-TENANT.md](./MULTI-TENANT.md)
 - [ ] Лицензия активирована, trial не просрочен
 - [ ] `LOG_LEVEL=info`, логи собираются centrally
 - [ ] `SENTRY_DSN` + `VITE_SENTRY_DSN` для алертов по 5xx / необработанным ошибкам

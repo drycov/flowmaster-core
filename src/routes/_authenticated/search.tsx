@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { listDocuments } from "@/lib/api/documents.functions";
+import { listDocuments, type DocumentListRowEnriched } from "@/lib/api/documents.functions";
 import {
   deleteSavedSearch,
   listSavedSearches,

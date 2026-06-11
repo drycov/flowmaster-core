@@ -28,6 +28,7 @@ import {
   testTelegramSettings,
   updateSystemSettings,
 } from "@/lib/api/system.functions";
+import { computeEffectiveAuthFlags } from "@/lib/auth/public-auth-config";
 import type { SystemSettings, SystemSettingsMeta } from "@/lib/auth/policy";
 import { normalizeEmailDomains } from "@/lib/auth/policy";
 import { getTelegramWebhookInfo, registerTelegramWebhookFn } from "@/lib/api/telegram.functions";
@@ -185,7 +186,7 @@ function SystemSettingsPage() {
 
   const effectiveSignup = useMemo(() => {
     if (!form || !meta) return false;
-    return meta.bootstrap_needed || form.auth.allow_public_signup;
+    return computeEffectiveAuthFlags(meta, form.auth, form.ldap.enabled).effectiveSignup;
   }, [form, meta]);
 
   if (isLoading || !form || !meta) {

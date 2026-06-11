@@ -1,5 +1,13 @@
 # Интеграции ЕСЭДО
 
+## Multi-tenant
+
+API keys, webhooks и import jobs привязаны к **организации** (`organization_id`). Ключ видит только документы и задачи своей org; webhook-подписки получают события только из той же org. Настройки LDAP, SMTP, Telegram — в `organization.settings` каждого tenant.
+
+Подробнее: [MULTI-TENANT.md](./MULTI-TENANT.md).
+
+---
+
 ## REST API v1
 
 **Base URL:** `https://<your-domain>/api/v1` (тот же домен, что и веб-приложение; nginx проксирует `/api` на app)

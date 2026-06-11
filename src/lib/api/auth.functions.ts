@@ -33,7 +33,7 @@ import {
   assertUserBelongsToOrganization,
   resolveAuthOrganizationFromRequest,
 } from "@/lib/access/tenant-auth.server";
-import { updateBootstrapOrganization } from "@/lib/access/tenant-public.server";
+import { applyBootstrapOrganizationSetup } from "@/lib/access/tenant-public.server";
 import { clearAuthCookies, publishAuthSession } from "@/lib/auth/server/publish-session.server";
 import { getRefreshSessionCookie } from "@/lib/auth/server/refresh-cookie.server";
 import { refreshAccessTokenFromOpaque } from "@/lib/auth/server/sessions";
@@ -104,16 +104,12 @@ export const registerWithEmail = createServerFn({ method: "POST" })
     let organizationId: string | null = null;
 
     if (bootstrap) {
-      const slug = data.tenant_slug?.trim();
-      const orgNameRu = data.org_name_ru?.trim() || data.full_name_ru;
-      const orgNameKk = data.org_name_kk?.trim() || data.full_name_kk;
-      if (!slug) {
-        throw new Error("Укажите код организации для первоначальной настройки");
-      }
-      await updateBootstrapOrganization({
-        slug,
-        name_ru: orgNameRu,
-        name_kk: orgNameKk,
+      await applyBootstrapOrganizationSetup(true, {
+        slug: data.tenant_slug,
+        org_name_ru: data.org_name_ru,
+        org_name_kk: data.org_name_kk,
+        full_name_ru: data.full_name_ru,
+        full_name_kk: data.full_name_kk,
       });
     } else {
       organizationId = await resolveAuthOrganizationId(data.tenant_slug);
@@ -252,8 +248,6 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
   .handler(async ({ data }) => {
     const settings = await loadSystemSettings();
-    const { loadSystemInitStatus } = await import("@/lib/system/init-status.server");
-    const init = await loadSystemInitStatus();
     const { verifyEdsAuthSignature } = await import("@/lib/auth/server/eds-auth-verify");
     const { certInfo, iin } = verifyEdsAuthSignature(data.signature, settings.eds, data.cert_info);
 
@@ -344,17 +338,15 @@ export const completeEdsAuth = createServerFn({ method: "POST" })
 
         profileEmail = row.email;
       } else {
-        if (init.needs_bootstrap) {
-          const slug = data.tenant_slug?.trim();
-          if (!slug) {
-            throw new Error("Укажите код организации для первоначальной настройки");
-          }
-          await updateBootstrapOrganization({
-            slug,
-            name_ru: data.org_name_ru?.trim() || displayName,
-            name_kk: data.org_name_kk?.trim() || data.full_name_kk || displayName,
-          });
-        }
+        const { bootstrap } = await assertEdsRegistrationAllowed();
+
+        await applyBootstrapOrganizationSetup(bootstrap, {
+          slug: data.tenant_slug,
+          org_name_ru: data.org_name_ru,
+          org_name_kk: data.org_name_kk,
+          full_name_ru: displayName,
+          full_name_kk: data.full_name_kk || displayName,
+        });
 
         userId = await registerUser({
           email: edsEmail(iin),

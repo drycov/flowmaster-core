@@ -3,7 +3,7 @@
 ## Архитектура
 
 - **Single-tenant (по умолчанию):** одна организация на инсталляцию
-- **Multi-tenant (SaaS-ready):** несколько изолированных организаций с общей БД, RLS по `organization_id`, вход по slug / поддомену
+- **Multi-tenant (SaaS-ready):** несколько изолированных организаций с общей БД, RLS по `organization_id`, вход по slug / поддомену — см. **[MULTI-TENANT.md](./MULTI-TENANT.md)**
 - **Приложение:** Node.js (TanStack Start + Nitro), порт `3000` (внутри Docker)
 - **Reverse proxy:** nginx — единая точка входа `:80` / `:443` (app + Supabase API)
 - **БД и API:** Self-hosted Supabase в Docker (PostgreSQL, PostgREST, Storage, Realtime)
@@ -67,8 +67,10 @@ curl https://esedo.example.kz/api/health
 После добавления новых миграций:
 
 ```bash
-npm run docker:migrate
-npm run docker:up -- --tls   # или restart app вручную
+npm run docker:migrate              # HTTP stack (default)
+npm run docker:migrate -- --tls     # production TLS
+npm run docker:migrate -- --staging # UAT
+npm run docker:up -- --tls          # или restart app вручную
 ```
 
 Шаблон и генерация env:
@@ -79,7 +81,8 @@ npm run docker:up -- --tls   # или restart app вручную
 | `npm run env:local` | Локальный Docker → `.env` |
 | `npm run env:production -- --domain=X` | → `.env.production` |
 | `npm run env:production -- --install` | → `.env` (production) |
-| `npm run env:staging` | UAT → `.env` |
+| `npm run env:staging` | UAT → `.env.staging` |
+| `npm run env:staging -- --install` | UAT → `.env` (активный) |
 | `npm run env:license-server` | Vendor license server |
 
 Legacy `.env.production.example` / `.env.staging.example` — указатели на генератор.
@@ -111,7 +114,7 @@ npx supabase db push
 |---------|-----------|
 | `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=1` |
 | `npm run env:production -- --domain=X --email=Y` | `.env.production` |
-| `npm run env:staging` | `.env` — UAT :8080 |
+| `npm run env:staging -- --install` | `.env` — UAT :8080 |
 | `npm run env:license-server -- --domain=X --install` | `.env` — license server |
 | `… --install` | копирует output → `.env` + `env:sync` |
 
@@ -312,6 +315,8 @@ server {
 
 ### Multi-tenant (wildcard DNS)
 
+Краткая инструкция по инфраструктуре. **Модель данных, RLS, роли и provisioning** — в [MULTI-TENANT.md](./MULTI-TENANT.md).
+
 1. DNS: `*.example.kz` → IP сервера
 2. Env:
 
@@ -319,7 +324,7 @@ server {
 TENANT_BASE_DOMAIN=example.kz
 ```
 
-3. Nginx — wildcard + сохранение `Host`:
+3. Nginx — wildcard + сохранение `Host` (приложение парсит slug из `Host`):
 
 ```nginx
 server {
@@ -333,9 +338,7 @@ server {
 5. **Вход:** `https://acme.example.kz/auth` или общий домен + поле «Код организации»
 6. Отключённая org (`is_active = false`) не принимает новые входы
 
-**Роли:** администраторы первой (primary) организации получают `platform_admin` (`manage_platform`). Администраторы tenant-org — роль `admin` без `manage_platform`.
-
-**Квоты:** опциональный `max_users` на организацию. Пустое значение = без org-лимита.
+**Роли:** primary org → `manage_platform`; tenant admin — только своя org. **Квоты:** `max_users` на org (опционально).
 
 ## 7. Лицензия
 

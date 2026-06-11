@@ -25,7 +25,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import type { ReferenceBriefRow } from "@/lib/api/reference-types";
 import { Plus, Trash2, Link2 } from "lucide-react";
 import { useI18n, localized } from "@/i18n";
-import { listDocuments } from "@/lib/api/documents.functions";
+import { listDocuments, type DocumentListRowEnriched } from "@/lib/api/documents.functions";
 import {
   createDocumentLink,
   deleteDocumentLink,
@@ -125,7 +125,9 @@ export function DocumentLinksTab({ documentId, canEdit = false }: DocumentLinksT
     link_type: unwrap(row.link_type),
     source: unwrap(row.source),
   }));
-  const candidates = (searchResults as LinkedDoc[]).filter((d) => d.id !== documentId);
+  const candidates = (searchResults as DocumentListRowEnriched[]).filter(
+    (d) => d.id !== documentId,
+  );
 
   const resetDialog = () => {
     setSearch("");

@@ -143,7 +143,7 @@ function Dashboard() {
                           <StatusBadge status={d.status} />
                         </td>
                         <td className="px-4 py-2.5 w-24 text-right">
-                          <SlaBadge sla={d.sla_status} />
+                          <SlaBadge sla={d.sla_status ?? "ok"} />
                         </td>
                       </tr>
                     ))}

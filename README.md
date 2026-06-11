@@ -10,6 +10,7 @@
 - База знаний (регламенты, публикация из утверждённых документов), проекты, контракты, контрагенты
 - Уведомления: in-app, email, Telegram
 - Интеграции: API keys, webhooks, batch import
+- **Multi-tenant (SaaS-ready):** несколько организаций на одной инсталляции, изоляция по `organization_id` + RLS
 - Лицензирование on-prem (FM1.*)
 
 ## Быстрый старт (разработка)
@@ -112,6 +113,7 @@ curl https://license.example.kz/api/v1/license/health
 | Документ | Описание |
 |----------|----------|
 | [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md) | Сервер лицензирования (vendor) |
+| [docs/MULTI-TENANT.md](docs/MULTI-TENANT.md) | Multi-tenant: модель, изоляция, provisioning |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Развёртывание, env, nginx, cron, backup |
 | [docs/SECURITY.md](docs/SECURITY.md) | Аутентификация, RLS, hardening |
 | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | API v1, webhooks, LDAP, Telegram |
@@ -124,14 +126,25 @@ curl https://license.example.kz/api/v1/license/health
 
 Полный список: [scripts/README.md](scripts/README.md).
 
+### Docker: `compose:*` vs `docker:*`
+
+| Namespace | Назначение | Примеры |
+|-----------|------------|---------|
+| **`compose:*`** | Deploy-стеки (production, staging, license server) | `compose:tls`, `compose:staging`, `compose:license-server` |
+| **`docker:*`** | Локальная разработка и утилиты | `docker:up`, `docker:deps`, `docker:migrate`, `docker:down` |
+
+Некоторые команды дублируются (`compose:full` = `docker:full`, `compose:tls:down` = `docker:down:tls`) — используйте один namespace в скриптах CI/CD.
+
 | Команда | Назначение |
 |---------|------------|
 | `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
+| `npm run env:staging -- --install` | UAT env → активный `.env` |
 | `npm run env:sync` | `.env` → `docker/supabase/.env` |
 | `npm run docker:up` | HTTP stack + migrate + wait |
 | `npm run compose:tls` / `compose:tls:cron` | HTTPS production |
 | `npm run compose:staging` | UAT stack |
 | `npm run compose:license-server` | Vendor license server |
+| `npm run docker:migrate` / `docker:migrate -- --tls` | SQL-миграции (stack-aware) |
 | `npm run docker:deps` | Supabase only (host dev) |
 | `npm run docker:full` | cron + studio + monitoring |
 | `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |

@@ -108,6 +108,33 @@ export async function updateBootstrapOrganization(input: {
   if (error) throw new Error(error.message);
 }
 
+export type BootstrapOrganizationInput = {
+  slug?: string | null;
+  org_name_ru?: string | null;
+  org_name_kk?: string | null;
+  full_name_ru: string;
+  full_name_kk: string;
+};
+
+/** Shared first-run org setup for email and EDS registration. */
+export async function applyBootstrapOrganizationSetup(
+  bootstrap: boolean,
+  input: BootstrapOrganizationInput,
+): Promise<void> {
+  if (!bootstrap) return;
+
+  const slug = input.slug?.trim();
+  if (!slug) {
+    throw new Error("Укажите код организации для первоначальной настройки");
+  }
+
+  await updateBootstrapOrganization({
+    slug,
+    name_ru: input.org_name_ru?.trim() || input.full_name_ru,
+    name_kk: input.org_name_kk?.trim() || input.full_name_kk,
+  });
+}
+
 export async function fetchOrganizationIdForAuth(opts: {
   tenant_slug?: string | null;
   host_header?: string | null;

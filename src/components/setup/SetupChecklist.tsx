@@ -44,7 +44,7 @@ export function SetupChecklist({ isAdmin }: { isAdmin: boolean }) {
     enabled: isAdmin,
   });
 
-  if (!isAdmin || !data?.needs_setup) return null;
+  if (!isAdmin || !data?.setup_checklist_incomplete) return null;
 
   return (
     <Card className="rounded-sm border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/10">

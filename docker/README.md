@@ -56,11 +56,20 @@ curl https://esedo.example.kz/api/health
 ### Staging UAT
 
 ```bash
-npm run env:staging
+npm run env:staging -- --install
 npm run env:sync
 npm run compose:staging
 curl http://localhost:8080/api/health
 ```
+
+### `compose:*` vs `docker:*`
+
+| Namespace | Когда использовать |
+|-----------|-------------------|
+| **`compose:*`** | Deploy-стеки: production TLS, staging, license server |
+| **`docker:*`** | Локальная разработка, migrate, down, monitoring |
+
+Дубликаты: `compose:full` = `docker:full`, `compose:tls:down` = `docker:down:tls`.
 
 ### License server (vendor)
 
@@ -83,7 +92,8 @@ npm run compose:license-server
 | `npm run compose:tls` | HTTPS stack + migrate + wait |
 | `npm run compose:staging` | UAT stack + migrate + wait |
 | `npm run docker:full` | cron + studio + monitoring |
-| `npm run docker:migrate` | Только SQL-миграции |
+| `npm run docker:migrate` | SQL-миграции (default HTTP stack) |
+| `npm run docker:migrate -- --tls` / `--staging` | Миграции для другого stack |
 | `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
 
 Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--full`.

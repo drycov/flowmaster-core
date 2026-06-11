@@ -37,7 +37,7 @@
     "docker:down:tls": "node scripts/docker-down.mjs --tls",
     "docker:down:staging": "node scripts/docker-down.mjs --staging",
     "docker:down:dev": "node scripts/docker-down.mjs --dev",
-    "docker:migrate": "docker compose run --rm db-migrate",
+    "docker:migrate": "node scripts/docker-migrate.mjs",
     "docker:wait": "node scripts/docker-wait.mjs",
     "docker:full": "node scripts/docker-full.mjs",
     "docker:monitoring": "node scripts/docker-up.mjs --monitoring",

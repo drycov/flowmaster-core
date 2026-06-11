@@ -18,8 +18,8 @@ export const PROFILES = {
   staging: {
     id: "staging",
     label: "Staging / UAT",
-    defaultOutput: ".env",
-    inheritFrom: [".env", ".env.staging"],
+    defaultOutput: ".env.staging",
+    inheritFrom: [".env.staging"],
   },
   "license-server": {
     id: "license-server",
@@ -94,7 +94,7 @@ export function buildProfileValues(profileId, ctx) {
         CERTBOT_EMAIL: certEmail,
         SENTRY_ENVIRONMENT: "production",
         SMTP_ADMIN_EMAIL: ctx.existing.get("SMTP_ADMIN_EMAIL") ?? `admin@${domain}`,
-        MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3001",
+        MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3002",
         LICENSE_MODE: ctx.licenseServerUrl
           ? "online"
           : (ctx.existing.get("LICENSE_MODE") ?? "offline"),
@@ -249,15 +249,15 @@ export function printNextSteps(profileId, ctx) {
       if (!ctx.installed) {
         console.log("  2. npm run env:production -- --install   (или cp .env.production .env)");
       }
-      console.log("  3. docker compose -f docker-compose.tls.yml up -d --build");
-      console.log("  4. docker compose -f docker-compose.tls.yml --profile cron up -d");
+      console.log("  3. npm run compose:tls");
+      console.log("  4. npm run compose:tls:cron");
       console.log("  5. npm run env:sync   (если compose ругается на docker/supabase/.env)");
       console.log("  6. curl http://127.0.0.1/api/health   (на сервере, до DNS)");
       console.log(`  7. curl https://${ctx.domain}/api/health   (после A-record DNS)`);
       break;
     case "staging":
       console.log("Next steps:");
-      console.log("  npm run env:staging");
+      console.log("  npm run env:staging -- --install");
       console.log("  npm run env:sync");
       console.log("  npm run compose:staging");
       console.log("  curl http://localhost:8080/api/health");

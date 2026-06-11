@@ -27,9 +27,9 @@ export async function ensureDocumentRegNumber(
   journalId?: string | null,
 ): Promise<string> {
   const { data: regRow, error: readErr } = await supabaseAdmin
-    .from("document_registration")
+    .from("document_registration" as never)
     .select("reg_number, registration_journal_id")
-    .eq("document_id", documentId)
+    .eq("document_id" as never, documentId)
     .maybeSingle();
 
   if (readErr) throw new Error(readErr.message);
@@ -52,9 +52,9 @@ export async function ensureDocumentRegNumber(
   }
 
   const { data: retry, error: retryErr } = await supabaseAdmin
-    .from("document_registration")
+    .from("document_registration" as never)
     .select("reg_number")
-    .eq("document_id", documentId)
+    .eq("document_id" as never, documentId)
     .maybeSingle();
 
   if (retryErr) throw new Error(retryErr.message);

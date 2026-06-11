@@ -1,6 +1,10 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { AppRole } from "@/lib/auth/roles";
-import { isBootstrapNeeded, loadSystemInitStatus } from "@/lib/system/init-status.server";
+import { loadSystemInitStatus } from "@/lib/system/init-status.server";
+import {
+  computeEffectiveAuthFlags,
+  type PublicAuthPolicySlice,
+} from "@/lib/auth/public-auth-config";
 
 export type AuthPolicySettings = {
   allow_public_signup: boolean;
@@ -96,21 +100,6 @@ export type SystemSettingsMeta = {
 export type SystemSettingsResponse = {
   settings: SystemSettings;
   meta: SystemSettingsMeta;
-};
-
-export type PublicAuthConfig = {
-  bootstrap_needed: boolean;
-  allow_public_signup: boolean;
-  allow_eds_signup: boolean;
-  allow_ldap_login: boolean;
-  /** Bot token configured and org past bootstrap */
-  telegram_bot_configured: boolean;
-  /** Org-level Telegram notifications toggle */
-  telegram_notifications_enabled: boolean;
-  allow_telegram_login: boolean;
-  allow_telegram_password_reset: boolean;
-  min_password_length: number;
-  require_strong_password: boolean;
 };
 
 const DEFAULT_AUTH: AuthPolicySettings = {
@@ -442,14 +431,6 @@ export async function loadSystemSettings(): Promise<SystemSettings> {
   return parseSystemSettings(data?.settings);
 }
 
-export async function getAdminCount(): Promise<number> {
-  return (await loadSystemInitStatus()).admin_count;
-}
-
-export async function hasAdminUser(): Promise<boolean> {
-  return !(await isBootstrapNeeded());
-}
-
 export async function loadSystemSettingsResponse(): Promise<SystemSettingsResponse> {
   const [settings, init] = await Promise.all([loadSystemSettings(), loadSystemInitStatus()]);
   const bootstrapNeeded = init.needs_bootstrap;
@@ -494,16 +475,16 @@ export async function saveTelegramWebhookSecret(secret: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function getPublicAuthConfig(): Promise<PublicAuthConfig> {
+export async function getPublicAuthConfig(): Promise<PublicAuthPolicySlice> {
   const { settings, meta } = await loadSystemSettingsResponse();
-
+  const effective = computeEffectiveAuthFlags(meta, settings.auth, settings.ldap.enabled);
   const telegramBotConfigured = !meta.bootstrap_needed && meta.has_telegram_bot_token;
 
   return {
     bootstrap_needed: meta.bootstrap_needed,
-    allow_public_signup: meta.bootstrap_needed || settings.auth.allow_public_signup,
-    allow_eds_signup: meta.bootstrap_needed || settings.auth.allow_eds_signup,
-    allow_ldap_login: !meta.bootstrap_needed && settings.ldap.enabled,
+    allow_public_signup: effective.effectiveSignup,
+    allow_eds_signup: effective.effectiveEdsSignup,
+    allow_ldap_login: effective.effectiveLdapLogin,
     telegram_bot_configured: telegramBotConfigured,
     telegram_notifications_enabled: telegramBotConfigured && settings.telegram.enabled,
     allow_telegram_login: telegramBotConfigured && settings.telegram.allow_telegram_login,

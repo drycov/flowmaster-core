@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-loadEnvFiles([".env"]);
+loadEnvFiles([".env", ".env.staging"]);
 
 orchestrateStack(root, {
   stack: "staging",

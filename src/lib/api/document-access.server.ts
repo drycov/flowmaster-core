@@ -2,17 +2,46 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requirePermission } from "@/lib/access/rbac.server";
 
+/** Mask sensitive fields when content access is denied. */
+export function maskDocumentContent<T extends { body?: string | null; summary?: string | null }>(
+  doc: T,
+  canViewContent: boolean,
+): T & { content_restricted: boolean } {
+  if (canViewContent) {
+    return { ...doc, content_restricted: false };
+  }
+  return { ...doc, body: null, summary: null, content_restricted: true };
+}
+
+export async function canViewDocument(userId: string, documentId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc(
+    "can_view_document" as never,
+    { _doc_id: documentId, _user: userId } as never,
+  );
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+export async function canViewDocumentContent(
+  userId: string,
+  documentId: string,
+): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc(
+    "can_view_document_content" as never,
+    { _doc_id: documentId, _user: userId } as never,
+  );
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
 export async function assertCanViewDocument(
   supabase: SupabaseClient,
   userId: string,
   documentId: string,
 ): Promise<void> {
-  const { data: canView, error } = await supabaseAdmin.rpc(
-    "can_view_document" as never,
-    { _doc_id: documentId, _user: userId } as never,
-  );
-  if (error) throw new Error(error.message);
-  if (!canView) throw new Error("Нет доступа к документу");
+  if (!(await canViewDocument(userId, documentId))) {
+    throw new Error("Нет доступа к документу");
+  }
 }
 
 export async function assertCanViewDocumentContent(
@@ -20,12 +49,9 @@ export async function assertCanViewDocumentContent(
   userId: string,
   documentId: string,
 ): Promise<void> {
-  const { data: canView, error } = await supabaseAdmin.rpc(
-    "can_view_document_content" as never,
-    { _doc_id: documentId, _user: userId } as never,
-  );
-  if (error) throw new Error(error.message);
-  if (!canView) throw new Error("Нет доступа к содержимому документа");
+  if (!(await canViewDocumentContent(userId, documentId))) {
+    throw new Error("Нет доступа к содержимому документа");
+  }
 }
 
 /** Author in editable status, or manage_documents. */

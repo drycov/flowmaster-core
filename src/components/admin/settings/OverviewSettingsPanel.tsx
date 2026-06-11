@@ -1,6 +1,7 @@
 import { AlertTriangle, Building2, KeyRound, Mail, Plug, Users } from "lucide-react";
 import { useI18n } from "@/i18n";
 import type { SystemSettings, SystemSettingsMeta } from "@/lib/auth/policy";
+import { computeEffectiveAuthFlags } from "@/lib/auth/public-auth-config";
 import { QuickLink, StatusCard } from "./settings-ui";
 
 export function OverviewSettingsPanel({
@@ -13,6 +14,7 @@ export function OverviewSettingsPanel({
   effectiveSignup: boolean;
 }) {
   const { t } = useI18n();
+  const effective = computeEffectiveAuthFlags(meta, form.auth, form.ldap.enabled);
 
   return (
     <div className="space-y-6">
@@ -42,7 +44,7 @@ export function OverviewSettingsPanel({
         />
         <StatusCard
           label={t("settings.overview.edsSignup")}
-          enabled={meta.bootstrap_needed || form.auth.allow_eds_signup}
+          enabled={effective.effectiveEdsSignup}
           detail={
             form.auth.allow_eds_signup
               ? t("settings.overview.enabled")
@@ -51,7 +53,7 @@ export function OverviewSettingsPanel({
         />
         <StatusCard
           label={t("settings.overview.ldapLogin")}
-          enabled={!meta.bootstrap_needed && form.ldap.enabled}
+          enabled={effective.effectiveLdapLogin}
           detail={
             form.ldap.enabled ? t("settings.overview.enabled") : t("settings.overview.disabled")
           }

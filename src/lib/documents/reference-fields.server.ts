@@ -16,6 +16,31 @@ export type ResolvedDocumentReferences = {
   due_at: string | null;
 };
 
+export const DEFAULT_DOC_TYPE_CODE = "general";
+
+export async function resolveDocumentTypeByCode(
+  supabase: SupabaseClient,
+  code?: string | null,
+  fallback = DEFAULT_DOC_TYPE_CODE,
+): Promise<{ document_type_id: string | null; doc_type: string }> {
+  const normalized = (code ?? fallback).trim();
+  if (!normalized) {
+    return { document_type_id: null, doc_type: fallback };
+  }
+
+  const { data } = await supabase
+    .from("ref_document_types")
+    .select("id, code")
+    .eq("code", normalized)
+    .maybeSingle();
+
+  if (data?.id && data.code) {
+    return { document_type_id: data.id, doc_type: data.code };
+  }
+
+  return { document_type_id: null, doc_type: normalized };
+}
+
 export async function resolveDocumentReferences(
   supabase: SupabaseClient,
   input: DocumentReferenceInput,
@@ -23,7 +48,7 @@ export async function resolveDocumentReferences(
   const document_type_id = input.document_type_id ?? null;
   const priority_id = input.priority_id ?? null;
   const correspondent_id = input.correspondent_id ?? null;
-  let doc_type = input.doc_type ?? "general";
+  let doc_type = input.doc_type ?? DEFAULT_DOC_TYPE_CODE;
   let due_at = input.due_at ?? null;
 
   if (document_type_id) {

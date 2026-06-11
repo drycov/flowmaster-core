@@ -5,8 +5,8 @@
 ## Быстрый старт
 
 ```bash
-# 1. Env (UAT-порты, debug, seed)
-npm run env:staging
+# 1. Env (UAT-порты, debug, seed) → .env.staging; активировать:
+npm run env:staging -- --install
 npm run env:sync
 
 # 2. Stack (Supabase + migrate + app + nginx :8080 + cron)
@@ -75,7 +75,7 @@ rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 
 | | Production | Staging |
 |---|------------|---------|
-| Env | `env:production --install` | `env:staging` |
+| Env | `env:production --install` | `env:staging --install` |
 | Up | `compose:tls` + `compose:tls:cron` | `compose:staging` |
 | HTTPS | Let's Encrypt | HTTP :8080 |
 | Cron | profile `cron` | always on |

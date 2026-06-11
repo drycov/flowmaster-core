@@ -1,5 +1,10 @@
 /** Barrel re-exports — implementation split by domain. */
-export { listDocuments, getDocument, getDashboardStats } from "./documents-query.functions";
+export {
+  listDocuments,
+  getDocument,
+  getDashboardStats,
+  type DocumentListRowEnriched,
+} from "./documents-query.functions";
 
 export {
   createDocument,

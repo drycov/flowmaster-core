@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertCanManageDocumentAccessGrants } from "@/lib/api/document-access-grants.server";
+import { fetchDocumentSummaryById } from "@/lib/documents/documents-read.server";
 
 export type DocumentAccessGrant = {
   id: string;
@@ -50,13 +51,7 @@ export const getDocumentAccessState = createServerFn({ method: "POST" })
         .maybeSingle(),
     ]);
 
-    const { data: docMeta } = await supabaseAdmin
-      .from("documents")
-      .select(
-        "id, reg_number, title_ru, title_kk, status, created_by, access_level_id, ref_access_levels!documents_access_level_id_fkey(code, name_ru, name_kk, level_order)",
-      )
-      .eq("id", data.document_id)
-      .maybeSingle();
+    const docMeta = await fetchDocumentSummaryById(supabaseAdmin, data.document_id);
 
     return {
       document_id: data.document_id,
@@ -66,12 +61,12 @@ export const getDocumentAccessState = createServerFn({ method: "POST" })
       grant: grant ?? null,
       document: docMeta
         ? {
-            reg_number: docMeta.reg_number,
-            title_ru: docMeta.title_ru,
-            title_kk: docMeta.title_kk,
-            status: docMeta.status,
-            created_by: docMeta.created_by,
-            access_level: docMeta.ref_access_levels,
+            reg_number: docMeta.reg_number as string,
+            title_ru: docMeta.title_ru as string,
+            title_kk: docMeta.title_kk as string | null,
+            status: docMeta.status as string,
+            created_by: docMeta.created_by as string,
+            access_level: docMeta.ref_access_levels ?? null,
           }
         : null,
     };
@@ -88,13 +83,8 @@ export const requestDocumentAccess = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: doc, error: docErr } = await supabaseAdmin
-      .from("documents")
-      .select("id")
-      .eq("id", data.document_id)
-      .maybeSingle();
-    if (docErr) throw new Error(docErr.message);
-    if (!doc) throw new Error("Документ не найден");
+    const docMeta = await fetchDocumentSummaryById(supabaseAdmin, data.document_id);
+    if (!docMeta) throw new Error("Документ не найден");
 
     const { data: canViewContent } = await supabaseAdmin.rpc(
       "can_view_document_content" as never,

@@ -5,10 +5,17 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enforceModuleLicense } from "./_helpers";
 import { assertCanManageDocumentAccessGrants } from "@/lib/api/document-access-grants.server";
 import { CONTENT_MASK, DOCUMENT_FULL_LIST_SELECT } from "./documents.shared.server";
+import { resolveDocumentTypeByCode } from "@/lib/documents/reference-fields.server";
 import {
   enrichDocumentListRows,
+  enrichFtsSearchRows,
   fetchDocumentById,
+  type DocumentFtsRow,
+  type DocumentListRow,
+  type DocumentListRowEnriched,
 } from "@/lib/documents/documents-read.server";
+
+export type { DocumentListRowEnriched };
 
 export const listDocuments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -44,7 +51,7 @@ export const listDocuments = createServerFn({ method: "POST" })
         } as never,
       );
       if (error) throw new Error(error.message);
-      return rows ?? [];
+      return enrichFtsSearchRows(supabase, (rows ?? []) as DocumentFtsRow[]);
     }
 
     let q = supabase
@@ -67,23 +74,19 @@ export const listDocuments = createServerFn({ method: "POST" })
         .in("status" as never, ["approved", "signed", "in_review"]);
     }
     if (data?.document_type_code) {
-      const { data: dt } = await supabase
-        .from("ref_document_types")
-        .select("id")
-        .eq("code", data.document_type_code)
-        .maybeSingle();
-      if (dt?.id) {
-        q = q.eq("document_type_id" as never, dt.id);
+      const { document_type_id, doc_type } = await resolveDocumentTypeByCode(
+        supabase,
+        data.document_type_code,
+      );
+      if (document_type_id) {
+        q = q.eq("document_type_id" as never, document_type_id);
       } else {
-        q = q.eq("doc_type" as never, data.document_type_code);
+        q = q.eq("doc_type" as never, doc_type);
       }
     }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return enrichDocumentListRows(
-      supabase,
-      (rows ?? []) as { document_type_id?: string | null }[],
-    );
+    return enrichDocumentListRows(supabase, (rows ?? []) as DocumentListRow[]);
   });
 
 export const getDocument = createServerFn({ method: "POST" })
@@ -213,7 +216,15 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     return {
       tasks: tasks.data ?? [],
       tasksCount: tasks.count ?? 0,
-      myDocs: myDocs.data ?? [],
+      myDocs: (myDocs.data ?? []) as Array<{
+        id: string;
+        reg_number: string;
+        title_ru: string;
+        title_kk: string | null;
+        status: string;
+        sla_status: string | null;
+        created_at: string;
+      }>,
       totalDocs: allDocs.count ?? 0,
       byStatus,
       overdue,

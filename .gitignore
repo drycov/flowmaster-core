@@ -32,6 +32,8 @@ dist-ssr
 *.sw?
 .env
 .env.production
+.env.staging
+.env.license-server
 .flowmaster/
 
 # Self-hosted Supabase data (docker/supabase)

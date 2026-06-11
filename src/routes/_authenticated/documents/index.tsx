@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { listDocuments } from "@/lib/api/documents.functions";
+import { listDocuments, type DocumentListRowEnriched } from "@/lib/api/documents.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { DataTableShell, PageToolbar, SearchField, TableStatusRow } from "@/components/PageLayout";
 import { StatusBadge, SlaBadge } from "@/components/StatusBadge";
@@ -90,7 +90,7 @@ function DocumentsList() {
     onError: (e) => toast.error(e instanceof Error ? e.message : t("bulk.error")),
   });
 
-  const rows = data ?? [];
+  const rows: DocumentListRowEnriched[] = data ?? [];
   const allSelected = rows.length > 0 && rows.every((d) => selected.has(d.id));
 
   const toggleAll = () => {
@@ -277,7 +277,7 @@ function DocumentsList() {
                     <StatusBadge status={d.status} />
                   </td>
                   <td className="px-4 py-2">
-                    <SlaBadge sla={d.sla_status} />
+                    <SlaBadge sla={d.sla_status ?? "ok"} />
                   </td>
                   <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
                     {fmtDateShort(d.created_at, locale)}
@@ -309,7 +309,7 @@ function DocumentsList() {
                   </Link>
                   <div className="flex gap-2 mt-2">
                     <StatusBadge status={d.status} />
-                    <SlaBadge sla={d.sla_status} />
+                    <SlaBadge sla={d.sla_status ?? "ok"} />
                   </div>
                 </div>
               </div>

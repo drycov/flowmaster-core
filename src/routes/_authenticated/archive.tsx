@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { listDocuments } from "@/lib/api/documents.functions";
+import { listDocuments, type DocumentListRowEnriched } from "@/lib/api/documents.functions";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { DataTableShell, PageToolbar, TableStatusRow } from "@/components/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -41,17 +41,7 @@ function ArchivePage() {
     queryFn: () => listDocuments({ data: queryParams }),
   });
 
-  const rows = (data ?? []) as Array<{
-    id: string;
-    reg_number: string;
-    title_ru: string;
-    title_kk?: string | null;
-    status: string;
-    created_at: string;
-    archived_at?: string | null;
-    retention_due_at?: string | null;
-    legal_hold?: boolean;
-  }>;
+  const rows = (data ?? []) as DocumentListRowEnriched[];
 
   return (
     <>

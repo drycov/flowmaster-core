@@ -70,6 +70,7 @@ import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_auth
 import { Route as ApiV1LicenseRevokeRouteImport } from './routes/api/v1/license/revoke'
 import { Route as ApiV1LicenseRegisterKeyRouteImport } from './routes/api/v1/license/register-key'
 import { Route as ApiV1LicenseHeartbeatRouteImport } from './routes/api/v1/license/heartbeat'
+import { Route as ApiV1LicenseHealthRouteImport } from './routes/api/v1/license/health'
 import { Route as ApiV1LicenseActivateRouteImport } from './routes/api/v1/license/activate'
 import { Route as ApiV1ImportIncomingRouteImport } from './routes/api/v1/import/incoming'
 import { Route as ApiV1DocumentsIdRouteImport } from './routes/api/v1/documents.$id'
@@ -434,6 +435,11 @@ const ApiV1LicenseHeartbeatRoute = ApiV1LicenseHeartbeatRouteImport.update({
   path: '/api/v1/license/heartbeat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1LicenseHealthRoute = ApiV1LicenseHealthRouteImport.update({
+  id: '/api/v1/license/health',
+  path: '/api/v1/license/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1LicenseActivateRoute = ApiV1LicenseActivateRouteImport.update({
   id: '/api/v1/license/activate',
   path: '/api/v1/license/activate',
@@ -616,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
   '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
@@ -698,6 +705,7 @@ export interface FileRoutesByTo {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
   '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
@@ -782,6 +790,7 @@ export interface FileRoutesById {
   '/api/v1/documents/$id': typeof ApiV1DocumentsIdRouteWithChildren
   '/api/v1/import/incoming': typeof ApiV1ImportIncomingRoute
   '/api/v1/license/activate': typeof ApiV1LicenseActivateRoute
+  '/api/v1/license/health': typeof ApiV1LicenseHealthRoute
   '/api/v1/license/heartbeat': typeof ApiV1LicenseHeartbeatRoute
   '/api/v1/license/register-key': typeof ApiV1LicenseRegisterKeyRoute
   '/api/v1/license/revoke': typeof ApiV1LicenseRevokeRoute
@@ -866,6 +875,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
     | '/api/v1/license/revoke'
@@ -948,6 +958,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
     | '/api/v1/license/revoke'
@@ -1031,6 +1042,7 @@ export interface FileRouteTypes {
     | '/api/v1/documents/$id'
     | '/api/v1/import/incoming'
     | '/api/v1/license/activate'
+    | '/api/v1/license/health'
     | '/api/v1/license/heartbeat'
     | '/api/v1/license/register-key'
     | '/api/v1/license/revoke'
@@ -1065,6 +1077,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWebhookDispatchRoute: typeof ApiPublicHooksWebhookDispatchRoute
   ApiV1ImportIncomingRoute: typeof ApiV1ImportIncomingRoute
   ApiV1LicenseActivateRoute: typeof ApiV1LicenseActivateRoute
+  ApiV1LicenseHealthRoute: typeof ApiV1LicenseHealthRoute
   ApiV1LicenseHeartbeatRoute: typeof ApiV1LicenseHeartbeatRoute
   ApiV1LicenseRegisterKeyRoute: typeof ApiV1LicenseRegisterKeyRoute
   ApiV1LicenseRevokeRoute: typeof ApiV1LicenseRevokeRoute
@@ -1499,6 +1512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1LicenseHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/license/health': {
+      id: '/api/v1/license/health'
+      path: '/api/v1/license/health'
+      fullPath: '/api/v1/license/health'
+      preLoaderRoute: typeof ApiV1LicenseHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/license/activate': {
       id: '/api/v1/license/activate'
       path: '/api/v1/license/activate'
@@ -1843,6 +1863,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWebhookDispatchRoute: ApiPublicHooksWebhookDispatchRoute,
   ApiV1ImportIncomingRoute: ApiV1ImportIncomingRoute,
   ApiV1LicenseActivateRoute: ApiV1LicenseActivateRoute,
+  ApiV1LicenseHealthRoute: ApiV1LicenseHealthRoute,
   ApiV1LicenseHeartbeatRoute: ApiV1LicenseHeartbeatRoute,
   ApiV1LicenseRegisterKeyRoute: ApiV1LicenseRegisterKeyRoute,
   ApiV1LicenseRevokeRoute: ApiV1LicenseRevokeRoute,

@@ -7,7 +7,7 @@ import { customRouteSchema } from "@/lib/workflow/custom-route-schema";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
 import { registerBodyContentVersion } from "@/lib/documents/versions.server";
 import { resolveDocumentReferences } from "@/lib/documents/reference-fields.server";
-import { assertCanViewDocument } from "@/lib/api/document-access.server";
+import { assertCanEditDocument, assertCanViewDocument } from "@/lib/api/document-access.server";
 import {
   ALLOWED_DIRECT_STATUS,
   applyDocumentStatusTransition,
@@ -133,29 +133,7 @@ export const updateDocumentMetadata = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { id, ...patchIn } = data;
 
-    const { data: doc, error: readErr } = await supabase
-      .from("documents")
-      .select("id, status, created_by")
-      .eq("id", id)
-      .single();
-    if (readErr || !doc) throw new Error(readErr?.message ?? "Document not found");
-
-    const editableStatuses = ["draft", "returned_for_revision"];
-    const canManage = await (async () => {
-      try {
-        await requirePermission(supabase, userId, "manage_documents");
-        return true;
-      } catch {
-        return false;
-      }
-    })();
-
-    if (!canManage && doc.created_by !== userId) {
-      throw new Error("Нет права редактировать документ");
-    }
-    if (!canManage && !editableStatuses.includes(doc.status)) {
-      throw new Error("Документ нельзя редактировать в текущем статусе");
-    }
+    await assertCanEditDocument(supabase, userId, id);
 
     const refs = await resolveDocumentReferences(supabaseAdmin, {
       document_type_id: patchIn.document_type_id,

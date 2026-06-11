@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyDocumentStatusTransition } from "@/lib/documents/status-transition.server";
+import { canViewDocumentContent } from "@/lib/api/document-access.server";
 import { requireModuleAccess } from "./_helpers";
 
 const bulkActionSchema = z.object({
@@ -23,34 +23,23 @@ export const bulkUpdateDocuments = createServerFn({ method: "POST" })
 
     for (const docId of data.document_ids) {
       try {
-        const { data: canView } = await supabaseAdmin.rpc(
-          "can_view_document_content" as never,
-          {
-            _doc_id: docId,
-            _user: userId,
-          } as never,
-        );
+        const canView = await canViewDocumentContent(userId, docId);
         if (!canView) {
           results.push({ id: docId, ok: false, error: "Нет доступа" });
           continue;
         }
 
         if (data.action === "archive") {
-          await requireModuleAccess(supabase, userId, "archive", { action: "write" });
-          const { data: doc } = await supabase
-            .from("documents")
-            .select("legal_hold")
-            .eq("id", docId)
-            .single();
-          if (doc?.legal_hold) {
-            results.push({ id: docId, ok: false, error: "Legal hold" });
-            continue;
+          try {
+            await applyDocumentStatusTransition(supabase, userId, docId, "archived");
+          } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            if (message.includes("legal hold")) {
+              results.push({ id: docId, ok: false, error: "Legal hold" });
+              continue;
+            }
+            throw e;
           }
-          const { error } = await supabase
-            .from("documents")
-            .update({ status: "archived" as never, archived_at: new Date().toISOString() } as never)
-            .eq("id", docId);
-          if (error) throw new Error(error.message);
         } else if (data.action === "assign") {
           if (!data.assignee_id) throw new Error("assignee_id required");
           const { error } = await supabase
