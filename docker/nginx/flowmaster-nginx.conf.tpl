@@ -66,7 +66,7 @@ server {
     }
 }
 
-# Port 443 — enabled after Let's Encrypt issues certs (certbot manages .nokey fallback)
+# Port 443 — Let's Encrypt when available; self-signed fallback if certbot fails
 server {
     listen 443 ssl;
     listen [::]:443 ssl;

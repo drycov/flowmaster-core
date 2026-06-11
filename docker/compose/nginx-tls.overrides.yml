@@ -25,18 +25,29 @@ services:
       CERTBOT_EMAIL: ${CERTBOT_EMAIL}
       CERTBOT_DOMAIN: ${PROXY_DOMAIN}
       DHPARAM_SIZE: "2048"
+      SSL_SELF_SIGNED_FALLBACK: ${SSL_SELF_SIGNED_FALLBACK:-1}
     command:
       - /bin/bash
       - -c
       - |
+        if [ ! -x /scripts/run_certbot.orig.sh ]; then cp /scripts/run_certbot.sh /scripts/run_certbot.orig.sh; fi && \
+        cp /etc/nginx/run-certbot-with-fallback.sh /scripts/run_certbot.sh && \
+        chmod +x /scripts/run_certbot.sh /etc/nginx/ensure-self-signed-cert.sh && \
+        /etc/nginx/ensure-self-signed-cert.sh && \
         rm -f /etc/nginx/conf.d/default.conf && \
         envsubst '$${PROXY_DOMAIN}' < /etc/nginx/flowmaster-nginx.conf.tpl > /etc/nginx/user_conf.d/flowmaster.conf && \
         /scripts/start_nginx_certbot.sh
     volumes:
       - ../../docker/nginx/flowmaster-nginx.conf.tpl:/etc/nginx/flowmaster-nginx.conf.tpl:ro
+      - ../../docker/nginx/ensure-self-signed-cert.sh:/etc/nginx/ensure-self-signed-cert.sh:ro
+      - ../../docker/nginx/run-certbot-with-fallback.sh:/etc/nginx/run-certbot-with-fallback.sh:ro
       - nginx_letsencrypt:/etc/letsencrypt
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- --header='Host: ${PROXY_DOMAIN}' http://127.0.0.1/api/health >/dev/null 2>&1 || wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- --header='Host: ${PROXY_DOMAIN}' http://127.0.0.1/api/health >/dev/null 2>&1 || wget -qO- --no-check-certificate --header='Host: ${PROXY_DOMAIN}' https://127.0.0.1/api/health >/dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -100,6 +100,7 @@ docker compose --profile cron up -d
 | `NGINX_HTTPS_PORT` | `443` | HTTPS (с `docker-compose.tls.yml`) |
 | `PROXY_DOMAIN` | — | Домен для Let's Encrypt |
 | `CERTBOT_EMAIL` | — | Email для certbot |
+| `SSL_SELF_SIGNED_FALLBACK` | `1` | Самоподписанный сертификат, если certbot не выдал LE |
 | `STAGING_NGINX_PORT` | `8080` | Порт nginx в staging compose |
 
 Healthcheck nginx: `GET /api/health` через proxy.
