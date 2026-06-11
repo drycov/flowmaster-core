@@ -38,7 +38,7 @@
       },
       "targets": [
         {
-          "expr": "probe_success{job=\"blackbox_http\"}",
+          "expr": "probe_success{job=~\"blackbox_.*\"}",
           "legendFormat": "{{instance}}",
           "refId": "A"
         }

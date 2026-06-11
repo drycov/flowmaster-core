@@ -19,15 +19,44 @@ scrape_configs:
     static_configs:
       - targets: ["postgres-exporter:9187"]
 
-  - job_name: blackbox_http
+  - job_name: blackbox_app
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://nginx/api/health
           - http://app:3000/api/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_edge
+    metrics_path: /probe
+    params:
+      module: [http_edge]
+    static_configs:
+      - targets:
+          - http://nginx/api/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_supabase
+    metrics_path: /probe
+    params:
+      module: [http_supabase]
+    static_configs:
+      - targets:
           - http://kong:8000/auth/v1/health
+          - http://kong:8000/rest/v1/
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
