@@ -14,6 +14,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { syncSupabaseEnvOrExit } from "./lib/sync-supabase-env.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -26,6 +27,8 @@ if (!existsSync(resolve(root, ".env"))) {
   console.error("Missing .env — run: npm run env:local");
   process.exit(1);
 }
+
+syncSupabaseEnvOrExit(root);
 
 function run(cmd, cmdArgs, opts = {}) {
   const res = spawnSync(cmd, cmdArgs, {

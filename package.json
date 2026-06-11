@@ -24,6 +24,7 @@
     "env:local": "node scripts/env-setup.mjs local",
     "env:production": "node scripts/env-setup.mjs production",
     "env:staging": "node scripts/env-setup.mjs staging",
+    "env:sync": "node scripts/env-sync.mjs",
     "docker:setup": "node scripts/env-setup.mjs local",
     "docker:setup:production": "node scripts/env-setup.mjs production",
     "docker:up": "node scripts/docker-up.mjs",

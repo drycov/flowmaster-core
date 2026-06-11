@@ -42,6 +42,8 @@ npm run docker:up
 # App + API: http://localhost (nginx) или :3000 / :54321 напрямую
 ```
 
+Compose подгружает `.env` также из `docker/supabase/` — скрипты синхронизируют его автоматически (`npm run env:sync`).
+
 ### Production on-prem
 
 ```bash

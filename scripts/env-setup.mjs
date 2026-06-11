@@ -24,6 +24,7 @@
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { syncSupabaseEnv } from "./lib/sync-supabase-env.mjs";
 import {
   loadEnvValues,
   mergeEnvMaps,
@@ -182,6 +183,14 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     copyFileSync(outputPath, envPath);
     console.log(`Copied → ${envPath}`);
     ctx.installed = true;
+  }
+
+  const rootEnv = resolve(root, ".env");
+  if (install || outputPath === rootEnv) {
+    const synced = syncSupabaseEnv(root);
+    if (synced.ok) {
+      console.log(`Synced → docker/supabase/.env`);
+    }
   }
 
   printNextSteps(profileId, ctx);

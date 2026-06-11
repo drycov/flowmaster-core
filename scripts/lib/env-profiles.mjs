@@ -184,8 +184,10 @@ export function printNextSteps(profileId, ctx) {
         console.log("  2. npm run env:production -- --install   (или cp .env.production .env)");
       }
       console.log("  3. docker compose -f docker-compose.tls.yml up -d --build");
-      console.log("  4. docker compose --profile cron up -d");
-      console.log(`  5. curl https://${ctx.domain}/api/health`);
+      console.log("  4. docker compose -f docker-compose.tls.yml --profile cron up -d");
+      console.log("  5. npm run env:sync   (если compose ругается на docker/supabase/.env)");
+      console.log("  6. curl http://127.0.0.1/api/health   (на сервере, до DNS)");
+      console.log(`  7. curl https://${ctx.domain}/api/health   (после A-record DNS)`);
       break;
     case "staging":
       console.log("Next steps:");
