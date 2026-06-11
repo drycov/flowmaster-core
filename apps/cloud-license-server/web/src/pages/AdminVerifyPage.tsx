@@ -63,9 +63,10 @@ export function AdminVerifyPage() {
       }
       await new Promise((r) => setTimeout(r, 250));
     }
-    await refresh();
-    navigate("/admin/app", { replace: true });
-  }, [navigate, refresh]);
+    clearStoredChallenge();
+    // Full page load so the verify cookie from poll is definitely sent on the next session check.
+    window.location.assign("/admin/app");
+  }, [navigate]);
 
   const runPoll = useCallback(async () => {
     const token = tokenRef.current;

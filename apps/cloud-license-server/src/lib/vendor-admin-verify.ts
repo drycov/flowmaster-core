@@ -43,11 +43,14 @@ export function signVerifySession(userId: string, expiresAtMs: number): string {
 
 export function verifyVerifySessionToken(token: string | undefined): string | null {
   if (!token?.includes(".")) return null;
-  const [payload] = token.split(".", 2);
-  const dot = payload.lastIndexOf(".");
+  // Format: `${userId}.${expiresAtMs}.${hmacSig}` — split from the right so UUIDs stay intact.
+  const sigSep = token.lastIndexOf(".");
+  if (sigSep <= 0) return null;
+  const payloadPart = token.slice(0, sigSep);
+  const dot = payloadPart.lastIndexOf(".");
   if (dot <= 0) return null;
-  const userId = payload.slice(0, dot);
-  const expiresAt = Number(payload.slice(dot + 1));
+  const userId = payloadPart.slice(0, dot);
+  const expiresAt = Number(payloadPart.slice(dot + 1));
   if (!userId || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null;
   const expected = signVerifySession(userId, expiresAt);
   if (!safeEqual(token, expected)) return null;
