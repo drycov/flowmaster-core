@@ -6,6 +6,9 @@
 .env.example eol=lf
 
 *.sh eol=lf
+docker/supabase/volumes/api/kong-entrypoint.sh text eol=lf
+docker/migrate/apply-migrations.sh text eol=lf
+scripts/cron-runner.sh text eol=lf
 *.sql eol=lf
 *.yml eol=lf
 *.yaml eol=lf

@@ -10,6 +10,7 @@
 
 services:
   kong:
+    entrypoint: ["/bin/bash", "/home/kong/kong-entrypoint.sh"]
     depends_on:
       auth:
         condition: service_healthy
