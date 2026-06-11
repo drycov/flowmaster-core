@@ -7,13 +7,13 @@
  *   node scripts/generate-license-key.mjs --plan trial --max-users 5
  *   node scripts/generate-license-key.mjs --plan enterprise
  *
- * INSTALLATION_ID and LICENSE_SIGNING_SECRET are resolved automatically from .env
- * (SUPABASE_PROJECT_REF → installation ID, SUPABASE_JWT_SECRET → signing secret).
+ * INSTALLATION_ID is resolved from .env or derived from SUPABASE_PROJECT_REF.
+ * FM1 keys are signed with HMAC derived from installation_id (see signing.server.ts).
  */
 
-import { createHash, createHmac } from "node:crypto";
-import { resolve } from "node:path";
+import { createHash } from "node:crypto";
 import { loadEnvFiles } from "./lib/load-env.mjs";
+import { signLicensePayload } from "./lib/license-signing.mjs";
 
 const KEY_PREFIX = "FM1";
 
@@ -115,15 +115,6 @@ function resolveInstallationId() {
   return null;
 }
 
-function signingSecret() {
-  return (
-    process.env.LICENSE_SIGNING_SECRET?.trim() ||
-    process.env.SUPABASE_JWT_SECRET?.trim() ||
-    process.env.APP_SESSION_SECRET?.trim() ||
-    null
-  );
-}
-
 function parseArgs(argv) {
   const args = { plan: "professional", customer: "", maxUsers: null, installationId: null, expiresAt: null, bind: true };
   for (let i = 0; i < argv.length; i++) {
@@ -141,8 +132,8 @@ Options:
   --plan <trial|standard|professional|enterprise>  (default: professional)
   --customer <name>
   --max-users <n>
-  --installation-id <uuid>   override auto-bound installation ID
-  --no-bind                  omit installation_id from key (any deployment)
+  --installation-id <uuid>   installation ID (required for signing; default from .env)
+  --no-bind                  deprecated: keys always require installation_id
   --expires-at <ISO8601>
 `);
       process.exit(0);
@@ -154,9 +145,6 @@ Options:
 function generateKey(args) {
   const preset = PLAN_PRESETS[args.plan];
   if (!preset) throw new Error(`Unknown plan: ${args.plan}`);
-
-  const secret = signingSecret();
-  if (!secret) throw new Error("Set LICENSE_SIGNING_SECRET or SUPABASE_JWT_SECRET");
 
   let expiresAt = args.expiresAt;
   if (expiresAt === null) {
@@ -172,6 +160,10 @@ function generateKey(args) {
     ? args.installationId ?? resolveInstallationId()
     : args.installationId ?? null;
 
+  if (!installationId) {
+    throw new Error("Set INSTALLATION_ID in .env or pass --installation-id (required for signing)");
+  }
+
   const payload = {
     v: 1,
     plan: args.plan,
@@ -184,18 +176,15 @@ function generateKey(args) {
   };
 
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const sig = createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+  const sig = signLicensePayload(encodedPayload, installationId);
   return `${KEY_PREFIX}.${encodedPayload}.${sig}`;
 }
 
 loadEnvFile();
-if (!process.env.LICENSE_SIGNING_SECRET?.trim() && signingSecret()) {
-  process.env.LICENSE_SIGNING_SECRET = signingSecret();
-}
 const args = parseArgs(process.argv.slice(2));
 const key = generateKey(args);
-const boundId = args.bind ? args.installationId ?? resolveInstallationId() : null;
+const boundId = args.bind ? args.installationId ?? resolveInstallationId() : args.installationId ?? null;
 console.log(key);
 console.error(`\nplan=${args.plan}`);
-if (boundId) console.error(`installation_id=${boundId} (auto)`);
+if (boundId) console.error(`installation_id=${boundId}`);
 console.error(`hash=${createHash("sha256").update(key).digest("hex").slice(0, 16)}…`);

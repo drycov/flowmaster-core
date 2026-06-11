@@ -1,8 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getSupabaseEnv } from "@/lib/env.server";
-
 const INSTALLATION_SEED_PREFIX = "flowmaster-install:";
 const PERSIST_DIR = ".flowmaster";
 const PERSIST_FILE = "installation-id";
@@ -70,18 +68,8 @@ function deriveInstallationId(): string {
   return generated;
 }
 
-function deriveLicenseSigningSecret(): string | null {
-  const env = getSupabaseEnv();
-  return (
-    process.env.LICENSE_SIGNING_SECRET?.trim() ||
-    env.jwtSecret?.trim() ||
-    process.env.APP_SESSION_SECRET?.trim() ||
-    null
-  );
-}
-
 /**
- * Populate INSTALLATION_ID and LICENSE_SIGNING_SECRET in process.env when absent.
+ * Populate INSTALLATION_ID in process.env when absent.
  * Call once from server entry after .env is loaded.
  */
 export function ensureInstallationEnv(): void {
@@ -91,18 +79,4 @@ export function ensureInstallationEnv(): void {
   if (!process.env.INSTALLATION_ID?.trim()) {
     process.env.INSTALLATION_ID = deriveInstallationId();
   }
-
-  if (!process.env.LICENSE_SIGNING_SECRET?.trim()) {
-    const secret = deriveLicenseSigningSecret();
-    if (secret) process.env.LICENSE_SIGNING_SECRET = secret;
-  }
-}
-
-export function getLicenseSigningSecret(): string {
-  ensureInstallationEnv();
-  const secret = process.env.LICENSE_SIGNING_SECRET?.trim();
-  if (!secret) {
-    throw new Error("Не задан секрет подписи лицензий. Укажите SUPABASE_JWT_SECRET в окружении.");
-  }
-  return secret;
 }

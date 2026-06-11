@@ -92,6 +92,7 @@ export function buildProfileValues(profileId, ctx) {
         APPLY_DB_SEED: "0",
         ONLYOFFICE_CALLBACK_BASE_URL: "http://nginx",
         ONLYOFFICE_STORAGE_INTERNAL_URL: "http://kong:8000",
+        ONLYOFFICE_HTTP_PORT: "8082",
         ONLYOFFICE_JWT_ENABLED: "false",
         ENABLE_EMAIL_AUTOCONFIRM: "false",
         DISABLE_SIGNUP: "false",

@@ -52,7 +52,7 @@ services:
       LICENSE_SERVER_URL: ${LICENSE_SERVER_URL:-}
       LICENSE_SIGNING_SECRET: ${LICENSE_SIGNING_SECRET:-}
       LICENSE_SERVER_ADMIN_SECRET: ${LICENSE_SERVER_ADMIN_SECRET:-}
-      ONLYOFFICE_CALLBACK_BASE_URL: ${ONLYOFFICE_CALLBACK_BASE_URL:-}
+      ONLYOFFICE_CALLBACK_BASE_URL: ${ONLYOFFICE_CALLBACK_BASE_URL:-http://nginx}
       ONLYOFFICE_STORAGE_INTERNAL_URL: ${ONLYOFFICE_STORAGE_INTERNAL_URL:-http://kong:8000}
     restart: unless-stopped
     depends_on:
@@ -118,7 +118,8 @@ services:
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
-      - ../../docker/onlyoffice/local.json:/etc/onlyoffice/documentserver/local.json:ro
+      # Override only custom keys; do NOT mount local.json (replaces DB/AMQP/Redis config).
+      - ../../docker/onlyoffice/local-production-linux.json:/etc/onlyoffice/documentserver/local-production-linux.json
     ports:
       - "${ONLYOFFICE_HTTP_PORT:-8082}:80"
     restart: unless-stopped

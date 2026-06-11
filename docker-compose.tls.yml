@@ -1,7 +1,9 @@
 # Production HTTPS — Let's Encrypt (single entry point, no root service conflicts).
 #
-#   docker compose -f docker-compose.tls.yml up -d --build
-#   docker compose -f docker-compose.tls.yml --profile cron up -d
+#   docker compose -f docker-compose.tls.yml --profile office up -d --build
+#   docker compose -f docker-compose.tls.yml --profile cron --profile office up -d
+#
+# npm run compose:tls / compose:tls:cron — ONLYOFFICE (profile office) включён по умолчанию.
 #
 # Requires in .env: PROXY_DOMAIN, CERTBOT_EMAIL, HTTPS URLs for VITE_* / APP_URL
 

@@ -10,7 +10,7 @@
  *   node scripts/docker-up.mjs --cron     # also start cron sidecar
  *   node scripts/docker-up.mjs --studio   # also start Supabase Studio
  *   node scripts/docker-up.mjs --monitoring
- *   node scripts/docker-up.mjs --office    # ONLYOFFICE Document Server
+ *   node scripts/docker-up.mjs --office    # ONLYOFFICE (auto with --tls; disable: --no-office)
  */
 
 import { loadEnvFiles } from "./lib/load-env.mjs";
@@ -26,7 +26,8 @@ const full = args.has("--full");
 const cron = full || args.has("--cron");
 const studio = full || args.has("--studio");
 const monitoring = full || args.has("--monitoring");
-const office = args.has("--office");
+const noOffice = args.has("--no-office");
+const office = !dev && !noOffice && (args.has("--office") || tls);
 
 loadEnvFiles([".env"]);
 

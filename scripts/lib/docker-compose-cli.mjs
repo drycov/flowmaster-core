@@ -2,6 +2,9 @@
 
 export const OPTIONAL_PROFILES = ["cron", "studio", "monitoring", "office"];
 
+/** Profiles enabled by default for HTTPS production stacks (`compose:tls*`). */
+export const TLS_STACK_PROFILES = ["office"];
+
 /** Profiles started by `docker-full.mjs` / `compose:*:full`. */
 export const FULL_PROFILES = ["cron", "studio", "monitoring"];
 
@@ -56,6 +59,17 @@ export function buildComposeCommand({
   return [...composeBaseArgs(files), ...composeProfileArgs(profiles), ...subcommand];
 }
 
-export function buildComposeDownCommand({ stack, tls = false, dev = false } = {}) {
-  return [...composeBaseArgs(resolveComposeFiles({ stack, tls, dev })), "down"];
+export function buildComposeDownCommand({ stack, tls = false, dev = false, profiles = [] } = {}) {
+  const stackId = resolveStackId({ stack, tls, dev });
+  const downProfiles =
+    profiles.length > 0
+      ? profiles
+      : stackId === "tls"
+        ? [...TLS_STACK_PROFILES, "cron"]
+        : [];
+  return [
+    ...composeBaseArgs(resolveComposeFiles({ stack: stackId, tls, dev })),
+    ...composeProfileArgs(downProfiles),
+    "down",
+  ];
 }

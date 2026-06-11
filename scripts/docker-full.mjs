@@ -10,7 +10,7 @@
  */
 
 import { loadEnvFiles } from "./lib/load-env.mjs";
-import { FULL_PROFILES } from "./lib/docker-compose-cli.mjs";
+import { FULL_PROFILES, TLS_STACK_PROFILES } from "./lib/docker-compose-cli.mjs";
 import { orchestrateStack, printStackUrls } from "./lib/docker-orchestrate.mjs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +22,7 @@ const dev = args.has("--dev");
 
 loadEnvFiles([".env"]);
 
-const profiles = dev ? ["studio"] : FULL_PROFILES;
+const profiles = dev ? ["studio"] : tls ? [...FULL_PROFILES, ...TLS_STACK_PROFILES] : FULL_PROFILES;
 
 orchestrateStack(root, {
   stack: dev ? "dev" : tls ? "tls" : "http",
@@ -37,4 +37,11 @@ orchestrateStack(root, {
   envHint: "npm run env:local (or env:production -- --install)",
 });
 
-printStackUrls(root, { stack: tls ? "tls" : "http", tls, dev, studio: true, monitoring: !dev });
+printStackUrls(root, {
+  stack: tls ? "tls" : "http",
+  tls,
+  dev,
+  studio: true,
+  monitoring: !dev,
+  office: tls,
+});

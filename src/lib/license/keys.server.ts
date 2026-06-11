@@ -1,6 +1,9 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { getLicenseSigningSecret } from "@/lib/installation.server";
+import { createHash } from "node:crypto";
 import { PLAN_PRESETS } from "./plans";
+import {
+  signLicensePayload,
+  verifyLicenseSignature,
+} from "./signing.server";
 import {
   LICENSE_FEATURES,
   LICENSE_PLANS,
@@ -11,21 +14,12 @@ import {
 
 const KEY_PREFIX = "FM1";
 
-function signingSecret(): string {
-  return getLicenseSigningSecret();
-}
-
 function toBase64Url(buf: Buffer): string {
   return buf.toString("base64url");
 }
 
 function fromBase64Url(value: string): Buffer {
   return Buffer.from(value, "base64url");
-}
-
-function signPayload(encodedPayload: string): string {
-  const sig = createHmac("sha256", signingSecret()).update(encodedPayload).digest();
-  return toBase64Url(sig);
 }
 
 function normalizeFeatures(raw: unknown): LicenseKeyPayload["features"] {
@@ -38,21 +32,7 @@ function normalizeFeatures(raw: unknown): LicenseKeyPayload["features"] {
   return result;
 }
 
-export function parseLicenseKey(key: string): LicenseKeyPayload {
-  const trimmed = key.trim();
-  const parts = trimmed.split(".");
-  if (parts.length !== 3 || parts[0] !== KEY_PREFIX) {
-    throw new Error("Неверный формат лицензионного ключа");
-  }
-
-  const [, encodedPayload, encodedSig] = parts;
-  const expectedSig = signPayload(encodedPayload);
-  const a = fromBase64Url(encodedSig);
-  const b = fromBase64Url(expectedSig);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    throw new Error("Недействительная подпись лицензионного ключа");
-  }
-
+function decodePayload(encodedPayload: string): Partial<LicenseKeyPayload> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(fromBase64Url(encodedPayload).toString("utf8"));
@@ -64,31 +44,52 @@ export function parseLicenseKey(key: string): LicenseKeyPayload {
     throw new Error("Некорректное содержимое лицензионного ключа");
   }
 
-  const p = parsed as Partial<LicenseKeyPayload>;
-  if (p.v !== 1) throw new Error("Неподдерживаемая версия ключа");
+  return parsed as Partial<LicenseKeyPayload>;
+}
 
-  const plan = p.plan as LicensePlan;
+export function parseLicenseKey(key: string): LicenseKeyPayload {
+  const trimmed = key.trim();
+  const parts = trimmed.split(".");
+  if (parts.length !== 3 || parts[0] !== KEY_PREFIX) {
+    throw new Error("Неверный формат лицензионного ключа");
+  }
+
+  const [, encodedPayload, encodedSig] = parts;
+  const raw = decodePayload(encodedPayload);
+  const installationId =
+    typeof raw.installation_id === "string" ? raw.installation_id.trim() : "";
+  if (!installationId) {
+    throw new Error("Ключ должен быть привязан к installation_id");
+  }
+
+  if (!verifyLicenseSignature(encodedPayload, encodedSig, installationId)) {
+    throw new Error("Недействительная подпись лицензионного ключа");
+  }
+
+  if (raw.v !== 1) throw new Error("Неподдерживаемая версия ключа");
+
+  const plan = raw.plan as LicensePlan;
   if (!LICENSE_PLANS.includes(plan)) {
     throw new Error("Неизвестный тарифный план в ключе");
   }
 
-  const maxUsers = Number(p.max_users);
+  const maxUsers = Number(raw.max_users);
   if (!Number.isFinite(maxUsers) || maxUsers < 1) {
     throw new Error("Некорректный лимит пользователей в ключе");
   }
 
   const preset = PLAN_PRESETS[plan];
-  const features = { ...preset.features, ...normalizeFeatures(p.features) };
+  const features = { ...preset.features, ...normalizeFeatures(raw.features) };
 
   return {
     v: 1,
     plan,
     max_users: Math.floor(maxUsers),
     features,
-    expires_at: p.expires_at ?? null,
-    customer: typeof p.customer === "string" ? p.customer.trim() : "",
-    installation_id: p.installation_id ?? null,
-    issued_at: typeof p.issued_at === "string" ? p.issued_at : new Date().toISOString(),
+    expires_at: raw.expires_at ?? null,
+    customer: typeof raw.customer === "string" ? raw.customer.trim() : "",
+    installation_id: installationId,
+    issued_at: typeof raw.issued_at === "string" ? raw.issued_at : new Date().toISOString(),
   };
 }
 
@@ -100,6 +101,11 @@ export function generateLicenseKey(input: {
   customer?: string;
   installation_id?: string | null;
 }): string {
+  const installationId = input.installation_id?.trim();
+  if (!installationId) {
+    throw new Error("installation_id обязателен для генерации лицензионного ключа");
+  }
+
   const preset = PLAN_PRESETS[input.plan];
   const payload: LicenseKeyPayload = {
     v: 1,
@@ -115,12 +121,12 @@ export function generateLicenseKey(input: {
             ? null
             : new Date(Date.now() + 365 * 86400000).toISOString(),
     customer: input.customer ?? "",
-    installation_id: input.installation_id ?? null,
+    installation_id: installationId,
     issued_at: new Date().toISOString(),
   };
 
   const encodedPayload = toBase64Url(Buffer.from(JSON.stringify(payload), "utf8"));
-  const encodedSig = signPayload(encodedPayload);
+  const encodedSig = signLicensePayload(encodedPayload, installationId);
   return `${KEY_PREFIX}.${encodedPayload}.${encodedSig}`;
 }
 

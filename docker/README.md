@@ -89,23 +89,28 @@ npm run compose:license-server
 | `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
 | `npm run env:sync` | `.env` → `docker/supabase/.env` |
 | `npm run docker:up` | HTTP stack + migrate + wait |
-| `npm run compose:tls` | HTTPS stack + migrate + wait |
+| `npm run compose:tls` | HTTPS + ONLYOFFICE + migrate + wait |
+| `npm run compose:tls:cron` | HTTPS + cron + ONLYOFFICE |
 | `npm run compose:staging` | UAT stack + migrate + wait |
 | `npm run docker:full` | cron + studio + monitoring |
-| `npm run docker:up -- --office` | + ONLYOFFICE Document Server |
+| `npm run docker:up -- --office` | ONLYOFFICE для HTTP-стека |
 | `npm run docker:migrate` | SQL-миграции (default HTTP stack) |
 | `npm run docker:migrate -- --tls` / `--staging` | Миграции для другого stack |
 | `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
 
-Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--office`, `--full`.
+Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--office`, `--no-office`, `--full`.
 
 ## ONLYOFFICE
 
-Document Server в профиле `office` (~2 GB RAM, первый старт 2–3 мин).
+Document Server (~2 GB RAM, первый старт 2–3 мин).
+
+**TLS:** `npm run compose:tls` / `compose:tls:cron` (профиль `office` по умолчанию).  
+**HTTP:** `npm run docker:up -- --office`  
+**Без ONLYOFFICE в TLS:** `node scripts/docker-up.mjs --tls --no-office`
 
 ```bash
-npm run docker:up -- --office
-curl http://localhost:8082/healthcheck
+npm run compose:tls
+curl https://<domain>/onlyoffice/web-apps/apps/api/documents/api.js | head
 ```
 
 - Nginx: `/onlyoffice/` → контейнер `onlyoffice:80`
@@ -113,7 +118,7 @@ curl http://localhost:8082/healthcheck
 - В админке: **Интеграции → ONLYOFFICE** → `http://localhost/onlyoffice` (или `https://domain/onlyoffice`)
 - **Общие → app_url** = публичный URL ЕСЭДО
 
-Конфиг: `docker/onlyoffice/local.json` (доступ к private IP для Storage).  
+Конфиг: `docker/onlyoffice/local-production-linux.json` (доступ к private IP для Storage; не монтировать `local.json` — перезапишет БД/AMQP).  
 Подробнее: [docs/INTEGRATIONS.md](../docs/INTEGRATIONS.md#onlyoffice).
 
 ## Переменные окружения
