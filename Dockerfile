@@ -29,6 +29,10 @@ RUN addgroup -S app && adduser -S app -G app && mkdir -p /tmp/vite-cache && chow
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/index.html ./index.html
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/docker/vite.preview.config.mjs ./docker/vite.preview.config.mjs
 RUN chown -R app:app /app
 USER app
