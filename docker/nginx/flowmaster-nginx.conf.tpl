@@ -38,7 +38,7 @@ server {
         root /var/www/letsencrypt;
     }
 
-    location /auth { proxy_pass $flowmaster_kong; }
+    location /auth/v1/ { proxy_pass $flowmaster_kong; }
     location /rest { proxy_pass $flowmaster_kong; }
     location /graphql { proxy_pass $flowmaster_kong; }
     location /realtime/ {
@@ -100,7 +100,7 @@ server {
     set $flowmaster_kong http://kong:8000;
     set $flowmaster_app http://app:3000;
 
-    location /auth { proxy_pass $flowmaster_kong; }
+    location /auth/v1/ { proxy_pass $flowmaster_kong; }
     location /rest { proxy_pass $flowmaster_kong; }
     location /graphql { proxy_pass $flowmaster_kong; }
     location /realtime/ {

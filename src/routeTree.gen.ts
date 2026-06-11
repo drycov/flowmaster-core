@@ -36,6 +36,7 @@ import { Route as AuthenticatedContractsIndexRouteImport } from './routes/_authe
 import { Route as ApiV1TasksRouteImport } from './routes/api/v1/tasks'
 import { Route as ApiV1DocumentsRouteImport } from './routes/api/v1/documents'
 import { Route as ApiV1ContractsRouteImport } from './routes/api/v1/contracts'
+import { Route as ApiHealthLiveRouteImport } from './routes/api/health/live'
 import { Route as AuthenticatedWorkflowsIdRouteImport } from './routes/_authenticated/workflows/$id'
 import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenticated/templates/$id'
 import { Route as AuthenticatedReferencesCatalogRouteImport } from './routes/_authenticated/references/$catalog'
@@ -234,6 +235,11 @@ const ApiV1ContractsRoute = ApiV1ContractsRouteImport.update({
   id: '/api/v1/contracts',
   path: '/api/v1/contracts',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => ApiHealthRoute,
 } as any)
 const AuthenticatedWorkflowsIdRoute =
   AuthenticatedWorkflowsIdRouteImport.update({
@@ -557,7 +563,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthenticatedSearchRoute
   '/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/tasks': typeof AuthenticatedTasksRoute
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
@@ -581,6 +587,7 @@ export interface FileRoutesByFullPath {
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
@@ -638,7 +645,7 @@ export interface FileRoutesByTo {
   '/search': typeof AuthenticatedSearchRoute
   '/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/tasks': typeof AuthenticatedTasksRoute
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
@@ -662,6 +669,7 @@ export interface FileRoutesByTo {
   '/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
@@ -721,7 +729,7 @@ export interface FileRoutesById {
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/substitutions': typeof AuthenticatedSubstitutionsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/_authenticated/admin/calendar': typeof AuthenticatedAdminCalendarRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
@@ -745,6 +753,7 @@ export interface FileRoutesById {
   '/_authenticated/references/$catalog': typeof AuthenticatedReferencesCatalogRoute
   '/_authenticated/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/_authenticated/workflows/$id': typeof AuthenticatedWorkflowsIdRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
   '/api/v1/contracts': typeof ApiV1ContractsRoute
   '/api/v1/documents': typeof ApiV1DocumentsRouteWithChildren
   '/api/v1/tasks': typeof ApiV1TasksRouteWithChildren
@@ -828,6 +837,7 @@ export interface FileRouteTypes {
     | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
+    | '/api/health/live'
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
@@ -909,6 +919,7 @@ export interface FileRouteTypes {
     | '/references/$catalog'
     | '/templates/$id'
     | '/workflows/$id'
+    | '/api/health/live'
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
@@ -991,6 +1002,7 @@ export interface FileRouteTypes {
     | '/_authenticated/references/$catalog'
     | '/_authenticated/templates/$id'
     | '/_authenticated/workflows/$id'
+    | '/api/health/live'
     | '/api/v1/contracts'
     | '/api/v1/documents'
     | '/api/v1/tasks'
@@ -1038,7 +1050,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiHealthRoute: typeof ApiHealthRoute
+  ApiHealthRoute: typeof ApiHealthRouteWithChildren
   ApiV1ContractsRoute: typeof ApiV1ContractsRoute
   ApiV1DocumentsRoute: typeof ApiV1DocumentsRouteWithChildren
   ApiV1TasksRoute: typeof ApiV1TasksRouteWithChildren
@@ -1248,6 +1260,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/contracts'
       preLoaderRoute: typeof ApiV1ContractsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/health/live': {
+      id: '/api/health/live'
+      path: '/live'
+      fullPath: '/api/health/live'
+      preLoaderRoute: typeof ApiHealthLiveRouteImport
+      parentRoute: typeof ApiHealthRoute
     }
     '/_authenticated/workflows/$id': {
       id: '/_authenticated/workflows/$id'
@@ -1756,6 +1775,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiHealthRouteChildren {
+  ApiHealthLiveRoute: typeof ApiHealthLiveRoute
+}
+
+const ApiHealthRouteChildren: ApiHealthRouteChildren = {
+  ApiHealthLiveRoute: ApiHealthLiveRoute,
+}
+
+const ApiHealthRouteWithChildren = ApiHealthRoute._addFileChildren(
+  ApiHealthRouteChildren,
+)
+
 interface ApiV1DocumentsIdRouteChildren {
   ApiV1DocumentsIdStatusRoute: typeof ApiV1DocumentsIdStatusRoute
   ApiV1DocumentsIdVersionsRoute: typeof ApiV1DocumentsIdVersionsRoute
@@ -1797,7 +1828,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiHealthRoute: ApiHealthRoute,
+  ApiHealthRoute: ApiHealthRouteWithChildren,
   ApiV1ContractsRoute: ApiV1ContractsRoute,
   ApiV1DocumentsRoute: ApiV1DocumentsRouteWithChildren,
   ApiV1TasksRoute: ApiV1TasksRouteWithChildren,
