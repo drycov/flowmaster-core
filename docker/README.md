@@ -2,11 +2,13 @@
 
 Self-hosted Supabase + Flowmaster app + **nginx**. Compose entrypoints — в корне репозитория; патчи — в `docker/compose/`.
 
+Полный индекс: [docs/README.md](../docs/README.md). Быстрый старт: [docs/QUICKSTART.md](../docs/QUICKSTART.md). Развёртывание: [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md). Env: [docs/ENV.md](../docs/ENV.md).
+
 ## Compose-файлы
 
 | Файл | Project name | Назначение |
 |------|--------------|------------|
-| `docker-compose.yml` | `flowmaster` | HTTP production |
+| `docker-compose.yml` | `flowmaster` | HTTP (local / on-prem без TLS) |
 | `docker-compose.tls.yml` | `flowmaster` | HTTPS (Let's Encrypt) |
 | `docker-compose.staging.yml` | `flowmaster-staging` | UAT (:8080 nginx, cron always on) |
 | `docker-compose.license-server.yml` | `flowmaster-license-server` | Vendor license server |
@@ -33,6 +35,8 @@ Browser ──► nginx :80/:443 ──┬──► app:3000        (ЕСЭДО,
 ```
 
 ## Быстрый старт
+
+Кратко ниже; подробные сценарии (cron, studio, миграции, multi-tenant) — в [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) и [корневом README](../README.md).
 
 ### Local
 
@@ -82,44 +86,23 @@ npm run compose:license-server
 
 ## npm-скрипты
 
-Полная таблица: [scripts/README.md](../scripts/README.md).
-
-| Команда | Действие |
-|---------|----------|
-| `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
-| `npm run env:sync` | `.env` → `docker/supabase/.env` |
-| `npm run docker:up` | HTTP stack + migrate + wait |
-| `npm run compose:tls` | HTTPS + ONLYOFFICE + migrate + wait |
-| `npm run compose:tls:cron` | HTTPS + cron + ONLYOFFICE |
-| `npm run compose:staging` | UAT stack + migrate + wait |
-| `npm run docker:full` | cron + studio + monitoring |
-| `npm run docker:up -- --office` | ONLYOFFICE для HTTP-стека |
-| `npm run docker:migrate` | SQL-миграции (default HTTP stack) |
-| `npm run docker:migrate -- --tls` / `--staging` | Миграции для другого stack |
-| `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
+Полная таблица: **[scripts/README.md](../scripts/README.md)**.
 
 Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--office`, `--no-office`, `--full`.
 
 ## ONLYOFFICE
 
-Document Server (~2 GB RAM, первый старт 2–3 мин).
+Document Server — profile `office`, **+2 GB RAM**, первый старт 2–3 мин.
 
-**TLS:** `npm run compose:tls` / `compose:tls:cron` (профиль `office` по умолчанию).  
-**HTTP:** `npm run docker:up -- --office`  
-**Без ONLYOFFICE в TLS:** `node scripts/docker-up.mjs --tls --no-office`
+| Команда | Стек |
+|---------|------|
+| `npm run compose:tls` / `compose:tls:cron` | TLS (office по умолчанию) |
+| `npm run docker:up -- --office` | HTTP local |
+| `node scripts/docker-up.mjs --tls --no-office` | TLS без ONLYOFFICE |
 
-```bash
-npm run compose:tls
-curl https://<domain>/onlyoffice/web-apps/apps/api/documents/api.js | head
-```
+Nginx: `/onlyoffice/` → `onlyoffice:80`; отладка: `:8082`.
 
-- Nginx: `/onlyoffice/` → контейнер `onlyoffice:80`
-- Порт `:8082` — прямой доступ (отладка)
-- В админке: **Интеграции → ONLYOFFICE** → `http://localhost/onlyoffice` (или `https://domain/onlyoffice`)
-- **Общие → app_url** = публичный URL ЕСЭДО
-
-Конфиг: `docker/onlyoffice/local-production-linux.json` (доступ к private IP для Storage; не монтировать `local.json` — перезапишет БД/AMQP).  
-Подробнее: [docs/INTEGRATIONS.md](../docs/INTEGRATIONS.md#onlyoffice).
+Настройка в админке, JWT callback, переменные — **[docs/INTEGRATIONS.md § ONLYOFFICE](../docs/INTEGRATIONS.md#onlyoffice)**. Конфиг: `docker/onlyoffice/local-production-linux.json`.
 
 ## Переменные окружения
 
@@ -166,15 +149,14 @@ npm run docker:monitoring
 # или: npm run docker:up -- --monitoring
 ```
 
-Grafana: `http://127.0.0.1:3001` — UI **Администрирование → Мониторинг**.
+Grafana: `http://127.0.0.1:${GRAFANA_PORT:-3001}` — UI **Администрирование → Мониторинг**. См. [TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md).
 
 ## Backup / reset
 
+Кратко (dev):
+
 ```bash
 docker exec supabase-db pg_dump -U postgres postgres > backup.sql
-docker compose down
-rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
-npm run docker:up
 ```
 
-Подробнее: [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
+Production backup/restore и полный сброс: **[docs/RUNBOOK.md](../docs/RUNBOOK.md)**. Обзор: [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md#8-backup).

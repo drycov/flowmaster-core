@@ -85,6 +85,11 @@ async function checkHealth() {
     if (body.checks?.database !== "ok") {
       fail("database check", body.checks?.database_error ?? body.checks?.database);
     }
+    if (RUN_E2E && body.checks?.cron_secret === "missing") {
+      fail("health cron_secret", "CRON_SECRET missing in production env");
+    } else if (body.checks?.cron_secret === "ok") {
+      pass("health cron_secret");
+    }
   } catch (e) {
     fail("GET /api/health", e instanceof Error ? e.message : String(e));
   }
@@ -138,8 +143,29 @@ async function checkCronHooks() {
   }
 
   if (!CRON_SECRET) {
-    skip("cron hooks with CRON_SECRET", "set CRON_SECRET in .env");
+    if (RUN_E2E) {
+      fail("CRON_SECRET", "required for uat:smoke:full — set in .env");
+    } else {
+      skip("cron hooks with CRON_SECRET", "set CRON_SECRET in .env");
+    }
     return;
+  }
+
+  const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY?.trim();
+  if (anonKey) {
+    try {
+      const res = await fetch(`${APP_URL}/api/public/hooks/email-dispatch`, {
+        method: "POST",
+        headers: { apikey: anonKey },
+      });
+      if (res.status === 401 || res.status === 403) {
+        pass("cron rejects anon apikey");
+      } else {
+        fail("cron rejects anon apikey", `expected 401/403, got ${res.status}`);
+      }
+    } catch (e) {
+      fail("cron rejects anon apikey", e instanceof Error ? e.message : String(e));
+    }
   }
 
   const hooks = ["email-dispatch", "webhook-dispatch", "telegram-dispatch"];
@@ -160,8 +186,32 @@ async function checkCronHooks() {
   }
 }
 
+async function checkOfficeCallback() {
+  section("5. ONLYOFFICE callback");
+
+  const forgedKey = "00000000-0000-0000-0000-000000000001-v1-0000000000000001";
+  try {
+    const res = await fetch(`${APP_URL}/api/public/hooks/office-callback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: forgedKey,
+        status: 2,
+        url: "http://169.254.169.254/latest/meta-data/",
+      }),
+    });
+    if (res.status === 401 || res.status === 403) {
+      pass("office-callback rejects unauthenticated save");
+    } else {
+      fail("office-callback rejects unauthenticated save", `expected 401/403, got ${res.status}`);
+    }
+  } catch (e) {
+    fail("office-callback rejects unauthenticated save", e instanceof Error ? e.message : String(e));
+  }
+}
+
 async function checkMigrations() {
-  section("5. Pending migrations");
+  section("6. Pending migrations");
   const proc = spawnSync("npx", ["supabase", "migration", "list", "--linked"], {
     cwd: root,
     encoding: "utf8",
@@ -182,7 +232,7 @@ async function checkMigrations() {
 }
 
 async function checkDatabase() {
-  section("6. Database & security regression");
+  section("7. Database & security regression");
   if (!SUPABASE_URL || !SERVICE_KEY) {
     skip("supabase RPC checks", "set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
     return;
@@ -234,7 +284,7 @@ async function checkDatabase() {
 }
 
 async function runE2e() {
-  section("7. Playwright security E2E");
+  section("8. Playwright security E2E");
   const email = process.env.E2E_EMAIL?.trim();
   const password = process.env.E2E_PASSWORD?.trim();
   if (!email || !password) {
@@ -321,13 +371,14 @@ if (!DB_ONLY) {
   await checkPublicRoutes();
   await checkRouteGuards();
   await checkCronHooks();
+  await checkOfficeCallback();
 }
 await checkMigrations();
 await checkDatabase();
 if (RUN_E2E && !DB_ONLY) {
   await runE2e();
 } else if (!DB_ONLY) {
-  section("7. Playwright security E2E");
+  section("8. Playwright security E2E");
   skip("playwright E2E", "pass --run-e2e to execute");
 }
 printManualChecklist();

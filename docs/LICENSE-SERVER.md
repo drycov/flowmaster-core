@@ -1,5 +1,7 @@
 # Сервер лицензирования (vendor)
 
+Индекс документации: [README.md](./README.md). Термины: [GLOSSARY.md](./GLOSSARY.md).
+
 Отдельный деплой license server. Клиентские инсталляции обращаются к нему по `LICENSE_SERVER_URL`.
 
 **Варианты деплоя:**
@@ -27,9 +29,11 @@ Bearer API (`LICENSE_SERVER_ADMIN_SECRET`) — для automation, не для б
 | Env | `VENDOR_TELEGRAM_BOT_TOKEN` | `TELEGRAM_BOT_TOKEN` |
 | Webhook | `{license-server}/api/v1/hooks/telegram` | `{edms}/api/public/hooks/telegram-webhook` |
 
+<a id="edms-vercel-cloud"></a>
+
 ## Связка EDMS (on-prem) + Vercel (облако)
 
-Типовая схема: **EDMS в Docker** на `edms.satory.kz`, **license server на Vercel** (`https://z-edms.vercel.app`).
+Типовая схема: **ЕСЭДО в Docker** на `esedo.example.kz`, **license server на Vercel** (`https://your-project.vercel.app`).
 
 ```mermaid
 sequenceDiagram
@@ -58,11 +62,11 @@ sequenceDiagram
 
 ```bash
 npm run env:production -- \
-  --domain=edms.satory.kz \
-  --email=support@satory.kz \
+  --domain=esedo.example.kz \
+  --email=admin@example.kz \
   --with-license-server \
-  --license-server-url=https://z-edms.vercel.app \
-  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --license-server-url=https://your-project.vercel.app \
+  --installation-id=<uuid-from-cabinet> \
   --force \
   --install
 ```
@@ -75,13 +79,19 @@ npm run env:production -- \
 npm run docker:up -- --tls
 npm run docker:up -- --tls --cron
 
-curl https://edms.satory.kz/api/health
-curl https://z-edms.vercel.app/api/v1/license/health
+curl https://esedo.example.kz/api/health
+curl https://your-project.vercel.app/api/v1/license/health
 ```
 
 Проверка в UI: **Администрирование → Настройки → Лицензия → «Синхронизировать»**.
 
+> **Reference (внутренняя инсталляция Zeus):** `edms.satory.kz` + `https://z-edms.vercel.app`.
+
+**Миграции EDMS** (self-hosted Supabase): см. [ARCHITECTURE.md § Миграции](./ARCHITECTURE.md#db-migrations).
+
 ---
+
+<a id="replica-phase-2"></a>
 
 ## Фаза 2: Local License Server (replica) + Cloud master
 
@@ -116,8 +126,8 @@ npm run env:production -- \
   --email=admin@client.kz \
   --license-domain=license.client.kz \
   --license-replica \
-  --license-server-url=https://z-edms.vercel.app \
-  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --license-server-url=https://your-project.vercel.app \
+  --installation-id=<uuid-from-cabinet> \
   --with-license-server \
   --force \
   --install
@@ -125,7 +135,7 @@ npm run env:production -- \
 
 Создаёт:
 - `.env` — EDMS → `https://license.client.kz`
-- `.env.license-server` — replica с `LICENSE_UPSTREAM_URL=https://z-edms.vercel.app`
+- `.env.license-server` — replica с `LICENSE_UPSTREAM_URL=https://your-project.vercel.app`
 
 ### Деплой
 
@@ -141,6 +151,8 @@ npm run docker:up -- --tls --cron
 ```
 
 Local LS при первом `connect` от EDMS подтягивает entitlement с облака. Cron на replica: `POST /api/public/hooks/license-upstream-sync` → heartbeat в Vercel.
+
+Миграция replica: `20260616100000_license_server_upstream_replica.sql` (EDMS + self-hosted LS).
 
 ### Закрытый контур (EDMS без выхода в интернет)
 
@@ -188,8 +200,8 @@ LICENSE_SERVER_ENABLED=false
 
 ```env
 LICENSE_SERVER_ENABLED=true
-LICENSE_UPSTREAM_URL=https://z-edms.vercel.app
-INSTALLATION_ID=da23803d-1048-4526-b5d8-09c9e95c2999
+LICENSE_UPSTREAM_URL=https://your-project.vercel.app
+INSTALLATION_ID=<uuid-from-cabinet>
 ```
 
 **Поведение при обрыве связи Local LS ↔ облако:**
@@ -225,10 +237,23 @@ INSTALLATION_ID=da23803d-1048-4526-b5d8-09c9e95c2999
 Публикуется как **единый проект**: landing + кабинет клиента + license API.
 
 ```bash
-# 1. Supabase: миграции 001 + 002, Auth Email включён
+# 1. Supabase: миграции 001 … 005 (по порядку), Auth Email включён
+#    apps/cloud-license-server/supabase/migrations/
+#    001_license_server_schema.sql
+#    002_portal_accounts.sql
+#    003_usage_telemetry.sql
+#    004_vendor_admin_verify.sql
+#    005_vendor_staff.sql
 # 2. Vercel Root Directory = apps/cloud-license-server
 # 3. Env: SUPABASE_*, LICENSE_SERVER_ADMIN_SECRET, VITE_SUPABASE_*, VITE_LICENSE_SERVER_URL
 # 4. Deploy → LICENSE_SERVER_URL=https://xxx.vercel.app на клиентах
+```
+
+Локальная разработка из корня репозитория:
+
+```bash
+npm run license:cloud:dev    # API :3848
+npm run license:cloud:web    # web :5173 (в другом терминале)
 ```
 
 - `/` — landing с тарифами  
@@ -237,20 +262,26 @@ INSTALLATION_ID=da23803d-1048-4526-b5d8-09c9e95c2999
 
 Подробнее: [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md)
 
+<a id="docker-self-hosted"></a>
+
 ## Быстрый старт (Docker / self-hosted)
 
 ```bash
 # 1. Сгенерировать .env (секреты LICENSE_SIGNING_SECRET + LICENSE_SERVER_ADMIN_SECRET)
-npm run env:license-server -- --domain=license.satory.kz --email=admin@satory.kz --install
+npm run env:license-server -- --domain=license.example.kz --email=admin@example.kz --install
 
 # 2. Запустить стек (migrate + wait включены)
 npm run compose:license-server
 
 # 3. Проверить
-curl -k https://license.satory.kz/api/v1/license/health
+curl -k https://license.example.kz/api/v1/license/health
 ```
 
+Без `--install` env пишется в `.env.license-server` — см. [scripts/README.md](../scripts/README.md).
+
 ## Console — локальный сервер (support code + SSH)
+
+Cloud Admin (Vercel), Telegram, `vendor_staff` — в [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
 
 На **хосте license server** (по SSH), в каталоге с `.env`:
 
@@ -271,7 +302,7 @@ ssh -L 3847:127.0.0.1:3847 user@license-server
 
 Браузер: `http://127.0.0.1:3847/vendor/license` → **Console** → ввести support code.
 
-Для **облачного** сервера на Vercel используйте **Admin**: `https://<project>.vercel.app/admin` (email + пароль сотрудника вендора из `LICENSE_SERVER_VENDOR_ADMIN_EMAILS`). См. [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+Для **облачного** сервера на Vercel — **Admin**: `https://<project>.vercel.app/admin`.
 
 Переменные (только при `npm run license:admin`, **не** в docker compose):
 
@@ -311,18 +342,9 @@ npm run license:server -- revoke --installation-id <uuid>
 
 ## Подключение клиента (облачная схема)
 
-См. раздел **[Связка EDMS + Vercel](#связка-edms-on-prem--vercel-облако)** выше.
+См. раздел **[EDMS + Vercel](#edms-vercel-cloud)** выше.
 
 Кратко: клиент **не вводит FM1-ключ**. EDMS при старте вызывает `POST {LICENSE_SERVER_URL}/api/v1/license/connect` с `installation_id` из кабинета Vercel.
-
-```bash
-npm run env:production -- \
-  --domain=edms.satory.kz \
-  --with-license-server \
-  --license-server-url=https://z-edms.vercel.app \
-  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
-  --install
-```
 
 `installation_id` должен быть **зарегистрирован** на Vercel (регистрация в кабинете или admin console).
 
@@ -356,6 +378,8 @@ npm run env:production -- \
 
 Миграции: `apps/cloud-license-server/supabase/migrations/003_usage_telemetry.sql` (облако), `supabase/migrations/20260617100000_license_server_usage_telemetry.sql` (self-hosted LS / replica).
 
+<a id="api"></a>
+
 ## API
 
 | Метод | Путь | Auth | Описание |
@@ -380,4 +404,6 @@ npm run env:production -- \
 | `npm run license:support-code` | Support code для локальной админки |
 | `npm run license:admin` | Локальный UI на 127.0.0.1 |
 
-См. также: [DEPLOYMENT.md](./DEPLOYMENT.md), [SECURITY.md](./SECURITY.md).
+Облачный LS (`license:cloud:*`) и остальные команды — [scripts/README.md](../scripts/README.md).
+
+См. также: [ARCHITECTURE.md](./ARCHITECTURE.md), [README.md](./README.md), [DEPLOYMENT.md](./DEPLOYMENT.md), [SECURITY.md](./SECURITY.md), [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).

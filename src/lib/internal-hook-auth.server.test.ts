@@ -39,7 +39,7 @@ describe("verifyInternalHookRequest", () => {
     expect(verifyInternalHookRequest(request)).toBe(false);
   });
 
-  it("falls back to apikey when CRON_SECRET is unset", () => {
+  it("rejects apikey when CRON_SECRET is unset", () => {
     snapshotRef = snapshotEnv();
     delete process.env.CRON_SECRET;
     delete process.env.INTERNAL_HOOK_SECRET;
@@ -47,6 +47,16 @@ describe("verifyInternalHookRequest", () => {
     const request = new Request("http://localhost/hooks", {
       headers: { apikey: "anon-key-test" },
     });
-    expect(verifyInternalHookRequest(request)).toBe(true);
+    expect(verifyInternalHookRequest(request)).toBe(false);
+  });
+
+  it("rejects apikey even when anon key matches but CRON_SECRET is set", () => {
+    snapshotRef = snapshotEnv();
+    process.env.CRON_SECRET = "cron-test-secret";
+    process.env.SUPABASE_PUBLISHABLE_KEY = "anon-key-test";
+    const request = new Request("http://localhost/hooks", {
+      headers: { apikey: "anon-key-test" },
+    });
+    expect(verifyInternalHookRequest(request)).toBe(false);
   });
 });

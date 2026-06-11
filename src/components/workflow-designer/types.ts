@@ -42,6 +42,8 @@ export interface WorkflowNode {
   sla_unit?: SlaUnit;
   sla_working_hours_only?: boolean;
   config?: Record<string, unknown>;
+  /** Legacy ReactFlow / stored graph shape — normalized to top-level fields by route-builder. */
+  data?: Record<string, unknown>;
 }
 
 export interface WorkflowEdge {

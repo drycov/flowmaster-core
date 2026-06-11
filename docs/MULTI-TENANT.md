@@ -1,5 +1,7 @@
 # Multi-tenant в ЕСЭДО (Flowmaster Core)
 
+Индекс документации: [README.md](./README.md). Термины: [GLOSSARY.md](./GLOSSARY.md).
+
 ## Определение
 
 **Multi-tenant** — режим одной инсталляции, в которой **несколько организаций (tenant)** работают на **общей БД и одном приложении**, но видят только **свои данные**.
@@ -163,7 +165,8 @@ npx supabase db push --linked   # Supabase Cloud
 | `20260612030000_tenant_foundation` | `slug`, `tenant_mode`, `profiles.organization_id` |
 | `20260612040000_tenant_isolation` | `organization_id`, helpers, первый RLS sweep |
 | `20260612051000_tenant_provisioning` | `is_active`, `register_app_user(p_organization_id)` |
-| `20260613160000` … `13170000` | Phase 1 hardening, org-scoped UNIQUE |
+| `20260613160000_phase1_tenant_hardening.sql` | Phase 1 hardening, org-scoped UNIQUE |
+| `20260613170000_phase1_tenant_hardening_part2.sql` | Phase 1 hardening (part 2) |
 | `20260614000000_phase3_tenant_rls_complete` | Integrations, per-tenant email/iin, полный RLS |
 
 ### 2. Переменные окружения
@@ -258,6 +261,8 @@ SELECT relname, relrowsecurity FROM pg_class
 
 | Документ | Тема |
 |----------|------|
+| [README.md](./README.md) | Индекс всей документации |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Потоки HTTP, tenant diagram |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | nginx, DNS, env, wildcard |
 | [SECURITY.md](./SECURITY.md) | RLS, JWT, hardening multi-tenant |
 | [INTEGRATIONS.md](./INTEGRATIONS.md) | API keys, webhooks per-org |

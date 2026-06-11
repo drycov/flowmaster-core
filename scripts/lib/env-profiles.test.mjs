@@ -19,6 +19,7 @@ describe("buildProfileValues production", () => {
     assert.equal(values.CERTBOT_EMAIL, "support@satory.kz");
     assert.equal(values.ONLYOFFICE_CALLBACK_BASE_URL, "http://nginx");
     assert.equal(values.ONLYOFFICE_STORAGE_INTERNAL_URL, "http://kong:8000");
+    assert.equal(values.ONLYOFFICE_JWT_ENABLED, "true");
     assert.match(values.ONLYOFFICE_JWT_SECRET, /^[0-9a-f]{64}$/);
     assert.equal(values.JWT_SECRET, values.SUPABASE_JWT_SECRET);
     assert.equal(values.INSTALLATION_ID, installationIdFromDomain("edms.satory.kz"));

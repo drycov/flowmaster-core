@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getInternalHookSecret } from "@/lib/internal-hook-auth.server";
 import { isLicenseServerEnabled } from "@/lib/license/server/config.server";
 
 export type HealthChecks = Record<string, string>;
@@ -54,5 +55,14 @@ export async function runHealthChecks(): Promise<HealthResult> {
     checks[`${key}_error`] = e instanceof Error ? e.message : String(e);
   }
 
-  return { ok: checks.database === "ok", checks };
+  const cronSecret = getInternalHookSecret();
+  if (process.env.NODE_ENV === "production") {
+    checks.cron_secret = cronSecret ? "ok" : "missing";
+  } else {
+    checks.cron_secret = cronSecret ? "ok" : "optional";
+  }
+
+  const cronOk = process.env.NODE_ENV !== "production" || Boolean(cronSecret);
+
+  return { ok: checks.database === "ok" && cronOk, checks };
 }

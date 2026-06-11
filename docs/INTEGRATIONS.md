@@ -1,5 +1,7 @@
 # Интеграции ЕСЭДО
 
+Индекс документации: [README.md](./README.md).
+
 ## Multi-tenant
 
 API keys, webhooks и import jobs привязаны к **организации** (`organization_id`). Ключ видит только документы и задачи своей org; webhook-подписки получают события только из той же org. Настройки LDAP, SMTP, Telegram — в `organization.settings` каждого tenant.
@@ -211,8 +213,8 @@ curl -sf http://localhost/onlyoffice/web-apps/apps/api/documents/api.js | head
 |------------|------------|
 | `ONLYOFFICE_CALLBACK_BASE_URL` | Внутренний URL для Document Server → app (`http://nginx` в Docker) |
 | `ONLYOFFICE_STORAGE_INTERNAL_URL` | Kong для signed URL файлов (`http://kong:8000`) |
-| `ONLYOFFICE_JWT_ENABLED` | `false`; если `true` — задайте одинаковый `ONLYOFFICE_JWT_SECRET` у Document Server **и** у app |
-| `ONLYOFFICE_JWT_SECRET` | Секрет HS256 для подписи конфига редактора (app → ONLYOFFICE) |
+| `ONLYOFFICE_JWT_ENABLED` | **Production: `true`**. Одинаковый `ONLYOFFICE_JWT_SECRET` у Document Server и app — подпись конфига и **JWT callback** |
+| `ONLYOFFICE_JWT_SECRET` | Секрет HS256 (app ↔ ONLYOFFICE). Callback без JWT в production → 401 |
 
 ### Настройка в админке
 
@@ -262,3 +264,16 @@ curl -X POST -H "Authorization: Bearer fm_xxx" \
 ```
 
 Max 500 items per request. Job history в админке → Интеграции.
+
+---
+
+## Связанные документы
+
+| Документ | Тема |
+|----------|------|
+| [README.md](./README.md) | Индекс документации |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Потоки nginx / app / kong |
+| [api-v1.yaml](./api-v1.yaml) | OpenAPI спецификация |
+| [MULTI-TENANT.md](./MULTI-TENANT.md) | API keys и webhooks per-org |
+| [docker/README.md](../docker/README.md) | ONLYOFFICE в Docker |
+| [SECURITY.md](./SECURITY.md) | API keys, webhooks, cron secrets |

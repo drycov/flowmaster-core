@@ -127,8 +127,8 @@ async function advanceFromStart(
     _run_id: runId,
     _doc_id: docId,
     _from_node_id: start.id,
-    _nodes: normalized.nodes as Json,
-    _edges: normalized.edges as Json,
+    _nodes: normalized.nodes as unknown as Json,
+    _edges: normalized.edges as unknown as Json,
   });
   if (error) {
     if (error.message.includes("has no assignees")) {

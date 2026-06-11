@@ -7,6 +7,8 @@
 
 # Self-Hosted Supabase with Docker
 
+> **Flowmaster / ЕСЭДО:** this directory is vendored upstream Supabase Docker. For operating the EDMS stack, use the project docs: [docker/README.md](../README.md), [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md), [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). Env is generated via `npm run env:*` — do not hand-edit secrets here.
+
 This is the official Docker Compose setup for self-hosted Supabase. It provides a complete stack with all Supabase services running locally or on your infrastructure.
 
 ## Getting Started

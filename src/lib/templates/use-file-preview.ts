@@ -35,7 +35,7 @@ export type UseFilePreviewOptions = {
   values?: Record<string, string>;
   htmlBody?: HtmlBodyStrategy | null;
   debounceMs?: number;
-  reloadToken?: number;
+  reloadToken?: string | number;
 };
 
 const BUCKET_MAP = {

@@ -51,9 +51,48 @@ jobs:
           SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
 
+  smoke-staging:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ secrets.STAGING_APP_URL != '' &&
+          secrets.CRON_SECRET != '' &&
+          secrets.E2E_SUPABASE_URL != '' &&
+          secrets.E2E_SUPABASE_SERVICE_ROLE_KEY != '' &&
+          secrets.E2E_EMAIL != '' &&
+          secrets.E2E_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run uat:smoke:full
+        env:
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_BASE_URL: ${{ secrets.STAGING_APP_URL }}
+          E2E_SKIP_SERVER: "1"
+          CI: true
+
   e2e:
     runs-on: ubuntu-latest
-    if: ${{ secrets.E2E_EMAIL != '' && secrets.E2E_PASSWORD != '' }}
+    if: >-
+      ${{ secrets.E2E_EMAIL != '' &&
+          secrets.E2E_PASSWORD != '' &&
+          secrets.E2E_SUPABASE_URL != '' &&
+          secrets.E2E_SUPABASE_PUBLISHABLE_KEY != '' &&
+          secrets.E2E_SUPABASE_SERVICE_ROLE_KEY != '' &&
+          secrets.E2E_SUPABASE_JWT_SECRET != '' }}
     steps:
       - uses: actions/checkout@v4
 

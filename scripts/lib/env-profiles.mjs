@@ -3,12 +3,12 @@ import { createSupabaseSecrets, installationIdFromDomain } from "./env-crypto.mj
 export const TEMPLATE_FILE = ".env.docker.example";
 
 /** ONLYOFFICE vars shared by app and documentserver containers (Docker network). */
-function onlyofficeDockerEnv(secrets) {
+function onlyofficeDockerEnv(secrets, jwtEnabled = false) {
   return {
     ONLYOFFICE_CALLBACK_BASE_URL: "http://nginx",
     ONLYOFFICE_STORAGE_INTERNAL_URL: "http://kong:8000",
     ONLYOFFICE_HTTP_PORT: "8082",
-    ONLYOFFICE_JWT_ENABLED: "false",
+    ONLYOFFICE_JWT_ENABLED: jwtEnabled ? "true" : "false",
     ONLYOFFICE_JWT_SECRET: secrets.ONLYOFFICE_JWT_SECRET,
   };
 }
@@ -147,7 +147,7 @@ export function buildProfileValues(profileId, ctx) {
         POOLER_TENANT_ID: ctx.existing.get("POOLER_TENANT_ID") ?? "flowmaster-prod",
         APPLY_DB_MIGRATIONS: "1",
         APPLY_DB_SEED: "0",
-        ...onlyofficeDockerEnv(secrets),
+        ...onlyofficeDockerEnv(secrets, true),
         ENABLE_EMAIL_AUTOCONFIRM: "false",
         DISABLE_SIGNUP: "false",
         NGINX_HTTP_PORT: "80",
@@ -158,7 +158,7 @@ export function buildProfileValues(profileId, ctx) {
         SMTP_ADMIN_EMAIL: ctx.force
           ? certEmail
           : (ctx.existing.get("SMTP_ADMIN_EMAIL") ?? certEmail),
-        MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3002",
+        MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3001",
         LICENSE_SIGNING_SECRET: signingSecret,
         LICENSE_SERVER_URL: ctx.licenseServerUrl ?? ctx.existing.get("LICENSE_SERVER_URL") ?? "",
         INSTALLATION_ID: resolveProductionInstallationId(ctx, domain),

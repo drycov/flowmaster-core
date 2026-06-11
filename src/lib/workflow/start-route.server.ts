@@ -34,7 +34,7 @@ function graphFromInput(
 ): WorkflowDefinition | null {
   if (graphDefinition?.nodes?.length) {
     return {
-      nodes: graphDefinition.nodes as WorkflowDefinition["nodes"],
+      nodes: graphDefinition.nodes as unknown as WorkflowDefinition["nodes"],
       edges: graphDefinition.edges ?? [],
     };
   }

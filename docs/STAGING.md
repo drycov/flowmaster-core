@@ -1,5 +1,7 @@
 # Staging и UAT
 
+Индекс документации: [README.md](./README.md).
+
 Приёмочная среда перед production.
 
 ## Быстрый старт
@@ -45,7 +47,7 @@ Hooks: `email-dispatch`, `webhook-dispatch`, `sla-tick`, `retention-tick`, `lice
 2. **Настройки → Общие** — `app_url`
 3. Лицензия FM1 или trial
 4. Тестовые пользователи (registrar, approver, viewer)
-5. Справочники — через UI или `supabase/seeds/` (см. `scripts/import-*-csv.mjs`), не автоматически при migrate
+5. Справочники — через UI или `supabase/seeds/` ([supabase/seeds/README.md](../supabase/seeds/README.md), `scripts/import-*-csv.mjs`), не автоматически при migrate
 
 ## Приёмочное тестирование
 
@@ -62,6 +64,7 @@ npm run test:e2e:security
 
 ```bash
 npm run compose:staging:down
+# то же: npm run docker:down:staging
 ```
 
 Полный сброс данных:
@@ -82,4 +85,4 @@ rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 | Seed | `APPLY_DB_SEED=0` | `APPLY_DB_SEED=0` |
 | Логи | `info` | `debug` |
 
-Production: [DEPLOYMENT.md](./DEPLOYMENT.md).
+Production: [DEPLOYMENT.md](./DEPLOYMENT.md). Индекс: [README.md](./README.md).

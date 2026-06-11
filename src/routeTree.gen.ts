@@ -85,6 +85,7 @@ import { Route as ApiPublicHooksTelegramDispatchRouteImport } from './routes/api
 import { Route as ApiPublicHooksSlaTickRouteImport } from './routes/api/public/hooks/sla-tick'
 import { Route as ApiPublicHooksRetentionTickRouteImport } from './routes/api/public/hooks/retention-tick'
 import { Route as ApiPublicHooksOfficeCallbackRouteImport } from './routes/api/public/hooks/office-callback'
+import { Route as ApiPublicHooksLicenseUpstreamSyncRouteImport } from './routes/api/public/hooks/license-upstream-sync'
 import { Route as ApiPublicHooksLicenseSyncRouteImport } from './routes/api/public/hooks/license-sync'
 import { Route as ApiPublicHooksEmailDispatchRouteImport } from './routes/api/public/hooks/email-dispatch'
 import { Route as AuthenticatedKnowledgeIdEditRouteImport } from './routes/_authenticated/knowledge/$id.edit'
@@ -520,6 +521,12 @@ const ApiPublicHooksOfficeCallbackRoute =
     path: '/api/public/hooks/office-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksLicenseUpstreamSyncRoute =
+  ApiPublicHooksLicenseUpstreamSyncRouteImport.update({
+    id: '/api/public/hooks/license-upstream-sync',
+    path: '/api/public/hooks/license-upstream-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksLicenseSyncRoute =
   ApiPublicHooksLicenseSyncRouteImport.update({
     id: '/api/public/hooks/license-sync',
@@ -639,6 +646,7 @@ export interface FileRoutesByFullPath {
   '/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
   '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
+  '/api/public/hooks/license-upstream-sync': typeof ApiPublicHooksLicenseUpstreamSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
@@ -726,6 +734,7 @@ export interface FileRoutesByTo {
   '/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
   '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
+  '/api/public/hooks/license-upstream-sync': typeof ApiPublicHooksLicenseUpstreamSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
@@ -815,6 +824,7 @@ export interface FileRoutesById {
   '/_authenticated/knowledge/$id/edit': typeof AuthenticatedKnowledgeIdEditRoute
   '/api/public/hooks/email-dispatch': typeof ApiPublicHooksEmailDispatchRoute
   '/api/public/hooks/license-sync': typeof ApiPublicHooksLicenseSyncRoute
+  '/api/public/hooks/license-upstream-sync': typeof ApiPublicHooksLicenseUpstreamSyncRoute
   '/api/public/hooks/office-callback': typeof ApiPublicHooksOfficeCallbackRoute
   '/api/public/hooks/retention-tick': typeof ApiPublicHooksRetentionTickRoute
   '/api/public/hooks/sla-tick': typeof ApiPublicHooksSlaTickRoute
@@ -904,6 +914,7 @@ export interface FileRouteTypes {
     | '/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
     | '/api/public/hooks/license-sync'
+    | '/api/public/hooks/license-upstream-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
@@ -991,6 +1002,7 @@ export interface FileRouteTypes {
     | '/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
     | '/api/public/hooks/license-sync'
+    | '/api/public/hooks/license-upstream-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
@@ -1079,6 +1091,7 @@ export interface FileRouteTypes {
     | '/_authenticated/knowledge/$id/edit'
     | '/api/public/hooks/email-dispatch'
     | '/api/public/hooks/license-sync'
+    | '/api/public/hooks/license-upstream-sync'
     | '/api/public/hooks/office-callback'
     | '/api/public/hooks/retention-tick'
     | '/api/public/hooks/sla-tick'
@@ -1117,6 +1130,7 @@ export interface RootRouteChildren {
   ApiV1TasksRoute: typeof ApiV1TasksRouteWithChildren
   ApiPublicHooksEmailDispatchRoute: typeof ApiPublicHooksEmailDispatchRoute
   ApiPublicHooksLicenseSyncRoute: typeof ApiPublicHooksLicenseSyncRoute
+  ApiPublicHooksLicenseUpstreamSyncRoute: typeof ApiPublicHooksLicenseUpstreamSyncRoute
   ApiPublicHooksOfficeCallbackRoute: typeof ApiPublicHooksOfficeCallbackRoute
   ApiPublicHooksRetentionTickRoute: typeof ApiPublicHooksRetentionTickRoute
   ApiPublicHooksSlaTickRoute: typeof ApiPublicHooksSlaTickRoute
@@ -1667,6 +1681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksOfficeCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/license-upstream-sync': {
+      id: '/api/public/hooks/license-upstream-sync'
+      path: '/api/public/hooks/license-upstream-sync'
+      fullPath: '/api/public/hooks/license-upstream-sync'
+      preLoaderRoute: typeof ApiPublicHooksLicenseUpstreamSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/license-sync': {
       id: '/api/public/hooks/license-sync'
       path: '/api/public/hooks/license-sync'
@@ -1947,6 +1968,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1TasksRoute: ApiV1TasksRouteWithChildren,
   ApiPublicHooksEmailDispatchRoute: ApiPublicHooksEmailDispatchRoute,
   ApiPublicHooksLicenseSyncRoute: ApiPublicHooksLicenseSyncRoute,
+  ApiPublicHooksLicenseUpstreamSyncRoute:
+    ApiPublicHooksLicenseUpstreamSyncRoute,
   ApiPublicHooksOfficeCallbackRoute: ApiPublicHooksOfficeCallbackRoute,
   ApiPublicHooksRetentionTickRoute: ApiPublicHooksRetentionTickRoute,
   ApiPublicHooksSlaTickRoute: ApiPublicHooksSlaTickRoute,

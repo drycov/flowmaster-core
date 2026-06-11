@@ -1,15 +1,20 @@
 #!/usr/bin/env sh
-# Production deploy: edms.satory.kz + cloud license (Phase 1)
+# Production deploy (Docker TLS + cron + optional cloud license)
+#
+# Docs: docs/CI.md, docs/DEPLOYMENT.md, docs/ENV.md
 #
 # Run on server (e.g. /opt/edms):
 #   chmod +x scripts/deploy-production.sh
+#   DOMAIN=esedo.example.kz EMAIL=admin@example.kz \
+#   LICENSE_URL=https://your-project.vercel.app \
+#   INSTALLATION_ID=<uuid-from-cabinet> \
 #   ./scripts/deploy-production.sh
 #
 # Options (env):
-#   DOMAIN=edms.satory.kz
-#   EMAIL=support@satory.kz
-#   LICENSE_URL=https://z-edms.vercel.app
-#   INSTALLATION_ID=da23803d-1048-4526-b5d8-09c9e95c2999
+#   DOMAIN               EDMS public domain
+#   EMAIL                Let's Encrypt / SMTP admin
+#   LICENSE_URL          Vercel license server (optional)
+#   INSTALLATION_ID      From /cabinet (optional)
 #   SKIP_PULL=1          skip git pull
 #   SKIP_ENV=1           skip env regeneration
 #   SKIP_MIGRATE=1       skip docker:migrate

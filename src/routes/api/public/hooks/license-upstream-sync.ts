@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/hooks/license-upstream-sync")(
 
         try {
           const result = await runUpstreamReplicaSync(supabaseAdmin);
-          return new Response(JSON.stringify({ ok: result.ok, ...result }), {
+          return new Response(JSON.stringify(result), {
             status: 200,
             headers: { "Content-Type": "application/json" },
           });

@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { resolveBodyTemplate } from "@/lib/templates/body-template";
 import { useFilePreview } from "@/lib/templates/use-file-preview";
-import type { DocumentVersion } from "../types";
+import type { DocumentFileVersionRow } from "@/lib/documents/file-version";
 
 export function useDocumentContentPreview(options: {
   body?: string | null;
   fieldValues?: Record<string, string>;
-  fileVersion?: DocumentVersion | null;
+  fileVersion?: DocumentFileVersionRow | null;
 }) {
   const { body, fieldValues = {}, fileVersion } = options;
   const bodyText = useMemo(() => resolveBodyTemplate(body), [body]);

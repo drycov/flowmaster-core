@@ -2,6 +2,8 @@
 
 Единая система электронного документооборота для организаций Казахстана: документы, маршруты согласования, ЭЦП (NCALayer), архив, грифы доступа, LDAP, Telegram, REST API v1.
 
+**Быстрый старт:** [docs/QUICKSTART.md](docs/QUICKSTART.md) · **Wiki:** [wiki/Home.md](wiki/Home.md) · **Документация:** [docs/README.md](docs/README.md) · **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+
 ## Возможности
 
 - Жизненный цикл документов: регистрация, версии, workflow, подписи, архив, legal hold
@@ -40,7 +42,7 @@ npm run dev                      # http://localhost:3000
 | ЕСЭДО (напрямую) | http://localhost:3000 |
 | Supabase API (Kong) | http://localhost:54321 |
 | Postgres (pg_dump) | 127.0.0.1:54322 |
-| Studio | `node scripts/docker-up.mjs --studio` |
+| Studio | `npm run docker:up -- --studio` |
 
 Cron: `npm run docker:up -- --cron`
 
@@ -67,6 +69,7 @@ npm run dev
 npm run test:e2e:install   # один раз: браузер Chromium
 # В .env задайте E2E_EMAIL и E2E_PASSWORD
 npm run test:e2e
+npm run test:e2e:ui   # Playwright UI mode
 ```
 
 Smoke-сценарий: вход → создание документа с кастомным маршрутом → согласование задачи. Без `E2E_EMAIL`/`E2E_PASSWORD` выполняются только публичные проверки (страница входа, `/api/health`).
@@ -76,18 +79,17 @@ Smoke-сценарий: вход → создание документа с ка
 ### Docker (on-prem, рекомендуется)
 
 ```bash
-# Клиент EDMS + облачный license server (Vercel)
 npm run env:production -- \
-  --domain=edms.satory.kz \
-  --email=support@satory.kz \
+  --domain=esedo.example.kz \
+  --email=admin@example.kz \
   --with-license-server \
-  --license-server-url=https://z-edms.vercel.app \
-  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --license-server-url=https://your-project.vercel.app \
+  --installation-id=<uuid-from-cabinet> \
   --install
-
-# Vendor: встроенный license API на том же домене
-# npm run env:production -- --domain=edms.satory.kz --with-license-server --install
+npm run compose:tls:cron
 ```
+
+Облачная связка EDMS + Vercel: [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md). Self-hosted vendor: `env:license-server` + `compose:license-server`.
 
 Env: `.env.docker.example` + `npm run env:production`. Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
@@ -112,47 +114,25 @@ curl https://license.example.kz/api/v1/license/health
 
 ## Документация
 
-| Документ | Описание |
-|----------|----------|
-| [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md) | Сервер лицензирования (vendor) |
-| [docs/MULTI-TENANT.md](docs/MULTI-TENANT.md) | Multi-tenant: модель, изоляция, provisioning |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Развёртывание, env, nginx, cron, backup |
-| [docs/SECURITY.md](docs/SECURITY.md) | Аутентификация, RLS, hardening |
-| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | API v1, webhooks, LDAP, Telegram |
-| [docs/STAGING.md](docs/STAGING.md) | Staging / UAT окружение |
-| [docs/UAT.md](docs/UAT.md) | Чеклист приёмочного тестирования |
-| [docs/api-v1.yaml](docs/api-v1.yaml) | OpenAPI спецификация REST API |
-| [docker/README.md](docker/README.md) | Docker Compose, nginx, профили |
+**Wiki:** [wiki/Home.md](wiki/Home.md) (навигация) · **Полные guides:** [docs/README.md](docs/README.md) (17 файлов + OpenAPI)
+
+| Раздел | Ключевые документы |
+|--------|-------------------|
+| Старт | [QUICKSTART](docs/QUICKSTART.md), [CONTRIBUTING](docs/CONTRIBUTING.md), [e2e/README](e2e/README.md) |
+| Архитектура | [ARCHITECTURE](docs/ARCHITECTURE.md), [GLOSSARY](docs/GLOSSARY.md), [ENV](docs/ENV.md) |
+| Эксплуатация | [DEPLOYMENT](docs/DEPLOYMENT.md), [RUNBOOK](docs/RUNBOOK.md), [docker/README](docker/README.md) |
+| CI/CD | [CI](docs/CI.md), [CHANGELOG](CHANGELOG.md), [scripts/README](scripts/README.md) |
+| Безопасность | [SECURITY](docs/SECURITY.md), [MULTI-TENANT](docs/MULTI-TENANT.md) |
+| Интеграции | [INTEGRATIONS](docs/INTEGRATIONS.md), [api-v1.yaml](docs/api-v1.yaml) |
+| Лицензии | [LICENSE-SERVER](docs/LICENSE-SERVER.md), [cloud-license-server](apps/cloud-license-server/README.md) |
+| Приёмка | [STAGING](docs/STAGING.md), [UAT](docs/UAT.md) |
+| Сбои | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 
 ## Скрипты
 
-Полный список: [scripts/README.md](scripts/README.md).
+Полный справочник: **[scripts/README.md](scripts/README.md)** (`env:*`, `docker:*`, `compose:*`, UAT, лицензии, тесты).
 
-### Docker: `compose:*` vs `docker:*`
-
-| Namespace | Назначение | Примеры |
-|-----------|------------|---------|
-| **`compose:*`** | Deploy-стеки (production, staging, license server) | `compose:tls`, `compose:staging`, `compose:license-server` |
-| **`docker:*`** | Локальная разработка и утилиты | `docker:up`, `docker:deps`, `docker:migrate`, `docker:down` |
-
-Некоторые команды дублируются (`compose:full` = `docker:full`, `compose:tls:down` = `docker:down:tls`) — используйте один namespace в скриптах CI/CD.
-
-| Команда | Назначение |
-|---------|------------|
-| `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
-| `npm run env:staging -- --install` | UAT env → активный `.env` |
-| `npm run env:sync` | `.env` → `docker/supabase/.env` |
-| `npm run docker:up` | HTTP stack + migrate + wait |
-| `npm run compose:tls` / `compose:tls:cron` | HTTPS production |
-| `npm run compose:staging` | UAT stack |
-| `npm run compose:license-server` | Vendor license server |
-| `npm run docker:migrate` / `docker:migrate -- --tls` | SQL-миграции (stack-aware) |
-| `npm run docker:deps` | Supabase only (host dev) |
-| `npm run docker:full` | cron + studio + monitoring |
-| `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
-| `npm run uat:smoke` / `uat:preflight` | UAT checks |
-| `npm run license:generate` / `license:server` | FM1 keys / vendor API |
-| `npm run dev` / `build` / `start` / `test` / `test:e2e` | App lifecycle |
+Частые команды: `env:local` → `docker:up` (dev); `env:production --install` → `compose:tls:cron` (prod); `compose:staging` (UAT); `license:cloud:dev` + `license:cloud:web` (облачный LS).
 
 ## Стек
 

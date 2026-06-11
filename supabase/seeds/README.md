@@ -1,5 +1,7 @@
 # Optional customer seed SQL
 
+Документация проекта: [docs/README.md](../../docs/README.md). Staging / UAT: [docs/STAGING.md](../../docs/STAGING.md).
+
 Demo and customer-specific data **не входят** в цепочку миграций.
 
 Генерация из CSV:

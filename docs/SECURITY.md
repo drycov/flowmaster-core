@@ -1,5 +1,7 @@
 # Безопасность ЕСЭДО
 
+Индекс документации: [README.md](./README.md). Переменные: [ENV.md](./ENV.md).
+
 ## Модель угроз
 
 - **Single-tenant (по умолчанию):** одна организация на инсталляцию
@@ -70,7 +72,8 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 |----------|--------|
 | API keys | `fm_*`, SHA-256 hash, scopes, expiry |
 | Webhooks outbound | HMAC-SHA256 `X-Flowmaster-Signature` |
-| Cron hooks | `CRON_SECRET` / `Authorization: Bearer` |
+| Cron hooks | `CRON_SECRET` / `Authorization: Bearer` (обязателен, без fallback на anon key) |
+| ONLYOFFICE callback | `ONLYOFFICE_JWT_ENABLED=true` + JWT от Document Server; проверка document key + SSRF allowlist |
 | Telegram webhook | `X-Telegram-Bot-Api-Secret-Token` (обязателен) |
 
 ## Секреты
@@ -87,6 +90,8 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 ## Hardening checklist (production)
 
 - [ ] `CRON_SECRET` задан, anon key не используется для cron
+- [ ] `ONLYOFFICE_JWT_ENABLED=true` на production (общий `ONLYOFFICE_JWT_SECRET` у app и Document Server)
+- [ ] Cron sidecar: `docker compose -f docker-compose.tls.yml --profile cron up -d`
 - [ ] Telegram webhook secret зарегистрирован
 - [ ] `DISABLE_TELEGRAM_POLLING=true` при нескольких репликах
 - [ ] HTTPS + HSTS на reverse proxy (Docker nginx TLS или внешний nginx)
@@ -105,6 +110,8 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 
 ## Отчёт об инциденте
 
+Пошаговый runbook: [RUNBOOK.md § Инцидент безопасности](./RUNBOOK.md#security-incident).
+
 1. Отозвать скомпрометированные API keys
 2. Сменить `CRON_SECRET`, `SUPABASE_JWT_SECRET` (invalidate sessions)
 3. `logout` всех пользователей (delete `app_sessions`)
@@ -112,7 +119,7 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 
 ## Лицензирование
 
-Поддерживаются два режима (`LICENSE_MODE`):
+Поддерживаются три режима (`LICENSE_MODE`):
 
 | Режим | Описание |
 |-------|----------|
@@ -130,17 +137,22 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 
 ### Online (license server)
 
+Варианты деплоя (облако / Docker vendor / replica): [LICENSE-SERVER.md](./LICENSE-SERVER.md), [docs/README.md](./README.md#лицензирование).
+
 | Компонент | Реализация |
 |-----------|------------|
-| Сервер | Отдельный деплой FlowMaster с таблицами `license_server_*` |
-| API | `POST /api/v1/license/activate`, `heartbeat`, `revoke` (admin) |
+| API | `POST /api/v1/license/connect` (облако), `activate`, `heartbeat`, `revoke` (admin) |
 | Клиент | `LICENSE_SERVER_URL` + cron `license-sync` (phone-home) |
-| Отзыв | `npm run license:server -- revoke` → следующий heartbeat блокирует запись |
+| Отзыв | Admin UI / `npm run license:server -- revoke` → следующий heartbeat блокирует запись |
 | Зависимость от сети | Без успешного sync > `offline_grace_hours` (72 ч) — read-only |
+| Телеметрия | Агрегированные метрики в heartbeat (без ПДн) — [LICENSE-SERVER.md](./LICENSE-SERVER.md#телеметрия-использования) |
 
 **Секреты:**
-- `LICENSE_SIGNING_SECRET` — подпись ключей (поставщик + инсталляция)
-- `LICENSE_SERVER_ADMIN_SECRET` — только на license server (revoke/register)
+- `LICENSE_SIGNING_SECRET` — подпись FM1-ключей (поставщик + инсталляция)
+- `LICENSE_SERVER_ADMIN_SECRET` — только на license server (machine API, revoke/register)
+- `VENDOR_TELEGRAM_*` — **отдельный** бот вендора для Cloud Admin (не `TELEGRAM_BOT_TOKEN` EDMS)
+
+См. также: [README.md](./README.md), [RUNBOOK.md § Security](./RUNBOOK.md#security-incident), [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
 
 ## Соответствие (РК)
 

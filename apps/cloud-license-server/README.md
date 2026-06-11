@@ -1,4 +1,6 @@
-# FlowMaster Cloud License Server
+# Flowmaster Cloud License Server
+
+Документация проекта: [docs/README.md](../../docs/README.md) · [LICENSE-SERVER.md](../../docs/LICENSE-SERVER.md) · [GLOSSARY.md](../../docs/GLOSSARY.md).
 
 Отдельный serverless-сервис для **Vercel**: API лицензирования + **маркетинговый сайт** + **личный кабинет клиента**.
 
@@ -22,29 +24,60 @@
 
 ## Быстрый старт (локально)
 
+Из корня репозитория (рекомендуется):
+
+```bash
+cp apps/cloud-license-server/.env.example apps/cloud-license-server/.env
+# заполните переменные
+
+npm run license:cloud:dev    # Терминал 1 — API :3848
+npm run license:cloud:web    # Терминал 2 — сайт :5173 (прокси /api → API)
+```
+
+Или из каталога приложения:
+
 ```bash
 cd apps/cloud-license-server
 cp .env.example .env
-# заполните переменные
-
 npm install
-
-# Терминал 1 — API :3848
-npm run dev
-
-# Терминал 2 — сайт :5173 (прокси /api → API)
-npm run dev:web
+npm run dev      # API :3848
+npm run dev:web  # web :5173
 ```
 
 Откройте http://127.0.0.1:5173
+
+<a id="npm-scripts"></a>
+
+## npm-скрипты (каталог приложения)
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | API :3848 (watch) |
+| `npm run dev:web` | Vite :5173 |
+| `npm run build` | `build:web` + typecheck |
+| `npm run build:web` | Сборка landing/кабинета |
+| `npm run start` | API без watch (как `dev`) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run support-code` | Support code (обёртка из корня: `license:cloud:support-code`) |
+| `npm run vendor-staff:bootstrap` | Создать первого owner в `vendor_staff` |
+| `npm run vendor-staff:reset-password` | Сброс пароля owner → Telegram DM |
+| `npm run vendor-telegram:webhook` | Register/check Telegram webhook |
+
+Архитектура облачного LS: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md).
 
 ## База данных
 
 1. Отдельный проект Supabase (не БД клиента EDMS).
 2. **Authentication → Providers → Email** — включить; для dev можно отключить confirm email.
-3. SQL Editor:
-   - `supabase/migrations/001_license_server_schema.sql`
-   - `supabase/migrations/002_portal_accounts.sql`
+3. SQL Editor — миграции **по порядку** (`supabase/migrations/`):
+
+| Файл | Содержание |
+|------|------------|
+| `001_license_server_schema.sql` | Таблицы `license_server_*` |
+| `002_portal_accounts.sql` | Личный кабинет, trial |
+| `003_usage_telemetry.sql` | Телеметрия heartbeat |
+| `004_vendor_admin_verify.sql` | Step-up verify (Telegram / webhook) |
+| `005_vendor_staff.sql` | Cloud Admin: `vendor_staff`, роли |
 
 ## Деплой на Vercel
 
@@ -107,11 +140,11 @@ npm run vendor-staff:reset-password
 Пример env:
 
 ```env
-LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS=d.rykov@zeus.kz:8328036041
+LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS=admin@example.com:123456789
 VENDOR_TELEGRAM_BOT_TOKEN=...
 ```
 
-Альтернатива (legacy): `LICENSE_SERVER_VENDOR_ADMIN_EMAILS` — при первом входе email автоматически попадёт в `vendor_staff` без заранее созданного пароля (первый = owner).
+**Legacy (не рекомендуется):** `LICENSE_SERVER_VENDOR_ADMIN_EMAILS` — auto-provision при первом входе без предсозданного пароля. Предпочтительно `vendor_staff` + Telegram bootstrap (шаг 1).
 
 **Шаг 2 — второй фактор (Telegram / webhook)**
 
@@ -136,7 +169,7 @@ LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_SECRET=shared-secret
 
 Если используете только Telegram — `LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_WEBHOOK_URL` оставьте **пустым**.
 
-Telegram webhook для **@zeus_cloud_bot** (после деплоя на Vercel):
+Telegram webhook для **vendor-бота** (`VENDOR_TELEGRAM_BOT_USERNAME`, после деплоя на Vercel):
 
 ```bash
 cd apps/cloud-license-server
@@ -178,7 +211,7 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 
 **Шаг 3 — миграции**
 
-SQL Editor: `001` … `005_vendor_staff.sql`.
+Примените все миграции из раздела [База данных](#база-данных) (001 … 005).
 
 **Поток входа:** `/admin` → `/admin/verify` → `/admin/app`. Новых сотрудников добавляют owner/admin в разделе **Сотрудники** (создаётся Supabase Auth user + строка в `vendor_staff`).
 
@@ -204,7 +237,7 @@ SQL Editor: `001` … `005_vendor_staff.sql`.
 
 ## API (кратко)
 
-См. предыдущие разделы README + новые portal routes:
+### Portal (кабинет клиента)
 
 | Метод | Путь | Auth |
 |-------|------|------|
@@ -214,7 +247,17 @@ SQL Editor: `001` … `005_vendor_staff.sql`.
 | GET | `/api/v1/portal/me` | Supabase JWT |
 | POST | `/api/v1/portal/bootstrap` | Supabase JWT |
 
-Admin UI (`/api/v1/admin/*`) — Supabase JWT + allowlist + verify cookie (Telegram/webhook).
-Machine API (`/api/v1/license/provision`, …) — Bearer `LICENSE_SERVER_ADMIN_SECRET`.
+### License (EDMS phone-home)
 
-См. также: [docs/LICENSE-SERVER.md](../../docs/LICENSE-SERVER.md)
+| Метод | Путь | Auth |
+|-------|------|------|
+| GET | `/api/v1/license/health` | — |
+| POST | `/api/v1/license/connect` | — |
+| POST | `/api/v1/license/heartbeat` | Token |
+| POST | `/api/v1/license/provision` | Bearer admin |
+
+Полная таблица machine API: [docs/LICENSE-SERVER.md](../../docs/LICENSE-SERVER.md#api).
+
+Admin UI (`/api/v1/admin/*`) — Supabase JWT + `vendor_staff` + verify cookie (Telegram/webhook).
+
+См. также: [docs/README.md](../../docs/README.md), [docs/LICENSE-SERVER.md](../../docs/LICENSE-SERVER.md)

@@ -1,23 +1,12 @@
 # Развёртывание ЕСЭДО (Flowmaster Core)
 
+Индекс всей документации: [README.md](./README.md).
+
 ## Архитектура
 
-- **Single-tenant (по умолчанию):** одна организация на инсталляцию
-- **Multi-tenant (SaaS-ready):** несколько изолированных организаций с общей БД, RLS по `organization_id`, вход по slug / поддомену — см. **[MULTI-TENANT.md](./MULTI-TENANT.md)**
-- **Приложение:** Node.js (TanStack Start + Nitro), порт `3000` (внутри Docker)
-- **Reverse proxy:** nginx — единая точка входа `:80` / `:443` (app + Supabase API)
-- **БД и API:** Self-hosted Supabase в Docker (PostgreSQL, PostgREST, Storage, Realtime)
-- **Файлы:** Supabase Storage (локальный том `docker/supabase/volumes/storage`)
+Полное описание компонентов, диаграммы потоков и схем лицензирования: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
-```
-                    ┌─────────────┐
-  Browser ─────────►│ nginx :443  │
-                    └──────┬──────┘
-                           │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-        app:3000 (/ , /api)      kong:8000 (/auth, /rest, /storage, …)
-```
+Кратко: browser → **nginx** → `app:3000` (UI, `/api`) и `kong:8000` (Supabase Auth/REST/Storage); PostgreSQL + Storage в Docker. Multi-tenant — RLS по `organization_id` ([MULTI-TENANT.md](./MULTI-TENANT.md)).
 
 ## Требования
 
@@ -34,23 +23,16 @@
 
 ## 1. Docker-стек (рекомендуется)
 
+Быстрый старт: [корневой README](../README.md#быстрый-старт-разработка). Compose-файлы: [docker/README.md](../docker/README.md).
+
 ### Локально / dev-сервер
 
 ```bash
-npm ci --legacy-peer-deps
-npm run env:local
-npm run docker:up
-npm run docker:up -- --cron    # optional cron sidecar
+npm run env:local && npm run docker:up
 curl http://localhost/api/health
 ```
 
-| Сервис | URL / порт |
-|--------|------------|
-| ЕСЭДО (nginx) | `http://localhost` (`NGINX_HTTP_PORT`, по умолчанию 80) |
-| ЕСЭДО (напрямую) | `http://localhost:3000` |
-| Supabase API (Kong) | `http://localhost:54321` |
-| Postgres (localhost) | `127.0.0.1:54322` |
-| Studio (опционально) | `npm run docker:up -- --studio` |
+Опционально: `--cron`, `--studio` — см. [scripts/README.md](../scripts/README.md).
 
 ### Production on-prem (HTTPS)
 
@@ -108,56 +90,15 @@ npx supabase db push
 
 ## 2. Переменные окружения
 
-### Генерация
+Полный справочник: **[ENV.md](./ENV.md)** (профили, флаги, лицензирование, cloud LS, UAT).
 
-| Команда | Результат |
-|---------|-----------|
-| `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=0` |
-| `npm run env:production -- --domain=X --email=Y` | `.env.production` |
-| `npm run env:staging -- --install` | `.env` — UAT :8080 |
-| `npm run env:license-server -- --domain=X --install` | `.env` — license server |
-| `… --install` | копирует output → `.env` + `env:sync` |
+Кратко:
 
-### Обязательные (production)
-
-| Переменная | Описание |
-|------------|----------|
-| `APP_URL` / `PUBLIC_APP_URL` | Публичный HTTPS URL приложения |
-| `VITE_SUPABASE_URL` | Тот же URL (единый домен через nginx) |
-| `SUPABASE_PUBLIC_URL` / `API_EXTERNAL_URL` / `SITE_URL` | Публичный URL для Supabase Auth redirects |
-| `SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon key (= `ANON_KEY`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Только на сервере |
-| `SUPABASE_JWT_SECRET` / `JWT_SECRET` | JWT secret (≥32 символов) |
-| `POSTGRES_PASSWORD` | Пароль PostgreSQL |
-| `CRON_SECRET` | Секрет для internal hooks |
-| `PROXY_DOMAIN` / `CERTBOT_EMAIL` | HTTPS через `docker-compose.tls.yml` |
-
-### Рекомендуемые (production)
-
-| Переменная | Значение | Описание |
-|------------|----------|----------|
-| `APPLY_DB_SEED` | `0` | Не применять demo seed |
-| `ENABLE_EMAIL_AUTOCONFIRM` | `false` | Подтверждение email |
-| `DISABLE_TELEGRAM_POLLING` | `true` | При >1 реплике app |
-| `LOG_LEVEL` | `info` | Уровень логов |
-| `REPLICA_COUNT` | `1` | Число реплик app |
-| `SENTRY_ENVIRONMENT` | `production` | Sentry env tag |
-
-### Опциональные
-
-| Переменная | Описание |
-|------------|----------|
-| `INSTALLATION_ID` | UUID инсталляции для лицензии |
-| `LICENSE_SIGNING_SECRET` | Подпись FM1 ключей |
-| `SENTRY_DSN` / `VITE_SENTRY_DSN` | Error tracking |
-| `TENANT_BASE_DOMAIN` | Multi-tenant поддомены |
-| `NGINX_HTTP_PORT` | Порт nginx (по умолчанию 80) |
-
-**Внутри Docker app** `SUPABASE_URL` переопределяется на `http://kong:8000` в `docker-compose.yml` — это нормально; браузер использует `VITE_SUPABASE_URL`.
-
-Почта, LDAP, Telegram, S3, ONLYOFFICE — **в админке** (хранятся в `organization.settings`).
-
-**Публичный URL** также задаётся в **Настройки → Общие → app_url** (Telegram webhook, email links).
+- Шаблон: `.env.docker.example` — генерируйте `npm run env:local` / `env:production` / `env:staging` / `env:license-server`
+- `--install` копирует output → `.env` + `npm run env:sync`
+- Production обязательно: `APP_URL`, Supabase keys, `CRON_SECRET`, `PROXY_DOMAIN` + `CERTBOT_EMAIL` (TLS)
+- В Docker `app`: `SUPABASE_URL=http://kong:8000`; браузер: `VITE_SUPABASE_URL` = публичный nginx URL
+- Почта, LDAP, Telegram, S3, ONLYOFFICE URL — **в админке** (`organization.settings`)
 
 ## 3. Подготовка БД (без Docker / cloud)
 
@@ -248,7 +189,10 @@ Docker cron sidecar: `scripts/cron-runner.sh` (profile `cron`).
 */2 * * * * curl -sf -X POST -H "Authorization: Bearer $CRON_SECRET" https://esedo.example.kz/api/public/hooks/webhook-dispatch
 */10 * * * * curl -sf -X POST -H "Authorization: Bearer $CRON_SECRET" https://esedo.example.kz/api/public/hooks/sla-tick
 15 3 * * * curl -sf -X POST -H "Authorization: Bearer $CRON_SECRET" https://esedo.example.kz/api/public/hooks/retention-tick
+0 */6 * * * curl -sf -X POST -H "Authorization: Bearer $CRON_SECRET" https://esedo.example.kz/api/public/hooks/license-sync
 ```
+
+Replica (Local License Server, не EDMS): `POST /api/public/hooks/license-upstream-sync` — см. [LICENSE-SERVER.md](./LICENSE-SERVER.md#фаза-2-local-license-server-replica--cloud-master).
 
 ## 6. Reverse proxy (nginx)
 
@@ -342,7 +286,14 @@ server {
 
 ## 7. Лицензия
 
-Полная инструкция по **серверу лицензирования (vendor)**: [LICENSE-SERVER.md](./LICENSE-SERVER.md).
+Полная инструкция: [LICENSE-SERVER.md](./LICENSE-SERVER.md). Облачный деплой: [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+
+| Схема | Когда | Документация |
+|-------|-------|--------------|
+| **Offline FM1** | Нет интернета, изолированный контур | ниже |
+| **Облако (Vercel)** | On-prem EDMS + облачный LS без Docker у вендора | [LICENSE-SERVER.md — EDMS + Vercel](./LICENSE-SERVER.md#edms-vercel-cloud) |
+| **Self-hosted vendor** | License server на VPS поставщика | [LICENSE-SERVER.md — Docker](./LICENSE-SERVER.md#docker-self-hosted) |
+| **Replica** | Закрытый контур, EDMS без выхода в интернет | [LICENSE-SERVER.md — Фаза 2](./LICENSE-SERVER.md#replica-phase-2) |
 
 ### Offline (изолированный контур)
 
@@ -352,7 +303,15 @@ npm run license:generate -- --plan professional --customer "Организаци
 
 Активация: **Администрирование → Настройки → Лицензия**. `LICENSE_MODE=offline` (по умолчанию).
 
-### Online (license server)
+### Online — облако (Vercel, рекомендуется для новых клиентов)
+
+Клиент **не вводит FM1-ключ**. Полная инструкция: [LICENSE-SERVER.md § EDMS + Vercel](./LICENSE-SERVER.md#edms-vercel-cloud).
+
+Кратко: `env:production --with-license-server --license-server-url=... --installation-id=... --install` → `compose:tls:cron`. На EDMS: `LICENSE_MODE=online`, **без** `LICENSE_SERVER_ENABLED=true`.
+
+Миграции EDMS: [ARCHITECTURE.md § Миграции](./ARCHITECTURE.md#db-migrations).
+
+### Online — self-hosted vendor (Docker)
 
 **На стороне поставщика** (`npm run env:license-server`, см. [LICENSE-SERVER.md](./LICENSE-SERVER.md)):
 
@@ -371,7 +330,13 @@ npm run env:production -- --domain=esedo.example.kz \
   --install
 ```
 
+На EDMS: `LICENSE_MODE=online`, `LICENSE_SERVER_URL`, `LICENSE_SERVER_ENABLED=false`.
+
 Cron phone-home каждые 6 ч: `POST /api/public/hooks/license-sync`.
+
+### Replica (закрытый контур)
+
+`npm run env:production -- --license-replica --license-domain=... --license-server-url=...` — см. [LICENSE-SERVER.md § Replica](./LICENSE-SERVER.md#replica-phase-2).
 
 ## 8. Backup
 
@@ -383,6 +348,8 @@ Cron phone-home каждые 6 ч: `POST /api/public/hooks/license-sync`.
 | `.env` / `.env.production` | Secrets manager (не в git) |
 
 Рекомендуется: ежедневный snapshot БД + weekly storage.
+
+Процедуры backup/restore, инциденты, откат релиза: **[RUNBOOK.md](./RUNBOOK.md)**.
 
 ## 9. Обновление версии
 
@@ -397,9 +364,11 @@ npm run uat:smoke
 
 ## 10. CI/CD
 
-GitHub Actions: `.github/workflows/ci.yml` — lint, test, build.
+Полная инструкция: **[CI.md](./CI.md)** — GitHub Actions jobs, secrets, smoke-команды, production deploy, чеклист релиза.
 
-Деплой — по вашему pipeline (SSH, K8s, Docker registry). Production env генерируйте на сервере, не храните в репозитории.
+Кратко: workflow `.github/workflows/ci.yml` — `build` (всегда) + опциональные `smoke-db`, `e2e`, `smoke-staging` при наличии secrets.
+
+Production на сервере: `env:production --install` → `docker:migrate --tls` → `compose:tls:cron` → `uat:smoke`. Shell: `npm run deploy:production`.
 
 ## 11. Модули приложения
 
@@ -410,3 +379,7 @@ GitHub Actions: `.github/workflows/ci.yml` — lint, test, build.
 | Администрирование | `/admin` | Пользователи, настройки, аудит |
 
 Права модулей — через RBAC (`knowledge_base`, `documents`, …).
+
+---
+
+См. также: [RUNBOOK.md](./RUNBOOK.md), [GLOSSARY.md](./GLOSSARY.md), [ENV.md](./ENV.md), [CI.md](./CI.md), [TROUBLESHOOTING.md](./TROUBLESHOOTING.md), [CONTRIBUTING.md](./CONTRIBUTING.md), [scripts/README.md](../scripts/README.md).

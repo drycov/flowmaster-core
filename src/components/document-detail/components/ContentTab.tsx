@@ -6,12 +6,12 @@ import { Pencil, Save, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { TemplatePreviewPane } from "@/components/shared/TemplatePreviewPane";
 import { useDocumentContentPreview } from "../hooks/useDocumentContentPreview";
-import type { DocumentVersion } from "../types";
+import type { DocumentFileVersionRow } from "@/lib/documents/file-version";
 
 interface ContentTabProps {
   body?: string | null;
   fieldValues?: Record<string, string>;
-  fileVersion?: DocumentVersion | null;
+  fileVersion?: DocumentFileVersionRow | null;
   summary?: string;
   isEditable?: boolean;
   onSave?: (content: string) => Promise<void>;

@@ -15,18 +15,14 @@ function safeEqual(a: string, b: string): boolean {
   }
 }
 
-/** Authenticates internal cron/worker hook requests. */
+/** Authenticates internal cron/worker hook requests. CRON_SECRET is mandatory — no anon-key fallback. */
 export function verifyInternalHookRequest(request: Request): boolean {
   const secret = getInternalHookSecret();
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    if (!auth?.startsWith("Bearer ")) return false;
-    return safeEqual(auth.slice(7), secret);
-  }
+  if (!secret) return false;
 
-  const apiKey = request.headers.get("apikey");
-  const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
-  return !!(expected && apiKey && safeEqual(apiKey, expected));
+  const auth = request.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return false;
+  return safeEqual(auth.slice(7), secret);
 }
 
 export function unauthorizedHookResponse(): Response {
