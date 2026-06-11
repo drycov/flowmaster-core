@@ -360,7 +360,7 @@ export const kkDictionary: Dictionary = {
     "Webhook қорғалмаған: webhook тіркеп, құпия кілт жасаңыз. Құпия кілтсіз кіріс сұраулары қабылданбайды.",
   "settings.integrations.servicesTitle": "Қызметтер және сақтау",
   "settings.integrations.officeEnabled": "ONLYOFFICE",
-  "settings.integrations.officeEnabledDesc": "Құжаттағы DOCX/XLSX редакторы.",
+  "settings.integrations.officeEnabledDesc": "Құжаттағы және үлгі редакторындағы DOCX/XLSX редакторы.",
   "settings.integrations.officeUrl": "Document Server URL",
   "settings.integrations.officeUrlHint":
     "ONLYOFFICE мекенжайы. Callback: /api/public/hooks/office-callback",

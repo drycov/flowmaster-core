@@ -366,7 +366,7 @@ export const ruDictionary: Dictionary = {
     "Webhook не защищён: зарегистрируйте webhook, чтобы сгенерировать секрет. Без секрета входящие запросы отклоняются.",
   "settings.integrations.servicesTitle": "Сервисы и хранилище",
   "settings.integrations.officeEnabled": "ONLYOFFICE",
-  "settings.integrations.officeEnabledDesc": "Встроенный редактор DOCX/XLSX на вкладке документа.",
+  "settings.integrations.officeEnabledDesc": "Встроенный редактор DOCX/XLSX на вкладке документа и в редакторе шаблона.",
   "settings.integrations.officeUrl": "URL Document Server",
   "settings.integrations.officeUrlHint":
     "Адрес ONLYOFFICE без завершающего слэша. Callback: /api/public/hooks/office-callback",

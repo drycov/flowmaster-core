@@ -69,3 +69,8 @@ if [ "${APPLY_DB_SEED:-0}" = "1" ] && [ -f /seed/seed.sql ]; then
 fi
 
 echo "[migrate] done (applied=$applied skipped=$skipped)"
+
+if [ "$applied" -gt 0 ]; then
+  echo "[migrate] reloading PostgREST schema cache..."
+  psql "$DB_URL" -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';" || true
+fi

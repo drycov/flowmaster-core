@@ -558,6 +558,11 @@ export const messagesRu = {
   "tpl.fileTemplate.parsing": "Разбор файла и извлечение полей…",
   "tpl.fileTemplate.fieldsAlreadySynced": "Все поля из файла уже добавлены",
   "tpl.fileTemplate.metadataFilled": "Название и описание заполнены из файла",
+  "tpl.fileTemplate.officeTitle": "Редактор ONLYOFFICE",
+  "tpl.fileTemplate.officeHint":
+    "Редактирование DOC/DOCX/XLS/XLSX в браузере. Сохранение — через ONLYOFFICE (Ctrl+S или кнопка сохранения).",
+  "tpl.fileTemplate.officeReadOnly":
+    "Шаблон опубликован или в архиве — ONLYOFFICE открыт только для просмотра.",
   "tpl.description": "Описание",
   "tpl.descriptionPlaceholder": "Краткое описание назначения шаблона",
   "tpl.preview.title": "Предпросмотр",

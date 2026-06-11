@@ -25,6 +25,7 @@ import { MetadataCard } from "@/components/template-editor/components/MetadataCa
 import { BodyTemplateCard } from "@/components/template-editor/components/BodyTemplateCard";
 import { FieldsCard } from "@/components/template-editor/components/FieldsCard";
 import { TemplateFileCard } from "@/components/template-editor/components/TemplateFileCard";
+import { TemplateOfficeCard } from "@/components/template-editor/components/TemplateOfficeCard";
 import { TemplatePreviewCard } from "@/components/template-editor/components/TemplatePreviewCard";
 import { EditorPreviewLayout } from "@/components/shared/EditorPreviewLayout";
 import { listWorkflows } from "@/lib/api/workflows.functions";
@@ -206,6 +207,13 @@ function TemplateEditor() {
             filePath={filePath}
             fileFormat={fileFormat}
             onSynced={handleTemplateSynced}
+          />
+
+          <TemplateOfficeCard
+            templateId={id}
+            filePath={filePath}
+            fileFormat={fileFormat}
+            status={status}
           />
 
           <Card className="rounded-sm">

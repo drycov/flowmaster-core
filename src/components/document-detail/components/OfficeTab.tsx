@@ -1,43 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo, Loader2 } from "lucide-react";
+import { FileEdit, Save, Bold, Italic, List, ListOrdered, Undo, Redo } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "sonner";
 import { getOfficeEditorConfig } from "@/lib/api/office.functions";
-
-declare global {
-  interface Window {
-    DocsAPI?: { DocEditor: (id: string, config: unknown) => void };
-  }
-}
+import { OnlyOfficeEmbed } from "@/components/office/OnlyOfficeEmbed";
 
 interface OfficeTabProps {
   documentId: string;
   initialContent?: string;
   onSave?: (content: string) => Promise<void>;
   isReadOnly?: boolean;
-}
-
-function loadOnlyOfficeScript(serverUrl: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const src = `${serverUrl}/web-apps/apps/api/documents/api.js`;
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("ONLYOFFICE script load failed"));
-    document.body.appendChild(script);
-  });
 }
 
 export function OfficeTab({
@@ -48,17 +26,15 @@ export function OfficeTab({
 }: OfficeTabProps) {
   const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const ooMounted = useRef(false);
 
-  const { data: officeConfig, isLoading: officeLoading } = useQuery({
-    queryKey: ["office-config", documentId],
+  const { data: officeConfig } = useQuery({
+    queryKey: ["office-config", "document", documentId],
     queryFn: () => getOfficeEditorConfig({ data: { document_id: documentId } }),
     staleTime: 5 * 60 * 1000,
   });
 
   const officeUrl = officeConfig?.office_url || officeConfig?.document_server_url || "";
-  const officeConfigured = !!officeUrl;
+  const officeActive = Boolean(officeUrl && officeConfig?.available);
 
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder: t("doc.contentPlaceholder") })],
@@ -73,29 +49,6 @@ export function OfficeTab({
     }
   }, [editor, initialContent]);
 
-  useEffect(() => {
-    if (!officeUrl || !officeConfig?.available || !officeConfig.document_server_url) return;
-    if (!editorRef.current || ooMounted.current) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        await loadOnlyOfficeScript(officeConfig.document_server_url!);
-        if (cancelled || !window.DocsAPI) return;
-        editorRef.current!.innerHTML = "";
-        window.DocsAPI.DocEditor("office-editor", officeConfig.config);
-        ooMounted.current = true;
-      } catch (e) {
-        console.error(e);
-        toast.error(t("office.loadError"));
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [officeUrl, officeConfig]);
-
   const handleSave = async () => {
     if (!onSave || !editor) return;
     setIsSaving(true);
@@ -109,24 +62,17 @@ export function OfficeTab({
     }
   };
 
-  if (officeConfigured) {
-    if (officeLoading) {
-      return (
-        <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          {t("common.loading")}
-        </div>
-      );
-    }
+  if (officeActive) {
+    return (
+      <OnlyOfficeEmbed
+        editorId="office-editor"
+        queryKey={["office-config", "document", documentId]}
+        queryFn={() => getOfficeEditorConfig({ data: { document_id: documentId } })}
+      />
+    );
+  }
 
-    if (officeConfig?.available) {
-      return (
-        <div className="relative">
-          <div id="office-editor" ref={editorRef} className="w-full h-[600px]" />
-        </div>
-      );
-    }
-
+  if (officeUrl && officeConfig && !officeConfig.available) {
     return (
       <div className="border-2 border-dashed border-border rounded-sm p-8 text-center text-sm text-muted-foreground space-y-2">
         <FileEdit className="w-8 h-8 mx-auto opacity-50" />

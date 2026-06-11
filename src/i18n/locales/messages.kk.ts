@@ -525,6 +525,11 @@ export const messagesKk = {
   "tpl.fileTemplate.parsing": "Файлды талдау және өрістерді алу…",
   "tpl.fileTemplate.fieldsAlreadySynced": "Файлдағы барлық өрістер қосылған",
   "tpl.fileTemplate.metadataFilled": "Атау мен сипаттама файлдан толтырылды",
+  "tpl.fileTemplate.officeTitle": "ONLYOFFICE редакторы",
+  "tpl.fileTemplate.officeHint":
+    "DOC/DOCX/XLS/XLSX браузерде өңдеу. Сақтау ONLYOFFICE арқылы (Ctrl+S немесе сақтау батырması).",
+  "tpl.fileTemplate.officeReadOnly":
+    "Үлгі жарияланған немесе мархивте — ONLYOFFICE тек қарау режимінде.",
   "tpl.description": "Сипаттама",
   "tpl.descriptionPlaceholder": "Үлгі мақсатының қысқаша сипаттамасы",
   "tpl.preview.title": "Алдын ала қарау",

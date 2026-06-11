@@ -1,14 +1,18 @@
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
+import {
+  detectTemplateFormat,
+  templateMimeType,
+  type TemplateFileFormat,
+} from "@/lib/templates/file-formats";
+import {
+  officeDocumentKey,
+  parseOfficeDocumentKey,
+  parseOfficeTemplateKey,
+} from "./keys.server";
 
-export function officeDocumentKey(docId: string, versionNo: number, updatedAt: string): string {
-  const hash = createHash("sha256")
-    .update(`${docId}:${versionNo}:${updatedAt}`)
-    .digest("hex")
-    .slice(0, 16);
-  return `${docId}-v${versionNo}-${hash}`;
-}
+export { officeDocumentKey, officeTemplateKey } from "./keys.server";
 
 /** Process ONLYOFFICE save callback (status 2 = must save). */
 export async function processOfficeCallback(body: { key?: string; status?: number; url?: string }) {
@@ -16,10 +20,19 @@ export async function processOfficeCallback(body: { key?: string; status?: numbe
     return { ok: true, saved: false };
   }
 
-  const docId = body.key.split("-")[0];
-  if (!docId) throw new Error("invalid document key");
+  const templateId = parseOfficeTemplateKey(body.key);
+  if (templateId) {
+    return processTemplateOfficeSave(templateId, body.url);
+  }
 
-  const res = await fetch(body.url);
+  const parsed = parseOfficeDocumentKey(body.key);
+  if (!parsed) throw new Error("invalid office key");
+
+  return processDocumentOfficeSave(parsed.documentId, body.url);
+}
+
+async function processDocumentOfficeSave(docId: string, downloadUrl: string) {
+  const res = await fetch(downloadUrl);
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const buffer = Buffer.from(await res.arrayBuffer());
 
@@ -57,5 +70,36 @@ export async function processOfficeCallback(body: { key?: string; status?: numbe
     .update({ current_version: nextVersion } as never)
     .eq("id", docId);
 
-  return { ok: true, saved: true, version_no: nextVersion };
+  return { ok: true, saved: true, version_no: nextVersion, entity: "document" as const };
+}
+
+async function processTemplateOfficeSave(templateId: string, downloadUrl: string) {
+  const { data: tpl, error } = await supabaseAdmin
+    .from("document_templates")
+    .select("file_path, file_format")
+    .eq("id", templateId)
+    .single();
+
+  if (error || !tpl?.file_path) throw new Error("Шаблон не найден");
+
+  const res = await fetch(downloadUrl);
+  if (!res.ok) throw new Error(`download failed: ${res.status}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+
+  const formatRaw = (tpl.file_format ?? "docx").toLowerCase();
+  const format =
+    detectTemplateFormat(`file.${formatRaw}`) ?? (formatRaw as TemplateFileFormat);
+  const contentType = templateMimeType(format);
+
+  const { error: uploadErr } = await supabaseAdmin.storage
+    .from(STORAGE_BUCKETS.templates)
+    .upload(tpl.file_path, buffer, { contentType, upsert: true });
+  if (uploadErr) throw new Error(uploadErr.message);
+
+  await supabaseAdmin
+    .from("document_templates")
+    .update({ updated_at: new Date().toISOString() } as never)
+    .eq("id", templateId);
+
+  return { ok: true, saved: true, entity: "template" as const, template_id: templateId };
 }
