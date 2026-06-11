@@ -38,6 +38,7 @@
     "docker:down:staging": "node scripts/docker-down.mjs --staging",
     "docker:down:dev": "node scripts/docker-down.mjs --dev",
     "docker:migrate": "node scripts/docker-migrate.mjs",
+    "docker:repair-stamp": "node scripts/docker-repair-stamp.mjs",
     "docker:wait": "node scripts/docker-wait.mjs",
     "docker:full": "node scripts/docker-full.mjs",
     "docker:monitoring": "node scripts/docker-up.mjs --monitoring",
