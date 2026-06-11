@@ -28,6 +28,7 @@
     "docker:down": "docker compose down",
     "docker:migrate": "docker compose run --rm db-migrate",
     "docker:wait": "node scripts/docker-wait.mjs",
+    "docker:monitoring": "docker compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring up -d",
     "uat:preflight": "sh scripts/uat-preflight.sh",
     "uat:smoke": "node scripts/uat-smoke.mjs",
     "uat:smoke:db": "node scripts/uat-smoke.mjs --db-only",

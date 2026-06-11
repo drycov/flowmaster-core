@@ -51,6 +51,7 @@ services:
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-${JWT_SECRET}}
       VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://localhost:54321}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY}}
+      MONITORING_GRAFANA_URL: ${MONITORING_GRAFANA_URL:-}
     restart: unless-stopped
     depends_on:
       db-migrate:

@@ -165,6 +165,12 @@ export const ADMIN_NAV_SECTIONS: AdminNavSectionDef[] = [
     labelKey: "nav.sectionSystem",
     items: [
       { id: "audit", to: "/audit", labelKey: "nav.audit", moduleId: "audit" },
+      {
+        id: "monitoring",
+        to: "/admin/monitoring",
+        labelKey: "nav.monitoring",
+        moduleId: "admin_system",
+      },
       { id: "settings", to: "/admin/settings", labelKey: "nav.settings", moduleId: "admin_system" },
       {
         id: "integrations",

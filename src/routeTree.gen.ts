@@ -54,6 +54,7 @@ import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminPositionsRouteImport } from './routes/_authenticated/admin/positions'
 import { Route as AuthenticatedAdminPermissionsRouteImport } from './routes/_authenticated/admin/permissions'
 import { Route as AuthenticatedAdminOrganizationRouteImport } from './routes/_authenticated/admin/organization'
+import { Route as AuthenticatedAdminMonitoringRouteImport } from './routes/_authenticated/admin/monitoring'
 import { Route as AuthenticatedAdminLicenseRouteImport } from './routes/_authenticated/admin/license'
 import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated/admin/integrations'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
@@ -340,6 +341,12 @@ const AuthenticatedAdminOrganizationRoute =
     path: '/admin/organization',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminMonitoringRoute =
+  AuthenticatedAdminMonitoringRouteImport.update({
+    id: '/admin/monitoring',
+    path: '/admin/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminLicenseRoute =
   AuthenticatedAdminLicenseRouteImport.update({
     id: '/admin/license',
@@ -555,6 +562,7 @@ export interface FileRoutesByFullPath {
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/license': typeof AuthenticatedAdminLicenseRoute
+  '/admin/monitoring': typeof AuthenticatedAdminMonitoringRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
@@ -635,6 +643,7 @@ export interface FileRoutesByTo {
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/license': typeof AuthenticatedAdminLicenseRoute
+  '/admin/monitoring': typeof AuthenticatedAdminMonitoringRoute
   '/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/admin/positions': typeof AuthenticatedAdminPositionsRoute
@@ -717,6 +726,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/_authenticated/admin/license': typeof AuthenticatedAdminLicenseRoute
+  '/_authenticated/admin/monitoring': typeof AuthenticatedAdminMonitoringRoute
   '/_authenticated/admin/organization': typeof AuthenticatedAdminOrganizationRoute
   '/_authenticated/admin/permissions': typeof AuthenticatedAdminPermissionsRoute
   '/_authenticated/admin/positions': typeof AuthenticatedAdminPositionsRoute
@@ -799,6 +809,7 @@ export interface FileRouteTypes {
     | '/admin/departments'
     | '/admin/integrations'
     | '/admin/license'
+    | '/admin/monitoring'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
@@ -879,6 +890,7 @@ export interface FileRouteTypes {
     | '/admin/departments'
     | '/admin/integrations'
     | '/admin/license'
+    | '/admin/monitoring'
     | '/admin/organization'
     | '/admin/permissions'
     | '/admin/positions'
@@ -960,6 +972,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/integrations'
     | '/_authenticated/admin/license'
+    | '/_authenticated/admin/monitoring'
     | '/_authenticated/admin/organization'
     | '/_authenticated/admin/permissions'
     | '/_authenticated/admin/positions'
@@ -1362,6 +1375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOrganizationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/monitoring': {
+      id: '/_authenticated/admin/monitoring'
+      path: '/admin/monitoring'
+      fullPath: '/admin/monitoring'
+      preLoaderRoute: typeof AuthenticatedAdminMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/license': {
       id: '/_authenticated/admin/license'
       path: '/admin/license'
@@ -1634,6 +1654,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminIntegrationsRoute: typeof AuthenticatedAdminIntegrationsRoute
   AuthenticatedAdminLicenseRoute: typeof AuthenticatedAdminLicenseRoute
+  AuthenticatedAdminMonitoringRoute: typeof AuthenticatedAdminMonitoringRoute
   AuthenticatedAdminOrganizationRoute: typeof AuthenticatedAdminOrganizationRoute
   AuthenticatedAdminPermissionsRoute: typeof AuthenticatedAdminPermissionsRoute
   AuthenticatedAdminPositionsRoute: typeof AuthenticatedAdminPositionsRoute
@@ -1690,6 +1711,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminIntegrationsRoute: AuthenticatedAdminIntegrationsRoute,
   AuthenticatedAdminLicenseRoute: AuthenticatedAdminLicenseRoute,
+  AuthenticatedAdminMonitoringRoute: AuthenticatedAdminMonitoringRoute,
   AuthenticatedAdminOrganizationRoute: AuthenticatedAdminOrganizationRoute,
   AuthenticatedAdminPermissionsRoute: AuthenticatedAdminPermissionsRoute,
   AuthenticatedAdminPositionsRoute: AuthenticatedAdminPositionsRoute,

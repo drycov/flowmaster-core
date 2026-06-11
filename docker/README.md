@@ -10,6 +10,7 @@ Self-hosted Supabase stack (vendored from [supabase/supabase/docker](https://git
 | `docker-compose.dev.yml` | Dev: только Supabase + migrate (app через `npm run dev`) |
 | `docker-compose.staging.yml` | UAT: app :3001 + cron + **nginx** :8080 |
 | `docker-compose.tls.yml` | Production HTTPS (Let's Encrypt) |
+| `docker-compose.monitoring.yml` | Prometheus + Grafana (profile `monitoring`) |
 | `docker/compose/nginx-tls.overrides.yml` | TLS-патчи Supabase/nginx (include) |
 | `docker/compose/supabase.overrides.yml` | Патчи Supabase (profiles, kong deps) |
 
@@ -102,7 +103,40 @@ Healthcheck nginx: `GET /api/health` через proxy.
 |---------|---------|
 | (default) | db, kong, rest, storage, realtime, auth, db-migrate, app, **nginx** |
 | `cron` | фоновые hooks (`scripts/cron-runner.sh`) |
+| `monitoring` | Prometheus, Grafana, cAdvisor, node/postgres/blackbox exporters |
 | `studio` | Supabase Studio + meta + edge functions |
+
+## Мониторинг
+
+Опциональный стек метрик (не публикуется наружу — только `127.0.0.1`):
+
+```bash
+npm run docker:monitoring
+# или вместе со стеком:
+node scripts/docker-up.mjs --monitoring
+```
+
+| UI | URL | Логин |
+|----|-----|-------|
+| Grafana | http://127.0.0.1:3001 | `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` |
+| Prometheus | http://127.0.0.1:9090 | — |
+| cAdvisor | http://127.0.0.1:8081 | — |
+
+В приложении: **Администрирование → Мониторинг** (`/admin/monitoring`) — health БД/лицензии, uptime, ссылка на Grafana.
+
+Переменные (`.env`):
+
+| Переменная | По умолчанию | Описание |
+|------------|--------------|----------|
+| `GRAFANA_PORT` | `3001` | Порт Grafana на хосте |
+| `GRAFANA_ADMIN_USER` | `admin` | Логин Grafana |
+| `GRAFANA_ADMIN_PASSWORD` | `admin` | **Смените в production** |
+| `MONITORING_GRAFANA_URL` | — | URL для ссылки в UI (напр. `http://127.0.0.1:3001`) |
+| `PROMETHEUS_PORT` | `9090` | Порт Prometheus |
+
+SSH tunnel с ноутбука: `ssh -L 3001:127.0.0.1:3001 user@server`
+
+Конфиги: `docker/monitoring/`.
 
 ## Backup
 

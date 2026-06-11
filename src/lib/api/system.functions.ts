@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
@@ -30,33 +31,35 @@ export type SystemInitStatus = {
   needs_setup: boolean;
 };
 
+export async function loadSystemInitStatus(supabase: SupabaseClient): Promise<SystemInitStatus> {
+  const { data, error } = await supabaseAdmin.rpc("get_system_init_status" as never);
+  if (error) {
+    const [{ count: adminCount }, { count: deptCount }] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "admin" as never),
+      supabase.from("departments").select("id", { count: "exact", head: true }),
+    ]);
+    return {
+      has_organization: true,
+      organization_configured: false,
+      has_admin: (adminCount ?? 0) > 0,
+      admin_count: adminCount ?? 0,
+      departments_count: deptCount ?? 0,
+      permissions_count: 0,
+      roles_count: 0,
+      published_workflows: 0,
+      published_templates: 0,
+      needs_setup: (adminCount ?? 0) === 0 || (deptCount ?? 0) === 0,
+    } satisfies SystemInitStatus;
+  }
+  return data as SystemInitStatus;
+}
+
 export const getSystemInitStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await supabaseAdmin.rpc("get_system_init_status" as never);
-    if (error) {
-      const [{ count: adminCount }, { count: deptCount }] = await Promise.all([
-        context.supabase
-          .from("user_roles")
-          .select("id", { count: "exact", head: true })
-          .eq("role", "admin" as never),
-        context.supabase.from("departments").select("id", { count: "exact", head: true }),
-      ]);
-      return {
-        has_organization: true,
-        organization_configured: false,
-        has_admin: (adminCount ?? 0) > 0,
-        admin_count: adminCount ?? 0,
-        departments_count: deptCount ?? 0,
-        permissions_count: 0,
-        roles_count: 0,
-        published_workflows: 0,
-        published_templates: 0,
-        needs_setup: (adminCount ?? 0) === 0 || (deptCount ?? 0) === 0,
-      } satisfies SystemInitStatus;
-    }
-    return data as SystemInitStatus;
-  });
+  .handler(async ({ context }) => loadSystemInitStatus(context.supabase));
 
 export const getPublicAuthConfigFn = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
