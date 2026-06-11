@@ -38,6 +38,8 @@ ensure_self_signed_cert() {
       -subj "/CN=${domain}/O=Flowmaster Self-Signed/C=KZ"
 
   cp "${live}/fullchain.pem" "${live}/chain.pem"
+  chmod 644 "${live}/fullchain.pem" "${live}/chain.pem"
+  chmod 600 "${live}/privkey.pem"
   touch "${live}/.self-signed"
 
   echo "[ssl-fallback] Self-signed certificate installed for ${domain}"
