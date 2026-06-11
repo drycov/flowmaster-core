@@ -1,19 +1,41 @@
-# Staging / UAT — app + cron sidecar (Supabase hosted separately)
+# Staging / UAT — self-hosted Supabase + app + cron
 name: flowmaster-staging
 
+include:
+  - path: ./docker/supabase/docker-compose.yml
+
 services:
+  db-migrate:
+    image: postgres:15-alpine
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-postgres}
+      DB_USER: postgres
+    volumes:
+      - ./supabase/migrations:/migrations:ro
+      - ./supabase/seed.sql:/seed/seed.sql:ro
+      - ./docker/migrate/apply-migrations.sh:/apply-migrations.sh:ro
+    entrypoint: ["/bin/sh", "/apply-migrations.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_SUPABASE_URL: ${SUPABASE_URL}
-        VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://localhost:54321}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY}}
+        SUPABASE_URL: http://kong:8000
+        SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY}}
+        SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-${SERVICE_ROLE_KEY}}
+        SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-${JWT_SECRET}}
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
-        SUPABASE_URL: ${SUPABASE_URL}
-        SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
-        SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-        SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
     ports:
       - "${STAGING_PORT:-3001}:3000"
     env_file:
@@ -23,13 +45,24 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       SENTRY_ENVIRONMENT: staging
       DISABLE_TELEGRAM_POLLING: ${DISABLE_TELEGRAM_POLLING:-true}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY}}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-${SERVICE_ROLE_KEY}}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-${JWT_SECRET}}
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://localhost:54321}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-${ANON_KEY}}
     restart: unless-stopped
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      kong:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 25s
+      start_period: 40s
 
   cron:
     image: alpine:3.21
@@ -48,3 +81,28 @@ services:
       app:
         condition: service_healthy
     restart: unless-stopped
+
+  kong:
+    depends_on:
+      auth:
+        condition: service_healthy
+      rest:
+        condition: service_started
+      realtime:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+  supavisor:
+    ports:
+      - "127.0.0.1:54322:5432"
+      - "127.0.0.1:6543:6543"
+
+  studio:
+    profiles: ["studio"]
+
+  meta:
+    profiles: ["studio"]
+
+  functions:
+    profiles: ["studio"]

@@ -5,47 +5,74 @@
 - **Single-tenant (по умолчанию):** одна организация на инсталляцию
 - **Multi-tenant (SaaS-ready):** несколько изолированных организаций с общей БД, RLS по `organization_id`, вход по slug / поддомену
 - **Приложение:** Node.js (TanStack Start + Nitro), порт `3000`
-- **БД:** Supabase PostgreSQL (hosted или self-hosted)
-- **Файлы:** Supabase Storage (+ опционально S3)
+- **БД и API:** Self-hosted Supabase в Docker (PostgreSQL, PostgREST, Storage, Realtime)
+- **Файлы:** Supabase Storage (локальный том `docker/supabase/volumes/storage`)
 
 ## Требования
 
 | Компонент | Минимум |
 |-----------|---------|
-| Node.js | 22 LTS |
-| PostgreSQL | 15+ (через Supabase) |
-| RAM (app) | 512 MB – 1 GB |
-| CPU | 1 vCPU |
+| Docker + Compose v2 | 24+ |
+| Node.js | 22 LTS (только для сборки образа app) |
+| RAM | 4 GB (Supabase stack + app) |
+| CPU | 2 vCPU |
+| Disk | 20 GB+ |
 
 Для LDAP, Telegram polling, ONLYOFFICE — предпочтителен **Node runtime** (не edge-only Workers).
 
-## 1. Подготовка Supabase
+## 1. Docker-стек (рекомендуется)
 
 ```bash
-# Локально (разработка)
-npx supabase start
-npx supabase db push
+npm ci --legacy-peer-deps
+node scripts/docker-setup.mjs          # .env с JWT/ключами Postgres
+docker compose up -d --build           # Supabase + миграции + app
+docker compose --profile cron up -d    # outbox, SLA, retention
+curl http://localhost:3000/api/health
+```
 
-# Production — применить миграции к remote project
+| Сервис | URL / порт |
+|--------|------------|
+| ЕСЭДО | `http://localhost:3000` |
+| Supabase API (Kong) | `http://localhost:54321` |
+| Postgres (localhost) | `127.0.0.1:54322` |
+| Studio (опционально) | `docker compose --profile studio up -d` |
+
+Миграции из `supabase/migrations/` применяются сервисом `db-migrate` при первом запуске.
+После добавления новых миграций:
+
+```bash
+npm run docker:migrate
+docker compose up -d app
+```
+
+Шаблон переменных: `.env.docker.example`. Официальный Supabase Docker vendored в `docker/supabase/`.
+
+### Облачный Supabase (альтернатива)
+
+Если БД остаётся в Supabase Cloud — поднимайте только app:
+
+```bash
+cp .env.production.example .env
+# SUPABASE_URL=https://your-project.supabase.co
+docker compose up -d app cron   # без include db/kong (см. legacy compose ниже)
+```
+
+Для cloud-only используйте прежний workflow:
+
+```bash
 npx supabase link --project-ref <ref>
 npx supabase db push
 ```
 
-Миграции: `supabase/migrations/` (применять по порядку).
-
-После деплоя проверьте:
-- RLS включён на чувствительных таблицах
-- Storage buckets: `avatars`, `documents`, `templates`, `signatures`
-
 ## 2. Переменные окружения
 
-Скопируйте `.env.production.example` → `.env`:
+Скопируйте `.env.docker.example` → `.env` или выполните `node scripts/docker-setup.mjs`:
 
 | Переменная | Обязательно | Описание |
 |------------|-------------|----------|
-| `SUPABASE_URL` | да | URL проекта |
-| `SUPABASE_PUBLISHABLE_KEY` | да | Anon/publishable key |
-| `VITE_SUPABASE_*` | да | Те же значения для client bundle |
+| `SUPABASE_URL` | да | Docker: `http://kong:8000` (server); cloud: URL проекта |
+| `SUPABASE_PUBLISHABLE_KEY` | да | Anon/publishable key (= `ANON_KEY` в Docker) |
+| `VITE_SUPABASE_*` | да | Браузер: `http://localhost:54321` + anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | да | Только на сервере |
 | `SUPABASE_JWT_SECRET` | да | JWT secret из Supabase API settings |
 | `CRON_SECRET` | prod | Секрет для internal hooks |
@@ -66,7 +93,14 @@ npx supabase db push
 
 **Публичный URL** приложения — **Настройки → Общие → app_url** (нужен для Telegram webhook, email links).
 
-## 3. Сборка и запуск
+## 3. Подготовка БД (без Docker / cloud)
+
+```bash
+npx supabase start && npx supabase db push
+# remote: npx supabase link --project-ref <ref> && npx supabase db push
+```
+
+## 4. Сборка и запуск
 
 ### Bare metal / VM
 
@@ -81,8 +115,7 @@ npm run start
 ### Docker
 
 ```bash
-cp .env.production.example .env
-# заполните .env
+node scripts/docker-setup.mjs
 docker compose up -d --build
 ```
 
@@ -90,6 +123,12 @@ docker compose up -d --build
 
 ```bash
 docker compose --profile cron up -d
+```
+
+Supabase Studio (админка БД):
+
+```bash
+docker compose --profile studio up -d
 ```
 
 ### Staging / UAT
@@ -110,7 +149,7 @@ curl http://localhost:3000/api/health
 
 Ожидается `{"ok":true,"checks":{"app":"ok","database":"ok",...}}`.
 
-## 4. Cron jobs (обязательно)
+## 5. Cron jobs (обязательно)
 
 Все hooks: `Authorization: Bearer <CRON_SECRET>`.
 
@@ -134,7 +173,7 @@ curl http://localhost:3000/api/health
 15 3 * * * curl -sf -X POST -H "Authorization: Bearer $CRON_SECRET" https://esedo.example.kz/api/public/hooks/retention-tick
 ```
 
-## 5. Reverse proxy (nginx)
+## 6. Reverse proxy (nginx)
 
 ### Single-tenant
 
@@ -192,7 +231,7 @@ server {
 
 Без поддомена (только slug на общем домене) — достаточно `TENANT_BASE_DOMAIN`; пользователи вводят код org на экране входа.
 
-## 6. Лицензия
+## 7. Лицензия
 
 ### 6a. Offline (изолированный контур)
 
@@ -243,7 +282,7 @@ npm run license:server -- revoke --installation-id <INSTALLATION_ID> --reason "C
 
 Без синхронизации дольше 72 ч (`offline_grace_hours`) — запись данных блокируется.
 
-## 7. Backup
+## 8. Backup
 
 | Объект | Метод |
 |--------|-------|
@@ -254,7 +293,7 @@ npm run license:server -- revoke --installation-id <INSTALLATION_ID> --reason "C
 
 Рекомендуется: ежедневный snapshot БД + weekly storage.
 
-## 8. Обновление версии
+## 9. Обновление версии
 
 ```bash
 git pull
@@ -266,7 +305,7 @@ npm run build
 
 Проверьте `/api/health` и smoke: login → документ → задача.
 
-## 9. CI/CD
+## 10. CI/CD
 
 GitHub Actions: `.github/workflows/ci.yml` — lint, test, build.
 

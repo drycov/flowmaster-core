@@ -7,7 +7,7 @@ test.describe("Authentication", () => {
   test("login page renders", async ({ page }) => {
     await page.goto("/auth");
     const panel = page.getByRole("tabpanel", { name: "Вход" });
-    await expect(panel.getByPlaceholder("user@example.com")).toBeVisible();
+    await expect(panel.getByPlaceholder("Адрес электронной почты")).toBeVisible();
     await expect(panel.locator('input[type="password"]')).toBeVisible();
     await expect(panel.getByRole("button", { name: "Войти в систему" })).toBeVisible();
   });

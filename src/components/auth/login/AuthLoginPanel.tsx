@@ -31,10 +31,8 @@ interface AuthLoginPanelProps {
 
 export function AuthLoginPanel(props: AuthLoginPanelProps) {
   return (
-    <section className="order-1 flex flex-col justify-center px-4 py-8 sm:px-8 lg:order-2 lg:px-10 lg:py-12 xl:px-14 2xl:px-16">
-      <div className="mx-auto flex w-full justify-center">
-        <AuthLoginCard {...props} />
-      </div>
-    </section>
+    <div className="w-full max-w-[400px]">
+      <AuthLoginCard {...props} />
+    </div>
   );
 }

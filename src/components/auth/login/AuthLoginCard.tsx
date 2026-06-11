@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { Rocket, ShieldCheck } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthBrand } from "@/components/auth/components/AuthBrand";
 import { AuthForm } from "@/components/auth/components/AuthForm";
 import { ForgotPasswordPanel } from "@/components/auth/components/ForgotPasswordPanel";
-import { sap, sapTabListClass, sapTabTriggerClass } from "@/components/auth/styles/sap-tokens";
+import { sapTabListClass, sapTabTriggerClass } from "@/components/auth/styles/sap-tokens";
 import { useI18n } from "@/i18n";
 import { AuthAlternativeMethods } from "./AuthAlternativeMethods";
-import { AuthSecurityBlock } from "./AuthSecurityBlock";
 import type { AuthMode, PublicAuthConfig } from "../types";
 
 interface AuthLoginCardProps {
@@ -39,33 +38,35 @@ interface AuthLoginCardProps {
   ldapLoading?: boolean;
 }
 
-export function AuthLoginCard({
-  mode,
-  config,
-  email,
-  password,
-  passwordConfirm,
-  fullNameRu,
-  fullNameKk,
-  tenantSlug,
-  orgNameRu,
-  orgNameKk,
-  loading,
-  onModeChange,
-  onEmailChange,
-  onPasswordChange,
-  onPasswordConfirmChange,
-  onFullNameRuChange,
-  onFullNameKkChange,
-  onTenantSlugChange,
-  onOrgNameRuChange,
-  onOrgNameKkChange,
-  onSubmit,
-  onEdsAuth,
-  edsLoading = false,
-  onLdapAuth,
-  ldapLoading = false,
-}: AuthLoginCardProps) {
+export function AuthLoginCard(props: AuthLoginCardProps) {
+  const {
+    mode,
+    config,
+    email,
+    password,
+    passwordConfirm,
+    fullNameRu,
+    fullNameKk,
+    tenantSlug,
+    orgNameRu,
+    orgNameKk,
+    loading,
+    onModeChange,
+    onEmailChange,
+    onPasswordChange,
+    onPasswordConfirmChange,
+    onFullNameRuChange,
+    onFullNameKkChange,
+    onTenantSlugChange,
+    onOrgNameRuChange,
+    onOrgNameKkChange,
+    onSubmit,
+    onEdsAuth,
+    edsLoading = false,
+    onLdapAuth,
+    ldapLoading = false,
+  } = props;
+
   const { t } = useI18n();
   const [forgotOpen, setForgotOpen] = useState(false);
 
@@ -93,56 +94,87 @@ export function AuthLoginCard({
     onOrgNameKkChange,
   };
 
-  const cardTitle =
+  const signupTitle =
     config.bootstrap_needed && mode === "signup"
       ? t("auth.bootstrapTitle")
-      : mode === "signin"
-        ? t("auth.signInTitle")
-        : t("auth.signUpTitle");
+      : t("auth.signUpTitle");
 
-  const cardDescription =
-    config.bootstrap_needed && mode === "signup"
-      ? t("auth.bootstrapDescription")
-      : t("auth.pageDescription");
+  const formBlock = (formMode: AuthMode) => (
+    <>
+      <AuthForm
+        mode={formMode}
+        email={email}
+        password={password}
+        passwordConfirm={passwordConfirm}
+        fullNameRu={fullNameRu}
+        fullNameKk={fullNameKk}
+        {...tenantFormProps}
+        minPasswordLength={config.min_password_length}
+        requireStrongPassword={config.require_strong_password}
+        loading={loading}
+        showForgotPassword={formMode === "signin" && showTelegramReset && !forgotOpen}
+        onForgotPassword={() => setForgotOpen(true)}
+        onEmailChange={onEmailChange}
+        onPasswordChange={onPasswordChange}
+        onPasswordConfirmChange={onPasswordConfirmChange}
+        onFullNameRuChange={onFullNameRuChange}
+        onFullNameKkChange={onFullNameKkChange}
+        onSubmit={onSubmit}
+      />
+
+      {formMode === "signin" && !forgotOpen && (
+        <AuthAlternativeMethods
+          mode={formMode}
+          showEds={showEds}
+          showTelegram={showTelegramLogin}
+          showLdap={showLdap}
+          loading={loading}
+          edsLoading={edsLoading}
+          ldapLoading={ldapLoading}
+          tenantSlug={effectiveTenantSlug}
+          showTenantSlug={showTenantSlug}
+          tenantSlugReadOnly={tenantSlugReadOnly}
+          tenantBaseDomain={config.tenant_base_domain}
+          onEdsAuth={onEdsAuth}
+          onLdapAuth={onLdapAuth}
+          onTenantSlugChange={onTenantSlugChange}
+        />
+      )}
+
+      {formMode === "signup" && showEds && (
+        <AuthAlternativeMethods
+          mode={formMode}
+          showEds={showEds}
+          showTelegram={false}
+          showLdap={false}
+          loading={loading}
+          edsLoading={edsLoading}
+          ldapLoading={ldapLoading}
+          tenantSlug={effectiveTenantSlug}
+          showTenantSlug={showTenantSlug}
+          tenantSlugReadOnly={tenantSlugReadOnly}
+          tenantBaseDomain={config.tenant_base_domain}
+          onEdsAuth={onEdsAuth}
+          onTenantSlugChange={onTenantSlugChange}
+        />
+      )}
+    </>
+  );
 
   return (
-    <div
-      className="w-full max-w-[520px] rounded-sm p-6 sm:p-8 xl:max-w-[540px]"
-      style={{ backgroundColor: sap.card, boxShadow: sap.shadowCard }}
-    >
-      <div className="mb-5 space-y-3 border-b pb-5" style={{ borderColor: sap.borderLight }}>
-        <div
-          className="inline-flex items-center gap-2 rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
-          style={{
-            borderColor: sap.border,
-            backgroundColor: sap.messageInfoBg,
-            color: sap.link,
-          }}
-        >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          {t("auth.secureAccess")}
-        </div>
-        <div>
-          <h1 className="text-xl font-semibold sm:text-2xl" style={{ color: sap.text }}>
-            {cardTitle}
-          </h1>
-          <p className="mt-1.5 text-sm leading-relaxed" style={{ color: sap.textSecondary }}>
-            {cardDescription}
-          </p>
-        </div>
-      </div>
+    <div className="w-full">
+      <AuthBrand />
+
+      {mode === "signup" && (
+        <h1 className="mb-4 text-center text-lg font-semibold text-foreground">
+          {signupTitle}
+        </h1>
+      )}
 
       {resolvedTenant && (
-        <Alert
-          className="mb-4 rounded-sm border-l-4"
-          style={{
-            borderLeftColor: sap.brand,
-            borderColor: sap.borderLight,
-            backgroundColor: sap.messageInfoBg,
-          }}
-        >
-          <AlertTitle style={{ color: sap.text }}>{t("auth.tenant.resolvedTitle")}</AlertTitle>
-          <AlertDescription style={{ color: sap.textSecondary }}>
+        <Alert className="mb-4 rounded-lg border-0 bg-muted/80">
+          <AlertTitle className="text-sm">{t("auth.tenant.resolvedTitle")}</AlertTitle>
+          <AlertDescription className="text-xs text-muted-foreground">
             {resolvedTenant.name_ru}
             {resolvedTenant.slug ? ` (${resolvedTenant.slug})` : ""}
           </AlertDescription>
@@ -150,146 +182,47 @@ export function AuthLoginCard({
       )}
 
       {config.bootstrap_needed && mode === "signup" && (
-        <Alert
-          className="mb-4 rounded-sm border-l-4"
-          style={{
-            borderLeftColor: sap.brand,
-            borderColor: sap.borderLight,
-            backgroundColor: sap.messageInfoBg,
-          }}
-        >
-          <Rocket className="h-4 w-4" style={{ color: sap.brand }} />
-          <AlertTitle style={{ color: sap.text }}>{t("auth.bootstrapAlertTitle")}</AlertTitle>
-          <AlertDescription style={{ color: sap.textSecondary }}>
+        <Alert className="mb-4 rounded-lg border-0 bg-muted/80">
+          <AlertTitle className="text-sm">{t("auth.bootstrapAlertTitle")}</AlertTitle>
+          <AlertDescription className="text-xs text-muted-foreground">
             {t("auth.bootstrapAlertDescription")}
           </AlertDescription>
         </Alert>
       )}
 
-      <Tabs value={mode} onValueChange={(v) => onModeChange(v as AuthMode)} className="space-y-4">
-        <TabsList className={sapTabListClass}>
-          <TabsTrigger value="signin" className={sapTabTriggerClass}>
-            {t("auth.tabSignIn")}
-          </TabsTrigger>
-          <TabsTrigger value="signup" disabled={!showSignupTab} className={sapTabTriggerClass}>
-            {t("auth.tabSignUp")}
-          </TabsTrigger>
-        </TabsList>
-
-        {!showSignupTab && (
-          <p className="text-xs" style={{ color: sap.textMuted }}>
-            {t("auth.signupDisabledHint")}
-          </p>
-        )}
-
-        <TabsContent value="signin" className="mt-0 space-y-4">
-          {forgotOpen && showTelegramReset ? (
-            <>
-              <h2 className="text-base font-semibold" style={{ color: sap.text }}>
-                {t("auth.telegram.resetTitle")}
-              </h2>
-              <ForgotPasswordPanel
-                minPasswordLength={config.min_password_length}
-                tenantSlug={effectiveTenantSlug}
-                onBack={() => setForgotOpen(false)}
-              />
-            </>
-          ) : (
-            <>
-              <AuthForm
-                mode="signin"
-                email={email}
-                password={password}
-                passwordConfirm={passwordConfirm}
-                fullNameRu={fullNameRu}
-                fullNameKk={fullNameKk}
-                {...tenantFormProps}
-                minPasswordLength={config.min_password_length}
-                requireStrongPassword={config.require_strong_password}
-                loading={loading}
-                showForgotPassword={showTelegramReset}
-                onForgotPassword={() => setForgotOpen(true)}
-                onEmailChange={onEmailChange}
-                onPasswordChange={onPasswordChange}
-                onPasswordConfirmChange={onPasswordConfirmChange}
-                onFullNameRuChange={onFullNameRuChange}
-                onFullNameKkChange={onFullNameKkChange}
-                onSubmit={onSubmit}
-              />
-
-              <AuthAlternativeMethods
-                mode={mode}
-                showEds={showEds}
-                showTelegram={showTelegramLogin}
-                showLdap={showLdap}
-                loading={loading}
-                edsLoading={edsLoading}
-                ldapLoading={ldapLoading}
-                tenantSlug={effectiveTenantSlug}
-                showTenantSlug={showTenantSlug}
-                tenantSlugReadOnly={tenantSlugReadOnly}
-                tenantBaseDomain={config.tenant_base_domain}
-                onEdsAuth={onEdsAuth}
-                onLdapAuth={onLdapAuth}
-                onTenantSlugChange={onTenantSlugChange}
-              />
-            </>
-          )}
-        </TabsContent>
-
-        <TabsContent value="signup" className="mt-0 space-y-4">
-          <AuthForm
-            mode="signup"
-            email={email}
-            password={password}
-            passwordConfirm={passwordConfirm}
-            fullNameRu={fullNameRu}
-            fullNameKk={fullNameKk}
-            {...tenantFormProps}
+      {forgotOpen && showTelegramReset && mode === "signin" ? (
+        <>
+          <h2 className="mb-4 text-center text-base font-medium text-foreground">
+            {t("auth.telegram.resetTitle")}
+          </h2>
+          <ForgotPasswordPanel
             minPasswordLength={config.min_password_length}
-            requireStrongPassword={config.require_strong_password}
-            loading={loading}
-            onEmailChange={onEmailChange}
-            onPasswordChange={onPasswordChange}
-            onPasswordConfirmChange={onPasswordConfirmChange}
-            onFullNameRuChange={onFullNameRuChange}
-            onFullNameKkChange={onFullNameKkChange}
-            onSubmit={onSubmit}
+            tenantSlug={effectiveTenantSlug}
+            onBack={() => setForgotOpen(false)}
           />
+        </>
+      ) : showSignupTab ? (
+        <Tabs value={mode} onValueChange={(v) => onModeChange(v as AuthMode)}>
+          <TabsList className={sapTabListClass}>
+            <TabsTrigger value="signin" className={sapTabTriggerClass}>
+              {t("auth.tabSignIn")}
+            </TabsTrigger>
+            <TabsTrigger value="signup" className={sapTabTriggerClass}>
+              {t("auth.tabSignUp")}
+            </TabsTrigger>
+          </TabsList>
 
-          {showEds && (
-            <AuthAlternativeMethods
-              mode={mode}
-              showEds={showEds}
-              showTelegram={false}
-              showLdap={false}
-              loading={loading}
-              edsLoading={edsLoading}
-              ldapLoading={ldapLoading}
-              tenantSlug={effectiveTenantSlug}
-              showTenantSlug={showTenantSlug}
-              tenantSlugReadOnly={tenantSlugReadOnly}
-              tenantBaseDomain={config.tenant_base_domain}
-              onEdsAuth={onEdsAuth}
-              onTenantSlugChange={onTenantSlugChange}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="signin" className="mt-0">
+            {formBlock("signin")}
+          </TabsContent>
 
-      {email && password && showEds && mode === "signin" && !forgotOpen && (
-        <p className="mt-3 text-center text-xs" style={{ color: sap.textMuted }}>
-          {t("auth.edsLinkHint")}
-        </p>
+          <TabsContent value="signup" className="mt-0">
+            {formBlock("signup")}
+          </TabsContent>
+        </Tabs>
+      ) : (
+        formBlock("signin")
       )}
-
-      <div className="mt-5">
-        <AuthSecurityBlock />
-      </div>
-
-      <p className="mt-4 text-center text-[11px] leading-relaxed" style={{ color: sap.textMuted }}>
-        {t("auth.policyFooter")}
-      </p>
     </div>
   );
 }

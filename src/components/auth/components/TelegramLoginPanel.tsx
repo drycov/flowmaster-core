@@ -1,37 +1,59 @@
 import { ExternalLink, Loader2, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { linkClass, sapButtonDefaultClass } from "@/components/auth/styles/sap-tokens";
 import { useI18n } from "@/i18n";
 import { useTelegramAuth } from "../hooks/useTelegramAuth";
 
 interface TelegramLoginPanelProps {
   tenantSlug?: string;
+  variant?: "button" | "link";
 }
 
-export function TelegramLoginPanel({ tenantSlug }: TelegramLoginPanelProps) {
+export function TelegramLoginPanel({ tenantSlug, variant = "button" }: TelegramLoginPanelProps) {
   const { t } = useI18n();
   const { loading, polling, deepLink, beginLogin, cancelLogin } = useTelegramAuth(tenantSlug);
 
   if (polling) {
     return (
-      <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
+      <div className="space-y-2 rounded-lg bg-muted p-3 text-sm">
+        <div className="flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" />
           {t("auth.telegram.waitingConfirm")}
         </div>
-        <p className="text-xs text-muted-foreground">{t("auth.telegram.waitingHint")}</p>
         {deepLink && (
-          <Button type="button" variant="outline" size="sm" asChild>
-            <a href={deepLink} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              {t("auth.telegram.openBot")}
-            </a>
-          </Button>
+          <a
+            href={deepLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1 ${linkClass}`}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            {t("auth.telegram.openBot")}
+          </a>
         )}
-        <Button type="button" variant="ghost" size="sm" onClick={cancelLogin}>
-          <X className="mr-2 h-4 w-4" />
+        <button type="button" className={linkClass} onClick={cancelLogin}>
+          <X className="mr-1 inline h-3.5 w-3.5" />
           {t("common.cancel")}
-        </Button>
+        </button>
       </div>
+    );
+  }
+
+  if (variant === "link") {
+    return (
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => void beginLogin()}
+        className={`inline-flex items-center gap-1.5 disabled:opacity-50 ${linkClass}`}
+      >
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Send className="h-3.5 w-3.5" />
+        )}
+        {t("auth.telegram.loginButton")}
+      </button>
     );
   }
 
@@ -39,14 +61,14 @@ export function TelegramLoginPanel({ tenantSlug }: TelegramLoginPanelProps) {
     <Button
       type="button"
       variant="outline"
-      className="h-9 w-full rounded border border-[#BCC3CA] bg-white text-sm font-semibold text-[#0064D9] shadow-none hover:border-[#0070F2] hover:bg-[#EBF8FF]"
       disabled={loading}
       onClick={() => void beginLogin()}
+      className={sapButtonDefaultClass}
     >
       {loading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Send className="mr-2 h-4 w-4" />
+        <Send className="h-4 w-4" />
       )}
       {t("auth.telegram.loginButton")}
     </Button>

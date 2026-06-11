@@ -9,7 +9,6 @@ import { useEdsAuth } from "@/components/auth/hooks/useEdsAuth";
 import { useLdapAuth } from "@/components/auth/hooks/useLdapAuth";
 import { useAuthForm } from "@/components/auth/hooks/useAuthForm";
 import { AuthPageLayout } from "@/components/auth/layout/AuthPageLayout";
-import { AuthHeroPanel } from "@/components/auth/hero/AuthHeroPanel";
 import { AuthLoginPanel } from "@/components/auth/login/AuthLoginPanel";
 import { getPublicAuthConfigFn } from "@/lib/api/system.functions";
 import type { PublicAuthConfig } from "@/components/auth/types";
@@ -196,6 +195,8 @@ function AuthPage() {
   };
 
   return (
-    <AuthPageLayout hero={<AuthHeroPanel />} login={<AuthLoginPanel {...loginPanelProps} />} />
+    <AuthPageLayout>
+      <AuthLoginPanel {...loginPanelProps} />
+    </AuthPageLayout>
   );
 }

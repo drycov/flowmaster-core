@@ -7,7 +7,7 @@ function signInPanel(page: Page) {
 export async function login(page: Page, email: string, password: string) {
   await page.goto("/auth");
   const panel = signInPanel(page);
-  await panel.getByPlaceholder("user@example.com").fill(email);
+  await panel.getByPlaceholder("Адрес электронной почты").fill(email);
   await panel.locator('input[type="password"]').fill(password);
   await panel.getByRole("button", { name: "Войти в систему" }).click();
   await expect(page).toHaveURL(/\/dashboard/);

@@ -1,9 +1,9 @@
-import { LockKeyhole } from "lucide-react";
+import { LockKeyhole, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AuthOrDivider } from "@/components/auth/components/AuthOrDivider";
 import { LdapLoginForm } from "@/components/auth/components/LdapLoginForm";
 import { TelegramLoginPanel } from "@/components/auth/components/TelegramLoginPanel";
-import { sap, sapButtonDefaultClass } from "@/components/auth/styles/sap-tokens";
+import { linkClass } from "@/lib/design-tokens";
 import { useI18n } from "@/i18n";
 import type { AuthMode } from "../types";
 
@@ -46,60 +46,47 @@ export function AuthAlternativeMethods({
     return null;
   }
 
+  const edsLabel = mode === "signup" ? t("auth.edsSignUp") : t("auth.edsSignIn");
+
   return (
-    <div className="space-y-3 border-t pt-5" style={{ borderColor: sap.border }}>
-      <div>
-        <h2 className="text-sm font-semibold" style={{ color: sap.text }}>
-          {t("auth.alternativeMethods.title")}
-        </h2>
-        <p className="mt-1 text-xs" style={{ color: sap.textSecondary }}>
-          {t("auth.alternativeMethods.description")}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        {showTelegram && (
-          <div
-            className="rounded-sm border p-3"
-            style={{ borderColor: sap.borderLight, backgroundColor: sap.pageBg }}
-          >
-            <TelegramLoginPanel tenantSlug={tenantSlug} />
-            <p className="mt-2 text-center text-[11px]" style={{ color: sap.textMuted }}>
-              {t("auth.telegram.loginHint")}
-            </p>
+    <div className="space-y-4 pt-1">
+      {(showEds || showTelegram) && (
+        <>
+          <AuthOrDivider />
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {showEds && (
+              <button
+                type="button"
+                disabled={loading || edsLoading}
+                onClick={onEdsAuth}
+                className={`inline-flex items-center gap-1.5 disabled:opacity-50 ${linkClass}`}
+              >
+                {edsLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <LockKeyhole className="h-3.5 w-3.5" />
+                )}
+                {edsLabel}
+              </button>
+            )}
+            {showTelegram && <TelegramLoginPanel tenantSlug={tenantSlug} variant="link" />}
           </div>
-        )}
+        </>
+      )}
 
-        {showEds && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={loading || edsLoading}
-            onClick={onEdsAuth}
-            className={sapButtonDefaultClass}
-          >
-            <LockKeyhole className="h-4 w-4" style={{ color: sap.brand }} />
-            {mode === "signup" ? t("auth.edsSignUp") : t("auth.edsSignIn")}
-          </Button>
-        )}
-
-        {showLdap && onLdapAuth && (
-          <div
-            className="rounded-sm border p-3"
-            style={{ borderColor: sap.borderLight, backgroundColor: sap.pageBg }}
-          >
-            <LdapLoginForm
-              loading={loading || ldapLoading}
-              tenantSlug={tenantSlug}
-              showTenantSlug={showTenantSlug}
-              tenantSlugReadOnly={tenantSlugReadOnly}
-              tenantBaseDomain={tenantBaseDomain}
-              onTenantSlugChange={onTenantSlugChange}
-              onSubmit={onLdapAuth}
-            />
-          </div>
-        )}
-      </div>
+      {showLdap && onLdapAuth && (
+        <div className="border-t border-border pt-4">
+          <LdapLoginForm
+            loading={loading || ldapLoading}
+            tenantSlug={tenantSlug}
+            showTenantSlug={showTenantSlug}
+            tenantSlugReadOnly={tenantSlugReadOnly}
+            tenantBaseDomain={tenantBaseDomain}
+            onTenantSlugChange={onTenantSlugChange}
+            onSubmit={onLdapAuth}
+          />
+        </div>
+      )}
     </div>
   );
 }

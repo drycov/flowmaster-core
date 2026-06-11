@@ -15,7 +15,6 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Languages,
   CheckSquare,
   User,
   HelpCircle,
@@ -59,7 +58,6 @@ import {
   type NavItemDef,
 } from "@/lib/access/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +69,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { useAccessTokenRefresh } from "@/lib/auth/client/useAccessTokenRefresh";
 
 type NavItem = {
@@ -91,8 +90,9 @@ function SidebarNavLink({ item, path }: { item: NavItem; path: string }) {
     <Link
       to={item.to}
       className={cn(
-        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent",
-        active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-sidebar-accent",
+        active &&
+          "border-l-2 border-sidebar-primary bg-sidebar-accent pl-[calc(0.5rem-2px)] font-medium text-sidebar-accent-foreground",
       )}
     >
       <item.icon className="w-4 h-4 shrink-0 opacity-70" />
@@ -154,7 +154,7 @@ function SidebarNavGroup({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { t, locale, setLocale } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const router = useRouterState();
   const path = router.location.pathname;
@@ -385,12 +385,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
         <div className="px-4 py-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-sm bg-sidebar-primary flex items-center justify-center font-bold text-sidebar-primary-foreground">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
               {t("shell.brandAbbr")}
             </div>
             <div className="leading-tight">
-              <div className="font-semibold text-sm">{t("app.name")}</div>
+              <div className="text-sm font-semibold">{t("app.name")}</div>
               <div className="text-[11px] text-sidebar-foreground/60">{t("shell.version")}</div>
             </div>
           </div>
@@ -459,18 +459,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 bg-card border-b border-border flex items-center px-4 gap-4">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
           <div className="flex-1" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocale(locale === "ru" ? "kk" : "ru")}
-            className="gap-1.5"
+          <LanguageSwitcher />
+          <Link
+            to="/notifications"
+            className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <Languages className="w-4 h-4" />
-            <span className="font-mono text-xs">{locale.toUpperCase()}</span>
-          </Button>
-          <Link to="/notifications" className="relative p-2 hover:bg-muted rounded">
             <Bell className="w-4 h-4" />
             {unread > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
@@ -478,7 +473,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-2 py-1 hover:bg-muted rounded">
+              <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
                 <Avatar className="w-7 h-7">
                   <AvatarFallback className="text-[11px] bg-primary text-primary-foreground">
                     {initials || "—"}
@@ -559,12 +554,12 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="border-b border-border bg-card px-6 py-4 flex items-start justify-between gap-4">
+    <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   );
 }

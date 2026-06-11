@@ -14,6 +14,30 @@
 
 ## Быстрый старт (разработка)
 
+### Docker (рекомендуется)
+
+Полный стек: PostgreSQL + Supabase API + приложение.
+
+```bash
+npm ci --legacy-peer-deps
+node scripts/docker-setup.mjs    # создаёт .env с секретами
+docker compose up -d --build     # первый запуск ~3–5 мин
+```
+
+- Приложение: `http://localhost:3000`
+- Supabase API: `http://localhost:54321`
+- Postgres (отладка): `127.0.0.1:54322`
+- Studio (опционально): `docker compose --profile studio up -d` → `http://localhost:54321` (Basic Auth)
+
+Миграции применяются автоматически при первом старте. После добавления новых SQL-файлов:
+
+```bash
+docker compose run --rm db-migrate
+docker compose up -d app
+```
+
+### Локально без Docker
+
 ```bash
 # 1. Зависимости
 npm ci --legacy-peer-deps
@@ -22,8 +46,9 @@ npm ci --legacy-peer-deps
 cp .env.example .env
 # Заполните SUPABASE_URL, ключи и JWT secret
 
-# 3. Миграции БД (Supabase CLI)
-npx supabase db push
+# 3. Supabase (локально через CLI или Docker-стек)
+docker compose up -d db kong rest storage realtime auth
+# или: npx supabase start && npx supabase db push
 
 # 4. Запуск
 npm run dev
@@ -52,10 +77,12 @@ npm run start
 
 Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
-Docker:
+Docker (production on-prem):
 
 ```bash
+node scripts/docker-setup.mjs
 docker compose up -d --build
+docker compose --profile cron up -d   # фоновые задачи
 ```
 
 ## Документация
@@ -78,6 +105,8 @@ docker compose up -d --build
 | `npm run start` | Запуск production (preview) |
 | `npm run test` | Unit-тесты (Vitest) |
 | `npm run test:e2e` | E2E smoke (Playwright) |
+| `npm run docker:setup` | Генерация `.env` для Docker-стека |
+| `npm run docker:up` | Docker: Supabase + app |
 | `npm run compose:staging` | Docker staging (app + cron) |
 | `npm run uat:preflight` | Pre-UAT health/cron checks |
 | `npm run lint` | ESLint |
@@ -86,7 +115,7 @@ docker compose up -d --build
 ## Стек
 
 - **Frontend/SSR:** React 19, TanStack Start/Router/Query, Tailwind 4
-- **Backend:** Server Functions + Nitro, PostgreSQL (Supabase)
+- **Backend:** Server Functions + Nitro, PostgreSQL (self-hosted Supabase в Docker)
 - **Auth:** Email, LDAP, ЭЦП, Telegram (custom sessions + RLS)
 
 ## Лицензия

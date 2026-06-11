@@ -33,6 +33,11 @@ dist-ssr
 .env
 .flowmaster/
 
+# Self-hosted Supabase data (docker/supabase)
+docker/supabase/volumes/db/data
+docker/supabase/volumes/storage
+docker/supabase/.env
+
 # Playwright
 /test-results/
 /playwright-report/

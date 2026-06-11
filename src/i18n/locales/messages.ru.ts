@@ -54,7 +54,12 @@ export const messagesRu = {
   "auth.feature.archive.desc":
     "Долговременное хранение документов с полной историей изменений и действий.",
   "auth.placeholder.fullName": "Иванов Иван Иванович",
-  "auth.placeholder.email": "user@example.com",
+  "auth.placeholder.email": "example@domain.kz",
+  "auth.placeholder.emailField": "Адрес электронной почты",
+  "auth.placeholder.passwordField": "Пароль",
+  "auth.orDivider": "или",
+  "auth.showPassword": "Показать пароль",
+  "auth.hidePassword": "Скрыть пароль",
   "auth.metaTitle": "Вход — ЕСЭДО",
   "auth.metaDescription": "Вход в единую систему электронного документооборота.",
   "auth.toast.signInSuccess": "Вход выполнен",
