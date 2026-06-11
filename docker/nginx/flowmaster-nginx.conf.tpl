@@ -1,11 +1,72 @@
-# HTTPS-шаблон для docker-compose.tls.yml (Let's Encrypt через nginx-certbot).
-# Переменные: PROXY_DOMAIN
+# HTTPS + HTTP bootstrap for jonasal/nginx-certbot (docker-compose.tls.yml)
+# Variables: PROXY_DOMAIN
+
+resolver 127.0.0.11 valid=10s ipv6=off;
 
 map $http_upgrade $connection_upgrade {
     default upgrade;
     ''      close;
 }
 
+# Port 80 — ACME challenge (certbot) + proxy until HTTPS certs exist
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${PROXY_DOMAIN};
+    server_tokens off;
+
+    client_max_body_size 500m;
+
+    large_client_header_buffers 4 16k;
+    proxy_buffer_size 128k;
+    proxy_buffers 4 256k;
+    proxy_busy_buffers_size 256k;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $http_host;
+
+    set $flowmaster_kong http://kong:8000;
+    set $flowmaster_app http://app:3000;
+
+    # HTTP-01 ACME — certbot writes to /var/www/letsencrypt (must precede location /)
+    location ^~ /.well-known/acme-challenge {
+        default_type "text/plain";
+        root /var/www/letsencrypt;
+    }
+
+    location /auth { proxy_pass $flowmaster_kong; }
+    location /rest { proxy_pass $flowmaster_kong; }
+    location /graphql { proxy_pass $flowmaster_kong; }
+    location /realtime/ {
+        proxy_pass $flowmaster_kong;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 3600s;
+    }
+    location /storage/v1/ {
+        proxy_pass $flowmaster_kong;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        chunked_transfer_encoding off;
+        client_max_body_size 0;
+    }
+    location /functions { proxy_pass $flowmaster_kong; }
+    location /mcp { proxy_pass $flowmaster_kong; }
+    location /sso { proxy_pass $flowmaster_kong; }
+
+    location / {
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+}
+
+# Port 443 — enabled after Let's Encrypt issues certs (certbot manages .nokey fallback)
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -23,6 +84,11 @@ server {
 
     client_max_body_size 500m;
 
+    large_client_header_buffers 4 16k;
+    proxy_buffer_size 128k;
+    proxy_buffers 4 256k;
+    proxy_busy_buffers_size 256k;
+
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -31,53 +97,32 @@ server {
     proxy_set_header X-Forwarded-Host $http_host;
     proxy_set_header X-Forwarded-Port $server_port;
 
-    large_client_header_buffers 4 16k;
-    proxy_buffer_size 128k;
-    proxy_buffers 4 256k;
-    proxy_busy_buffers_size 256k;
+    set $flowmaster_kong http://kong:8000;
+    set $flowmaster_app http://app:3000;
 
-    location /auth {
-        proxy_pass http://kong:8000;
-    }
-
-    location /rest {
-        proxy_pass http://kong:8000;
-    }
-
-    location /graphql {
-        proxy_pass http://kong:8000;
-    }
-
+    location /auth { proxy_pass $flowmaster_kong; }
+    location /rest { proxy_pass $flowmaster_kong; }
+    location /graphql { proxy_pass $flowmaster_kong; }
     location /realtime/ {
-        proxy_pass http://kong:8000;
+        proxy_pass $flowmaster_kong;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
         proxy_read_timeout 3600s;
     }
-
     location /storage/v1/ {
-        proxy_pass http://kong:8000;
+        proxy_pass $flowmaster_kong;
         proxy_buffering off;
         proxy_request_buffering off;
         chunked_transfer_encoding off;
         client_max_body_size 0;
     }
-
-    location /functions {
-        proxy_pass http://kong:8000;
-    }
-
-    location /mcp {
-        proxy_pass http://kong:8000;
-    }
-
-    location /sso {
-        proxy_pass http://kong:8000;
-    }
+    location /functions { proxy_pass $flowmaster_kong; }
+    location /mcp { proxy_pass $flowmaster_kong; }
+    location /sso { proxy_pass $flowmaster_kong; }
 
     location / {
         proxy_set_header Host $http_host;
-        proxy_pass http://app:3000;
+        proxy_pass $flowmaster_app;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
     }
