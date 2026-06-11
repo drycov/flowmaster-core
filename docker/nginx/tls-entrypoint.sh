@@ -1,5 +1,9 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
+
+: "${DEBUG:=0}"
+: "${STAGING:=0}"
+: "${USE_LOCAL_CA:=0}"
 
 . /scripts/util.sh
 
