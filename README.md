@@ -41,9 +41,9 @@ npm run dev                      # http://localhost:3000
 | Postgres (pg_dump) | 127.0.0.1:54322 |
 | Studio | `node scripts/docker-up.mjs --studio` |
 
-Cron: `npm run docker:up -- --cron` или `docker compose --profile cron up -d`
+Cron: `npm run docker:up -- --cron`
 
-После новых SQL-миграций: `npm run docker:migrate && docker compose restart app`
+После новых SQL-миграций: `npm run docker:migrate && npm run docker:up`
 
 ### Локально без Docker
 
@@ -52,9 +52,7 @@ npm ci --legacy-peer-deps
 cp .env.example .env
 # Заполните SUPABASE_URL, ключи и JWT secret
 
-docker compose up -d db kong rest storage realtime auth
-# или: npx supabase start && npx supabase db push
-
+npm run docker:deps    # Supabase в Docker (рекомендуется)
 npm run dev
 ```
 
@@ -80,15 +78,15 @@ Smoke-сценарий: вход → создание документа с ка
 # 1. Production .env с секретами и доменом
 npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
 
-# 2. HTTPS (Let's Encrypt) + cron
-docker compose -f docker-compose.tls.yml up -d --build
-docker compose --profile cron up -d
+# 2. HTTPS + cron
+npm run compose:tls
+npm run compose:tls:cron
 
 # 3. Проверка
 curl https://esedo.example.kz/api/health
 ```
 
-Шаблоны переменных: `.env.docker.example` (локально), `.env.production.example` (production). Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Env: `.env.docker.example` + `npm run env:production`. Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Bare metal / VM
 
@@ -124,24 +122,22 @@ curl https://license.example.kz/api/v1/license/health
 
 ## Скрипты
 
+Полный список: [scripts/README.md](scripts/README.md).
+
 | Команда | Назначение |
 |---------|------------|
-| `npm run dev` | Dev-сервер |
-| `npm run build` | Production build |
-| `npm run start` | Запуск production (preview) |
-| `npm run test` | Unit-тесты (Vitest) |
-| `npm run test:e2e` | E2E smoke (Playwright) |
-| `npm run env:local` | Генерация `.env` для локального Docker |
-| `npm run env:production` | Генерация `.env.production` / `--install` → `.env` |
-| `npm run docker:up` | Полный стек: Supabase → migrate → app → nginx |
-| `npm run docker:deps` | Только Supabase (для `npm run dev`) |
-| `npm run docker:migrate` | Применить SQL-миграции |
-| `npm run docker:wait` | Дождаться готовности Kong |
-| `npm run compose:staging` | Docker staging (app + cron + nginx) |
-| `npm run uat:preflight` | Pre-UAT health/cron checks |
-| `npm run uat:smoke` | Smoke: health, DB, migrations |
-| `npm run lint` | ESLint |
-| `npm run license:generate` | Генерация лицензионного ключа FM1 |
+| `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
+| `npm run env:sync` | `.env` → `docker/supabase/.env` |
+| `npm run docker:up` | HTTP stack + migrate + wait |
+| `npm run compose:tls` / `compose:tls:cron` | HTTPS production |
+| `npm run compose:staging` | UAT stack |
+| `npm run compose:license-server` | Vendor license server |
+| `npm run docker:deps` | Supabase only (host dev) |
+| `npm run docker:full` | cron + studio + monitoring |
+| `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
+| `npm run uat:smoke` / `uat:preflight` | UAT checks |
+| `npm run license:generate` / `license:server` | FM1 keys / vendor API |
+| `npm run dev` / `build` / `start` / `test` / `test:e2e` | App lifecycle |
 
 ## Стек
 

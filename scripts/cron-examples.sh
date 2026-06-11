@@ -15,3 +15,5 @@ curl -sf -X POST $auth "$APP_URL/api/public/hooks/webhook-dispatch"
 curl -sf -X POST $auth "$APP_URL/api/public/hooks/sla-tick"
 curl -sf -X POST $auth "$APP_URL/api/public/hooks/retention-tick"
 curl -sf -X POST $auth "$APP_URL/api/public/hooks/license-sync"
+# Optional when ENABLE_TELEGRAM_POLL=1:
+# curl -sf -X POST $auth "$APP_URL/api/public/hooks/telegram-poll"

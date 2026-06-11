@@ -5,35 +5,24 @@
  *   npm run compose:license-server
  */
 
-import { existsSync } from "node:fs";
+import { loadEnvFiles } from "./lib/load-env.mjs";
+import { orchestrateStack, printStackUrls } from "./lib/docker-orchestrate.mjs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
-import { composeBaseArgs } from "./lib/docker-compose-cli.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const envPath = resolve(root, ".env");
-const licenseEnvPath = resolve(root, ".env.license-server");
 
-if (!existsSync(envPath) && !existsSync(licenseEnvPath)) {
-  console.error("Missing .env — run:");
-  console.error("  npm run env:license-server -- --domain=license.example.kz --install");
-  process.exit(1);
+loadEnvFiles([".env", ".env.license-server"]);
+
+orchestrateStack(root, {
+  stack: "licenseServer",
+  envHint: "npm run env:license-server -- --domain=license.example.kz --install",
+  label: "License server (HTTPS)",
+});
+
+printStackUrls(root, { stack: "licenseServer", tls: true });
+
+const domain = process.env.PROXY_DOMAIN?.trim();
+if (domain) {
+  console.log(`  License API:  curl https://${domain}/api/v1/license/health`);
 }
-
-if (!existsSync(envPath) && existsSync(licenseEnvPath)) {
-  console.error("Copy .env.license-server → .env first:");
-  console.error("  npm run env:license-server -- --install");
-  process.exit(1);
-}
-
-const args = [
-  ...composeBaseArgs(["docker-compose.license-server.yml"]),
-  "up",
-  "-d",
-  "--build",
-];
-
-console.log("Starting license server stack…");
-const result = spawnSync("docker", args, { cwd: root, stdio: "inherit", shell: process.platform === "win32" });
-process.exit(result.status ?? 1);

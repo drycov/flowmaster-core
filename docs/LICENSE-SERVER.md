@@ -7,8 +7,9 @@
 ```bash
 # 1. Сгенерировать .env (секреты LICENSE_SIGNING_SECRET + LICENSE_SERVER_ADMIN_SECRET)
 npm run env:license-server -- --domain=license.satory.kz --email=admin@satory.kz --install
+# env:sync выполняется автоматически при --install
 
-# 2. Запустить стек
+# 2. Запустить стек (migrate + wait включены)
 npm run compose:license-server
 
 # 3. Проверить
@@ -56,7 +57,7 @@ npm run env:production -- \
 Cron на клиенте (`license-sync`):
 
 ```bash
-docker compose -f docker-compose.tls.yml --profile cron up -d
+npm run compose:tls:cron
 ```
 
 ## API

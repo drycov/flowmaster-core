@@ -1,5 +1,0 @@
-# DEPRECATED — use docker-compose.tls.yml instead.
-#
-#   docker compose -f docker-compose.tls.yml up -d --build
-#
-# See docker/compose/nginx-tls.overrides.yml

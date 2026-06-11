@@ -38,10 +38,10 @@
 
 ```bash
 npm ci --legacy-peer-deps
-npm run env:local          # .env с JWT/ключами Postgres
-docker compose up -d --build           # Supabase + migrate + app + nginx
-docker compose --profile cron up -d    # outbox, SLA, retention
-curl http://localhost/api/health       # через nginx
+npm run env:local
+npm run docker:up
+npm run docker:up -- --cron    # optional cron sidecar
+curl http://localhost/api/health
 ```
 
 | Сервис | URL / порт |
@@ -50,14 +50,14 @@ curl http://localhost/api/health       # через nginx
 | ЕСЭДО (напрямую) | `http://localhost:3000` |
 | Supabase API (Kong) | `http://localhost:54321` |
 | Postgres (localhost) | `127.0.0.1:54322` |
-| Studio (опционально) | `docker compose --profile studio up -d` |
+| Studio (опционально) | `npm run docker:up -- --studio` |
 
 ### Production on-prem (HTTPS)
 
 ```bash
-npm run docker:setup:production -- --domain=esedo.example.kz --email=admin@example.kz --install
-docker compose -f docker-compose.tls.yml up -d --build
-docker compose --profile cron up -d
+npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
+npm run compose:tls
+npm run compose:tls:cron
 curl https://esedo.example.kz/api/health
 ```
 
@@ -68,16 +68,21 @@ curl https://esedo.example.kz/api/health
 
 ```bash
 npm run docker:migrate
-docker compose up -d app
+npm run docker:up -- --tls   # или restart app вручную
 ```
 
-Шаблоны переменных:
+Шаблон и генерация env:
 
-| Файл | Назначение |
-|------|------------|
-| `.env.docker.example` | Локальный Docker |
-| `.env.production.example` | Production (домен, nginx, SMTP) |
-| `.env.production` | Сгенерированный env (gitignored) |
+| Способ | Описание |
+|--------|----------|
+| `.env.docker.example` | Единый шаблон (reference) |
+| `npm run env:local` | Локальный Docker → `.env` |
+| `npm run env:production -- --domain=X` | → `.env.production` |
+| `npm run env:production -- --install` | → `.env` (production) |
+| `npm run env:staging` | UAT → `.env` |
+| `npm run env:license-server` | Vendor license server |
+
+Legacy `.env.production.example` / `.env.staging.example` — указатели на генератор.
 
 Supabase Docker vendored в `docker/supabase/`. Nginx-конфиги: `docker/nginx/`.
 
@@ -86,9 +91,8 @@ Supabase Docker vendored в `docker/supabase/`. Nginx-конфиги: `docker/ng
 Если БД остаётся в Supabase Cloud — поднимайте только app (+ внешний nginx):
 
 ```bash
-cp .env.production.example .env
-# SUPABASE_URL=https://your-project.supabase.co
-# VITE_SUPABASE_URL=https://your-domain
+npm run env:production -- --domain=your.domain --install
+# или вручную: cp .env.docker.example .env и заполните Supabase Cloud keys
 npm run build && npm run start
 ```
 
@@ -107,7 +111,9 @@ npx supabase db push
 |---------|-----------|
 | `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=1` |
 | `npm run env:production -- --domain=X --email=Y` | `.env.production` |
-| `… --install` | копирует в `.env` |
+| `npm run env:staging` | `.env` — UAT :8080 |
+| `npm run env:license-server -- --domain=X --install` | `.env` — license server |
+| `… --install` | копирует output → `.env` + `env:sync` |
 
 ### Обязательные (production)
 
@@ -173,34 +179,35 @@ npm run start
 
 ```bash
 npm run env:local
-docker compose up -d --build
+npm run docker:up
 ```
 
 ### Docker (HTTPS, production)
 
 ```bash
 npm run env:production -- --domain=your.domain.kz --install
-docker compose -f docker-compose.tls.yml up -d --build
+npm run compose:tls
 ```
 
 Cron sidecar:
 
 ```bash
-docker compose --profile cron up -d
+npm run compose:tls:cron
 ```
 
 Supabase Studio:
 
 ```bash
-docker compose --profile studio up -d
+npm run docker:up -- --tls --studio
 ```
 
 ### Staging / UAT
 
 ```bash
-cp .env.staging.example .env
-docker compose -f docker-compose.staging.yml up -d --build
-APP_URL=http://localhost:8080 CRON_SECRET=... npm run uat:preflight
+npm run env:staging
+npm run env:sync
+npm run compose:staging
+APP_URL=http://localhost:8080 npm run uat:preflight
 ```
 
 Staging nginx: `http://localhost:8080` (app напрямую: `:3001`). Подробнее: [STAGING.md](./STAGING.md).
@@ -258,7 +265,7 @@ Docker cron sidecar: `scripts/cron-runner.sh` (profile `cron`).
 **HTTPS (production):**
 
 ```bash
-docker compose -f docker-compose.tls.yml up -d --build
+npm run compose:tls
 ```
 
 Override использует `jonasal/nginx-certbot` + `docker/nginx/flowmaster-nginx.conf.tpl`. Kong и app не публикуют порты наружу — только nginx `:80`/`:443`.
@@ -378,10 +385,9 @@ Cron phone-home каждые 6 ч: `POST /api/public/hooks/license-sync`.
 
 ```bash
 git pull
-npm run docker:migrate          # Docker
-# или: npx supabase db push     # cloud
-docker compose up -d --build    # пересборка app при смене VITE_*
-npm run uat:smoke               # smoke-проверка
+npm run docker:migrate
+npm run compose:tls          # или npm run docker:up
+npm run uat:smoke
 ```
 
 Проверьте `/api/health` и smoke: login → документ → задача.

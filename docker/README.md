@@ -1,182 +1,146 @@
 # Docker
 
-Self-hosted Supabase stack (vendored from [supabase/supabase/docker](https://github.com/supabase/supabase/tree/master/docker)) + Flowmaster app + **nginx** reverse proxy.
+Self-hosted Supabase + Flowmaster app + **nginx**. Compose entrypoints — в корне репозитория; патчи — в `docker/compose/`.
 
 ## Compose-файлы
 
-| Файл | Назначение |
-|------|------------|
-| `docker-compose.yml` | Production: Supabase + app + **nginx** + cron (profile) |
-| `docker-compose.dev.yml` | Dev: только Supabase + migrate (app через `npm run dev`) |
-| `docker-compose.staging.yml` | UAT: app :3001 + cron + **nginx** :8080 |
-| `docker-compose.tls.yml` | Production HTTPS (Let's Encrypt) |
-| `docker-compose.monitoring.yml` | Prometheus + Grafana (profile `monitoring`) |
-| `docker/compose/nginx-tls.overrides.yml` | TLS-патчи Supabase/nginx (include) |
-| `docker/compose/flowmaster.services.yml` | app, nginx, db-migrate, cron (include) |
-| `docker/compose/supabase.overrides.yml` | Патчи Supabase (profiles, kong deps) |
-| `docker/compose/staging.overrides.yml` | Staging-порты и cron |
+| Файл | Project name | Назначение |
+|------|--------------|------------|
+| `docker-compose.yml` | `flowmaster` | HTTP production |
+| `docker-compose.tls.yml` | `flowmaster` | HTTPS (Let's Encrypt) |
+| `docker-compose.staging.yml` | `flowmaster-staging` | UAT (:8080 nginx, cron always on) |
+| `docker-compose.license-server.yml` | `flowmaster-license-server` | Vendor license server |
+| `docker-compose.dev.yml` | `flowmaster-dev` | Supabase + migrate (app на хосте) |
+| `docker-compose.monitoring.yml` | — | Prometheus/Grafana (profile `monitoring`) |
 
-## Архитектура (production)
+Includes:
+
+| Файл | Содержимое |
+|------|------------|
+| `docker/compose/flowmaster.services.yml` | app, nginx, db-migrate, cron |
+| `docker/compose/supabase.overrides.yml` | Kong deps, studio profile |
+| `docker/compose/staging.overrides.yml` | Staging ports, cron без profile |
+| `docker/compose/nginx-tls.overrides.yml` | Certbot nginx, unpublish app/kong ports |
+| `docker/supabase/docker-compose.yml` | Vendored Supabase base |
+
+> **Не путать:** `docker/supabase/dev/docker-compose.dev.yml` — upstream Supabase overlay, **не** используется npm-скриптами. Dev backend: root `docker-compose.dev.yml` (`npm run docker:deps`).
+
+## Архитектура
 
 ```
 Browser ──► nginx :80/:443 ──┬──► app:3000        (ЕСЭДО, /api/*)
-                             └──► kong:8000       (/auth, /rest, /storage, …)
+                             └──► kong:8000       (/auth/v1/, /rest, /storage, …)
 ```
-
-Единый публичный домен: `VITE_SUPABASE_URL` и `APP_URL` указывают на один URL (например `https://esedo.example.kz`). Конфиг nginx: `docker/nginx/conf.d/flowmaster.conf`.
 
 ## Быстрый старт
 
-### Локальная разработка (Docker backend)
-
-```bash
-npm run env:local
-npm run docker:deps && npm run dev
-```
-
-### Полный локальный стек
+### Local
 
 ```bash
 npm run env:local
 npm run docker:up
-# App + API: http://localhost (nginx) или :3000 / :54321 напрямую
+curl http://localhost/api/health
 ```
 
-Compose подгружает `.env` также из `docker/supabase/` — скрипты синхронизируют его автоматически (`npm run env:sync`).
+Dev на хосте: `npm run docker:deps && npm run dev`
 
-### Production on-prem
+### Production HTTPS
 
 ```bash
 npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
-docker compose -f docker-compose.tls.yml up -d --build
-docker compose --profile cron up -d
+npm run compose:tls
+npm run compose:tls:cron
+curl https://esedo.example.kz/api/health
 ```
 
-## Скрипты
+### Staging UAT
+
+```bash
+npm run env:staging
+npm run env:sync
+npm run compose:staging
+curl http://localhost:8080/api/health
+```
+
+### License server (vendor)
+
+```bash
+npm run env:license-server -- --domain=license.example.kz --install
+npm run compose:license-server
+```
+
+См. [docs/LICENSE-SERVER.md](../docs/LICENSE-SERVER.md).
+
+## npm-скрипты
+
+Полная таблица: [scripts/README.md](../scripts/README.md).
 
 | Команда | Действие |
 |---------|----------|
-| `npm run env:local` | `.env` — localhost + nginx, `APPLY_DB_SEED=1` |
-| `npm run env:production -- --domain=X` | `.env.production` — HTTPS, prod-флаги |
-| `npm run env:staging` | `.env` — UAT (:8080) |
-| `npm run docker:setup` | alias для `env:local` |
-| `npm run docker:setup:production` | alias для `env:production` |
-| `npm run docker:up` | `up` → `db-migrate` → restart app → wait Kong |
-| `npm run docker:deps` | Backend only (`docker-compose.dev.yml`) |
-| `npm run docker:migrate` | Idempotent SQL migrations |
-| `npm run docker:wait` | Ждать Supabase API |
+| `npm run env:local` / `env:production` / `env:staging` / `env:license-server` | Генерация env |
+| `npm run env:sync` | `.env` → `docker/supabase/.env` |
+| `npm run docker:up` | HTTP stack + migrate + wait |
+| `npm run compose:tls` | HTTPS stack + migrate + wait |
+| `npm run compose:staging` | UAT stack + migrate + wait |
+| `npm run docker:full` | cron + studio + monitoring |
+| `npm run docker:migrate` | Только SQL-миграции |
+| `npm run docker:down` / `docker:down:tls` / `docker:down:staging` | Остановка stack |
 
-Флаги для `docker-up.mjs`: `--dev`, `--cron`, `--studio`.
+Флаги `docker-up.mjs`: `--dev`, `--tls`, `--cron`, `--studio`, `--monitoring`, `--full`.
 
 ## Переменные окружения
 
-| Контекст | `SUPABASE_URL` | `VITE_SUPABASE_URL` |
-|----------|----------------|---------------------|
+| Контекст | `SUPABASE_URL` (server) | `VITE_SUPABASE_URL` (browser) |
+|----------|-------------------------|-------------------------------|
 | `npm run dev` на хосте | `http://localhost:54321` | `http://localhost:54321` |
-| Docker app (server) | `http://kong:8000` (override в compose) | из `.env` |
-| Production через nginx | `https://your.domain` | `https://your.domain` |
+| Docker app | `http://kong:8000` (override) | из `.env` |
+| Production nginx | `https://domain` | `https://domain` |
 
-Файлы:
+**Шаблон:** `.env.docker.example` (единственный).  
+**Генерация:** `npm run env:*` — не редактируйте `.env.production.example` / `.env.staging.example` (legacy pointers).
 
-| Файл | Назначение |
-|------|------------|
-| `.env.docker.example` | Шаблон локального Docker |
-| `.env.production.example` | Шаблон production (домен, nginx, SMTP) |
-| `.env.production` | Сгенерированный production env (gitignored) |
-| `.env` | Активный env (gitignored) |
-
-## Nginx
-
-| Путь | Описание |
-|------|----------|
-| `docker/nginx/conf.d/flowmaster.conf` | HTTP reverse proxy (app + Supabase API) |
-| `docker/nginx/flowmaster-nginx.conf.tpl` | HTTPS-шаблон для certbot override |
-
-Переменные:
-
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `NGINX_HTTP_PORT` | `80` | Порт nginx на хосте |
-| `NGINX_HTTPS_PORT` | `443` | HTTPS (с `docker-compose.tls.yml`) |
-| `PROXY_DOMAIN` | — | Домен для Let's Encrypt |
-| `CERTBOT_EMAIL` | — | Email для certbot |
-| `SSL_SELF_SIGNED_FALLBACK` | `1` | Самоподписанный сертификат, если certbot не выдал LE |
-| `STAGING_NGINX_PORT` | `8080` | Порт nginx в staging compose |
-
-Healthcheck nginx: `GET /api/health` через proxy.
-
-## Профили Compose
+## Compose profiles
 
 | Profile | Сервисы |
 |---------|---------|
-| (default) | db, kong, rest, storage, realtime, auth, db-migrate, app, **nginx** |
-| `cron` | фоновые hooks (`scripts/cron-runner.sh`) |
-| `studio` | Supabase Studio + meta + edge functions (`:54323`) |
-| `monitoring` | Prometheus, Grafana, cAdvisor, exporters |
-| **`full`** | `cron` + `studio` + `monitoring` (см. `npm run docker:full`) |
+| (default) | db, kong, rest, storage, app, nginx, db-migrate |
+| `cron` | Sidecar `scripts/cron-runner.sh` |
+| `studio` | Supabase Studio :54323 |
+| `monitoring` | Prometheus, Grafana, exporters |
 
-### Full stack (app + cron + studio + monitoring)
+`npm run docker:full` = profiles `cron` + `studio` + `monitoring`.
 
-```bash
-npm run env:local && npm run env:sync
-npm run docker:full                    # HTTP localhost
+## Nginx / TLS
 
-npm run env:production -- --domain=edms.satory.kz --install
-npm run env:sync
-npm run compose:tls:full              # HTTPS production
-```
+| Путь | Описание |
+|------|----------|
+| `docker/nginx/conf.d/flowmaster.conf` | HTTP reverse proxy |
+| `docker/nginx/flowmaster-nginx.conf.tpl` | HTTPS template (certbot) |
 
-Или одной compose-командой (TLS):
-
-```bash
-docker compose -f docker-compose.tls.yml -f docker-compose.monitoring.yml \
-  --profile cron --profile studio --profile monitoring \
-  up -d --build
-```
+| Переменная | Default | Описание |
+|------------|---------|----------|
+| `NGINX_HTTP_PORT` | 80 | HTTP |
+| `NGINX_HTTPS_PORT` | 443 | HTTPS |
+| `STAGING_NGINX_PORT` | 8080 | Staging |
+| `PROXY_DOMAIN` | — | Let's Encrypt |
+| `SSL_SELF_SIGNED_FALLBACK` | 1 | Self-signed если LE недоступен |
 
 ## Мониторинг
 
-Опциональный стек метрик (не публикуется наружу — только `127.0.0.1`):
-
 ```bash
 npm run docker:monitoring
-# или вместе со стеком:
-node scripts/docker-up.mjs --monitoring
+# или: npm run docker:up -- --monitoring
 ```
 
-| UI | URL | Логин |
-|----|-----|-------|
-| Grafana | http://127.0.0.1:3001 | `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` |
-| Prometheus | http://127.0.0.1:9090 | — |
-| cAdvisor | http://127.0.0.1:8081 | — |
+Grafana: `http://127.0.0.1:3001` — UI **Администрирование → Мониторинг**.
 
-В приложении: **Администрирование → Мониторинг** (`/admin/monitoring`) — health БД/лицензии, uptime, ссылка на Grafana.
-
-Переменные (`.env`):
-
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `GRAFANA_PORT` | `3001` | Порт Grafana на хосте |
-| `GRAFANA_ADMIN_USER` | `admin` | Логин Grafana |
-| `GRAFANA_ADMIN_PASSWORD` | `admin` | **Смените в production** |
-| `MONITORING_GRAFANA_URL` | — | URL для ссылки в UI (напр. `http://127.0.0.1:3001`) |
-| `PROMETHEUS_PORT` | `9090` | Порт Prometheus |
-
-SSH tunnel с ноутбука: `ssh -L 3001:127.0.0.1:3001 user@server`
-
-Конфиги: `docker/monitoring/`.
-
-## Backup
+## Backup / reset
 
 ```bash
 docker exec supabase-db pg_dump -U postgres postgres > backup.sql
-tar -czf storage-backup.tgz docker/supabase/volumes/storage
-```
-
-## Сброс данных
-
-```bash
 docker compose down
 rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 npm run docker:up
 ```
+
+Подробнее: [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).

@@ -18,7 +18,7 @@ export const PROFILES = {
   staging: {
     id: "staging",
     label: "Staging / UAT",
-    defaultOutput: ".env.staging",
+    defaultOutput: ".env",
     inheritFrom: [".env", ".env.staging"],
   },
   "license-server": {
@@ -200,8 +200,8 @@ export function buildHeader(profileId, ctx) {
         "# Установить как .env:",
         `#   npm run env:production -- --domain=${ctx.domain} --install`,
         "# Запуск:",
-        "#   docker compose -f docker-compose.tls.yml up -d --build",
-        "#   docker compose --profile cron up -d",
+        "#   npm run compose:tls",
+        "#   npm run compose:tls:cron",
         `#   curl https://${ctx.domain}/api/health`,
         "#",
       );
@@ -209,6 +209,7 @@ export function buildHeader(profileId, ctx) {
     case "staging":
       lines.push(
         "# Запуск:",
+        "#   npm run env:staging",
         "#   npm run compose:staging",
         "#   curl http://localhost:8080/api/health",
         "#",
@@ -256,6 +257,8 @@ export function printNextSteps(profileId, ctx) {
       break;
     case "staging":
       console.log("Next steps:");
+      console.log("  npm run env:staging");
+      console.log("  npm run env:sync");
       console.log("  npm run compose:staging");
       console.log("  curl http://localhost:8080/api/health");
       break;

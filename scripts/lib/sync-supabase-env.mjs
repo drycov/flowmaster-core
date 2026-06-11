@@ -17,10 +17,10 @@ export function syncSupabaseEnv(root) {
   return { ok: true, source, target };
 }
 
-export function syncSupabaseEnvOrExit(root) {
+export function syncSupabaseEnvOrExit(root, hint = "npm run env:local") {
   const result = syncSupabaseEnv(root);
   if (!result.ok) {
-    console.error(`Missing ${result.source} — run: npm run env:local`);
+    console.error(`Missing ${result.source} — run: ${hint}`);
     process.exit(1);
   }
   return result;

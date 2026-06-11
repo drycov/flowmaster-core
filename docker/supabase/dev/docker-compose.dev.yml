@@ -1,3 +1,5 @@
+# Upstream Supabase dev overlay (local Studio build).
+# NOT used by Flowmaster npm scripts — use root docker-compose.dev.yml (npm run docker:deps).
 version: "3.8"
 
 services:

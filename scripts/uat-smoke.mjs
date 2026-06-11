@@ -10,7 +10,7 @@
  *   npm run uat:smoke -- --json
  *
  * Env (from .env or shell):
- *   APP_URL / E2E_BASE_URL     — default http://127.0.0.1:3000
+ *   APP_URL / E2E_BASE_URL     — default http://127.0.0.1:8080 (staging nginx)
  *   CRON_SECRET                — cron hook auth
  *   SUPABASE_URL / VITE_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
@@ -19,9 +19,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { spawnSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadEnvFiles } from "./lib/load-env.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -31,12 +31,12 @@ const DB_ONLY = args.has("--db-only");
 const RUN_E2E = args.has("--run-e2e");
 const JSON_OUT = args.has("--json");
 
-loadDotEnv(resolve(root, ".env"));
+loadEnvFiles([".env"]);
 
 const APP_URL = (
   process.env.APP_URL ??
   process.env.E2E_BASE_URL ??
-  "http://127.0.0.1:3000"
+  "http://127.0.0.1:8080"
 ).replace(/\/$/, "");
 
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)?.trim();
@@ -70,25 +70,6 @@ function skip(label, detail = "") {
 
 function section(title) {
   if (!JSON_OUT) console.log(`\n${title}`);
-}
-
-function loadDotEnv(path) {
-  if (!existsSync(path)) return;
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (process.env[key] === undefined) process.env[key] = value;
-  }
 }
 
 async function checkHealth() {

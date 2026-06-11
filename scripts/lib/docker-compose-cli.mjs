@@ -2,13 +2,35 @@
 
 export const OPTIONAL_PROFILES = ["cron", "studio", "monitoring"];
 
+/** Profiles started by `docker-full.mjs` / `compose:*:full`. */
 export const FULL_PROFILES = ["cron", "studio", "monitoring"];
 
-export function resolveComposeFiles({ tls = false, dev = false, monitoring = false } = {}) {
-  if (dev) return ["docker-compose.dev.yml"];
-  const files = [tls ? "docker-compose.tls.yml" : "docker-compose.yml"];
+/** Named compose entrypoints (root docker-compose*.yml). */
+export const STACKS = {
+  http: { files: ["docker-compose.yml"], label: "HTTP production" },
+  tls: { files: ["docker-compose.tls.yml"], label: "HTTPS production" },
+  staging: { files: ["docker-compose.staging.yml"], label: "Staging / UAT" },
+  licenseServer: { files: ["docker-compose.license-server.yml"], label: "License server" },
+  dev: { files: ["docker-compose.dev.yml"], label: "Supabase backend (dev)", dev: true },
+};
+
+export function resolveStackId({ stack, tls = false, dev = false } = {}) {
+  if (stack && STACKS[stack]) return stack;
+  if (dev) return "dev";
+  if (tls) return "tls";
+  return "http";
+}
+
+export function resolveComposeFiles({ stack, tls = false, dev = false, monitoring = false } = {}) {
+  const stackId = resolveStackId({ stack, tls, dev });
+  const files = [...STACKS[stackId].files];
   if (monitoring) files.push("docker-compose.monitoring.yml");
   return files;
+}
+
+/** @deprecated Use resolveComposeFiles({ stack: 'tls' }) — kept for callers passing tls/dev booleans. */
+export function resolveComposeFilesLegacy({ tls = false, dev = false, monitoring = false } = {}) {
+  return resolveComposeFiles({ tls, dev, monitoring });
 }
 
 export function composeBaseArgs(files) {
@@ -28,12 +50,17 @@ export function composeProfileArgs(profiles) {
 }
 
 export function buildComposeCommand({
+  stack,
   tls = false,
   dev = false,
   profiles = [],
   subcommand = [],
 } = {}) {
   const wantsMonitoring = profiles.includes("monitoring");
-  const files = resolveComposeFiles({ tls, dev, monitoring: wantsMonitoring });
+  const files = resolveComposeFiles({ stack, tls, dev, monitoring: wantsMonitoring });
   return [...composeBaseArgs(files), ...composeProfileArgs(profiles), ...subcommand];
+}
+
+export function buildComposeDownCommand({ stack, tls = false, dev = false } = {}) {
+  return [...composeBaseArgs(resolveComposeFiles({ stack, tls, dev })), "down"];
 }

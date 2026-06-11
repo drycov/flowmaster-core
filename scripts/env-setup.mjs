@@ -54,7 +54,7 @@ Profiles:
 Options:
   --force           overwrite if output exists
   --rotate-secrets  new JWT/Postgres secrets (default: keep from --output / inherit files)
-  --install         copy result to .env (production / license-server)
+  --install         copy result to .env (production, license-server, staging)
   --domain=HOST     HTTPS domain (production / license-server)
   --email=ADDR      certbot email
   --license-secret=HEX   production: shared LICENSE_SIGNING_SECRET from vendor
@@ -195,7 +195,7 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   }
 
   const rootEnv = resolve(root, ".env");
-  if (install || outputPath === rootEnv) {
+  if (install || outputPath === rootEnv || profileId === "local") {
     const synced = syncSupabaseEnv(root);
     if (synced.ok) {
       console.log(`Synced → docker/supabase/.env`);
