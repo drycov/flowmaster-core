@@ -8,19 +8,24 @@
 # 1. Env (генерирует секреты Supabase + app)
 node scripts/docker-setup.mjs
 
-# 2. Запуск (Supabase + миграции + app :3001 + cron)
+# 2. Запуск (Supabase + migrate + app :3001 + nginx :8080 + cron)
 docker compose -f docker-compose.staging.yml up -d --build
+# или: npm run compose:staging
 
 # 3. Preflight
-APP_URL=http://localhost:3001 CRON_SECRET=<secret> sh scripts/uat-preflight.sh
+APP_URL=http://localhost:8080 CRON_SECRET=<secret> npm run uat:preflight
 
 # 4. E2E smoke (опционально)
-E2E_BASE_URL=http://127.0.0.1:3001 npm run test:e2e
+E2E_BASE_URL=http://127.0.0.1:8080 npm run test:e2e
 ```
 
-Приложение: `http://localhost:3001` (порт меняется через `STAGING_PORT`).
+| URL | Назначение |
+|-----|------------|
+| `http://localhost:8080` | ЕСЭДО через nginx (рекомендуется для UAT) |
+| `http://localhost:3001` | App напрямую |
+| `http://localhost:54321` | Supabase API (Kong) |
 
-Supabase API: `http://localhost:54321` (тот же Kong, что и в production compose).
+Порты: `STAGING_PORT` (app, по умолчанию 3001), `STAGING_NGINX_PORT` (nginx, по умолчанию 8080).
 
 ## Что входит в staging compose
 
@@ -29,7 +34,8 @@ Supabase API: `http://localhost:54321` (тот же Kong, что и в productio
 | `db`, `kong`, `rest`, `storage`, `realtime`, `auth` | Self-hosted Supabase |
 | `db-migrate` | SQL-миграции из `supabase/migrations/` |
 | `app` | ЕСЭДО, `LOG_LEVEL=debug`, `SENTRY_ENVIRONMENT=staging` |
-| `cron` | Все internal hooks каждые 60 с (настраивается `CRON_INTERVAL_SEC`) |
+| `nginx` | Reverse proxy app + Supabase API |
+| `cron` | Все internal hooks каждые 60 с (`CRON_INTERVAL_SEC`) |
 
 Cron вызывает:
 
@@ -44,7 +50,7 @@ Cron вызывает:
 
 ## Подготовка данных UAT
 
-1. Откройте `http://localhost:3001/auth` — зарегистрируйте первого пользователя (admin).
+1. Откройте `http://localhost:8080/auth` — зарегистрируйте первого пользователя (admin).
 2. **Настройки → Общие** — укажите `app_url` (публичный URL staging).
 3. Активируйте лицензию `FM1.*` или trial.
 4. Создайте тестовых пользователей с ролями: registrar, approver, viewer.
@@ -56,15 +62,17 @@ Cron вызывает:
 
 Рекомендуемый порядок:
 
-1. `uat-preflight.sh` — health + cron
-2. `npm run test:e2e` — автоматический smoke
-3. Ручной проход UAT.md с заказчиком
-4. Pen-test / security review ([SECURITY.md](./SECURITY.md))
+1. `npm run uat:preflight` — health + cron
+2. `npm run uat:smoke` — health, migrations, DB
+3. `npm run test:e2e` — автоматический smoke
+4. Ручной проход UAT.md с заказчиком
+5. Pen-test / security review ([SECURITY.md](./SECURITY.md))
 
 ## Остановка
 
 ```bash
-docker compose -f docker-compose.staging.yml down
+npm run compose:staging:down
+# или: docker compose -f docker-compose.staging.yml down
 ```
 
 Данные Postgres и Storage сохраняются в `docker/supabase/volumes/`. Полный сброс:
@@ -79,15 +87,19 @@ rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 | | Production | Staging |
 |---|------------|---------|
 | Compose | `docker-compose.yml` | `docker-compose.staging.yml` |
-| Supabase | self-hosted | self-hosted |
+| HTTPS | `docker-compose.tls.yml` | HTTP nginx :8080 |
 | Cron | `--profile cron` | всегда включён |
-| Порт app | 3000 | 3001 (по умолчанию) |
+| Порт app | 3000 | 3001 |
+| Порт nginx | 80 | 8080 |
+| Seed | `APPLY_DB_SEED=0` | `APPLY_DB_SEED=1` |
 | Логи | `info` | `debug` |
 
 Production:
 
 ```bash
-node scripts/docker-setup.mjs
-docker compose up -d --build
+npm run docker:setup:production -- --domain=esedo.example.kz --install
+docker compose -f docker-compose.tls.yml up -d --build
 docker compose --profile cron up -d
 ```
+
+Подробнее: [DEPLOYMENT.md](./DEPLOYMENT.md).

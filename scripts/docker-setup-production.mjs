@@ -167,7 +167,7 @@ const header = `# ЕСЭДО — production environment (auto-generated)
 # Regenerate: node scripts/docker-setup-production.mjs --domain=${domain} --force
 # Deploy:
 #   cp .env.production .env
-#   docker compose -f docker-compose.yml -f docker-compose.nginx-tls.yml up -d --build
+#   docker compose -f docker-compose.tls.yml up -d --build
 #   docker compose --profile cron up -d
 #
 
@@ -190,7 +190,7 @@ console.log("Next steps:");
 console.log(`  1. DNS A-record: ${domain} → server IP`);
 console.log("  2. cp .env.production .env   (or re-run with --install)");
 console.log(
-  "  3. docker compose -f docker-compose.yml -f docker-compose.nginx-tls.yml up -d --build",
+  "  3. docker compose -f docker-compose.tls.yml up -d --build",
 );
 console.log("  4. docker compose --profile cron up -d");
 console.log(`  5. curl https://${domain}/api/health`);

@@ -1,52 +1,5 @@
-# HTTPS: Let's Encrypt перед app + Supabase API.
-# Kong и app не публикуют порты наружу — только nginx :80/:443.
+# DEPRECATED — use docker-compose.tls.yml instead.
 #
-#   docker compose -f docker-compose.yml -f docker-compose.nginx-tls.yml up -d --build
+#   docker compose -f docker-compose.tls.yml up -d --build
 #
-# В .env задайте PROXY_DOMAIN и CERTBOT_EMAIL; для единого URL:
-#   APP_URL=https://your-domain.example.com
-#   VITE_SUPABASE_URL=https://your-domain.example.com
-#   SUPABASE_PUBLIC_URL=https://your-domain.example.com
-#   API_EXTERNAL_URL=https://your-domain.example.com
-#   SITE_URL=https://your-domain.example.com
-
-services:
-  app:
-    ports: !reset []
-
-  kong:
-    ports: !reset []
-
-  nginx:
-    image: jonasal/nginx-certbot:6.2.0-nginx1.31.0
-    container_name: flowmaster-nginx
-    restart: unless-stopped
-    ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
-    depends_on:
-      app:
-        condition: service_healthy
-      kong:
-        condition: service_healthy
-    environment:
-      PROXY_DOMAIN: ${PROXY_DOMAIN}
-      CERTBOT_EMAIL: ${CERTBOT_EMAIL}
-    command:
-      - /bin/bash
-      - -c
-      - |
-        envsubst '$${PROXY_DOMAIN}' < /etc/nginx/flowmaster-nginx.conf.tpl > /etc/nginx/user_conf.d/flowmaster.conf && \
-        /scripts/start_nginx_certbot.sh
-    volumes:
-      - ./docker/nginx/flowmaster-nginx.conf.tpl:/etc/nginx/flowmaster-nginx.conf.tpl:ro
-      - nginx_letsencrypt:/etc/letsencrypt
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1 || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 120s
-
-volumes:
-  nginx_letsencrypt:
+# See docker/compose/nginx-tls.overrides.yml

@@ -2,7 +2,7 @@
 
 ## REST API v1
 
-**Base URL:** `https://<your-domain>/api/v1`
+**Base URL:** `https://<your-domain>/api/v1` (тот же домен, что и веб-приложение; nginx проксирует `/api` на app)
 
 **Аутентификация:**
 

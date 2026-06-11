@@ -1,4 +1,4 @@
-# HTTPS-шаблон для docker-compose.nginx-tls.yml (Let's Encrypt через nginx-certbot).
+# HTTPS-шаблон для docker-compose.tls.yml (Let's Encrypt через nginx-certbot).
 # Переменные: PROXY_DOMAIN
 
 upstream flowmaster_app {

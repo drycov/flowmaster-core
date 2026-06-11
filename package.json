@@ -19,6 +19,8 @@
     "test:e2e:install": "playwright install chromium",
     "compose:staging": "docker compose -f docker-compose.staging.yml up -d --build",
     "compose:staging:down": "docker compose -f docker-compose.staging.yml down",
+    "compose:tls": "docker compose -f docker-compose.tls.yml up -d --build",
+    "compose:tls:cron": "docker compose -f docker-compose.tls.yml --profile cron up -d",
     "docker:setup": "node scripts/docker-setup.mjs",
     "docker:setup:production": "node scripts/docker-setup-production.mjs",
     "docker:up": "node scripts/docker-up.mjs",

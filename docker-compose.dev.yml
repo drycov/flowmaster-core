@@ -2,7 +2,9 @@
 name: flowmaster-dev
 
 include:
-  - path: ./docker/supabase/docker-compose.yml
+  - path:
+      - ./docker/supabase/docker-compose.yml
+      - ./docker/compose/supabase.overrides.yml
 
 services:
   db-migrate:
@@ -25,30 +27,3 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  kong:
-    depends_on:
-      auth:
-        condition: service_healthy
-      rest:
-        condition: service_started
-      realtime:
-        condition: service_healthy
-      storage:
-        condition: service_healthy
-      db-migrate:
-        condition: service_completed_successfully
-
-  supavisor:
-    ports:
-      - "127.0.0.1:54322:5432"
-      - "127.0.0.1:6543:6543"
-
-  studio:
-    profiles: ["studio"]
-
-  meta:
-    profiles: ["studio"]
-
-  functions:
-    profiles: ["studio"]

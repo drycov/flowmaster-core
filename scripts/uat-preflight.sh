@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # Pre-UAT checks: health, optional cron hook, E2E hint.
-# Usage: APP_URL=http://localhost:3001 CRON_SECRET=... sh scripts/uat-preflight.sh
+# Usage:
+#   APP_URL=http://localhost:8080 CRON_SECRET=... npm run uat:preflight   # staging (nginx)
+#   APP_URL=http://127.0.0.1:3000 CRON_SECRET=... npm run uat:preflight  # local app
 
 set -eu
 

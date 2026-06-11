@@ -27,6 +27,8 @@
 - `ACCESS_TOKEN_TTL_MINUTES=60` (или меньше)
 - `session_ttl_hours` — максимальный срок «запомнить устройство»
 - HTTPS everywhere (cookie `Secure` в production)
+- TLS на nginx (`docker-compose.tls.yml`) или внешнем reverse proxy
+- `.env` / `.env.production` — только на сервере, в `.gitignore`
 
 ## Авторизация
 
@@ -69,19 +71,22 @@ PostgreSQL RLS на:
 
 | Секрет | Где хранить |
 |--------|-------------|
-| Service role key | `.env` only |
+| Service role key | `.env` / `.env.production` only |
 | JWT secret | `.env` only |
 | CRON_SECRET | `.env` only |
 | LDAP/SMTP/Telegram | DB `organization.settings` (masked in API) |
 
-Не коммитьте `.env`. Ротируйте `CRON_SECRET` при компрометации.
+Не коммитьте `.env`, `.env.production`. Ротируйте `CRON_SECRET` при компрометации.
 
 ## Hardening checklist (production)
 
 - [ ] `CRON_SECRET` задан, anon key не используется для cron
 - [ ] Telegram webhook secret зарегистрирован
 - [ ] `DISABLE_TELEGRAM_POLLING=true` при нескольких репликах
-- [ ] HTTPS + HSTS на reverse proxy
+- [ ] HTTPS + HSTS на reverse proxy (Docker nginx TLS или внешний nginx)
+- [ ] `PROXY_DOMAIN` / Let's Encrypt или корпоративный сертификат
+- [ ] `APPLY_DB_SEED=0` на production
+- [ ] `ENABLE_EMAIL_AUTOCONFIRM=false` на production
 - [ ] Supabase RLS policies применены (миграции phase 8+)
 - [ ] Лицензия активирована, trial не просрочен
 - [ ] `LOG_LEVEL=info`, логи собираются centrally
