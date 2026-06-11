@@ -98,6 +98,12 @@ cd apps/cloud-license-server
 npm run vendor-staff:bootstrap
 ```
 
+Если пароль не пришёл или «Invalid login credentials» — сброс и повторная отправка в Telegram:
+
+```bash
+npm run vendor-staff:reset-password
+```
+
 Пример env:
 
 ```env
@@ -125,15 +131,30 @@ LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_WEBHOOK_URL=https://internal.vendor.kz/hook
 LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_SECRET=shared-secret
 ```
 
-При старте verify сервер шлёт POST на webhook `{ event, challenge_token, email, user_id, expires_at }`.
-Подтверждение: `POST /api/v1/admin/verify/approve` с `{ challenge_token, secret }`.
+При старте verify сервер шлёт POST **на ваш внутренний** `LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_WEBHOOK_URL` (не на Vercel!) с `{ event, challenge_token, email, user_id, expires_at }`.
+Подтверждение inbound: `POST /api/v1/admin/verify/approve` с `{ challenge_token, secret }` — **только POST**, в браузере будет 405 с подсказкой.
 
-Telegram webhook (после деплоя):
+Если используете только Telegram — `LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_WEBHOOK_URL` оставьте **пустым**.
+
+Telegram webhook для **@zeus_cloud_bot** (после деплоя на Vercel):
+
+```bash
+cd apps/cloud-license-server
+npm run vendor-telegram:webhook          # установить
+npm run vendor-telegram:webhook -- --info  # проверить
+```
+
+URL webhook: `https://your-project.vercel.app/api/v1/hooks/telegram`  
+**Не путать** с `/api/v1/admin/verify/approve` — это другой endpoint (approval webhook).
+
+На Vercel должны быть заданы: `VENDOR_TELEGRAM_BOT_TOKEN`, `VENDOR_TELEGRAM_WEBHOOK_SECRET` (тот же secret, что в `setWebhook`).
+
+Ручная регистрация:
 
 ```bash
 curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://your-project.vercel.app/api/v1/hooks/telegram","secret_token":"<VENDOR_TELEGRAM_WEBHOOK_SECRET>"}'
+  -d '{"url":"https://your-project.vercel.app/api/v1/hooks/telegram","secret_token":"<VENDOR_TELEGRAM_WEBHOOK_SECRET>","allowed_updates":["message"]}'
 ```
 
 **Шаг 3 — миграции**

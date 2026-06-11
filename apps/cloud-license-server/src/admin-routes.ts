@@ -121,6 +121,25 @@ adminRoutes.get("/verify/poll", async (c) => {
   return c.json({ status, ok: false });
 });
 
+adminRoutes.get("/verify/approve", (c) =>
+  c.json(
+    {
+      ok: false,
+      message: "Это POST-endpoint для подтверждения step-up verify из внутренней системы.",
+      usage: {
+        method: "POST",
+        content_type: "application/json",
+        body: {
+          challenge_token: "<из webhook-уведомления>",
+          secret: "<LICENSE_SERVER_VENDOR_ADMIN_APPROVAL_SECRET>",
+        },
+      },
+      note: "Для входа через Telegram webhook не нужен — подтвердите через vendor-бота.",
+    },
+    405,
+  ),
+);
+
 adminRoutes.post(
   "/verify/approve",
   zValidator(

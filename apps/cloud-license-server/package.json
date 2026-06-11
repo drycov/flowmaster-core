@@ -14,7 +14,9 @@
     "typecheck": "tsc --noEmit",
     "start": "tsx src/dev.ts",
     "support-code": "node scripts/support-code.mjs",
-    "vendor-staff:bootstrap": "node scripts/vendor-staff-bootstrap.mjs"
+    "vendor-staff:bootstrap": "node scripts/vendor-staff-bootstrap.mjs",
+    "vendor-staff:reset-password": "node scripts/vendor-staff-reset-password.mjs",
+    "vendor-telegram:webhook": "node scripts/vendor-telegram-set-webhook.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
