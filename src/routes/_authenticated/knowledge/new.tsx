@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { KbArticleEditor } from "@/components/kb/KbArticleEditor";
+import { KbBackLink } from "@/components/kb/KbBackLink";
 import { useI18n } from "@/i18n";
 import { requireModule } from "@/lib/access/route-guards";
 
@@ -14,7 +15,8 @@ function KbNewArticlePage() {
   return (
     <>
       <PageHeader title={t("kb.newArticle")} />
-      <PageBody>
+      <PageBody className="max-w-3xl space-y-4">
+        <KbBackLink />
         <KbArticleEditor />
       </PageBody>
     </>

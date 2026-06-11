@@ -21,20 +21,28 @@
 ```bash
 npm ci --legacy-peer-deps
 node scripts/docker-setup.mjs    # создаёт .env с секретами
-docker compose up -d --build     # первый запуск ~3–5 мин
+npm run docker:up                # backend → migrate → app
+npm run docker:wait              # дождаться Kong (если нужно отдельно)
 ```
 
-- Приложение: `http://localhost:3000`
-- Supabase API: `http://localhost:54321`
-- Postgres (отладка): `127.0.0.1:54322`
-- Studio (опционально): `docker compose --profile studio up -d` → `http://localhost:54321` (Basic Auth)
-
-Миграции применяются автоматически при первом старте. После добавления новых SQL-файлов:
+**Разработка на хосте** (Vite, hot reload) — только backend в Docker:
 
 ```bash
-docker compose run --rm db-migrate
-docker compose up -d app
+node scripts/docker-setup.mjs
+npm run docker:deps              # Supabase + миграции
+npm run dev                      # http://localhost:3000
 ```
+
+| Сервис | URL |
+|--------|-----|
+| ЕСЭДО (dev/prod) | http://localhost:3000 |
+| Supabase API | http://localhost:54321 |
+| Postgres | 127.0.0.1:54322 |
+| Studio | `node scripts/docker-up.mjs --studio` |
+
+Cron: `npm run docker:up -- --cron` или `docker compose --profile cron up -d`
+
+После новых SQL-миграций: `npm run docker:migrate && docker compose restart app`
 
 ### Локально без Docker
 
@@ -106,7 +114,10 @@ docker compose --profile cron up -d   # фоновые задачи
 | `npm run test` | Unit-тесты (Vitest) |
 | `npm run test:e2e` | E2E smoke (Playwright) |
 | `npm run docker:setup` | Генерация `.env` для Docker-стека |
-| `npm run docker:up` | Docker: Supabase + app |
+| `npm run docker:up` | Полный стек: Supabase → migrate → app |
+| `npm run docker:deps` | Только Supabase (для `npm run dev`) |
+| `npm run docker:migrate` | Применить SQL-миграции |
+| `npm run docker:wait` | Дождаться готовности Kong |
 | `npm run compose:staging` | Docker staging (app + cron) |
 | `npm run uat:preflight` | Pre-UAT health/cron checks |
 | `npm run lint` | ESLint |

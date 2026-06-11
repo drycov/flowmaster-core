@@ -92,6 +92,8 @@ services:
         condition: service_healthy
       storage:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
 
   supavisor:
     ports:

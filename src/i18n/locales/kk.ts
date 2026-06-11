@@ -1197,6 +1197,11 @@ export const kkDictionary: Dictionary = {
   "kb.status.draft": "Жоба",
   "kb.status.published": "Жарияланған",
   "kb.status.archived": "Мұрағатта",
+  "kb.backToList": "Мақалалар тізіміне",
+  "kb.emptyTitle": "Мақалалар әлі жоқ",
+  "kb.emptyHint": "Сүзгілерді өзгертіңіз немесе жаңа мақала жасаңыз",
+  "kb.edit": "Өңдеу",
+  "kb.preview": "Қарау",
 
   "contract.detailTitle": "Шарт",
   "contract.openDocument": "Құжатты ашу",

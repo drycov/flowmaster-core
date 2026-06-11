@@ -1210,6 +1210,11 @@ export const ruDictionary: Dictionary = {
   "kb.status.draft": "Черновик",
   "kb.status.published": "Опубликовано",
   "kb.status.archived": "В архиве",
+  "kb.backToList": "К списку статей",
+  "kb.emptyTitle": "Статей пока нет",
+  "kb.emptyHint": "Измените фильтры или создайте новую статью",
+  "kb.edit": "Редактировать",
+  "kb.preview": "Просмотр",
 
   "contract.detailTitle": "Контракт",
   "contract.openDocument": "Открыть документ",

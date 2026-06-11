@@ -70,6 +70,7 @@ const replacements = {
   SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
   SUPABASE_JWT_SECRET: jwtSecret,
   VITE_SUPABASE_PUBLISHABLE_KEY: anonKey,
+  SUPABASE_URL: "http://localhost:54321",
   POSTGRES_PASSWORD: hex(16),
   DASHBOARD_PASSWORD: hex(16),
   SECRET_KEY_BASE: b64(48),
@@ -100,5 +101,12 @@ console.log("  docker compose up -d --build");
 console.log("  curl http://localhost:3000/api/health");
 console.log("  open http://localhost:3000/auth");
 console.log("");
-console.log("Supabase API (browser): http://localhost:54321");
-console.log("Supabase Studio (optional): docker compose --profile studio up -d");
+console.log("Supabase API: http://localhost:54321");
+console.log("");
+console.log("Development (Vite on host):");
+console.log("  node scripts/docker-up.mjs --dev");
+console.log("  npm run dev");
+console.log("");
+console.log("Full stack:");
+console.log("  node scripts/docker-up.mjs");
+console.log("  docker compose --profile cron up -d");

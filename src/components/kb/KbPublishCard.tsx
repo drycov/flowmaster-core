@@ -42,7 +42,7 @@ export function KbPublishCard({
   if (!canPublish && !linked) return null;
 
   return (
-    <Card className="rounded-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="text-sm flex items-center gap-2">
           <BookOpen className="w-4 h-4" />

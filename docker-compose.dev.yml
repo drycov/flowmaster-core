@@ -1,0 +1,54 @@
+# Dev — только Supabase backend (PostgreSQL + API). App: npm run dev на хосте.
+name: flowmaster-dev
+
+include:
+  - path: ./docker/supabase/docker-compose.yml
+
+services:
+  db-migrate:
+    image: postgres:15-alpine
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-postgres}
+      DB_USER: postgres
+      APPLY_DB_MIGRATIONS: ${APPLY_DB_MIGRATIONS:-1}
+      APPLY_DB_SEED: ${APPLY_DB_SEED:-1}
+    volumes:
+      - ./supabase/migrations:/migrations:ro
+      - ./supabase/seed.sql:/seed/seed.sql:ro
+      - ./docker/migrate/apply-migrations.sh:/apply-migrations.sh:ro
+    entrypoint: ["/bin/sh", "/apply-migrations.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  kong:
+    depends_on:
+      auth:
+        condition: service_healthy
+      rest:
+        condition: service_started
+      realtime:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
+  supavisor:
+    ports:
+      - "127.0.0.1:54322:5432"
+      - "127.0.0.1:6543:6543"
+
+  studio:
+    profiles: ["studio"]
+
+  meta:
+    profiles: ["studio"]
+
+  functions:
+    profiles: ["studio"]

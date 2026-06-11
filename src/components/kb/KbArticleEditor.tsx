@@ -1,11 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { labelClass } from "@/lib/design-tokens";
 import {
   Select,
   SelectContent,
@@ -107,17 +110,18 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <Card>
+      <CardContent className="space-y-4 pt-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>{t("kb.field.titleRu")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.titleRu")}</Label>
           <Input
             value={form.title_ru}
             onChange={(e) => setForm((f) => ({ ...f, title_ru: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
-          <Label>{t("kb.field.titleKk")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.titleKk")}</Label>
           <Input
             value={form.title_kk}
             onChange={(e) => setForm((f) => ({ ...f, title_kk: e.target.value }))}
@@ -126,16 +130,16 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>{t("kb.field.summaryRu")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.summaryRu")}</Label>
           <Textarea
             rows={2}
             value={form.summary_ru}
             onChange={(e) => setForm((f) => ({ ...f, summary_ru: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
-          <Label>{t("kb.field.summaryKk")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.summaryKk")}</Label>
           <Textarea
             rows={2}
             value={form.summary_kk}
@@ -145,16 +149,16 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>{t("kb.field.bodyRu")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.bodyRu")}</Label>
           <Textarea
             rows={10}
             value={form.body_ru}
             onChange={(e) => setForm((f) => ({ ...f, body_ru: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
-          <Label>{t("kb.field.bodyKk")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.bodyKk")}</Label>
           <Textarea
             rows={10}
             value={form.body_kk}
@@ -164,8 +168,8 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <Label>{t("kb.field.category")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.category")}</Label>
           <Select
             value={form.category_id || "__none"}
             onValueChange={(v) => setForm((f) => ({ ...f, category_id: v === "__none" ? "" : v }))}
@@ -183,8 +187,8 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>{t("common.status")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("common.status")}</Label>
           <Select
             value={form.status}
             onValueChange={(v) => setForm((f) => ({ ...f, status: v as ArticleForm["status"] }))}
@@ -199,8 +203,8 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>{t("kb.field.tags")}</Label>
+        <div className="space-y-1.5">
+          <Label className={labelClass}>{t("kb.field.tags")}</Label>
           <Input
             value={form.tags}
             onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
@@ -209,17 +213,26 @@ export function KbArticleEditor({ articleId }: { articleId?: string }) {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 pt-2">
         <Button
           disabled={!form.title_ru.trim() || saveMutation.isPending}
           onClick={() => saveMutation.mutate()}
         >
           {t("common.save")}
         </Button>
+        {articleId && (
+          <Button size="default" variant="outline" asChild>
+            <Link to="/knowledge/$id" params={{ id: articleId }}>
+              <Eye className="w-4 h-4 mr-1" />
+              {t("kb.preview")}
+            </Link>
+          </Button>
+        )}
         <Button variant="outline" onClick={() => navigate({ to: "/knowledge" })}>
           {t("common.cancel")}
         </Button>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

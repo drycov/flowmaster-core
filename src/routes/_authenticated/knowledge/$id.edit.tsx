@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { KbArticleEditor } from "@/components/kb/KbArticleEditor";
+import { KbBackLink } from "@/components/kb/KbBackLink";
 import { useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/knowledge/$id/edit")({
@@ -15,7 +16,8 @@ function KbEditArticlePage() {
   return (
     <>
       <PageHeader title={t("kb.editArticle")} />
-      <PageBody>
+      <PageBody className="max-w-3xl space-y-4">
+        <KbBackLink />
         <KbArticleEditor articleId={id} />
       </PageBody>
     </>

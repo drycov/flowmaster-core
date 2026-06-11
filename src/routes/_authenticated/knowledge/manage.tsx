@@ -4,13 +4,16 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageBody } from "@/components/AppShell";
+import { DataTableShell, ListEmpty } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { KbBackLink } from "@/components/kb/KbBackLink";
 import { useI18n, localized } from "@/i18n";
+import { labelClass } from "@/lib/design-tokens";
 import { requireModule } from "@/lib/access/route-guards";
 import { listKbArticles, listKbCategoriesAdmin, upsertKbCategory } from "@/lib/api/kb.functions";
 
@@ -92,36 +95,40 @@ function KbManagePage() {
           </Button>
         }
       />
-      <PageBody>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">{t("kb.categoriesTitle")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1">
-                  <Label>{t("kb.field.code")}</Label>
-                  <Input value={catCode} onChange={(e) => setCatCode(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label>{t("kb.field.nameRu")}</Label>
-                  <Input value={catNameRu} onChange={(e) => setCatNameRu(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label>{t("kb.field.nameKk")}</Label>
-                  <Input value={catNameKk} onChange={(e) => setCatNameKk(e.target.value)} />
-                </div>
+      <PageBody className="max-w-4xl space-y-6">
+        <KbBackLink />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t("kb.categoriesTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className={labelClass}>{t("kb.field.code")}</Label>
+                <Input value={catCode} onChange={(e) => setCatCode(e.target.value)} />
               </div>
-              <Button
-                size="sm"
-                disabled={!catCode.trim() || !catNameRu.trim() || createCategory.isPending}
-                onClick={() => createCategory.mutate()}
-              >
-                {t("kb.addCategory")}
-              </Button>
-              <div className="space-y-2">
-                {categories.map(
+              <div className="space-y-1.5">
+                <Label className={labelClass}>{t("kb.field.nameRu")}</Label>
+                <Input value={catNameRu} onChange={(e) => setCatNameRu(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className={labelClass}>{t("kb.field.nameKk")}</Label>
+                <Input value={catNameKk} onChange={(e) => setCatNameKk(e.target.value)} />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              disabled={!catCode.trim() || !catNameRu.trim() || createCategory.isPending}
+              onClick={() => createCategory.mutate()}
+            >
+              {t("kb.addCategory")}
+            </Button>
+            <div className="divide-y divide-border rounded-lg border border-border">
+              {categories.length === 0 ? (
+                <ListEmpty>{t("common.empty")}</ListEmpty>
+              ) : (
+                categories.map(
                   (c: {
                     id: string;
                     code: string;
@@ -131,7 +138,7 @@ function KbManagePage() {
                   }) => (
                     <div
                       key={c.id}
-                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                      className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
                     >
                       <div>
                         <span className="font-mono text-xs text-muted-foreground">{c.code}</span>
@@ -143,40 +150,44 @@ function KbManagePage() {
                       />
                     </div>
                   ),
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">{t("kb.allArticles")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {articles.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("common.empty")}</p>
-              ) : (
-                articles.map(
-                  (a: { id: string; title_ru: string; title_kk: string; status: string }) => (
-                    <div
-                      key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2"
-                    >
-                      <Link
-                        to="/knowledge/$id/edit"
-                        params={{ id: a.id }}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        {localized(a, locale, "title")}
-                      </Link>
-                      <Badge variant="outline">{t(`kb.status.${a.status}`)}</Badge>
-                    </div>
-                  ),
                 )
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t("kb.allArticles")}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <DataTableShell className="border-0 rounded-none">
+              {articles.length === 0 ? (
+                <ListEmpty>{t("common.empty")}</ListEmpty>
+              ) : (
+                <div className="divide-y divide-border">
+                  {articles.map(
+                    (a: { id: string; title_ru: string; title_kk: string; status: string }) => (
+                      <div
+                        key={a.id}
+                        className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+                      >
+                        <Link
+                          to="/knowledge/$id/edit"
+                          params={{ id: a.id }}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          {localized(a, locale, "title")}
+                        </Link>
+                        <Badge variant="outline">{t(`kb.status.${a.status}`)}</Badge>
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </DataTableShell>
+          </CardContent>
+        </Card>
       </PageBody>
     </>
   );
