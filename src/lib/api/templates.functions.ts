@@ -21,6 +21,7 @@ import { buildTemplateAuthorDefaultsForUser } from "@/lib/templates/author-defau
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
 import { insertDocumentWithRegistration } from "@/lib/documents/create.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
+import { buildSystemTemplateValues } from "@/lib/templates/system-values";
 
 export const listTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -99,25 +100,6 @@ function substituteTemplateBody(template: string, values: Record<string, string>
     body = body.replaceAll(`{{${k}}}`, String(v));
   }
   return body;
-}
-
-function buildSystemTemplateValues(data: {
-  title_ru: string;
-  title_kk?: string | null;
-  reg_number?: string;
-}): Record<string, string> {
-  const today = new Date().toISOString().slice(0, 10);
-  const vals: Record<string, string> = {
-    document_title: data.title_ru,
-    title_ru: data.title_ru,
-    title_kk: data.title_kk ?? data.title_ru,
-    document_date: today,
-  };
-  if (data.reg_number) {
-    vals.registration_number = data.reg_number;
-    vals.reg_number = data.reg_number;
-  }
-  return vals;
 }
 
 /** Extract {{placeholder}} keys from uploaded DOCX/XLSX template file. */
@@ -378,17 +360,13 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       tplRow.file_path && fileFormat && supportsTemplateProcessing(fileFormat);
 
     if (hasFileTemplate) {
-      try {
-        await registerInitialFileVersion({
-          documentId: doc.id,
-          userId,
-          templateFilePath: tplRow.file_path!,
-          fileFormat: fileFormat!,
-          values: finalValues,
-        });
-      } catch (fileErr) {
-        console.error("Template file render failed:", fileErr);
-      }
+      await registerInitialFileVersion({
+        documentId: doc.id,
+        userId,
+        templateFilePath: tplRow.file_path!,
+        fileFormat: fileFormat!,
+        values: finalValues,
+      });
     }
 
     return { id: doc.id, reg_number: regNumber, body };

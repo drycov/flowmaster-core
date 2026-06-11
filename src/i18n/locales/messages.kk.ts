@@ -564,6 +564,9 @@ export const messagesKk = {
   "doc.versionUploaded": "Файл нұсқасы жүктелді",
   "doc.versionUploadError": "Файлды жүктеу қатесі",
   "doc.titleRuRequired": "Құжат атауы (орысша) міндетті",
+  "doc.documentTypeRequired": "Құжат түрін таңдаңыз",
+  "doc.selectDocumentTypeHint":
+    "Құжат түрін таңдаңыз — форма осы типке сәйкес тіркеу өрістерін көрсетеді.",
   "doc.created": "Құжат сәтті жасалды",
   "doc.createError": "Құжат жасау қатесі",
   "doc.formInvalid": "Міндетті өрістерді толтырыңыз",

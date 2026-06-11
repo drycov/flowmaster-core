@@ -7,6 +7,28 @@ import { requireModuleAccess } from "./_helpers";
 import { createSignedDownloadUrl } from "@/lib/storage/s3.server";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
 import { officeDocumentKey, officeTemplateKey } from "@/lib/office/keys.server";
+import {
+  initializeDocumentOfficeFile,
+  resolveOfficeInitOptions,
+  type OfficeFileInitMode,
+  type OfficeInitOptions,
+} from "@/lib/office/document-file-init.server";
+
+export type OfficeUnavailableReason = "office_not_configured" | "no_file_version";
+
+export type OfficeEditorConfigResponse =
+  | {
+      available: false;
+      office_url: string | null;
+      reason: OfficeUnavailableReason;
+      init_options?: OfficeInitOptions;
+    }
+  | {
+      available: true;
+      office_url: string;
+      document_server_url: string;
+      config: Record<string, unknown>;
+    };
 
 function officeFileTypes(format: string) {
   const ext = format.toLowerCase();
@@ -86,7 +108,7 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
 
     const { data: doc, error: docErr } = await supabase
       .from("documents")
-      .select("id, title_ru, current_version, updated_at, status, created_by")
+      .select("id, title_ru, current_version, updated_at, status, created_by, template_id")
       .eq("id", data.document_id)
       .single();
     if (docErr || !doc) throw new Error("Документ не найден");
@@ -106,23 +128,43 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
       .eq("version_no", doc.current_version)
       .maybeSingle();
 
-    if (!version?.file_path) {
+    let fileVersion = version?.file_path ? version : null;
+    if (!fileVersion) {
+      const { data: latestFileVersion } = await supabase
+        .from("document_versions")
+        .select("id, version_no, file_path, file_format")
+        .eq("document_id", data.document_id)
+        .not("file_path", "is", null)
+        .order("version_no", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      fileVersion = latestFileVersion ?? null;
+    }
+
+    if (!fileVersion?.file_path) {
+      const initOptions = await resolveOfficeInitOptions(
+        supabase,
+        userId,
+        data.document_id,
+        doc.template_id,
+      );
       return {
         available: false as const,
         office_url: officeUrl,
-        reason: "no_file_version",
+        reason: "no_file_version" as const,
+        init_options: initOptions,
       };
     }
 
     const readOnly = !["draft", "returned_for_revision"].includes(doc.status);
-    const key = officeDocumentKey(doc.id, version.version_no, doc.updated_at);
+    const key = officeDocumentKey(doc.id, fileVersion.version_no, doc.updated_at);
 
     return buildEditorPayload({
       supabase,
       userId,
       bucket: STORAGE_BUCKETS.documents,
-      storagePath: version.file_path,
-      fileFormat: version.file_format ?? "docx",
+      storagePath: fileVersion.file_path,
+      fileFormat: fileVersion.file_format ?? "docx",
       title: doc.title_ru,
       documentKey: key,
       readOnly,
@@ -174,5 +216,24 @@ export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
       documentKey: key,
       readOnly,
       officeUrl,
+    });
+  });
+
+export const initializeDocumentOfficeFileFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      document_id: z.string().uuid(),
+      mode: z.enum(["blank_docx", "blank_xlsx", "from_template"]),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
+    await assertCanViewDocumentContent(context.supabase, context.userId, data.document_id);
+    return initializeDocumentOfficeFile({
+      supabase: context.supabase,
+      userId: context.userId,
+      documentId: data.document_id,
+      mode: data.mode as OfficeFileInitMode,
     });
   });

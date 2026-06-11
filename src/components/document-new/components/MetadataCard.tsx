@@ -15,12 +15,20 @@ import type {
 import { TemplateSelect } from "./TemplateSelect";
 import { NomenclatureSelect } from "./NomenclatureSelect";
 import { ReferenceSelect } from "./ReferenceSelect";
+import {
+  hasCorrespondenceSection,
+  isMetadataFieldRequired,
+  isMetadataFieldVisible,
+  type DocumentTypeFormProfile,
+} from "@/lib/documents/document-type-form";
 
 interface MetadataCardProps {
   form: UseFormReturn<DocumentFormValues>;
   templateId: string;
   onTemplateChange: (value: string) => void;
   showManualFields: boolean;
+  formProfile: DocumentTypeFormProfile;
+  documentTypeSelected: boolean;
   templates: Template[];
   nomenclatures: Nomenclature[];
   documentTypes: ReferenceBrief[];
@@ -36,6 +44,8 @@ export function MetadataCard({
   templateId,
   onTemplateChange,
   showManualFields,
+  formProfile,
+  documentTypeSelected,
   templates,
   nomenclatures,
   documentTypes,
@@ -50,12 +60,30 @@ export function MetadataCard({
   const titleRu = watch("title_ru");
   const titleKk = watch("title_kk");
 
+  const show = (field: Parameters<typeof isMetadataFieldVisible>[1]) =>
+    isMetadataFieldVisible(formProfile, field);
+  const req = (field: Parameters<typeof isMetadataFieldRequired>[1]) =>
+    isMetadataFieldRequired(formProfile, field);
+
   return (
     <Card className="rounded-sm">
       <CardHeader>
         <CardTitle className="text-sm">{t("doc.metadata")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <ReferenceSelect
+          label={`${t("doc.documentType")} *`}
+          value={form.watch("document_type_id")}
+          onChange={(v) => form.setValue("document_type_id", v)}
+          options={documentTypes}
+          locale={locale}
+          isLoading={isLoading}
+        />
+
+        {!documentTypeSelected ? (
+          <p className="text-xs text-muted-foreground">{t("doc.selectDocumentTypeHint")}</p>
+        ) : null}
+
         <div className="grid grid-cols-2 gap-3">
           <TemplateSelect
             value={templateId}
@@ -63,88 +91,130 @@ export function MetadataCard({
             templates={templates}
             isLoading={isLoading}
           />
-          <NomenclatureSelect
-            value={form.watch("nomenclature_id")}
-            onChange={(v) => form.setValue("nomenclature_id", v)}
-            nomenclatures={nomenclatures}
-            isLoading={isLoading}
-          />
+          {show("nomenclature_id") ? (
+            <NomenclatureSelect
+              value={form.watch("nomenclature_id")}
+              onChange={(v) => form.setValue("nomenclature_id", v)}
+              nomenclatures={nomenclatures}
+              isLoading={isLoading}
+            />
+          ) : (
+            <div />
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <ReferenceSelect
-            label={t("doc.documentType")}
-            value={form.watch("document_type_id")}
-            onChange={(v) => form.setValue("document_type_id", v)}
-            options={documentTypes}
-            locale={locale}
-            isLoading={isLoading}
-          />
-          <ReferenceSelect
-            label={t("doc.priority")}
-            value={form.watch("priority_id")}
-            onChange={(v) => form.setValue("priority_id", v)}
-            options={priorities}
-            locale={locale}
-            isLoading={isLoading}
-          />
-        </div>
-
-        <ReferenceSelect
-          label={t("doc.correspondent")}
-          value={form.watch("correspondent_id")}
-          onChange={(v) => form.setValue("correspondent_id", v)}
-          options={correspondents}
-          locale={locale}
-          isLoading={isLoading}
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <ReferenceSelect
-            label={t("doc.registrationJournal")}
-            value={form.watch("registration_journal_id")}
-            onChange={(v) => form.setValue("registration_journal_id", v)}
-            options={registrationJournals}
-            locale={locale}
-            isLoading={isLoading}
-          />
-          <ReferenceSelect
-            label={t("doc.deliveryMethod")}
-            value={form.watch("delivery_method_id")}
-            onChange={(v) => form.setValue("delivery_method_id", v)}
-            options={deliveryMethods}
-            locale={locale}
-            isLoading={isLoading}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>{t("doc.externalRegNumber")}</Label>
-            <Input {...register("external_reg_number")} />
+        {show("priority_id") || show("registration_journal_id") ? (
+          <div className="grid grid-cols-2 gap-3">
+            {show("priority_id") ? (
+              <ReferenceSelect
+                label={t("doc.priority")}
+                value={form.watch("priority_id")}
+                onChange={(v) => form.setValue("priority_id", v)}
+                options={priorities}
+                locale={locale}
+                isLoading={isLoading}
+              />
+            ) : (
+              <div />
+            )}
+            {show("registration_journal_id") ? (
+              <ReferenceSelect
+                label={t("doc.registrationJournal")}
+                value={form.watch("registration_journal_id")}
+                onChange={(v) => form.setValue("registration_journal_id", v)}
+                options={registrationJournals}
+                locale={locale}
+                isLoading={isLoading}
+              />
+            ) : (
+              <div />
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>{t("doc.pagesCount")}</Label>
-              <Input type="number" min={0} {...register("pages_count")} />
-            </div>
-            <div>
-              <Label>{t("doc.copiesCount")}</Label>
-              <Input type="number" min={0} {...register("copies_count")} />
-            </div>
-          </div>
-        </div>
+        ) : null}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>{t("doc.receivedAt")}</Label>
-            <Input type="datetime-local" {...register("received_at")} />
-          </div>
-          <div>
-            <Label>{t("doc.sentAt")}</Label>
-            <Input type="datetime-local" {...register("sent_at")} />
-          </div>
-        </div>
+        {documentTypeSelected && hasCorrespondenceSection(formProfile) ? (
+          <>
+            {show("correspondent_id") ? (
+              <ReferenceSelect
+                label={`${t("doc.correspondent")}${req("correspondent_id") ? " *" : ""}`}
+                value={form.watch("correspondent_id")}
+                onChange={(v) => form.setValue("correspondent_id", v)}
+                options={correspondents}
+                locale={locale}
+                isLoading={isLoading}
+              />
+            ) : null}
+
+            {show("delivery_method_id") ? (
+              <ReferenceSelect
+                label={t("doc.deliveryMethod")}
+                value={form.watch("delivery_method_id")}
+                onChange={(v) => form.setValue("delivery_method_id", v)}
+                options={deliveryMethods}
+                locale={locale}
+                isLoading={isLoading}
+              />
+            ) : null}
+
+            {show("external_reg_number") ||
+            show("pages_count") ||
+            show("copies_count") ? (
+              <div className="grid grid-cols-2 gap-3">
+                {show("external_reg_number") ? (
+                  <div>
+                    <Label>{t("doc.externalRegNumber")}</Label>
+                    <Input {...register("external_reg_number")} />
+                  </div>
+                ) : (
+                  <div />
+                )}
+                {show("pages_count") || show("copies_count") ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {show("pages_count") ? (
+                      <div>
+                        <Label>{t("doc.pagesCount")}</Label>
+                        <Input type="number" min={0} {...register("pages_count")} />
+                      </div>
+                    ) : null}
+                    {show("copies_count") ? (
+                      <div>
+                        <Label>{t("doc.copiesCount")}</Label>
+                        <Input type="number" min={0} {...register("copies_count")} />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {show("received_at") || show("sent_at") ? (
+              <div className="grid grid-cols-2 gap-3">
+                {show("received_at") ? (
+                  <div>
+                    <Label>
+                      {t("doc.receivedAt")}
+                      {req("received_at") ? " *" : ""}
+                    </Label>
+                    <Input type="datetime-local" {...register("received_at")} />
+                  </div>
+                ) : (
+                  <div />
+                )}
+                {show("sent_at") ? (
+                  <div>
+                    <Label>
+                      {t("doc.sentAt")}
+                      {req("sent_at") ? " *" : ""}
+                    </Label>
+                    <Input type="datetime-local" {...register("sent_at")} />
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            ) : null}
+          </>
+        ) : null}
 
         {showManualFields ? (
           <>

@@ -60,6 +60,7 @@ function CorrespondenceJournalPage({ kind }: { kind: CorrespondenceKind }) {
                   templateId: undefined,
                   nomenclatureId: undefined,
                   departmentId: undefined,
+                  documentTypeCode: kind,
                 },
               })
             }

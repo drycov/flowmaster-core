@@ -121,6 +121,7 @@ function DocumentsList() {
                   templateId: undefined,
                   nomenclatureId: undefined,
                   departmentId: undefined,
+                  documentTypeCode: undefined,
                 },
               })
             }

@@ -3,25 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { FileEdit, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { toast } from "sonner";
+import type { OfficeEditorConfigResponse } from "@/lib/api/office.functions";
+
+export type { OfficeEditorConfigResponse };
 
 declare global {
   interface Window {
     DocsAPI?: { DocEditor: (id: string, config: unknown) => void };
   }
 }
-
-export type OfficeEditorConfigResponse =
-  | {
-      available: false;
-      office_url: string | null;
-      reason: string;
-    }
-  | {
-      available: true;
-      office_url: string;
-      document_server_url: string;
-      config: Record<string, unknown>;
-    };
 
 function loadOnlyOfficeScript(serverUrl: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -65,7 +55,10 @@ export function OnlyOfficeEmbed({
     staleTime: 5 * 60 * 1000,
   });
 
-  const officeUrl = officeConfig?.office_url || officeConfig?.document_server_url || "";
+  const officeUrl =
+    officeConfig?.available === true
+      ? officeConfig.document_server_url
+      : (officeConfig?.office_url ?? "");
   const configKey =
     officeConfig?.available && officeConfig.document_server_url
       ? JSON.stringify(officeConfig.config)

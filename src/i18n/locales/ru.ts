@@ -644,6 +644,15 @@ export const ruDictionary: Dictionary = {
   "office.placeholder": "Настройте ONLYOFFICE в Администрирование → Настройки → Интеграции",
   "office.noFileVersion":
     "Для ONLYOFFICE нужна файловая версия документа (DOCX). Загрузите файл на вкладке «Версии».",
+  "office.noFileVersionHint":
+    "Файл для редактора ещё не создан. Создайте новый документ или сгенерируйте из шаблона.",
+  "office.createBlankDocx": "Создать пустой DOCX",
+  "office.createBlankXlsx": "Создать пустую XLSX",
+  "office.generateFromTemplate": "Из шаблона «{{name}}»",
+  "office.fileCreated": "Файл создан — открываем ONLYOFFICE…",
+  "office.fileCreateError": "Не удалось создать файл",
+  "office.noFileVersionReadOnly": "Документ нельзя редактировать — загрузите файл на вкладке «Версии».",
+  "office.uploadOnVersionsTab": "Или загрузите готовый DOCX/XLSX на вкладке «Версии».",
   "office.loadError": "Не удалось загрузить редактор ONLYOFFICE",
   "doc.versions.diff": "Сравнение версий",
   "doc.versions.diffFrom": "Версия A",

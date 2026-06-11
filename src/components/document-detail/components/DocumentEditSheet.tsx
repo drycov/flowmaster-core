@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +27,11 @@ import {
   listRegistrationJournalsBrief,
 } from "@/lib/api/references.functions";
 import { fromDatetimeLocal, toDatetimeLocal } from "@/lib/documents/datetime-local";
+import {
+  getDocumentTypeFormProfile,
+  isMetadataFieldVisible,
+  resolveDocumentTypeCode,
+} from "@/lib/documents/document-type-form";
 import { useI18n } from "@/i18n";
 import { toast } from "sonner";
 
@@ -200,6 +205,18 @@ export function DocumentEditSheet({
 
   const onSubmit = form.handleSubmit((values) => saveMutation.mutate(values));
 
+  const watchedDocumentTypeId = form.watch("document_type_id");
+  const documentTypeCode = useMemo(
+    () => resolveDocumentTypeCode(watchedDocumentTypeId, documentTypes),
+    [watchedDocumentTypeId, documentTypes],
+  );
+  const formProfile = useMemo(
+    () => getDocumentTypeFormProfile(documentTypeCode),
+    [documentTypeCode],
+  );
+  const show = (field: Parameters<typeof isMetadataFieldVisible>[1]) =>
+    isMetadataFieldVisible(formProfile, field);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -243,29 +260,39 @@ export function DocumentEditSheet({
             />
           </div>
 
-          <ReferenceSelect
-            label={t("doc.correspondent")}
-            value={form.watch("correspondent_id")}
-            onChange={(v) => form.setValue("correspondent_id", v)}
-            options={correspondents as ReferenceOption[]}
-            locale={locale}
-          />
+          {show("correspondent_id") ? (
+            <ReferenceSelect
+              label={t("doc.correspondent")}
+              value={form.watch("correspondent_id")}
+              onChange={(v) => form.setValue("correspondent_id", v)}
+              options={correspondents as ReferenceOption[]}
+              locale={locale}
+            />
+          ) : null}
 
           <div className="grid grid-cols-2 gap-3">
-            <ReferenceSelect
-              label={t("doc.registrationJournal")}
-              value={form.watch("registration_journal_id")}
-              onChange={(v) => form.setValue("registration_journal_id", v)}
-              options={journals as ReferenceOption[]}
-              locale={locale}
-            />
-            <ReferenceSelect
-              label={t("doc.deliveryMethod")}
-              value={form.watch("delivery_method_id")}
-              onChange={(v) => form.setValue("delivery_method_id", v)}
-              options={deliveryMethods as ReferenceOption[]}
-              locale={locale}
-            />
+            {show("registration_journal_id") ? (
+              <ReferenceSelect
+                label={t("doc.registrationJournal")}
+                value={form.watch("registration_journal_id")}
+                onChange={(v) => form.setValue("registration_journal_id", v)}
+                options={journals as ReferenceOption[]}
+                locale={locale}
+              />
+            ) : (
+              <div />
+            )}
+            {show("delivery_method_id") ? (
+              <ReferenceSelect
+                label={t("doc.deliveryMethod")}
+                value={form.watch("delivery_method_id")}
+                onChange={(v) => form.setValue("delivery_method_id", v)}
+                options={deliveryMethods as ReferenceOption[]}
+                locale={locale}
+              />
+            ) : (
+              <div />
+            )}
           </div>
 
           <ReferenceSelect
@@ -276,32 +303,50 @@ export function DocumentEditSheet({
             locale={locale}
           />
 
-          <div>
-            <Label>{t("doc.externalRegNumber")}</Label>
-            <Input {...form.register("external_reg_number")} />
-          </div>
+          {show("external_reg_number") ? (
+            <div>
+              <Label>{t("doc.externalRegNumber")}</Label>
+              <Input {...form.register("external_reg_number")} />
+            </div>
+          ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>{t("doc.pagesCount")}</Label>
-              <Input type="number" min={0} {...form.register("pages_count")} />
+          {show("pages_count") || show("copies_count") ? (
+            <div className="grid grid-cols-2 gap-3">
+              {show("pages_count") ? (
+                <div>
+                  <Label>{t("doc.pagesCount")}</Label>
+                  <Input type="number" min={0} {...form.register("pages_count")} />
+                </div>
+              ) : null}
+              {show("copies_count") ? (
+                <div>
+                  <Label>{t("doc.copiesCount")}</Label>
+                  <Input type="number" min={0} {...form.register("copies_count")} />
+                </div>
+              ) : null}
             </div>
-            <div>
-              <Label>{t("doc.copiesCount")}</Label>
-              <Input type="number" min={0} {...form.register("copies_count")} />
-            </div>
-          </div>
+          ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>{t("doc.receivedAt")}</Label>
-              <Input type="datetime-local" {...form.register("received_at")} />
+          {show("received_at") || show("sent_at") ? (
+            <div className="grid grid-cols-2 gap-3">
+              {show("received_at") ? (
+                <div>
+                  <Label>{t("doc.receivedAt")}</Label>
+                  <Input type="datetime-local" {...form.register("received_at")} />
+                </div>
+              ) : (
+                <div />
+              )}
+              {show("sent_at") ? (
+                <div>
+                  <Label>{t("doc.sentAt")}</Label>
+                  <Input type="datetime-local" {...form.register("sent_at")} />
+                </div>
+              ) : (
+                <div />
+              )}
             </div>
-            <div>
-              <Label>{t("doc.sentAt")}</Label>
-              <Input type="datetime-local" {...form.register("sent_at")} />
-            </div>
-          </div>
+          ) : null}
 
           <div>
             <Label>{t("common.deadline")}</Label>

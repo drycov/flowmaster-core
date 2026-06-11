@@ -1,6 +1,6 @@
 // src/routes/_authenticated/documents/new.tsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
@@ -39,8 +39,14 @@ import {
 
 import type { Template } from "@/components/document-new/types";
 
-import { useI18n } from "@/i18n";
+import { useI18n, interpolate } from "@/i18n";
 import { resolveDocumentTitles } from "@/lib/templates/document-title";
+import {
+  getDocumentTypeFormProfile,
+  hiddenMetadataFields,
+  resolveDocumentTypeCode,
+  validateDocumentFormByType,
+} from "@/lib/documents/document-type-form";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/documents/new")({
@@ -50,6 +56,7 @@ export const Route = createFileRoute("/_authenticated/documents/new")({
     templateId: (search.templateId as string) || undefined,
     nomenclatureId: (search.nomenclatureId as string) || undefined,
     departmentId: (search.departmentId as string) || undefined,
+    documentTypeCode: (search.documentTypeCode as string) || undefined,
   }),
   component: NewDocument,
 });
@@ -62,7 +69,7 @@ type TemplateWithWorkflow = Template & {
 
 function NewDocument() {
   const { t } = useI18n();
-  const { projectId, templateId, nomenclatureId } = Route.useSearch();
+  const { projectId, templateId, nomenclatureId, documentTypeCode } = Route.useSearch();
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ["tpls"],
@@ -148,6 +155,45 @@ function NewDocument() {
 
   const documentTypeId = form.watch("document_type_id");
 
+  const documentTypeCodeResolved = useMemo(
+    () => resolveDocumentTypeCode(documentTypeId, documentTypes),
+    [documentTypeId, documentTypes],
+  );
+
+  const formProfile = useMemo(
+    () => getDocumentTypeFormProfile(documentTypeCodeResolved),
+    [documentTypeCodeResolved],
+  );
+
+  const filteredTemplates = useMemo(() => {
+    if (!documentTypeCodeResolved) return templates;
+    return templates.filter(
+      (tp) =>
+        !tp.category ||
+        tp.category === "general" ||
+        tp.category === documentTypeCodeResolved,
+    );
+  }, [templates, documentTypeCodeResolved]);
+
+  useEffect(() => {
+    if (!documentTypeCode || !documentTypes.length) return;
+    const match = documentTypes.find((dt) => dt.code === documentTypeCode);
+    if (match) form.setValue("document_type_id", match.id);
+  }, [documentTypeCode, documentTypes, form]);
+
+  useEffect(() => {
+    if (selectedTemplateId === "none") return;
+    if (!filteredTemplates.some((tp) => tp.id === selectedTemplateId)) {
+      setSelectedTemplateId("none");
+    }
+  }, [filteredTemplates, selectedTemplateId]);
+
+  useEffect(() => {
+    for (const field of hiddenMetadataFields(formProfile)) {
+      form.setValue(field, "");
+    }
+  }, [formProfile, form]);
+
   useEffect(() => {
     if (!documentTypeId || !registrationJournals.length) return;
     const journal = registrationJournals.find((j) => j.document_type_id === documentTypeId);
@@ -158,6 +204,21 @@ function NewDocument() {
 
   const handleSubmit = form.handleSubmit(
     (values) => {
+      const missingLabel = validateDocumentFormByType(values, formProfile, {
+        correspondent_id: t("doc.correspondent"),
+        received_at: t("doc.receivedAt"),
+        sent_at: t("doc.sentAt"),
+      });
+      if (missingLabel) {
+        toast.error(interpolate(t("doc.fieldRequired"), { field: missingLabel }));
+        return;
+      }
+
+      if (!values.document_type_id?.trim()) {
+        toast.error(t("doc.documentTypeRequired"));
+        return;
+      }
+
       const payload = { ...values } as Record<string, string>;
 
       if (selectedTemplateId !== "none" && selectedTemplate) {
@@ -247,7 +308,9 @@ function NewDocument() {
               templateId={selectedTemplateId}
               onTemplateChange={setSelectedTemplateId}
               showManualFields={showManualFields}
-              templates={templates}
+              formProfile={formProfile}
+              documentTypeSelected={!!documentTypeId}
+              templates={filteredTemplates}
               nomenclatures={nomenclatures}
               documentTypes={documentTypes}
               priorities={priorities}

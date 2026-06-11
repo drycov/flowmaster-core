@@ -599,6 +599,9 @@ export const messagesRu = {
   "doc.versionUploaded": "Версия файла загружена",
   "doc.versionUploadError": "Ошибка загрузки файла",
   "doc.titleRuRequired": "Название документа на русском языке обязательно",
+  "doc.documentTypeRequired": "Выберите вид документа",
+  "doc.selectDocumentTypeHint":
+    "Выберите вид документа — форма покажет поля регистрации для этого типа.",
   "doc.created": "Документ успешно создан",
   "doc.createError": "Ошибка при создании документа",
   "doc.formInvalid": "Заполните обязательные поля формы",

@@ -105,6 +105,7 @@ function ProjectDetailPage() {
         templateId,
         nomenclatureId: project.nomenclature_id ?? undefined,
         departmentId: project.department_id ?? undefined,
+        documentTypeCode: undefined,
       },
     });
   };

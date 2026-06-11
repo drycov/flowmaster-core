@@ -80,11 +80,23 @@ export async function registerBodyContentVersion(
   },
 ): Promise<number> {
   const versionNo = await resolveNextDocumentVersionNo(supabase, options.documentId);
+
+  const { data: latestFileVersion } = await supabase
+    .from("document_versions")
+    .select("file_path, file_format")
+    .eq("document_id", options.documentId)
+    .not("file_path", "is", null)
+    .order("version_no", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const { sha256Hex } = await import("@/lib/documents/content-hash.server");
   await registerDocumentVersionRow(supabase, {
     documentId: options.documentId,
     versionNo,
     userId: options.userId,
+    file_path: latestFileVersion?.file_path ?? null,
+    file_format: latestFileVersion?.file_format ?? null,
     body_snapshot: options.body,
     content_hash: sha256Hex(options.body),
     comment: options.comment ?? "Редактирование содержимого",

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "sonner";
 import { getOfficeEditorConfig } from "@/lib/api/office.functions";
-import { OnlyOfficeEmbed } from "@/components/office/OnlyOfficeEmbed";
+import { DocumentOfficeEditor } from "@/components/office/DocumentOfficeEditor";
 
 interface OfficeTabProps {
   documentId: string;
@@ -33,8 +33,8 @@ export function OfficeTab({
     staleTime: 5 * 60 * 1000,
   });
 
-  const officeUrl = officeConfig?.office_url || officeConfig?.document_server_url || "";
-  const officeActive = Boolean(officeUrl && officeConfig?.available);
+  const officeUrl = officeConfig?.office_url ?? "";
+  const officeConfigured = Boolean(officeUrl);
 
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder: t("doc.contentPlaceholder") })],
@@ -62,25 +62,8 @@ export function OfficeTab({
     }
   };
 
-  if (officeActive) {
-    return (
-      <OnlyOfficeEmbed
-        editorId="office-editor"
-        queryKey={["office-config", "document", documentId]}
-        queryFn={() => getOfficeEditorConfig({ data: { document_id: documentId } })}
-      />
-    );
-  }
-
-  if (officeUrl && officeConfig && !officeConfig.available) {
-    return (
-      <div className="border-2 border-dashed border-border rounded-sm p-8 text-center text-sm text-muted-foreground space-y-2">
-        <FileEdit className="w-8 h-8 mx-auto opacity-50" />
-        <div className="font-medium text-foreground">ONLYOFFICE</div>
-        <p>{t("office.noFileVersion")}</p>
-        <p className="text-xs">{t("office.placeholder")}</p>
-      </div>
-    );
+  if (officeConfigured) {
+    return <DocumentOfficeEditor documentId={documentId} />;
   }
 
   return (

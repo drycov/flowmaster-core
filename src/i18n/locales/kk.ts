@@ -633,6 +633,17 @@ export const kkDictionary: Dictionary = {
   "office.placeholder": "ONLYOFFICE: Әкімшілеу → Параметрлер → Интеграциялар",
   "office.noFileVersion":
     "ONLYOFFICE үшін құжаттың файл нұсқасы (DOCX) қажет. «Нұсқалар» қойындысынан жүктеңіз.",
+  "office.noFileVersionHint":
+    "Редактор файлы әлі жоқ. Жаңа құжат жасаңыз немесе үлгіден генерациялаңыз.",
+  "office.createBlankDocx": "Бос DOCX жасау",
+  "office.createBlankXlsx": "Бос XLSX жасау",
+  "office.generateFromTemplate": "«{{name}}» үлgisінен",
+  "office.fileCreated": "Файл жасалды — ONLYOFFICE ашылуда…",
+  "office.fileCreateError": "Файл жасау сәтсіз аяқталды",
+  "office.noFileVersionReadOnly":
+    "Құжатты өңдеуге болмайды — «Нұсқалар» қойындысынан файл жүктеңіз.",
+  "office.uploadOnVersionsTab":
+    "Немесе дайын DOCX/XLSX файлын «Нұсқалар» қойындысынан жүктеңіз.",
   "office.loadError": "ONLYOFFICE редакторын жүктеу мүмкін болмады",
   "doc.versions.diff": "Нұсқаларды салыстыру",
   "doc.versions.diffFrom": "A нұсқасы",
