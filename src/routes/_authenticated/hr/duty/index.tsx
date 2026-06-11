@@ -33,6 +33,7 @@ import { buildMonthCells, toDateKey } from "@/components/calendar/business-calen
 import { DutyAssignmentsList } from "@/components/scheduling/DutyAssignmentsList";
 import { DutyDayList } from "@/components/scheduling/DutyDayList";
 import { PersonalDutyView } from "@/components/scheduling/PersonalDutyView";
+import { ReferenceCatalogLinks } from "@/components/references/ReferenceCatalogLinks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { monthRange } from "@/lib/scheduling/date-range";
@@ -278,6 +279,9 @@ function DutySchedulePage() {
       />
 
       <PageBody className="max-w-5xl space-y-6">
+        {canManage ? (
+          <ReferenceCatalogLinks section="hr" catalogIds={["duty-roles"]} titleKey="hr.admin.catalogLinksTitle" />
+        ) : null}
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "personal" | "organization")}>
           <TabsList>
             <TabsTrigger value="personal" className="gap-1.5">

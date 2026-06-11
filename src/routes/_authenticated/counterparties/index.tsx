@@ -6,7 +6,7 @@ import { Building2 } from "lucide-react";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ManageCatalogLink } from "@/components/references/ManageCatalogLink";
 import { DataTableShell, TableStatusRow } from "@/components/PageLayout";
 import { useI18n, localized } from "@/i18n";
 import { listCounterparties } from "@/lib/api/counterparties.functions";
@@ -67,11 +67,7 @@ function CounterpartiesPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/references/$catalog" params={{ catalog: "correspondents" }}>
-                {t("counterparty.manageRefs")}
-              </Link>
-            </Button>
+            <ManageCatalogLink catalogId="correspondents" labelKey="counterparty.manageRefs" />
           </div>
 
           <DataTableShell>

@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useI18n, localized } from "@/i18n";
 import type { RefCatalogDef, RefFieldDef } from "@/lib/references/catalogs";
+import { invalidateCatalogQueries } from "@/lib/references/cache";
 import {
   deleteReferenceRow,
   listArchiveLocationsBrief,
@@ -41,8 +42,8 @@ import {
   listReferenceCatalog,
   upsertReferenceRow,
 } from "@/lib/api/references.functions";
-import { listDepartments } from "@/lib/api/admin.functions";
-import { getMyProfile } from "@/lib/api/admin.functions";
+import { listDepartments, getMyProfile } from "@/lib/api/admin.functions";
+import { listWorkflows } from "@/lib/api/workflows.functions";
 import { userHasPermission } from "@/lib/access/rbac";
 
 type Row = Record<string, unknown>;
@@ -96,6 +97,8 @@ function fieldLabel(t: (k: string) => string, field: RefFieldDef): string {
       return t("ref.prefix");
     case "select_document_type":
       return t("ref.documentType");
+    case "select_workflow":
+      return t("ref.defaultWorkflow");
     case "select_department":
       return t("nav.departments");
     case "select_parent_location":
@@ -105,6 +108,9 @@ function fieldLabel(t: (k: string) => string, field: RefFieldDef): string {
     case "color":
       return t("ref.color");
     default:
+      if (field.key === "deducts_balance") return t("ref.deductsBalance");
+      if (field.key === "requires_approval") return t("ref.requiresApproval");
+      if (field.key === "auto_start_workflow") return t("ref.autoStartWorkflow");
       return field.key;
   }
 }
@@ -119,6 +125,9 @@ function formatCellValue(
   if (field.type === "is_active" || field.type === "is_permanent" || field.type === "boolean") {
     return v ? "✓" : "—";
   }
+  if (field.type === "color" && typeof v === "string" && v) {
+    return v;
+  }
   if (field.type === "name" || field.key === "name_ru" || field.key === "name_kk") {
     if (field.key === "name_ru" || field.key === "name_kk") {
       return String(v ?? "");
@@ -128,6 +137,10 @@ function formatCellValue(
   if (field.type === "select_document_type" && row.ref_document_types) {
     const dt = row.ref_document_types as { name_ru?: string; name_kk?: string };
     return localized(dt, locale, "name") || "—";
+  }
+  if (field.type === "select_workflow" && row.workflows) {
+    const wf = row.workflows as { name_ru?: string; name_kk?: string };
+    return localized(wf, locale, "name") || "—";
   }
   if (field.type === "select_department" && row.departments) {
     const d = row.departments as { name_ru?: string; name_kk?: string };
@@ -174,6 +187,12 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
     enabled: catalog.fields.some((f) => f.type === "select_parent_location"),
   });
 
+  const { data: workflows = [] } = useQuery({
+    queryKey: ["wfs"],
+    queryFn: () => listWorkflows(),
+    enabled: catalog.fields.some((f) => f.type === "select_workflow"),
+  });
+
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -196,8 +215,7 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
     onSuccess: () => {
       toast.success(t("common.success"));
       handleClose();
-      qc.invalidateQueries({ queryKey: ["ref-catalog", catalog.id] });
-      qc.invalidateQueries({ queryKey: ["ref-locations-brief"] });
+      invalidateCatalogQueries(qc, catalog.id);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   });
@@ -206,7 +224,7 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
     mutationFn: (id: string) => deleteReferenceRow({ data: { catalogId: catalog.id, id } }),
     onSuccess: () => {
       toast.success(t("common.success"));
-      qc.invalidateQueries({ queryKey: ["ref-catalog", catalog.id] });
+      invalidateCatalogQueries(qc, catalog.id);
       setDeleteId(null);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
@@ -269,6 +287,32 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
                   {localized(dt, locale, "name")} ({dt.code})
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    if (field.type === "select_workflow") {
+      return (
+        <div>
+          <Label>{fieldLabel(t, field)}</Label>
+          <Select
+            value={(value as string) ?? "__none"}
+            onValueChange={(v) => updateField(field.key, v === "__none" ? null : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="—" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none">—</SelectItem>
+              {(workflows as { id: string; name_ru: string; name_kk: string; status?: string }[])
+                .filter((w) => w.status !== "archived")
+                .map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {localized(w, locale, "name")}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -342,6 +386,27 @@ export function ReferenceCatalogPage({ catalog }: { catalog: RefCatalogDef }) {
               updateField(field.key, e.target.value === "" ? null : Number(e.target.value))
             }
           />
+        </div>
+      );
+    }
+
+    if (field.type === "color") {
+      return (
+        <div>
+          <Label>{fieldLabel(t, field)}</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="color"
+              className="h-9 w-14 cursor-pointer p-1"
+              value={String(value || "#6366f1")}
+              onChange={(e) => updateField(field.key, e.target.value)}
+            />
+            <Input
+              value={String(value ?? "")}
+              onChange={(e) => updateField(field.key, e.target.value)}
+              placeholder="#6366f1"
+            />
+          </div>
         </div>
       );
     }

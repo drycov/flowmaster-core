@@ -65,7 +65,7 @@ export async function resolveStartWorkflowRoute(
 ): Promise<ResolvedStartWorkflowRoute> {
   const { data: doc, error } = await supabase
     .from("documents_full" as never)
-    .select("workflow_id, custom_route, template_id")
+    .select("workflow_id, custom_route, template_id, document_type_id")
     .eq("id" as never, documentId)
     .single();
 
@@ -75,6 +75,7 @@ export async function resolveStartWorkflowRoute(
     workflow_id?: string | null;
     custom_route?: unknown;
     template_id?: string | null;
+    document_type_id?: string | null;
   };
 
   let workflowId = input.workflow_id ?? row.workflow_id ?? null;
@@ -94,6 +95,17 @@ export async function resolveStartWorkflowRoute(
       .eq("id", row.template_id)
       .maybeSingle();
     workflowId = (tpl as { default_workflow_id?: string | null } | null)?.default_workflow_id ?? null;
+  }
+
+  if (!workflowId && !graphDef && !customSteps && row.document_type_id) {
+    const { data: docType } = await supabase
+      .from("ref_document_types")
+      .select("default_workflow_id")
+      .eq("id", row.document_type_id)
+      .eq("is_active", true)
+      .maybeSingle();
+    workflowId =
+      (docType as { default_workflow_id?: string | null } | null)?.default_workflow_id ?? null;
   }
 
   return { workflowId, graphDef, customSteps };

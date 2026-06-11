@@ -132,16 +132,28 @@ function NewDocument() {
 
   const templateAllowCustom = selectedTemplate?.allow_custom_route ?? true;
 
+  const documentTypeId = form.watch("document_type_id");
+
+  const selectedDocumentType = useMemo(
+    () => documentTypes.find((dt) => dt.id === documentTypeId),
+    [documentTypes, documentTypeId],
+  );
+
+  const documentTypeDefaultWf = selectedDocumentType?.default_workflow_id ?? null;
+  const documentTypeAutoStart = selectedDocumentType?.auto_start_workflow ?? false;
+
   const [route, setRoute] = useState<RouteValue>({ kind: "none" });
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
 
   useEffect(() => {
     if (templateDefaultWf) {
       setRoute({ kind: "template_default" });
+    } else if (documentTypeDefaultWf) {
+      setRoute({ kind: "document_type_default" });
     } else {
       setRoute({ kind: "none" });
     }
-  }, [selectedTemplateId, templateDefaultWf]);
+  }, [selectedTemplateId, templateDefaultWf, documentTypeId, documentTypeDefaultWf]);
 
   useEffect(() => {
     if (!priorities.length || form.getValues("priority_id")) return;
@@ -154,8 +166,6 @@ function NewDocument() {
     const match = documentTypes.find((dt) => dt.code === selectedTemplate.category);
     if (match) form.setValue("document_type_id", match.id);
   }, [selectedTemplateId, selectedTemplate?.category, documentTypes, form]);
-
-  const documentTypeId = form.watch("document_type_id");
 
   const documentTypeCodeResolved = useMemo(
     () => resolveDocumentTypeCode(documentTypeId, documentTypes),
@@ -243,6 +253,10 @@ function NewDocument() {
         templateFields,
         authorDefaults,
         route,
+        documentTypeRoute: {
+          defaultWorkflowId: documentTypeDefaultWf,
+          autoStartWorkflow: documentTypeAutoStart,
+        },
         projectId: projectId ?? null,
         attachmentFiles: pendingAttachments,
       });
@@ -343,6 +357,7 @@ function NewDocument() {
 
             <RoutePickerCard
               templateDefaultWorkflowId={templateDefaultWf}
+              documentTypeDefaultWorkflowId={documentTypeDefaultWf}
               templateAllowCustom={templateAllowCustom}
               value={route}
               onChange={setRoute}

@@ -10,6 +10,7 @@ import { listTemplates } from "@/lib/api/templates.functions";
 import { listTemplateCategoriesBrief } from "@/lib/api/references.functions";
 import type { ReferenceCodeOption } from "@/components/references/ReferenceCodeSelect";
 
+import { ManageCatalogLink } from "@/components/references/ManageCatalogLink";
 import { useTemplateCreation } from "@/components/templates-list/hooks/useTemplateCreation";
 import { TemplateGrid } from "@/components/templates-list/components/TemplateGrid";
 
@@ -50,10 +51,13 @@ function TemplatesList() {
       <PageHeader
         title={t("nav.templates")}
         actions={
-          <Button size="sm" onClick={() => createTemplate()} disabled={isCreating}>
-            <Plus className="w-4 h-4 mr-1" />
-            {isCreating ? t("tpl.creating") : t("common.create")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ManageCatalogLink catalogId="template-categories" />
+            <Button size="sm" onClick={() => createTemplate()} disabled={isCreating}>
+              <Plus className="w-4 h-4 mr-1" />
+              {isCreating ? t("tpl.creating") : t("common.create")}
+            </Button>
+          </div>
         }
       />
 

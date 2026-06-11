@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireAnyPermission } from "@/lib/access/route-guards";
+import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
@@ -10,12 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LeaveStatusBadge } from "@/components/hr/LeaveStatusBadge";
+import { HrEmptyState } from "@/components/hr/HrEmptyState";
+import { HrSubNav } from "@/components/hr/HrSubNav";
 import { useI18n, localized } from "@/i18n";
 import { decideLeaveRequest, listPendingLeaveApprovals } from "@/lib/api/hr.functions";
 import { fmtDateShort } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/hr/leave/approvals")({
-  beforeLoad: () => requireAnyPermission("manage_hr"),
+  beforeLoad: () => requireModule("hr"),
   component: LeaveApprovalsPage,
 });
 
@@ -57,7 +59,8 @@ function LeaveApprovalsPage() {
           </Button>
         }
       />
-      <PageBody className="max-w-3xl">
+      <PageBody className="max-w-3xl space-y-4">
+        <HrSubNav />
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("hr.leave.pendingQueue")}</CardTitle>
@@ -68,7 +71,7 @@ function LeaveApprovalsPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : requests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("hr.leave.noPending")}</p>
+              <HrEmptyState title={t("hr.leave.noPending")} />
             ) : (
               <div className="space-y-4">
                 {requests.map((raw) => {

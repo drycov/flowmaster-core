@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireModuleAccess } from "./_helpers";
 import { getCatalogById, REFERENCE_CATALOGS, REFERENCE_TABLES } from "@/lib/references/catalogs";
-import { queryActiveReferenceBrief, type ReferenceBriefRow } from "@/lib/api/reference-brief.server";
+import { queryActiveReferenceBrief, queryDutyRolesBrief, type ReferenceBriefRow } from "@/lib/api/reference-brief.server";
 import type { ReferenceCatalogRow } from "@/lib/api/reference-types";
 import { upsertRow } from "@/lib/api/db.helpers.server";
 
@@ -30,11 +30,17 @@ function assertCatalog(catalogId: string) {
 }
 
 function buildSelectQuery(table: string, catalogId: string) {
+  if (table === "ref_document_types") {
+    return `*, workflows!ref_document_types_default_workflow_id_fkey(id, name_ru, name_kk)`;
+  }
   if (table === "ref_registration_journals") {
     return `*, ref_document_types(id, code, name_ru, name_kk), departments(id, code, name_ru, name_kk)`;
   }
   if (table === "ref_archive_locations") {
     return `*, parent:ref_archive_locations!ref_archive_locations_parent_id_fkey(id, code, name_ru, name_kk)`;
+  }
+  if (table === "ref_duty_roles") {
+    return `*, departments!ref_duty_roles_department_id_fkey(id, code, name_ru, name_kk)`;
   }
   void catalogId;
   return "*";
@@ -115,7 +121,7 @@ export const listDocumentTypesBrief = createServerFn({ method: "GET" })
       queryActiveReferenceBrief<ReferenceBriefRow>(
         context.supabase,
         "ref_document_types",
-        "id, code, name_ru, name_kk",
+        "id, code, name_ru, name_kk, default_workflow_id, auto_start_workflow",
         [...defaultBriefOrder],
       ),
   );
@@ -224,6 +230,49 @@ export const listArchiveLocationsBrief = createServerFn({ method: "GET" })
         context.supabase,
         "ref_archive_locations",
         "id, code, name_ru, name_kk, parent_id",
+        [...defaultBriefOrder],
+      ),
+  );
+
+export const listAbsenceTypesBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_absence_types",
+        "id, code, name_ru, name_kk, color, deducts_balance, requires_approval, sort_order",
+        [...defaultBriefOrder],
+      ),
+  );
+
+export const listDutyRolesBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ department_id: z.string().uuid().optional() }).optional())
+  .handler(async ({ data, context }): Promise<ReferenceBriefRow[]> =>
+    queryDutyRolesBrief(context.supabase, data?.department_id),
+  );
+
+export const listDepartmentKindsBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_department_kinds",
+        "id, code, name_ru, name_kk",
+        [...defaultBriefOrder],
+      ),
+  );
+
+export const listRejectionReasonsBrief = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({ context }): Promise<ReferenceBriefRow[]> =>
+      queryActiveReferenceBrief<ReferenceBriefRow>(
+        context.supabase,
+        "ref_rejection_reasons",
+        "id, code, name_ru, name_kk",
         [...defaultBriefOrder],
       ),
   );

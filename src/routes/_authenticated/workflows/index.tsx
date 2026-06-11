@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkflows, upsertWorkflow } from "@/lib/api/workflows.functions";
+import { ManageCatalogLink } from "@/components/references/ManageCatalogLink";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { ListEmpty } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -61,10 +62,13 @@ function WorkflowsList() {
       <PageHeader
         title={t("nav.workflows")}
         actions={
-          <Button size="sm" onClick={() => create.mutate()}>
-            <Plus className="w-4 h-4 mr-1" />
-            {t("common.create")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ManageCatalogLink catalogId="document-types" />
+            <Button size="sm" onClick={() => create.mutate()}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t("common.create")}
+            </Button>
+          </div>
         }
       />
       <PageBody>

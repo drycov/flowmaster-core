@@ -19,6 +19,11 @@ import { toGraphRouteInput } from "@/lib/workflow/route-builder";
 import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments";
 import { formatAttachmentsListText } from "@/lib/documents/attachments-format";
 
+interface DocumentTypeRouteMeta {
+  defaultWorkflowId?: string | null;
+  autoStartWorkflow?: boolean;
+}
+
 interface CreateDocumentParams {
   values: Record<string, string>;
   templateId: string | null;
@@ -26,6 +31,7 @@ interface CreateDocumentParams {
   templateFields: TemplateField[];
   authorDefaults?: Record<string, string>;
   route?: RouteValue;
+  documentTypeRoute?: DocumentTypeRouteMeta;
   projectId?: string | null;
   attachmentFiles?: File[];
 }
@@ -51,6 +57,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       templateFields,
       authorDefaults = {},
       route,
+      documentTypeRoute,
       projectId,
       attachmentFiles = [],
     }: CreateDocumentParams) => {
@@ -112,6 +119,8 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
       if (route) {
         if (route.kind === "template_default") {
           resolvedWorkflowId = tpl?.default_workflow_id ?? null;
+        } else if (route.kind === "document_type_default") {
+          resolvedWorkflowId = documentTypeRoute?.defaultWorkflowId ?? null;
         } else if (route.kind === "workflow") {
           resolvedWorkflowId = route.workflow_id;
         } else if (route.kind === "custom") {
@@ -124,6 +133,8 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
         }
       } else if (tpl?.default_workflow_id) {
         resolvedWorkflowId = tpl.default_workflow_id;
+      } else if (documentTypeRoute?.defaultWorkflowId) {
+        resolvedWorkflowId = documentTypeRoute.defaultWorkflowId;
       }
 
       let created: CreateDocumentResult | GenerateFromTemplateResult;
@@ -188,8 +199,23 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
         await uploadDocumentAttachments(created.id, attachmentFiles);
       }
 
+      const routeRequiresWorkflow =
+        route?.kind === "document_type_default" ||
+        route?.kind === "template_default" ||
+        route?.kind === "workflow" ||
+        route?.kind === "modify" ||
+        (route?.kind === "custom" && route.steps.length > 0);
+
       const shouldStart =
-        hasRoute || (!route && resolvedWorkflowId) || customRouteSteps || graphDefinition;
+        hasRoute ||
+        (!route && resolvedWorkflowId) ||
+        customRouteSteps ||
+        graphDefinition ||
+        (documentTypeRoute?.autoStartWorkflow && !!documentTypeRoute.defaultWorkflowId);
+
+      const workflowStartRequired =
+        routeRequiresWorkflow ||
+        (documentTypeRoute?.autoStartWorkflow && !!documentTypeRoute.defaultWorkflowId);
 
       if (
         created?.id &&
@@ -208,6 +234,9 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
         } catch (workflowErr) {
           const message =
             workflowErr instanceof Error ? workflowErr.message : "Не удалось запустить маршрут";
+          if (workflowStartRequired) {
+            throw workflowErr instanceof Error ? workflowErr : new Error(message);
+          }
           toast.error(message);
         }
       }

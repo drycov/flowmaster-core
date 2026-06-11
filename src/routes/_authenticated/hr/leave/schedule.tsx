@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buildMonthCells, toDateKey } from "@/components/calendar/business-calendar-utils";
 import { LeaveDayList } from "@/components/hr/LeaveDayList";
 import { PersonalLeaveView } from "@/components/hr/PersonalLeaveView";
+import { HrSubNav } from "@/components/hr/HrSubNav";
 import { useI18n, localized } from "@/i18n";
 import { getMyProfile, listDepartments } from "@/lib/api/admin.functions";
 import { listDepartmentLeaveCalendar, listMyLeaveCalendar } from "@/lib/api/hr.functions";
@@ -156,7 +157,8 @@ function LeaveSchedulePage() {
           </Button>
         }
       />
-      <PageBody className="max-w-5xl space-y-6">
+      <PageBody className="max-w-5xl space-y-4">
+        <HrSubNav />
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "personal" | "organization")}>
           <TabsList>
             <TabsTrigger value="personal" className="gap-1.5">

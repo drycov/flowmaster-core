@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { upsertRow } from "@/lib/api/db.helpers.server";
+import { queryDutyRolesBrief } from "@/lib/api/reference-brief.server";
 import { requireModuleAccess, requireAnyPermission } from "./_helpers";
 
 const dutySelect = `
@@ -18,17 +19,7 @@ export const listDutyRoles = createServerFn({ method: "GET" })
   .inputValidator(z.object({ department_id: z.string().uuid().optional() }).optional())
   .handler(async ({ data, context }) => {
     await requireModuleAccess(supabaseAdmin, context.userId, "hr", { action: "read" });
-    let q = context.supabase
-      .from("ref_duty_roles" as never)
-      .select("id, code, name_ru, name_kk, color, department_id, sort_order")
-      .eq("is_active", true)
-      .order("sort_order");
-    if (data?.department_id) {
-      q = q.or(`department_id.is.null,department_id.eq.${data.department_id}`);
-    }
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-    return rows ?? [];
+    return queryDutyRolesBrief(context.supabase, data?.department_id);
   });
 
 export const listDutyAssignments = createServerFn({ method: "POST" })

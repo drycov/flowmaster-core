@@ -12,9 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HrEmptyState } from "@/components/hr/HrEmptyState";
+import { HrSubNav } from "@/components/hr/HrSubNav";
 import { useI18n, localized } from "@/i18n";
 import { listDepartments } from "@/lib/api/admin.functions";
-import { listStaffDirectory } from "@/lib/api/hr.functions";
+import { listStaffDirectory, type StaffDirectoryRow } from "@/lib/api/hr.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/directory/")({
   beforeLoad: () => requireModule("hr"),
@@ -42,14 +44,15 @@ function StaffDirectoryPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return staff;
-    return staff.filter((raw) => {
-      const row = raw as Record<string, unknown>;
+    return staff.filter((row) => {
       const name =
         `${row.full_name_ru ?? ""} ${row.full_name_kk ?? ""} ${row.email ?? ""}`.toLowerCase();
-      const dept = row.departments as { name_ru?: string; name_kk?: string } | null;
-      const pos = row.positions as { title_ru?: string; title_kk?: string } | null;
-      const deptName = dept ? `${dept.name_ru ?? ""} ${dept.name_kk ?? ""}` : "";
-      const posName = pos ? `${pos.title_ru ?? ""} ${pos.title_kk ?? ""}` : "";
+      const deptName = row.departments
+        ? `${row.departments.name_ru ?? ""} ${row.departments.name_kk ?? ""}`
+        : "";
+      const posName = row.positions
+        ? `${row.positions.title_ru ?? ""} ${row.positions.title_kk ?? ""}`
+        : "";
       return (
         name.includes(q) || deptName.toLowerCase().includes(q) || posName.toLowerCase().includes(q)
       );
@@ -60,6 +63,7 @@ function StaffDirectoryPage() {
     <>
       <PageHeader title={t("hr.directory.title")} description={t("hr.directory.description")} />
       <PageBody className="max-w-5xl space-y-4">
+        <HrSubNav />
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             value={search}
@@ -90,7 +94,7 @@ function StaffDirectoryPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("hr.directory.empty")}</p>
+          <HrEmptyState title={t("hr.directory.empty")} />
         ) : (
           <div className="overflow-hidden rounded-xl border">
             <table className="w-full text-sm">
@@ -109,34 +113,23 @@ function StaffDirectoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((raw) => {
-                  const row = raw as Record<string, unknown>;
-                  const dept = row.departments as { name_ru?: string; name_kk?: string } | null;
-                  const pos = row.positions as { title_ru?: string; title_kk?: string } | null;
-                  const manager = row.manager as {
-                    full_name_ru?: string;
-                    full_name_kk?: string;
-                  } | null;
-                  return (
-                    <tr key={String(row.id)} className="border-b last:border-0">
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{localized(row, locale, "full_name")}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {String(row.email ?? "")}
-                        </div>
-                      </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
-                        {dept ? localized(dept, locale, "name") : "—"}
-                      </td>
-                      <td className="hidden px-4 py-3 lg:table-cell">
-                        {pos ? localized(pos, locale, "title") : "—"}
-                      </td>
-                      <td className="hidden px-4 py-3 xl:table-cell">
-                        {manager ? localized(manager, locale, "full_name") : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filtered.map((row: StaffDirectoryRow) => (
+                  <tr key={row.id} className="border-b last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{localized(row, locale, "full_name")}</div>
+                      <div className="text-xs text-muted-foreground">{row.email}</div>
+                    </td>
+                    <td className="hidden px-4 py-3 md:table-cell">
+                      {row.departments ? localized(row.departments, locale, "name") : "—"}
+                    </td>
+                    <td className="hidden px-4 py-3 lg:table-cell">
+                      {row.positions ? localized(row.positions, locale, "title") : "—"}
+                    </td>
+                    <td className="hidden px-4 py-3 xl:table-cell">
+                      {row.manager ? localized(row.manager, locale, "full_name") : "—"}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

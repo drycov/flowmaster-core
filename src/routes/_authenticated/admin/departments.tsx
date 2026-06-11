@@ -3,6 +3,7 @@ import { requireModule } from "@/lib/access/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { listDepartments, upsertDepartment, listUsers } from "@/lib/api/admin.functions";
+import { ManageCatalogLink } from "@/components/references/ManageCatalogLink";
 import { PageHeader, PageBody } from "@/components/AppShell";
 import { ListEmpty, PageLoading, PanelCard } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -195,10 +196,13 @@ function DepartmentsPage() {
         title={t("nav.departments")}
         description={t("departments.description")}
         actions={
-          <Button size="sm" onClick={handleCreate}>
-            <Plus className="w-4 h-4 mr-1" />
-            {t("common.create")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ManageCatalogLink catalogId="department-kinds" />
+            <Button size="sm" onClick={handleCreate}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t("common.create")}
+            </Button>
+          </div>
         }
       />
 

@@ -22,3 +22,23 @@ export async function queryActiveReferenceBrief<T>(
   if (error) throw new Error(error.message);
   return (data ?? []) as T[];
 }
+
+export async function queryDutyRolesBrief(
+  supabase: SupabaseClient,
+  departmentId?: string,
+): Promise<ReferenceBriefRow[]> {
+  let q = supabase
+    .from("ref_duty_roles" as never)
+    .select("id, code, name_ru, name_kk, color, department_id, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("code", { ascending: true });
+
+  if (departmentId) {
+    q = q.or(`department_id.is.null,department_id.eq.${departmentId}`);
+  }
+
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ReferenceBriefRow[];
+}

@@ -8,6 +8,7 @@ export type RefFieldType =
   | "number"
   | "boolean"
   | "select_document_type"
+  | "select_workflow"
   | "select_department"
   | "select_parent_location"
   | "years"
@@ -25,12 +26,16 @@ export type RefFieldDef = {
   width?: "sm" | "md" | "lg";
 };
 
+export type RefCatalogSection = "edms" | "hr";
+
 export type RefCatalogDef = {
   id: string;
   table: string;
   titleKey: string;
   descriptionKey: string;
   icon: string;
+  /** Hub section; defaults to EDMS classifiers */
+  section?: RefCatalogSection;
   fields: RefFieldDef[];
   orderBy?: { column: string; ascending?: boolean }[];
 };
@@ -48,6 +53,8 @@ export const REFERENCE_CATALOGS: RefCatalogDef[] = [
       { key: "name_kk", type: "name", required: true },
       { key: "description_ru", type: "description" },
       { key: "description_kk", type: "description" },
+      { key: "default_workflow_id", type: "select_workflow", list: true },
+      { key: "auto_start_workflow", type: "boolean", list: true, width: "sm" },
       { key: "sort_order", type: "sort_order", list: true, width: "sm" },
       { key: "is_active", type: "is_active", list: true, width: "sm" },
     ],
@@ -242,6 +249,43 @@ export const REFERENCE_CATALOGS: RefCatalogDef[] = [
     ],
     orderBy: [{ column: "sort_order" }],
   },
+  {
+    id: "absence-types",
+    table: "ref_absence_types",
+    titleKey: "ref.absenceTypes",
+    descriptionKey: "ref.absenceTypesDesc",
+    icon: "Palmtree",
+    section: "hr",
+    fields: [
+      { key: "code", type: "code", required: true, list: true, width: "sm" },
+      { key: "name_ru", type: "name", required: true, list: true },
+      { key: "name_kk", type: "name", required: true },
+      { key: "color", type: "color", list: true, width: "sm" },
+      { key: "deducts_balance", type: "boolean", list: true, width: "sm" },
+      { key: "requires_approval", type: "boolean", list: true, width: "sm" },
+      { key: "sort_order", type: "sort_order", list: true, width: "sm" },
+      { key: "is_active", type: "is_active", list: true, width: "sm" },
+    ],
+    orderBy: [{ column: "sort_order" }, { column: "code" }],
+  },
+  {
+    id: "duty-roles",
+    table: "ref_duty_roles",
+    titleKey: "ref.dutyRoles",
+    descriptionKey: "ref.dutyRolesDesc",
+    icon: "ShieldHalf",
+    section: "hr",
+    fields: [
+      { key: "code", type: "code", required: true, list: true, width: "sm" },
+      { key: "name_ru", type: "name", required: true, list: true },
+      { key: "name_kk", type: "name", required: true },
+      { key: "color", type: "color", list: true, width: "sm" },
+      { key: "department_id", type: "select_department" },
+      { key: "sort_order", type: "sort_order", list: true, width: "sm" },
+      { key: "is_active", type: "is_active", list: true, width: "sm" },
+    ],
+    orderBy: [{ column: "sort_order" }, { column: "code" }],
+  },
 ];
 
 const catalogById = new Map(REFERENCE_CATALOGS.map((c) => [c.id, c]));
@@ -254,6 +298,28 @@ export function getCatalogById(id: string): RefCatalogDef | undefined {
 export function getCatalogByTable(table: string): RefCatalogDef | undefined {
   return catalogByTable.get(table);
 }
+
+export function getCatalogsBySection(section: RefCatalogSection): RefCatalogDef[] {
+  return REFERENCE_CATALOGS.filter((c) => (c.section ?? "edms") === section);
+}
+
+/** React-query keys invalidated after catalog CRUD */
+export const CATALOG_BRIEF_QUERY_KEYS: Partial<Record<string, readonly string[]>> = {
+  "document-types": ["ref-document-types-brief"],
+  "template-categories": ["ref-template-categories"],
+  correspondents: ["ref-correspondents-brief"],
+  "delivery-methods": ["ref-delivery-methods-brief"],
+  "access-levels": ["ref-access-levels-brief"],
+  priorities: ["ref-priorities-brief"],
+  "retention-periods": ["ref-retention-periods"],
+  "registration-journals": ["ref-registration-journals-brief"],
+  "archive-locations": ["ref-locations-brief", "ref-archive-locations"],
+  "department-kinds": ["ref-department-kinds-brief"],
+  "rejection-reasons": ["ref-rejection-reasons-brief"],
+  "document-link-types": ["ref-document-link-types"],
+  "absence-types": ["absence-types"],
+  "duty-roles": ["duty-roles"],
+};
 
 export const REFERENCE_TABLES = REFERENCE_CATALOGS.map((c) => c.table);
 
@@ -290,6 +356,13 @@ export const EXTERNAL_REFERENCE_LINKS: ExternalReferenceLink[] = [
     titleKey: "nav.positions",
     descriptionKey: "ref.positionsDesc",
     icon: "Settings",
+    permission: "manage_org",
+  },
+  {
+    to: "/admin/departments",
+    titleKey: "nav.departments",
+    descriptionKey: "ref.departmentsDesc",
+    icon: "Building",
     permission: "manage_org",
   },
 ];

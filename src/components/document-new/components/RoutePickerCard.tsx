@@ -56,6 +56,7 @@ export type RouteStep = {
 
 export type RouteValue =
   | { kind: "template_default" }
+  | { kind: "document_type_default" }
   | { kind: "workflow"; workflow_id: string }
   | { kind: "modify"; workflow_id: string; overrides: ModifyNodeOverride[] }
   | { kind: "custom"; steps: RouteStep[] }
@@ -63,6 +64,7 @@ export type RouteValue =
 
 interface Props {
   templateDefaultWorkflowId?: string | null;
+  documentTypeDefaultWorkflowId?: string | null;
   templateAllowCustom?: boolean;
   value: RouteValue;
   onChange: (v: RouteValue) => void;
@@ -250,6 +252,7 @@ function SortableStep({
 
 export function RoutePickerCard({
   templateDefaultWorkflowId,
+  documentTypeDefaultWorkflowId,
   templateAllowCustom = true,
   value,
   onChange,
@@ -300,6 +303,7 @@ export function RoutePickerCard({
     setKind(k);
     if (k === "none") onChange({ kind: "none" });
     else if (k === "template_default") onChange({ kind: "template_default" });
+    else if (k === "document_type_default") onChange({ kind: "document_type_default" });
     else if (k === "workflow")
       onChange({ kind: "workflow", workflow_id: (workflows as any[])[0]?.id ?? "" });
     else if (k === "modify")
@@ -380,6 +384,9 @@ export function RoutePickerCard({
               <SelectItem value="none">{t("tpl.noWorkflow")}</SelectItem>
               {templateDefaultWorkflowId && (
                 <SelectItem value="template_default">{t("doc.from_template")}</SelectItem>
+              )}
+              {!templateDefaultWorkflowId && documentTypeDefaultWorkflowId && (
+                <SelectItem value="document_type_default">{t("doc.from_document_type")}</SelectItem>
               )}
               {templateDefaultWorkflowId && templateAllowCustom && (
                 <SelectItem value="modify">{t("common.edit")}</SelectItem>

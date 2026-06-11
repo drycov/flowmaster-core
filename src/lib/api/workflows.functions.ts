@@ -164,6 +164,13 @@ export const startWorkflow = createServerFn({ method: "POST" })
       .single();
     if (docErr) throw new Error(docErr.message);
 
+    const docStatus = (doc as { status?: string }).status;
+    if (!docStatus || !["draft", "returned_for_revision"].includes(docStatus)) {
+      throw new Error(
+        "Маршрут можно запустить только для черновика или документа, возвращённого на доработку",
+      );
+    }
+
     const { data: canManage, error: canErr } = await supabaseAdmin.rpc(
       "can_manage_document_workflow" as never,
       { _doc_id: data.document_id, _user: userId } as never,

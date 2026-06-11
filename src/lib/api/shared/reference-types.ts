@@ -13,6 +13,11 @@ export type ReferenceBriefRow = {
   is_permanent?: boolean | null;
   level_order?: number | null;
   parent_id?: string | null;
+  deducts_balance?: boolean | null;
+  requires_approval?: boolean | null;
+  department_id?: string | null;
+  default_workflow_id?: string | null;
+  auto_start_workflow?: boolean | null;
 };
 
 export type ReferenceCatalogRow = {
