@@ -38,7 +38,7 @@ npm run dev                      # http://localhost:3000
 | ЕСЭДО (через nginx) | http://localhost (порт `NGINX_HTTP_PORT`, по умолчанию 80) |
 | ЕСЭДО (напрямую) | http://localhost:3000 |
 | Supabase API (Kong) | http://localhost:54321 |
-| Postgres | 127.0.0.1:54322 |
+| Postgres (pg_dump) | 127.0.0.1:54322 |
 | Studio | `node scripts/docker-up.mjs --studio` |
 
 Cron: `npm run docker:up -- --cron` или `docker compose --profile cron up -d`

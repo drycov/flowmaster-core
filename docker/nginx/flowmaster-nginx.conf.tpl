@@ -1,15 +1,7 @@
 # HTTPS-шаблон для docker-compose.tls.yml (Let's Encrypt через nginx-certbot).
 # Переменные: PROXY_DOMAIN
 
-upstream flowmaster_app {
-    server app:3000;
-    keepalive 8;
-}
-
-upstream flowmaster_kong {
-    server kong:8000;
-    keepalive 8;
-}
+resolver 127.0.0.11 valid=10s ipv6=off;
 
 map $http_upgrade $connection_upgrade {
     default upgrade;
@@ -46,27 +38,30 @@ server {
     proxy_buffers 4 256k;
     proxy_busy_buffers_size 256k;
 
+    set $flowmaster_app http://app:3000;
+    set $flowmaster_kong http://kong:8000;
+
     location /auth {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location /rest {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location /graphql {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location /realtime/ {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
         proxy_read_timeout 3600s;
     }
 
     location /storage/v1/ {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
         proxy_buffering off;
         proxy_request_buffering off;
         chunked_transfer_encoding off;
@@ -74,19 +69,19 @@ server {
     }
 
     location /functions {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location /mcp {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location /sso {
-        proxy_pass http://flowmaster_kong;
+        proxy_pass $flowmaster_kong;
     }
 
     location / {
-        proxy_pass http://flowmaster_app;
+        proxy_pass $flowmaster_app;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
     }
