@@ -28,7 +28,12 @@ export function buildTemplateEditorPreviewValues(
     }
   }
 
-  return values;
+  return harmonizeTemplateSubstitutionValues({
+    ...values,
+    document_number: "000000000001",
+    registration_number: "000000000001",
+    reg_number: "000000000001",
+  });
 }
 
 export function buildPreviewTemplateValues(options: {

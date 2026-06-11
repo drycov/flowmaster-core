@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOfficeEditorConfig } from "@/lib/api/office.functions";
+import { getOfficeEditorConfig, isOfficeNotConfigured } from "@/lib/api/office.functions";
 import { OnlyOfficeEmbed } from "@/components/office/OnlyOfficeEmbed";
 import { OfficeFileInitPanel } from "@/components/office/OfficeFileInitPanel";
 
@@ -49,7 +49,7 @@ export function DocumentOfficeEditor({
       editorId={editorId}
       queryKey={queryKey}
       queryFn={() => getOfficeEditorConfig({ data: { document_id: documentId } })}
-      showPlaceholderWhenUnavailable={officeConfig?.reason !== "office_not_configured"}
+      showPlaceholderWhenUnavailable={!isOfficeNotConfigured(officeConfig)}
     />
   );
 }

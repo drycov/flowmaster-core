@@ -1,8 +1,8 @@
 // src/components/document-new/hooks/useDocumentCreation.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { createDocument } from "@/lib/api/documents.functions";
-import { generateFromTemplate } from "@/lib/api/templates.functions";
+import { createDocument, type CreateDocumentResult } from "@/lib/api/documents.functions";
+import { generateFromTemplate, type GenerateFromTemplateResult } from "@/lib/api/templates.functions";
 import { startWorkflow } from "@/lib/api/workflows.functions";
 import { toast } from "sonner";
 import { useI18n, interpolate } from "@/i18n";
@@ -16,7 +16,7 @@ import { buildModifiedDefinition } from "@/lib/workflow/route-builder";
 import { getWorkflow } from "@/lib/api/workflows.functions";
 import type { WorkflowDefinition } from "@/components/workflow-designer/types";
 import { toGraphRouteInput } from "@/lib/workflow/route-builder";
-import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments.client";
+import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments";
 import { formatAttachmentsListText } from "@/lib/documents/attachments-format";
 
 interface CreateDocumentParams {
@@ -126,7 +126,7 @@ export function useDocumentCreation(options: UseDocumentCreationOptions = {}) {
         resolvedWorkflowId = tpl.default_workflow_id;
       }
 
-      let created: { id: string; reg_number?: string };
+      let created: CreateDocumentResult | GenerateFromTemplateResult;
 
       if (templateId && templateId !== "none" && template) {
         const templateValues: Record<string, string> = {};

@@ -8,8 +8,10 @@ function base64UrlEncode(input: string | Buffer): string {
     .replace(/=+$/, "");
 }
 
+import type { OnlyOfficeEditorConfig } from "@/lib/office/config.types";
+
 /** Sign ONLYOFFICE editor config when JWT is enabled on Document Server. */
-export function signOnlyOfficeConfig(config: Record<string, unknown>): Record<string, unknown> {
+export function signOnlyOfficeConfig(config: OnlyOfficeEditorConfig): OnlyOfficeEditorConfig {
   const enabled = process.env.ONLYOFFICE_JWT_ENABLED === "true";
   const secret = process.env.ONLYOFFICE_JWT_SECRET?.trim();
   if (!enabled || !secret) return config;

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/i18n";
-import { getTemplateOfficeEditorConfig } from "@/lib/api/office.functions";
+import { getTemplateOfficeEditorConfig, isOfficeNotConfigured } from "@/lib/api/office.functions";
 import { OnlyOfficeEmbed } from "@/components/office/OnlyOfficeEmbed";
 import { TEMPLATE_FILE_EXTENSIONS } from "@/lib/templates/file-formats";
 
@@ -38,7 +38,7 @@ export function TemplateOfficeCard({
   });
 
   if (!enabled) return null;
-  if (officeConfig?.reason === "office_not_configured") return null;
+  if (isOfficeNotConfigured(officeConfig)) return null;
   if (editOnly && status !== "draft") return null;
 
   return (
@@ -48,11 +48,6 @@ export function TemplateOfficeCard({
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-xs text-muted-foreground">{t("tpl.fileTemplate.officeHint")}</p>
-        {status !== "draft" && (
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-            {t("tpl.fileTemplate.officeReadOnly")}
-          </p>
-        )}
         <OnlyOfficeEmbed
           editorId={`template-office-${templateId}`}
           queryKey={[...queryKey]}

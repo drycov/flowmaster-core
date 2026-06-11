@@ -12,6 +12,7 @@ import {
   officeTemplatePreviewKey,
 } from "@/lib/office/keys.server";
 import { signOnlyOfficeConfig } from "@/lib/office/jwt.server";
+import type { OnlyOfficeEditorConfig } from "@/lib/office/config.types";
 import {
   downloadTemplateBuffer,
   renderTemplateFile,
@@ -30,6 +31,9 @@ import {
   type OfficeInitOptions,
 } from "@/lib/office/document-file-init.server";
 
+export type { OfficeFileInitMode, OfficeInitOptions } from "@/lib/office/document-file-init.server";
+export type { OnlyOfficeEditorConfig } from "@/lib/office/config.types";
+
 export type OfficeUnavailableReason = "office_not_configured" | "no_file_version";
 
 export type OfficeEditorConfigResponse =
@@ -43,8 +47,14 @@ export type OfficeEditorConfigResponse =
       available: true;
       office_url: string;
       document_server_url: string;
-      config: Record<string, unknown>;
+      config: OnlyOfficeEditorConfig;
     };
+
+export function isOfficeNotConfigured(
+  config: OfficeEditorConfigResponse | undefined,
+): boolean {
+  return Boolean(config && !config.available && config.reason === "office_not_configured");
+}
 
 function officeFileTypes(format: string) {
   const ext = format.toLowerCase();
@@ -85,7 +95,7 @@ async function buildEditorPayload(input: {
   const callbackBase = await resolveOfficeCallbackBase(resolveAppOrigin);
   const callbackUrl = callbackBase ? `${callbackBase}/api/public/hooks/office-callback` : "";
 
-  const rawConfig = {
+  const rawConfig: OnlyOfficeEditorConfig = {
     document: {
       fileType,
       key: input.documentKey,
@@ -125,7 +135,7 @@ async function buildEditorPayload(input: {
 export const getOfficeEditorConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ document_id: z.string().uuid() }))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<OfficeEditorConfigResponse> => {
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { supabase, userId } = context;
     await assertCanViewDocumentContent(supabase, userId, data.document_id);
@@ -200,7 +210,7 @@ export const getOfficeEditorConfig = createServerFn({ method: "POST" })
 export const getTemplateOfficeEditorConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ template_id: z.string().uuid() }))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<OfficeEditorConfigResponse> => {
     await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
     const { supabase, userId } = context;
     const officeUrl = await resolveOfficeUrl();
@@ -260,7 +270,7 @@ export const getTemplateOfficePreviewConfig = createServerFn({ method: "POST" })
       preview_values: z.record(z.string(), z.string()).default({}),
     }),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<OfficeEditorConfigResponse> => {
     await requireModuleAccess(context.supabase, context.userId, "templates", { action: "manage" });
     const { supabase, userId } = context;
     const officeUrl = await resolveOfficeUrl();

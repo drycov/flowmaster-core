@@ -11,6 +11,7 @@ import { buildTemplateEditorPreviewValues } from "@/lib/templates/preview-values
 import { TEMPLATE_FILE_EXTENSIONS } from "@/lib/templates/file-formats";
 import {
   getTemplateOfficePreviewConfig,
+  isOfficeNotConfigured,
   type OfficeEditorConfigResponse,
 } from "@/lib/api/office.functions";
 import { useTemplatePreview } from "../hooks/useTemplatePreview";
@@ -72,8 +73,7 @@ export function TemplatePreviewCard({
     staleTime: 60_000,
   });
 
-  const useOfficePreview =
-    officePreviewEnabled && officeConfig?.reason !== "office_not_configured";
+  const useOfficePreview = officePreviewEnabled && !isOfficeNotConfigured(officeConfig);
 
   const preview = useTemplatePreview({
     filePath,

@@ -1,4 +1,5 @@
 import type { TemplateFieldDef } from "./file-formats";
+import { lookupPresetField } from "./preset-fields";
 
 type FieldPreset = Omit<TemplateFieldDef, "key">;
 
@@ -188,10 +189,18 @@ function inferFieldType(key: string): TemplateFieldDef["type"] {
 export function inferFieldDef(key: string): TemplateFieldDef {
   const normalized = normalizeKey(key);
   const alias = KEY_ALIASES[normalized] ?? normalized;
+  const catalog = lookupPresetField(alias) ?? lookupPresetField(normalized) ?? lookupPresetField(key);
   const preset = PRESET_FIELDS[alias] ?? PRESET_FIELDS[normalized];
 
-  if (preset) {
-    return { key, ...preset, required: preset.required ?? false };
+  if (catalog || preset) {
+    return {
+      key,
+      label_ru: catalog?.label_ru ?? preset?.label_ru ?? humanizeKey(key).ru,
+      label_kk: catalog?.label_kk ?? preset?.label_kk ?? humanizeKey(key).kk,
+      type: catalog?.type ?? preset?.type ?? inferFieldType(key),
+      required: catalog?.required ?? preset?.required ?? false,
+      ...(catalog?.source ? { source: catalog.source } : {}),
+    };
   }
 
   const labels = humanizeKey(key);
@@ -233,7 +242,10 @@ export function mergeTemplateFieldKeys(
         label_ru: inferred.label_ru,
         label_kk: inferred.label_kk,
         type: prev.type === "text" ? inferred.type : prev.type,
+        source: prev.source ?? inferred.source,
       });
+    } else if (!prev.source && inferred.source) {
+      byKey.set(key, { ...prev, source: inferred.source });
     }
   }
 

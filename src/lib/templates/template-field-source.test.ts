@@ -14,6 +14,9 @@ describe("resolveTemplateFieldSource", () => {
   it("infers author vs signatory", () => {
     expect(resolveTemplateFieldSource({ key: "executor_name" })).toBe("author");
     expect(resolveTemplateFieldSource({ key: "sender_name" })).toBe("signatory");
+    expect(resolveTemplateFieldSource({ key: "full_name" })).toBe("author");
+    expect(resolveTemplateFieldSource({ key: "department" })).toBe("author");
+    expect(resolveTemplateFieldSource({ key: "position" })).toBe("author");
   });
 });
 

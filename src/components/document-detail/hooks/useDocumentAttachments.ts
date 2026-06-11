@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { getSignedDownloadUrl } from "@/lib/api/storage.functions";
 import { STORAGE_BUCKETS } from "@/lib/storage/buckets";
-import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments.client";
+import { uploadDocumentAttachments } from "@/lib/documents/upload-attachments";
 import {
   deleteDocumentAttachment,
   listDocumentAttachments,

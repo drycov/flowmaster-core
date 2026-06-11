@@ -11,6 +11,7 @@ import {
   isOrganizationField,
   isSystemTemplateField,
 } from "./author-field-values";
+import { resolvePresetFieldSource } from "./preset-fields";
 
 export type TemplateFieldSource =
   | "user"
@@ -26,6 +27,8 @@ export type TemplateFieldLike = {
 
 export function resolveTemplateFieldSource(field: TemplateFieldLike): TemplateFieldSource {
   if (field.source) return field.source;
+  const presetSource = resolvePresetFieldSource(field.key);
+  if (presetSource) return presetSource;
   const key = field.key;
   if (isSystemTemplateField(key)) return "system";
   if (isOrganizationField(key)) return "organization";

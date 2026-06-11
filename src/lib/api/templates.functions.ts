@@ -229,6 +229,13 @@ export const syncTemplateFieldsFromFile = createServerFn({ method: "POST" })
   });
 
 // Generate document body by simple {{key}} substitution
+export type GenerateFromTemplateResult = {
+  id: string;
+  reg_number?: string;
+  body?: string;
+  approval_sheet_id?: string;
+};
+
 export const generateFromTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -254,7 +261,7 @@ export const generateFromTemplate = createServerFn({ method: "POST" })
       project_id: z.string().uuid().nullable().optional(),
     }),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<GenerateFromTemplateResult> => {
     await enforceModuleLicense(context.supabase, "templates", "write");
     const { supabase, userId } = context;
     const tpl = await supabase

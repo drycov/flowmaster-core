@@ -1,5 +1,6 @@
 export type FieldType = "text" | "textarea" | "number" | "date" | "select" | "user";
 export type TemplateStatus = "draft" | "published" | "archived";
+export type FieldSource = "user" | "author" | "signatory" | "organization" | "system";
 
 export interface Field {
   key: string;
@@ -7,6 +8,7 @@ export interface Field {
   label_kk: string;
   type: FieldType;
   required?: boolean;
+  source?: FieldSource;
 }
 
 export interface TemplateSchema {

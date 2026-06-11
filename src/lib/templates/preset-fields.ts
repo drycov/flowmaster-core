@@ -1,4 +1,6 @@
 /** Единый каталог предустановленных плейсхолдеров шаблона (редактор + автоподстановка). */
+import type { TemplateFieldDef } from "./file-formats";
+
 export type TemplatePresetSource =
   | "system"
   | "organization"
@@ -44,6 +46,160 @@ export const TEMPLATE_EXTENDED_PRESETS: TemplatePresetFieldDef[] = [
 export const ALL_TEMPLATE_PRESET_KEYS = new Set(
   [...TEMPLATE_BODY_PRESETS, ...TEMPLATE_EXTENDED_PRESETS].map((field) => field.key),
 );
+
+/** Метаданные пресетов для inference полей (сервер + синхронизация DOCX). */
+export type PresetFieldInference = {
+  label_ru: string;
+  label_kk: string;
+  type: TemplateFieldDef["type"];
+  required?: boolean;
+  source: TemplatePresetSource;
+};
+
+export const PRESET_FIELD_INFERENCE: Record<string, PresetFieldInference> = {
+  full_name: {
+    label_ru: "ФИО сотрудника",
+    label_kk: "Қызметкердің аты-жөні",
+    type: "text",
+    required: true,
+    source: "author",
+  },
+  fio: { label_ru: "ФИО", label_kk: "Аты-жөні", type: "text", required: true, source: "author" },
+  document_date: {
+    label_ru: "Дата документа",
+    label_kk: "Құжат күні",
+    type: "date",
+    source: "system",
+  },
+  department: {
+    label_ru: "Название отдела",
+    label_kk: "Бөлім атауы",
+    type: "text",
+    source: "author",
+  },
+  registration_number: {
+    label_ru: "Регистрационный номер",
+    label_kk: "Тіркеу нөмірі",
+    type: "text",
+    source: "system",
+  },
+  reg_number: {
+    label_ru: "Регистрационный номер",
+    label_kk: "Тіркеу нөмірі",
+    type: "text",
+    source: "system",
+  },
+  document_number: {
+    label_ru: "Номер документа",
+    label_kk: "Құжат нөмірі",
+    type: "text",
+    source: "system",
+  },
+  document_title: {
+    label_ru: "Название документа",
+    label_kk: "Құжат атауы",
+    type: "text",
+    required: true,
+    source: "system",
+  },
+  title_ru: {
+    label_ru: "Название (рус.)",
+    label_kk: "Атау (орысша)",
+    type: "text",
+    required: true,
+    source: "system",
+  },
+  title_kk: { label_ru: "Название (каз.)", label_kk: "Атау (қазақша)", type: "text", source: "system" },
+  responsible_person: {
+    label_ru: "Ответственный",
+    label_kk: "Жауапты",
+    type: "user",
+    source: "author",
+  },
+  signature_name: {
+    label_ru: "Подпись",
+    label_kk: "Қолтаңба",
+    type: "text",
+    source: "signatory",
+  },
+  content_body: {
+    label_ru: "Основное содержание",
+    label_kk: "Негізгі мазмұн",
+    type: "textarea",
+    source: "user",
+  },
+  organization_name: {
+    label_ru: "Организация",
+    label_kk: "Ұйым",
+    type: "text",
+    source: "organization",
+  },
+  position: { label_ru: "Должность", label_kk: "Лауазымы", type: "text", source: "author" },
+  phone: { label_ru: "Телефон", label_kk: "Телефон", type: "text", source: "author" },
+  email: { label_ru: "Email", label_kk: "Email", type: "text", source: "author" },
+  executor_name: {
+    label_ru: "Исполнитель (ФИО)",
+    label_kk: "Орындаушы (Аты-жөні)",
+    type: "text",
+    source: "author",
+  },
+  executor_position: {
+    label_ru: "Должность исполнителя",
+    label_kk: "Орындаушы лауазымы",
+    type: "text",
+    source: "author",
+  },
+  executor_phone: {
+    label_ru: "Телефон исполнителя",
+    label_kk: "Орындаушы телефоны",
+    type: "text",
+    source: "author",
+  },
+  sender_name: {
+    label_ru: "Отправитель (ФИО)",
+    label_kk: "Жіберуші (Аты-жөні)",
+    type: "text",
+    source: "signatory",
+  },
+  sender_position: {
+    label_ru: "Должность отправителя",
+    label_kk: "Жіберуші лауазымы",
+    type: "text",
+    source: "signatory",
+  },
+  sender_short_name: {
+    label_ru: "Отправитель (кратко)",
+    label_kk: "Жіберуші (қысқа)",
+    type: "text",
+    source: "signatory",
+  },
+  signatory_line: {
+    label_ru: "Строка подписанта",
+    label_kk: "Қол қоюшы жолы",
+    type: "text",
+    source: "signatory",
+  },
+  attachments: {
+    label_ru: "Приложения",
+    label_kk: "Қосымшалар",
+    type: "textarea",
+    source: "user",
+  },
+  document_subject: {
+    label_ru: "Тема документа",
+    label_kk: "Құжат тақырыбы",
+    type: "text",
+    source: "user",
+  },
+};
+
+export function lookupPresetField(key: string): PresetFieldInference | undefined {
+  return PRESET_FIELD_INFERENCE[key];
+}
+
+export function resolvePresetFieldSource(key: string): TemplatePresetSource | undefined {
+  return PRESET_FIELD_INFERENCE[key]?.source;
+}
 
 /** Синхронизация алиасов перед подстановкой в DOCX/HTML. */
 export function harmonizeTemplateSubstitutionValues(

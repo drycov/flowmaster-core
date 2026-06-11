@@ -15,6 +15,12 @@ import {
 import { patchDocumentDomains } from "@/lib/documents/sidecars.server";
 import { attachApprovalSheetForDocument } from "@/lib/documents/approval-sheet.server";
 
+export type CreateDocumentResult = {
+  id: string;
+  reg_number?: string;
+  approval_sheet_id?: string;
+};
+
 export const createDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -44,7 +50,7 @@ export const createDocument = createServerFn({ method: "POST" })
       project_id: z.string().uuid().nullable().optional(),
     }),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<CreateDocumentResult> => {
     await requireModuleAccess(context.supabase, context.userId, "documents", { action: "write" });
     const { userId } = context;
     const {

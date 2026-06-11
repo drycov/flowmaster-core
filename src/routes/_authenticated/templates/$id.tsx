@@ -32,6 +32,7 @@ import { listWorkflows } from "@/lib/api/workflows.functions";
 import { listTemplateCategoriesBrief } from "@/lib/api/references.functions";
 import type { ReferenceCodeOption } from "@/components/references/ReferenceCodeSelect";
 import { supportsTemplateProcessing } from "@/lib/templates/file-formats";
+import { inferFieldDef } from "@/lib/templates/field-inference";
 import type { TemplateSyncResult } from "@/components/template-editor/types";
 import { useTemplateAutoSyncFields } from "@/components/template-editor/hooks/useTemplateAutoSyncFields";
 
@@ -120,6 +121,29 @@ function TemplateEditor() {
       if (synced.metadata.description) setDescription(synced.metadata.description);
       if (synced.metadata.category) setCategory(synced.metadata.category);
     }
+  };
+
+  const ensureTemplateField = (
+    key: string,
+    labelRu: string,
+    labelKk: string,
+    source?: (typeof fields)[0]["source"],
+  ) => {
+    setFields((prev) => {
+      if (prev.some((field) => field.key === key)) return prev;
+      const inferred = inferFieldDef(key);
+      return [
+        ...prev,
+        {
+          key,
+          label_ru: labelRu,
+          label_kk: labelKk || inferred.label_kk,
+          type: inferred.type,
+          required: inferred.required ?? false,
+          source: source ?? inferred.source,
+        },
+      ];
+    });
   };
 
   const { isSyncing: isAutoSyncingFields } = useTemplateAutoSyncFields({
@@ -269,7 +293,11 @@ function TemplateEditor() {
               <p className="text-xs text-muted-foreground mb-2">{t("tpl.fileTemplate.bodyHint")}</p>
             )}
             <CollapsibleContent>
-              <BodyTemplateCard body={body} onBodyChange={setBody} />
+              <BodyTemplateCard
+                body={body}
+                onBodyChange={setBody}
+                onEnsureField={ensureTemplateField}
+              />
             </CollapsibleContent>
           </Collapsible>
 

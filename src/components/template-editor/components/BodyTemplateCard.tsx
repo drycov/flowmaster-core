@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n";
 import {
   TEMPLATE_BODY_PRESETS,
   TEMPLATE_EXTENDED_PRESETS,
+  lookupPresetField,
 } from "@/lib/templates/preset-fields";
 import {
   Bold,
@@ -45,13 +46,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-type SchemaField = { key: string; label_ru: string; label_kk?: string };
+import type { FieldSource } from "../types";
+
+type SchemaField = { key: string; label_ru: string; label_kk?: string; source?: FieldSource };
 
 interface BodyTemplateCardProps {
   body: string;
   onBodyChange: (value: string) => void;
   schemaFields?: SchemaField[];
-  onEnsureField?: (key: string, labelRu: string) => void;
+  onEnsureField?: (key: string, labelRu: string, labelKk: string, source?: FieldSource) => void;
 }
 
 const PRESET_ICONS: Record<string, typeof User> = {
@@ -107,7 +110,7 @@ function PresetMenuItems({
   });
 }
 
-export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) {
+export function BodyTemplateCard({ body, onBodyChange, onEnsureField }: BodyTemplateCardProps) {
   const { t } = useI18n();
   const [showPlaceholders, setShowPlaceholders] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -163,8 +166,22 @@ export function BodyTemplateCard({ body, onBodyChange }: BodyTemplateCardProps) 
         editor.commands.insertContent(`{{${key}}}`);
         editor.commands.focus();
       }
+      if (onEnsureField) {
+        const preset = [...TEMPLATE_BODY_PRESETS, ...TEMPLATE_EXTENDED_PRESETS].find(
+          (item) => item.key === key,
+        );
+        const meta = lookupPresetField(key);
+        if (preset) {
+          onEnsureField(
+            key,
+            t(preset.labelKey),
+            meta?.label_kk ?? t(preset.labelKey),
+            meta?.source,
+          );
+        }
+      }
     },
-    [editor],
+    [editor, onEnsureField, t],
   );
 
   const insertCustomPlaceholder = useCallback(() => {

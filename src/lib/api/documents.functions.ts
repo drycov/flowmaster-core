@@ -11,6 +11,7 @@ export {
   updateDocumentMetadata,
   addComment,
   updateDocumentStatus,
+  type CreateDocumentResult,
 } from "./documents-mutation.functions";
 
 export { addSignature } from "./documents-signatures.functions";
