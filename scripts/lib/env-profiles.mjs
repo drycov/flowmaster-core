@@ -63,6 +63,21 @@ export function stripVendorSecrets(existing, profileId) {
   return existing;
 }
 
+function resolveProductionInstallationId(ctx, domain) {
+  const explicit = ctx.installationId?.trim();
+  if (explicit) return explicit;
+
+  if (
+    !ctx.rotateSecrets &&
+    ctx.existing.get("INSTALLATION_ID") &&
+    (ctx.existing.get("PROXY_DOMAIN") === domain || ctx.licenseServerUrl)
+  ) {
+    return ctx.existing.get("INSTALLATION_ID");
+  }
+
+  return installationIdFromDomain(domain);
+}
+
 export function buildProfileValues(profileId, ctx) {
   const secrets = createSupabaseSecrets(ctx.existing, { rotate: ctx.rotateSecrets });
   const base = clientSecrets(secrets);
@@ -146,28 +161,36 @@ export function buildProfileValues(profileId, ctx) {
         MONITORING_GRAFANA_URL: ctx.existing.get("MONITORING_GRAFANA_URL") ?? "http://127.0.0.1:3002",
         LICENSE_SIGNING_SECRET: signingSecret,
         LICENSE_SERVER_URL: ctx.licenseServerUrl ?? ctx.existing.get("LICENSE_SERVER_URL") ?? "",
-        INSTALLATION_ID:
-          !ctx.rotateSecrets &&
-          ctx.existing.get("INSTALLATION_ID") &&
-          ctx.existing.get("PROXY_DOMAIN") === domain
-            ? ctx.existing.get("INSTALLATION_ID")
-            : installationIdFromDomain(domain),
+        INSTALLATION_ID: resolveProductionInstallationId(ctx, domain),
       };
 
-      if (ctx.withLicenseServer || (ctx.licenseDomain && ctx.licenseDomain === domain)) {
+      const externalLicenseUrl = (ctx.licenseServerUrl ?? "").trim();
+      const wantsLicense =
+        ctx.withLicenseServer || Boolean(externalLicenseUrl) || Boolean(ctx.installationId);
+
+      if (externalLicenseUrl) {
+        // Связка EDMS (on-prem Docker) ↔ license server (Vercel / облако)
+        production.LICENSE_MODE = "online";
+        production.LICENSE_SERVER_URL = externalLicenseUrl.replace(/\/$/, "");
+        production.LICENSE_SERVER_ENABLED = "false";
+      } else if (
+        wantsLicense &&
+        (ctx.withLicenseServer || (ctx.licenseDomain && ctx.licenseDomain === domain))
+      ) {
         production.LICENSE_SERVER_ENABLED = "true";
         production.LICENSE_SERVER_ADMIN_SECRET = secrets.LICENSE_SERVER_ADMIN_SECRET;
         production.LICENSE_MODE = "offline";
         production.LICENSE_SERVER_URL = "";
-      } else if (ctx.licenseServerUrl || ctx.existing.get("LICENSE_MODE") === "online") {
+      } else if (ctx.existing.get("LICENSE_MODE") === "online") {
         production.LICENSE_MODE = "online";
       } else {
         production.LICENSE_MODE = ctx.existing.get("LICENSE_MODE") ?? "offline";
       }
 
-      if (ctx.licenseDomain && ctx.licenseDomain !== domain) {
+      if (ctx.licenseDomain && ctx.licenseDomain !== domain && !externalLicenseUrl) {
         production.LICENSE_MODE = "online";
         production.LICENSE_SERVER_URL = `https://${ctx.licenseDomain}`;
+        production.LICENSE_SERVER_ENABLED = "false";
       }
 
       return production;
@@ -275,12 +298,19 @@ export function buildHeader(profileId, ctx) {
         `# Regenerate: npm run env:production -- --domain=${ctx.domain} --force`,
         "# Установить как .env:",
         `#   npm run env:production -- --domain=${ctx.domain} --email=... --install`,
-        ...(ctx.withLicenseServer || ctx.licenseDomain === ctx.domain
-          ? [
-              "# Vendor (license API на этом же домене):",
-              `#   npm run env:production -- --domain=${ctx.domain} --with-license-server --install`,
-              `#   curl https://${ctx.domain}/api/v1/license/health`,
-            ]
+        ...(ctx.withLicenseServer || ctx.licenseServerUrl || ctx.licenseDomain === ctx.domain
+          ? ctx.licenseServerUrl
+            ? [
+                "# Связка EDMS ↔ облако (online-клиент):",
+                `#   LICENSE_SERVER_URL=${ctx.licenseServerUrl}`,
+                ...(ctx.installationId ? [`#   INSTALLATION_ID=${ctx.installationId}`] : []),
+                "#   npm run docker:up -- --tls --cron",
+              ]
+            : [
+                "# Vendor (license API на этом же домене):",
+                `#   npm run env:production -- --domain=${ctx.domain} --with-license-server --install`,
+                `#   curl https://${ctx.domain}/api/v1/license/health`,
+              ]
           : []),
         ...(ctx.licenseDomain && ctx.licenseDomain !== ctx.domain
           ? [`# License server (отдельный VPS): ${ctx.licenseDomain}`]
@@ -344,7 +374,11 @@ export function printNextSteps(profileId, ctx) {
       console.log("  5. npm run env:sync   (если compose ругается на docker/supabase/.env)");
       console.log("  6. curl http://127.0.0.1/api/health   (на сервере, до DNS)");
       console.log(`  7. curl https://${ctx.domain}/api/health   (после A-record DNS)`);
-      if (ctx.withLicenseServer || ctx.licenseDomain === ctx.domain) {
+      if (ctx.licenseServerUrl) {
+        console.log(`  8. curl ${ctx.licenseServerUrl.replace(/\/$/, "")}/api/v1/license/health`);
+        console.log(`  9. curl https://${ctx.domain}/api/health`);
+        console.log(" 10. Админка → Настройки → Лицензия → «Синхронизировать»");
+      } else if (ctx.withLicenseServer || ctx.licenseDomain === ctx.domain) {
         console.log(`  8. curl https://${ctx.domain}/api/v1/license/health`);
         console.log("  9. npm run license:support-code   (vendor admin, на хосте)");
       } else if (ctx.licenseDomain && ctx.licenseDomain !== ctx.domain) {

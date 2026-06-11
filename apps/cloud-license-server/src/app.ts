@@ -7,6 +7,7 @@ import { generateLicenseKey } from "./lib/keys.js";
 import { PLAN_PRESETS } from "./lib/plans.js";
 import { getPortalUserFromRequest } from "./lib/portal-auth.js";
 import { bootstrapPortalAccount, buildPublicPlans, getPortalAccount } from "./lib/portal.js";
+import { buildPricingConfig, calculateQuote, type BillingPeriod } from "./lib/pricing.js";
 import {
   activateOnLicenseServer,
   connectOnLicenseServer,
@@ -62,6 +63,12 @@ const generateKeySchema = z.object({
 const bootstrapSchema = z.object({
   company_name: z.string().min(2).max(200),
 });
+const pricingQuoteSchema = z.object({
+  users: z.number().int().min(1).max(9999),
+  period: z.enum(["monthly", "yearly"]),
+  extended: z.boolean().optional(),
+  integrations: z.boolean().optional(),
+});
 
 export const app = new Hono().basePath("/");
 
@@ -78,6 +85,20 @@ app.use(
 app.route("/api/v1/admin", adminRoutes);
 
 app.get("/api/v1/portal/plans", (c) => c.json({ plans: buildPublicPlans() }));
+
+app.get("/api/v1/portal/pricing-config", (c) => c.json(buildPricingConfig()));
+
+app.post("/api/v1/portal/pricing-quote", zValidator("json", pricingQuoteSchema), (c) => {
+  const body = c.req.valid("json");
+  return c.json({
+    quote: calculateQuote({
+      users: body.users,
+      period: body.period as BillingPeriod,
+      extended: body.extended,
+      integrations: body.integrations,
+    }),
+  });
+});
 
 app.get("/api/v1/portal/me", async (c) => {
   const user = await getPortalUserFromRequest(c.req.header("authorization"));

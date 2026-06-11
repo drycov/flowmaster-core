@@ -27,6 +27,9 @@ export function SiteHeader() {
           <a href="/#pricing" className="hidden text-slate-300 hover:text-white sm:inline">
             Тарифы
           </a>
+          <a href="/#calculator" className="hidden text-slate-300 hover:text-white lg:inline">
+            Калькулятор
+          </a>
           <a href="/#contact" className="hidden text-slate-300 hover:text-white md:inline">
             Контакты
           </a>

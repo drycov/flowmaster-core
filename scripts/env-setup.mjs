@@ -11,7 +11,10 @@
  *   --install            (production) copy output → .env
  *   --domain=HOST        production domain (default: esedo.example.kz)
  *   --email=ADDR         Let's Encrypt email
- *   --with-license-server  production: встроенный license API (vendor)
+ *   --with-license-server  production: лицензирование (online с --license-server-url, vendor без URL)
+ *   --cloud-license        alias для --with-license-server
+ *   --license-server-url=URL  production: облачный license server (Vercel)
+ *   --installation-id=UUID production: INSTALLATION_ID из кабинета vendor
  *   --license-domain=HOST  production: также создать .env.license-server
  *   --output=PATH        custom output path
  *   --dry-run            print to stdout, do not write
@@ -61,9 +64,11 @@ Options:
   --domain=HOST     HTTPS domain (production / license-server)
   --email=ADDR      certbot email
   --license-secret=HEX   production: shared LICENSE_SIGNING_SECRET from vendor
-  --license-server-url=URL production: online license URL for clients
-  --with-license-server  production: LICENSE_SERVER_ENABLED=true на этом же домене
-  --license-domain=HOST  production: дополнительно .env.license-server (другой VPS)
+  --license-server-url=URL production: облачный license server (online-клиент)
+  --installation-id=UUID production: INSTALLATION_ID из кабинета vendor
+  --with-license-server  production: включить лицензирование
+  --cloud-license        alias для --with-license-server (облачная связка с --license-server-url)
+  --license-domain=HOST  production: дополнительно .env.license-server (self-hosted VPS)
   --output=PATH     override output file
   --dry-run         stdout only
   --help            this message
@@ -146,9 +151,16 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     `admin@${domain}`;
   const publicUrl = `https://${domain}`;
   const licenseSecret = values.get("--license-secret") ?? null;
-  const licenseServerUrl = values.get("--license-server-url") ?? null;
-  const withLicenseServer = flags.has("--with-license-server");
+  const licenseServerUrl = values.get("--license-server-url")?.trim().replace(/\/$/, "") || null;
+  const installationId = values.get("--installation-id")?.trim() || null;
+  const withLicenseServer =
+    flags.has("--with-license-server") || flags.has("--cloud-license");
   const licenseDomain = values.get("--license-domain")?.trim() || null;
+
+  if (installationId && !/^[0-9a-f-]{36}$/i.test(installationId)) {
+    console.error(`Invalid --installation-id (expected UUID): ${installationId}`);
+    return 1;
+  }
 
   const inheritPaths = profile.inheritFrom.map((p) => resolve(root, p));
   const existingFromFiles = loadEnvValues(inheritPaths);
@@ -168,6 +180,7 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     publicUrl,
     licenseSecret,
     licenseServerUrl,
+    installationId,
     withLicenseServer,
     licenseDomain,
     force,
@@ -197,6 +210,10 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
   if (profileId === "production" || profileId === "license-server") {
     console.log(`  Domain:  ${domain}`);
     console.log(`  App URL: ${publicUrl}`);
+    if (licenseServerUrl) {
+      console.log(`  License: ${licenseServerUrl} (online)`);
+      if (installationId) console.log(`  Installation: ${installationId}`);
+    }
   }
 
   if (profileId === "production" && licenseDomain && licenseDomain !== domain) {

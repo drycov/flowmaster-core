@@ -95,6 +95,8 @@ npm run support-code
 | Метод | Путь | Auth |
 |-------|------|------|
 | GET | `/api/v1/portal/plans` | — |
+| GET | `/api/v1/portal/pricing-config` | — |
+| POST | `/api/v1/portal/pricing-quote` | — |
 | GET | `/api/v1/portal/me` | Supabase JWT |
 | POST | `/api/v1/portal/bootstrap` | Supabase JWT |
 

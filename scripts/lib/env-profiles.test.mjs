@@ -43,4 +43,25 @@ describe("buildProfileValues production", () => {
     assert.match(values.LICENSE_SIGNING_SECRET, /^[0-9a-f]{64}$/);
     assert.equal(values.LICENSE_MODE, "offline");
   });
+
+  it("configures cloud license client with URL and installation id", () => {
+    const installationId = "da23803d-1048-4526-b5d8-09c9e95c2999";
+    const values = buildProfileValues("production", {
+      domain: "edms.satory.kz",
+      certEmail: "support@satory.kz",
+      publicUrl: "https://edms.satory.kz",
+      withLicenseServer: true,
+      licenseServerUrl: "https://z-edms.vercel.app",
+      installationId,
+      existing: new Map(),
+      rotateSecrets: true,
+      force: true,
+    });
+
+    assert.equal(values.LICENSE_MODE, "online");
+    assert.equal(values.LICENSE_SERVER_URL, "https://z-edms.vercel.app");
+    assert.equal(values.LICENSE_SERVER_ENABLED, "false");
+    assert.equal(values.INSTALLATION_ID, installationId);
+    assert.equal(values.LICENSE_SERVER_ADMIN_SECRET, undefined);
+  });
 });

@@ -76,16 +76,17 @@ Smoke-сценарий: вход → создание документа с ка
 ### Docker (on-prem, рекомендуется)
 
 ```bash
-# 1. Production .env с секретами, доменом и встроенным license API (vendor)
-npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --with-license-server --install
+# Клиент EDMS + облачный license server (Vercel)
+npm run env:production -- \
+  --domain=edms.satory.kz \
+  --email=support@satory.kz \
+  --with-license-server \
+  --license-server-url=https://z-edms.vercel.app \
+  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --install
 
-# 2. HTTPS + cron
-npm run docker:up -- --tls
-npm run docker:up -- --tls --cron
-
-# 3. Проверка
-curl https://esedo.example.kz/api/health
-curl https://esedo.example.kz/api/v1/license/health
+# Vendor: встроенный license API на том же домене
+# npm run env:production -- --domain=edms.satory.kz --with-license-server --install
 ```
 
 Env: `.env.docker.example` + `npm run env:production`. Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).

@@ -5,7 +5,7 @@
  * Usage:
  *   node scripts/docker-up.mjs              # HTTP production (app + nginx)
  *   node scripts/docker-up.mjs --tls        # HTTPS production (+ ONLYOFFICE)
- *   node scripts/docker-up.mjs --tls --with-license-server  # + external .env.license-server stack
+ *   node scripts/docker-up.mjs --tls --license-server-stack  # + self-hosted .env.license-server (отдельный VPS)
  *   node scripts/docker-up.mjs --full       # app + cron + studio + monitoring
  *   node scripts/docker-up.mjs --dev        # Supabase only (npm run dev on host)
  *   node scripts/docker-up.mjs --cron       # also start cron sidecar
@@ -13,10 +13,15 @@
  *   node scripts/docker-up.mjs --monitoring
  *   node scripts/docker-up.mjs --office       # ONLYOFFICE (auto with --tls; disable: --no-office)
  *
- * License server (vendor, same domain):
+ * Облако (Vercel) — только env, отдельный compose не нужен:
+ *   npm run env:production -- --domain=edms.satory.kz \
+ *     --with-license-server --license-server-url=https://z-edms.vercel.app \
+ *     --installation-id=<uuid> --install
+ *   npm run docker:up -- --tls --cron
+ *
+ * Vendor (license API на том же домене):
  *   npm run env:production -- --domain=edms.example.kz --with-license-server --install
  *   npm run docker:up -- --tls
- *   curl https://edms.example.kz/api/v1/license/health
  */
 
 import { loadEnvFiles } from "./lib/load-env.mjs";
@@ -38,7 +43,9 @@ const studio = full || args.has("--studio");
 const monitoring = full || args.has("--monitoring");
 const noOffice = args.has("--no-office");
 const office = !dev && !noOffice && (args.has("--office") || tls);
-const withLicenseServer = args.has("--with-license-server") || args.has("--license-server");
+/** Поднять отдельный Docker-стек из .env.license-server (self-hosted VPS, не Vercel). */
+const startLicenseServerStack =
+  args.has("--license-server-stack") || args.has("--license-server");
 
 loadEnvFiles([".env"]);
 
@@ -49,7 +56,7 @@ if (monitoring && !dev) profiles.push("monitoring");
 if (office && !dev) profiles.push("office");
 
 const envHint = tls
-  ? "npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --install"
+  ? "npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --license-server-url=https://....vercel.app --installation-id=UUID --install"
   : "npm run env:local";
 
 orchestrateStack(root, {
@@ -67,24 +74,32 @@ orchestrateStack(root, {
   envHint,
 });
 
-if (withLicenseServer && !dev) {
+if (startLicenseServerStack && !dev) {
   orchestrateLicenseServerStack(root);
 } else if (tls && !dev) {
   loadEnvFiles([".env"]);
   const enabled = ["1", "true", "yes"].includes(
     String(process.env.LICENSE_SERVER_ENABLED ?? "").trim().toLowerCase(),
   );
-  if (!enabled) {
+  const cloudLicense = Boolean(process.env.LICENSE_SERVER_URL?.trim());
+  if (cloudLicense) {
     console.log("");
-    console.log("License server: не включён в .env");
-    console.log("  Vendor (API на том же домене):");
+    console.log("License (облако): EDMS → " + process.env.LICENSE_SERVER_URL.trim());
+    console.log("  Cron sync: npm run docker:up -- --tls --cron");
+  } else if (!enabled) {
+    console.log("");
+    console.log("License: не настроен в .env");
+    console.log("  Облако (Vercel):");
+    console.log(
+      "    npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --license-server-url=https://....vercel.app --installation-id=UUID --install",
+    );
+    console.log("  Vendor (API на том же домене, без Vercel):");
     console.log(
       "    npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --install",
     );
-    console.log("    npm run docker:up -- --tls");
-    console.log("  Отдельный VPS:");
+    console.log("  Self-hosted license VPS:");
     console.log("    npm run env:license-server -- --domain=license.example.kz --install");
-    console.log("    npm run docker:up -- --tls --with-license-server");
+    console.log("    npm run docker:up -- --tls --license-server-stack");
   }
 }
 

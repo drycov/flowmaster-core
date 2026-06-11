@@ -11,6 +11,62 @@
 
 **Админка vendor не входит в EDMS**. Для Docker: локально через support code и SSH tunnel. Для **Vercel**: `/admin` на том же домене (support code + httpOnly cookie). Bearer API — для автomation.
 
+## Связка EDMS (on-prem) + Vercel (облако)
+
+Типовая схема: **EDMS в Docker** на `edms.satory.kz`, **license server на Vercel** (`https://z-edms.vercel.app`).
+
+```mermaid
+sequenceDiagram
+  participant EDMS as EDMS Docker
+  participant Cloud as Vercel license API
+  participant Cron as cron sidecar
+
+  Note over EDMS: env: LICENSE_SERVER_URL, INSTALLATION_ID
+  EDMS->>Cloud: POST /api/v1/license/connect
+  Cloud-->>EDMS: entitlement + token
+  EDMS->>EDMS: installation_license (локально)
+  Cron->>EDMS: POST /hooks/license-sync
+  EDMS->>Cloud: POST /api/v1/license/heartbeat
+```
+
+| Где | Что |
+|-----|-----|
+| **Vercel** | `apps/cloud-license-server` — API, кабинет, регистрация trial, `installation_id` |
+| **EDMS `.env`** | `LICENSE_SERVER_URL`, `INSTALLATION_ID`, `LICENSE_MODE=online` |
+| **EDMS app** | При старте: `connect` по `installation_id` (без FM1-ключа) |
+| **cron** | `--cron` → heartbeat каждые ~6 ч |
+
+**Важно:** для облака **не** нужны `npm run compose:license-server` и **не** нужен `LICENSE_SERVER_ENABLED=true` на EDMS. Отдельный Docker license server — только для self-hosted vendor.
+
+### Генерация `.env` (облачная связка)
+
+```bash
+npm run env:production -- \
+  --domain=edms.satory.kz \
+  --email=support@satory.kz \
+  --with-license-server \
+  --license-server-url=https://z-edms.vercel.app \
+  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
+  --force \
+  --install
+```
+
+Флаги `--with-license-server` + `--license-server-url` вместе означают: **online-клиент к облаку** (не встроенный vendor API на том же домене).
+
+### Деплой EDMS
+
+```bash
+npm run docker:up -- --tls
+npm run docker:up -- --tls --cron
+
+curl https://edms.satory.kz/api/health
+curl https://z-edms.vercel.app/api/v1/license/health
+```
+
+Проверка в UI: **Администрирование → Настройки → Лицензия → «Синхронизировать»**.
+
+---
+
 ## Быстрый старт (Vercel)
 
 Публикуется как **единый проект**: landing + кабинет клиента + license API.
@@ -74,12 +130,14 @@ ssh -L 3847:127.0.0.1:3847 user@license-server
 
 ## Роли
 
-| Роль | Переменные | API |
-|------|------------|-----|
-| **License server** | `LICENSE_SERVER_ENABLED=true`, `LICENSE_SERVER_ADMIN_SECRET` | `/api/v1/license/*` |
-| **Клиент (on-prem)** | `LICENSE_MODE=online`, `LICENSE_SERVER_URL`, тот же `LICENSE_SIGNING_SECRET` | `/hooks/license-sync` (cron) |
+| Роль | Где | Переменные | Связь |
+|------|-----|------------|-------|
+| **License server (Vercel)** | `apps/cloud-license-server` | Supabase, `LICENSE_SERVER_ADMIN_SECRET` | Принимает `connect` / `heartbeat` |
+| **Клиент EDMS (облако)** | Docker on-prem | `LICENSE_SERVER_URL`, `INSTALLATION_ID`, `LICENSE_MODE=online` | → Vercel API |
+| **License server (Docker vendor)** | `compose:license-server` | `LICENSE_SERVER_ENABLED=true` | Self-hosted, FM1/CLI |
+| **Клиент (legacy offline)** | on-prem | `LICENSE_MODE=offline`, FM1-ключ | Без облака |
 
-На клиентских установках маршруты `/api/v1/license/*` **отключены** (404), если `LICENSE_SERVER_ENABLED` не задан.
+На клиентских EDMS маршруты `/api/v1/license/*` **отключены** (`LICENSE_SERVER_ENABLED=false` или не задан).
 
 ## Выдача ключей
 
@@ -96,19 +154,22 @@ npm run license:server -- revoke --installation-id <uuid>
 
 ## Подключение клиента (облачная схема)
 
-Клиент **не вводит FM1-ключ**. Достаточно `LICENSE_SERVER_URL` и `INSTALLATION_ID` — EDMS при старте автоматически вызывает `POST /api/v1/license/connect`.
+См. раздел **[Связка EDMS + Vercel](#связка-edms-on-prem--vercel-облако)** выше.
+
+Кратко: клиент **не вводит FM1-ключ**. EDMS при старте вызывает `POST {LICENSE_SERVER_URL}/api/v1/license/connect` с `installation_id` из кабинета Vercel.
 
 ```bash
 npm run env:production -- \
-  --domain=edms.client.kz \
-  --license-secret=<LICENSE_SIGNING_SECRET из .env license server> \
-  --license-server-url=https://license.satory.kz \
+  --domain=edms.satory.kz \
+  --with-license-server \
+  --license-server-url=https://z-edms.vercel.app \
+  --installation-id=da23803d-1048-4526-b5d8-09c9e95c2999 \
   --install
 ```
 
-На vendor: зарегистрируйте `installation_id` клиента в локальной админке (**Установки → Зарегистрировать установку**) или CLI. FM1-ключ нужен только для legacy/offline сценариев.
+`installation_id` должен быть **зарегистрирован** на Vercel (регистрация в кабинете или admin console).
 
-Статус на клиенте: **Администрирование → Настройки → Лицензия** (только просмотр и «Синхронизировать»).
+Статус на клиенте: **Администрирование → Настройки → Лицензия** (просмотр и «Синхронизировать»).
 
 При потере связи с облаком EDMS переходит в **offline mode** — лицензия остаётся активной по последней синхронизации (кроме явного отзыва или истечения срока).
 

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { salesContactHref } from "../lib/company";
+import { TariffCalculator } from "./TariffCalculator";
 import type { PublicPlan } from "../lib/api";
 
 export function PricingSection({ plans }: { plans: PublicPlan[] }) {
@@ -11,6 +12,7 @@ export function PricingSection({ plans }: { plans: PublicPlan[] }) {
           Облачная лицензия подключается автоматически — без ввода ключей на стороне клиента.
         </p>
       </div>
+      <TariffCalculator />
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
           <article

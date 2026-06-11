@@ -140,10 +140,13 @@ export function printLicenseServerHints(root, { tls = false } = {}) {
     return;
   }
 
-  const licenseDomain = process.env.LICENSE_SERVER_URL?.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  if (licenseDomain) {
-    console.log(`  License URL (client): ${process.env.LICENSE_SERVER_URL}`);
-    console.log("  License server stack: npm run compose:license-server  (отдельный VPS)");
+  const licenseUrl = process.env.LICENSE_SERVER_URL?.trim().replace(/\/$/, "");
+  if (licenseUrl) {
+    console.log(`  License cloud: ${licenseUrl}/api/v1/license/health`);
+    if (process.env.INSTALLATION_ID?.trim()) {
+      console.log(`  Installation:  ${process.env.INSTALLATION_ID.trim()}`);
+    }
+    return;
   }
 }
 
