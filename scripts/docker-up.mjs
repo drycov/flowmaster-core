@@ -66,8 +66,10 @@ if (dev) {
   console.log("  Supabase API: http://localhost:54321");
   console.log("  Postgres:     127.0.0.1:54322");
 } else {
+  const nginxPort = process.env.NGINX_HTTP_PORT ?? "80";
   console.log("Stack ready:");
-  console.log("  App:          http://localhost:3000");
+  console.log(`  Nginx:        http://localhost:${nginxPort}  (app + Supabase API)`);
+  console.log("  App (direct): http://localhost:3000");
   console.log("  Supabase API: http://localhost:54321");
-  console.log("  Health:       curl http://localhost:3000/api/health");
+  console.log(`  Health:       curl http://localhost:${nginxPort}/api/health`);
 }
