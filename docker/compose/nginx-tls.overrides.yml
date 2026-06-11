@@ -28,17 +28,10 @@ services:
       SSL_SELF_SIGNED_FALLBACK: ${SSL_SELF_SIGNED_FALLBACK:-1}
     command:
       - /bin/bash
-      - -c
-      - |
-        if [ ! -x /scripts/run_certbot.orig.sh ]; then cp /scripts/run_certbot.sh /scripts/run_certbot.orig.sh; fi && \
-        cp /etc/nginx/ensure-self-signed-cert.sh /scripts/ensure-self-signed-cert.sh && \
-        cp /etc/nginx/run-certbot-with-fallback.sh /scripts/run_certbot.sh && \
-        chmod +x /scripts/run_certbot.sh /scripts/ensure-self-signed-cert.sh && \
-        /scripts/ensure-self-signed-cert.sh && \
-        envsubst '$${PROXY_DOMAIN}' < /etc/nginx/flowmaster-nginx.conf.tpl > /etc/nginx/user_conf.d/flowmaster.conf && \
-        /scripts/start_nginx_certbot.sh
+      - /etc/nginx/tls-entrypoint.sh
     volumes: !override
       - ../../docker/nginx/flowmaster-nginx.conf.tpl:/etc/nginx/flowmaster-nginx.conf.tpl:ro
+      - ../../docker/nginx/tls-entrypoint.sh:/etc/nginx/tls-entrypoint.sh:ro
       - ../../docker/nginx/ensure-self-signed-cert.sh:/etc/nginx/ensure-self-signed-cert.sh:ro
       - ../../docker/nginx/run-certbot-with-fallback.sh:/etc/nginx/run-certbot-with-fallback.sh:ro
       - nginx_letsencrypt:/etc/letsencrypt
