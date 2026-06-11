@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isSidecarSchemaMissing } from "@/lib/documents/schema-fallback.server";
 
 const ROOT_FIELDS = new Set([
   "title_ru",
@@ -63,6 +64,14 @@ function pickFields(
   return Object.keys(out).length > 0 ? out : null;
 }
 
+function mergeRootFields(
+  root: Record<string, unknown> | null,
+  patch: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (!patch) return root;
+  return { ...(root ?? {}), ...patch };
+}
+
 async function upsertSidecar(
   client: SupabaseClient,
   table:
@@ -72,11 +81,15 @@ async function upsertSidecar(
     | "document_lifecycle",
   documentId: string,
   patch: Record<string, unknown>,
-): Promise<void> {
+): Promise<"ok" | "missing"> {
   const { error } = await client
     .from(table)
     .upsert({ document_id: documentId, ...patch } as never, { onConflict: "document_id" });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isSidecarSchemaMissing(error.message)) return "missing";
+    throw new Error(error.message);
+  }
+  return "ok";
 }
 
 /** Write domain fields to sidecar tables (canonical path). Root fields go to documents. */
@@ -85,28 +98,35 @@ export async function patchDocumentDomains(
   documentId: string,
   patch: Record<string, unknown>,
 ): Promise<void> {
-  const root = pickFields(patch, ROOT_FIELDS);
+  let root = pickFields(patch, ROOT_FIELDS);
   const registration = pickFields(patch, REGISTRATION_FIELDS);
   const classification = pickFields(patch, CLASSIFICATION_FIELDS);
   const archive = pickFields(patch, ARCHIVE_FIELDS);
   const lifecycle = pickFields(patch, LIFECYCLE_FIELDS);
 
-  const sidecarWrites: Promise<void>[] = [];
   if (registration) {
-    sidecarWrites.push(upsertSidecar(client, "document_registration", documentId, registration));
+    const result = await upsertSidecar(client, "document_registration", documentId, registration);
+    if (result === "missing") {
+      root = mergeRootFields(root, registration);
+    }
   }
   if (classification) {
-    sidecarWrites.push(upsertSidecar(client, "document_classification", documentId, classification));
+    const result = await upsertSidecar(client, "document_classification", documentId, classification);
+    if (result === "missing") {
+      root = mergeRootFields(root, classification);
+    }
   }
   if (archive) {
-    sidecarWrites.push(upsertSidecar(client, "document_archive", documentId, archive));
+    const result = await upsertSidecar(client, "document_archive", documentId, archive);
+    if (result === "missing") {
+      root = mergeRootFields(root, archive);
+    }
   }
   if (lifecycle) {
-    sidecarWrites.push(upsertSidecar(client, "document_lifecycle", documentId, lifecycle));
-  }
-
-  if (sidecarWrites.length > 0) {
-    await Promise.all(sidecarWrites);
+    const result = await upsertSidecar(client, "document_lifecycle", documentId, lifecycle);
+    if (result === "missing") {
+      root = mergeRootFields(root, lifecycle);
+    }
   }
 
   if (root) {
@@ -122,5 +142,13 @@ export async function updateDocumentRegistration(
 ): Promise<void> {
   const registration = pickFields(patch, REGISTRATION_FIELDS);
   if (!registration) return;
-  await upsertSidecar(client, "document_registration", documentId, registration);
+
+  const result = await upsertSidecar(client, "document_registration", documentId, registration);
+  if (result === "missing") {
+    const { error } = await client
+      .from("documents")
+      .update(registration as never)
+      .eq("id", documentId);
+    if (error) throw new Error(error.message);
+  }
 }

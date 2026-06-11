@@ -10,7 +10,7 @@ import {
   type TemplateFieldLabel,
   type TemplatePreviewMode,
 } from "@/lib/templates/preview";
-import { renderTemplateFileClient } from "@/lib/templates/preview-render";
+import { renderTemplateFileClient } from "@/lib/templates/preview-render.client";
 import type { TemplatePreviewStatus } from "@/lib/templates/preview-types";
 import {
   PREVIEW_DEBOUNCE_MS,

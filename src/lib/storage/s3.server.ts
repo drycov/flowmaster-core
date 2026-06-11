@@ -12,6 +12,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { loadSystemSettings } from "@/lib/auth/policy";
 import type { Database } from "@/integrations/supabase/types";
 import type { StorageBucket } from "./buckets";
+import { rewriteBrowserStorageUrl } from "./public-url.server";
 
 export interface S3Config {
   endpoint: string;
@@ -60,7 +61,7 @@ export async function createSignedDownloadUrl(
     .from(bucket)
     .createSignedUrl(path, expiresInSeconds);
   if (error) throw new Error(error.message);
-  return data.signedUrl;
+  return rewriteBrowserStorageUrl(data.signedUrl);
 }
 
 /** Service-role signed URL (bypasses RLS — trusted server only). */
@@ -73,5 +74,5 @@ export async function createAdminSignedDownloadUrl(
     .from(bucket)
     .createSignedUrl(path, expiresInSeconds);
   if (error) throw new Error(error.message);
-  return data.signedUrl;
+  return rewriteBrowserStorageUrl(data.signedUrl);
 }

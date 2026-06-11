@@ -1,6 +1,6 @@
 /**
- * Signed storage URLs from the Supabase JS client use SUPABASE_URL (often http://kong:8000 in Docker).
- * Browser-facing responses must use the public HTTPS origin (nginx → Kong).
+ * Signed storage URLs from Supabase JS use SUPABASE_URL (http://kong:8000 in Docker).
+ * Browser-facing URLs must use the public HTTPS origin (nginx → Kong).
  */
 
 function publicSupabaseOrigin(): string {
@@ -13,13 +13,24 @@ function publicSupabaseOrigin(): string {
   return raw.replace(/\/$/, "");
 }
 
+function isInternalStorageHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return h === "kong" || h === "localhost" || h === "127.0.0.1" || h === "db";
+}
+
 /** Rewrite internal signed URL origin for browser download/preview. */
 export function rewriteBrowserStorageUrl(signedUrl: string): string {
-  const publicBase = publicSupabaseOrigin();
-  if (!publicBase) return signedUrl;
-
   try {
     const src = new URL(signedUrl);
+    if (!isInternalStorageHost(src.hostname)) {
+      return signedUrl;
+    }
+
+    const publicBase = publicSupabaseOrigin();
+    if (!publicBase) {
+      return signedUrl;
+    }
+
     const base = new URL(publicBase.endsWith("/") ? publicBase : `${publicBase}/`);
     return `${base.origin}${src.pathname}${src.search}`;
   } catch {

@@ -15,7 +15,6 @@ import {
   type StorageBucket,
 } from "@/lib/storage/buckets";
 import { createSignedDownloadUrl, getS3PublicInfo } from "@/lib/storage/s3.server";
-import { rewriteBrowserStorageUrl } from "@/lib/storage/public-url.server";
 import {
   detectTemplateFormat,
   templateMimeType,
@@ -39,13 +38,11 @@ export const getSignedDownloadUrl = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    const url = rewriteBrowserStorageUrl(
-      await createSignedDownloadUrl(
-        context.supabase,
-        data.bucket as StorageBucket,
-        data.path,
-        data.expires_in ?? 3600,
-      ),
+    const url = await createSignedDownloadUrl(
+      context.supabase,
+      data.bucket as StorageBucket,
+      data.path,
+      data.expires_in ?? 3600,
     );
     return { signed_url: url, expires_in: data.expires_in ?? 3600 };
   });
