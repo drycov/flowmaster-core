@@ -29,6 +29,13 @@ export default defineConfig({
     },
   },
   vite: {
+    preview: {
+      host: true,
+      port: 3000,
+      strictPort: true,
+      // Docker: nginx/cron reach the container as Host "app"; browsers may use IP/domain.
+      allowedHosts: true,
+    },
     define: {
       "process.env.SUPABASE_URL": JSON.stringify(supabaseUrl),
       "process.env.SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabaseAnonKey),
