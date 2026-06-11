@@ -70,7 +70,8 @@ export function AuthLoginCard(props: AuthLoginCardProps) {
   const { t } = useI18n();
   const [forgotOpen, setForgotOpen] = useState(false);
 
-  const showSignupTab = config.allow_public_signup;
+  const isBootstrapSetup = config.bootstrap_needed;
+  const showSignupTab = config.allow_public_signup && !isBootstrapSetup;
   const showEds = mode === "signin" || config.allow_eds_signup;
   const showLdap = mode === "signin" && config.allow_ldap_login && Boolean(onLdapAuth);
   const showTelegramLogin = mode === "signin" && config.allow_telegram_login;
@@ -221,7 +222,7 @@ export function AuthLoginCard(props: AuthLoginCardProps) {
           </TabsContent>
         </Tabs>
       ) : (
-        formBlock("signin")
+        formBlock(isBootstrapSetup ? "signup" : "signin")
       )}
     </div>
   );

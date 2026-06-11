@@ -80,6 +80,7 @@ export const messagesKk = {
   "auth.bootstrapAlertTitle": "Жүйенің алғашқы іске қосылуы",
   "auth.bootstrapAlertDescription":
     "Бірінші тіркелген пайдаланушы әкімші рөлі мен ұйымды баптау құқығын алады.",
+  "auth.bootstrapSubmit": "Әкімші тіркелгісін жасау",
   "auth.signupDisabledHint":
     "Өздігінен тіркелу өшірілген. Тіркелгі алу үшін әкімшіге хабарласыңыз.",
   "auth.fullnameRu": "Т.А.Ә. (орыс)",

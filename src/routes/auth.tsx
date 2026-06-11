@@ -21,7 +21,7 @@ import {
 
 const DEFAULT_CONFIG: PublicAuthConfig = {
   bootstrap_needed: true,
-  allow_public_signup: false,
+  allow_public_signup: true,
   allow_eds_signup: true,
   allow_ldap_login: false,
   telegram_bot_configured: false,

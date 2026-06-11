@@ -84,6 +84,7 @@ export const messagesRu = {
   "auth.bootstrapAlertTitle": "Первый запуск системы",
   "auth.bootstrapAlertDescription":
     "Первый зарегистрированный пользователь получает роль администратора и права на настройку организации.",
+  "auth.bootstrapSubmit": "Создать учётную запись администратора",
   "auth.signupDisabledHint":
     "Самостоятельная регистрация отключена. Обратитесь к администратору для получения учётной записи.",
   "auth.fullnameRu": "ФИО (рус.)",

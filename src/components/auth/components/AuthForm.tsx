@@ -233,7 +233,13 @@ export function AuthForm(props: AuthFormProps) {
 
       <div className="pt-2">
         <Button type="submit" className={btnPrimaryPillClass} disabled={loading}>
-          {loading ? t("common.loading") : mode === "signin" ? t("auth.signin") : t("auth.signup")}
+          {loading
+            ? t("common.loading")
+            : mode === "signin"
+              ? t("auth.signin")
+              : showBootstrapOrg
+                ? t("auth.bootstrapSubmit")
+                : t("auth.signup")}
         </Button>
       </div>
     </form>

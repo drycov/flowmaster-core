@@ -30,8 +30,9 @@ interface AuthLoginPanelProps {
 }
 
 export function AuthLoginPanel(props: AuthLoginPanelProps) {
+  const wide = props.config.bootstrap_needed;
   return (
-    <div className="w-full max-w-[400px]">
+    <div className={`w-full ${wide ? "max-w-md" : "max-w-[400px]"}`}>
       <AuthLoginCard {...props} />
     </div>
   );
