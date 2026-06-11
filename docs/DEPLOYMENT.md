@@ -38,7 +38,7 @@
 
 ```bash
 npm ci --legacy-peer-deps
-node scripts/docker-setup.mjs          # .env с JWT/ключами Postgres
+npm run env:local          # .env с JWT/ключами Postgres
 docker compose up -d --build           # Supabase + migrate + app + nginx
 docker compose --profile cron up -d    # outbox, SLA, retention
 curl http://localhost/api/health       # через nginx
@@ -105,8 +105,8 @@ npx supabase db push
 
 | Команда | Результат |
 |---------|-----------|
-| `node scripts/docker-setup.mjs` | `.env` — localhost, `APPLY_DB_SEED=1` |
-| `npm run docker:setup:production -- --domain=X --email=Y` | `.env.production` |
+| `node scripts/env-setup.mjs local` | `.env` — localhost, `APPLY_DB_SEED=1` |
+| `npm run env:production -- --domain=X --email=Y` | `.env.production` |
 | `… --install` | копирует в `.env` |
 
 ### Обязательные (production)
@@ -172,14 +172,14 @@ npm run start
 ### Docker (HTTP, локально)
 
 ```bash
-node scripts/docker-setup.mjs
+npm run env:local
 docker compose up -d --build
 ```
 
 ### Docker (HTTPS, production)
 
 ```bash
-npm run docker:setup:production -- --domain=your.domain.kz --install
+npm run env:production -- --domain=your.domain.kz --install
 docker compose -f docker-compose.tls.yml up -d --build
 ```
 

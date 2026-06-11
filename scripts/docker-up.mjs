@@ -23,7 +23,7 @@ const studio = args.has("--studio");
 const monitoring = args.has("--monitoring");
 
 if (!existsSync(resolve(root, ".env"))) {
-  console.error("Missing .env — run: node scripts/docker-setup.mjs");
+  console.error("Missing .env — run: npm run env:local");
   process.exit(1);
 }
 

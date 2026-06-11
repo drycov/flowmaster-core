@@ -20,7 +20,7 @@
 
 ```bash
 npm ci --legacy-peer-deps
-node scripts/docker-setup.mjs    # создаёт .env с секретами
+npm run env:local    # создаёт .env с секретами
 npm run docker:up                # backend → migrate → app → nginx
 npm run docker:wait              # дождаться Kong (если нужно отдельно)
 ```
@@ -28,7 +28,7 @@ npm run docker:wait              # дождаться Kong (если нужно 
 **Разработка на хосте** (Vite, hot reload) — только backend в Docker:
 
 ```bash
-node scripts/docker-setup.mjs
+npm run env:local
 npm run docker:deps              # Supabase + миграции
 npm run dev                      # http://localhost:3000
 ```
@@ -78,7 +78,7 @@ Smoke-сценарий: вход → создание документа с ка
 
 ```bash
 # 1. Production .env с секретами и доменом
-npm run docker:setup:production -- --domain=esedo.example.kz --email=admin@example.kz --install
+npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
 
 # 2. HTTPS (Let's Encrypt) + cron
 docker compose -f docker-compose.tls.yml up -d --build
@@ -120,8 +120,8 @@ Reverse proxy (nginx) перед приложением обязателен в 
 | `npm run start` | Запуск production (preview) |
 | `npm run test` | Unit-тесты (Vitest) |
 | `npm run test:e2e` | E2E smoke (Playwright) |
-| `npm run docker:setup` | Генерация `.env` для локального Docker |
-| `npm run docker:setup:production` | Генерация `.env.production` / `--install` → `.env` |
+| `npm run env:local` | Генерация `.env` для локального Docker |
+| `npm run env:production` | Генерация `.env.production` / `--install` → `.env` |
 | `npm run docker:up` | Полный стек: Supabase → migrate → app → nginx |
 | `npm run docker:deps` | Только Supabase (для `npm run dev`) |
 | `npm run docker:migrate` | Применить SQL-миграции |

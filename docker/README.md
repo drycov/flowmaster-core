@@ -28,14 +28,14 @@ Browser ──► nginx :80/:443 ──┬──► app:3000        (ЕСЭДО,
 ### Локальная разработка (Docker backend)
 
 ```bash
-node scripts/docker-setup.mjs
+npm run env:local
 npm run docker:deps && npm run dev
 ```
 
 ### Полный локальный стек
 
 ```bash
-node scripts/docker-setup.mjs
+npm run env:local
 npm run docker:up
 # App + API: http://localhost (nginx) или :3000 / :54321 напрямую
 ```
@@ -43,7 +43,7 @@ npm run docker:up
 ### Production on-prem
 
 ```bash
-npm run docker:setup:production -- --domain=esedo.example.kz --email=admin@example.kz --install
+npm run env:production -- --domain=esedo.example.kz --email=admin@example.kz --install
 docker compose -f docker-compose.tls.yml up -d --build
 docker compose --profile cron up -d
 ```
@@ -52,8 +52,11 @@ docker compose --profile cron up -d
 
 | Команда | Действие |
 |---------|----------|
-| `npm run docker:setup` | Создать `.env` с секретами (localhost) |
-| `npm run docker:setup:production` | Создать `.env.production` с доменом и prod-флагами |
+| `npm run env:local` | `.env` — localhost + nginx, `APPLY_DB_SEED=1` |
+| `npm run env:production -- --domain=X` | `.env.production` — HTTPS, prod-флаги |
+| `npm run env:staging` | `.env` — UAT (:8080) |
+| `npm run docker:setup` | alias для `env:local` |
+| `npm run docker:setup:production` | alias для `env:production` |
 | `npm run docker:up` | `up` → `db-migrate` → restart app → wait Kong |
 | `npm run docker:deps` | Backend only (`docker-compose.dev.yml`) |
 | `npm run docker:migrate` | Idempotent SQL migrations |

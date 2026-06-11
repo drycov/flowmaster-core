@@ -6,7 +6,7 @@
 
 ```bash
 # 1. Env (генерирует секреты Supabase + app)
-node scripts/docker-setup.mjs
+npm run env:local
 
 # 2. Запуск (Supabase + migrate + app :3001 + nginx :8080 + cron)
 docker compose -f docker-compose.staging.yml up -d --build
@@ -97,7 +97,7 @@ rm -rf docker/supabase/volumes/db/data docker/supabase/volumes/storage
 Production:
 
 ```bash
-npm run docker:setup:production -- --domain=esedo.example.kz --install
+npm run env:production -- --domain=esedo.example.kz --install
 docker compose -f docker-compose.tls.yml up -d --build
 docker compose --profile cron up -d
 ```
