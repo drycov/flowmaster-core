@@ -17,7 +17,9 @@ export async function ensureCloudLicense(): Promise<void> {
 
   const { data: row } = await supabaseAdmin
     .from("installation_license")
-    .select("activation_mode, license_server_token, last_sync_at, sync_interval_hours")
+    .select(
+      "activation_mode, license_server_token, last_sync_at, sync_interval_hours, server_revoked",
+    )
     .limit(1)
     .maybeSingle();
 
@@ -26,9 +28,19 @@ export async function ensureCloudLicense(): Promise<void> {
     license_server_token: string | null;
     last_sync_at: string | null;
     sync_interval_hours: number | null;
+    server_revoked: boolean | null;
   } | null;
 
   if (!license?.license_server_token || license.activation_mode !== "online") {
+    try {
+      await connectWithLicenseServer(installationId);
+    } catch {
+      // Keep last known local entitlement when cloud is temporarily unreachable.
+    }
+    return;
+  }
+
+  if (license.server_revoked) {
     try {
       await connectWithLicenseServer(installationId);
     } catch {

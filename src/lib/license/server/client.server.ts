@@ -189,6 +189,11 @@ async function runHeartbeatSync(
   });
 
   const serverRevoked = result.status === "revoked" || result.status === "suspended";
+  if (serverRevoked) {
+    // After vendor revoke + re-provision, heartbeat keeps the old token — reconnect for a fresh one.
+    return connectWithLicenseServer(license.installation_id);
+  }
+
   const patch: Record<string, unknown> = {
     last_sync_at: new Date().toISOString(),
     last_sync_ok: true,
@@ -246,6 +251,7 @@ export async function syncLicenseWithServer(
     activation_mode: string;
     license_server_token: string | null;
     installation_id: string | null;
+    server_revoked?: boolean;
   } | null;
 
   if (!license || license.activation_mode !== "online" || !license.license_server_token) {
@@ -264,6 +270,10 @@ export async function syncLicenseWithServer(
 
   const installationId = license.installation_id ?? getInstallationId();
   if (!installationId) throw new Error("INSTALLATION_ID не задан");
+
+  if (license.server_revoked) {
+    return connectWithLicenseServer(installationId);
+  }
 
   try {
     return await runHeartbeatSync(supabase, {

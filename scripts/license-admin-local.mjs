@@ -25,12 +25,27 @@ function flag(name, fallback) {
   return process.argv[idx + 1] ?? fallback;
 }
 
-loadEnvFiles([".env", ".env.license-server"]);
+loadEnvFiles([".env", ".env.license-server", ".env.production"]);
 
 const port = flag("--port", process.env.LICENSE_ADMIN_PORT ?? "3847");
 
-if (!process.env.LICENSE_SERVER_ADMIN_SECRET?.trim()) {
-  console.error("LICENSE_SERVER_ADMIN_SECRET required (.env.license-server)");
+const adminSecret = process.env.LICENSE_SERVER_ADMIN_SECRET?.trim();
+const licenseUrl = (process.env.LICENSE_SERVER_URL ?? "").trim().replace(/\/$/, "");
+const serverEnabled = process.env.LICENSE_SERVER_ENABLED === "true";
+
+if (!adminSecret) {
+  if (licenseUrl && !serverEnabled) {
+    console.error("npm run license:admin — только для self-hosted license server на этом хосте.");
+    console.error("");
+    console.error(`У вас облачный license server: ${licenseUrl}`);
+    console.error("  Web UI:  " + licenseUrl + "/admin");
+    console.error("  CLI:     LICENSE_SERVER_URL + LICENSE_SERVER_ADMIN_SECRET → npm run license:server");
+    console.error("");
+    console.error("Self-hosted stack: npm run env:license-server -- --install && npm run docker:up -- --license-server-stack");
+  } else {
+    console.error("LICENSE_SERVER_ADMIN_SECRET required (.env.license-server)");
+    console.error("Hint: npm run env:license-server -- --install");
+  }
   process.exit(1);
 }
 

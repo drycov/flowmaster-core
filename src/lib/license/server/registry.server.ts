@@ -111,6 +111,8 @@ async function upsertProvisionKey(
     expires_at: provision.expires_at,
     issued_at: provision.issued_at,
     status: "active",
+    revoked_at: null,
+    revoked_reason: "",
   };
 
   const { data: existing, error: loadErr } = await supabase
@@ -167,14 +169,13 @@ async function activateKeyForInstallation(
 
   if (prior) {
     const p = prior as { id: string; status: string };
-    if (p.status === "revoked") {
-      throw new Error("Активация отозвана поставщиком");
-    }
     const { error: updErr } = await supabase
       .from("license_server_activations" as never)
       .update({
         token_hash: tokenHash,
         status: "active",
+        revoked_at: null,
+        revoked_reason: "",
         hostname: req.hostname ?? "",
         app_version: req.app_version ?? "",
         last_seen_at: new Date().toISOString(),
@@ -243,6 +244,18 @@ export async function upsertProvisionOnServer(
     .single();
   if (error) throw new Error(error.message);
   const row = data as { id: string; installation_id: string };
+  await upsertProvisionKey(
+    supabase,
+    {
+      plan: input.plan,
+      max_users: input.max_users,
+      features: input.features,
+      customer_name: input.customer_name,
+      expires_at: input.expires_at,
+      issued_at: new Date().toISOString(),
+    },
+    input.installation_id,
+  );
   return row;
 }
 
