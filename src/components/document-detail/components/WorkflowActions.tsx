@@ -18,6 +18,7 @@ import {
   LockKeyhole,
   UserPlus,
   UserRoundCog,
+  QrCode,
 } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ import {
 import { useWorkflowTaskActions } from "@/components/tasks/useWorkflowTaskActions";
 import { delegateWorkflowTask } from "@/lib/api/workflows.functions";
 import { listUsersBrief } from "@/lib/api/admin.functions";
+import { getEgovQrSigningAvailability } from "@/lib/api/documents.functions";
 import { interpolate, localized } from "@/i18n";
 
 import { toast } from "sonner";
@@ -44,9 +46,14 @@ import { toast } from "sonner";
 import { addSignature } from "@/lib/api/documents.functions";
 
 import { findMyPendingTask, type WorkflowTaskRow } from "@/lib/workflow/task-match";
+import {
+  resolveTaskSignatureProvider,
+  type SignatureProvider,
+} from "@/lib/workflow/signature-provider";
 
 import { signCMSFull, NCALayerError } from "@/lib/ncalayer";
 import { buildSignatureInsertData } from "@/lib/eds/build-signature-record";
+import { EgovQrSignDialog } from "@/components/document-detail/components/EgovQrSignDialog";
 
 import { useI18n } from "@/i18n";
 import { useLicenseStatus } from "@/lib/license/hooks";
@@ -63,6 +70,14 @@ interface Props {
   canManageWorkflows?: boolean;
 
   signPayload?: string;
+
+  signTitleRu?: string;
+
+  signTitleKk?: string;
+
+  regNumber?: string;
+
+  signatureProvider?: SignatureProvider;
 
   substituteFor?: string[];
 
@@ -88,6 +103,14 @@ export function WorkflowActions({
 
   signPayload,
 
+  signTitleRu,
+
+  signTitleKk,
+
+  regNumber,
+
+  signatureProvider = "ncalayer",
+
   substituteFor = [],
 
   substitutePrincipalName,
@@ -101,6 +124,12 @@ export function WorkflowActions({
   const [delegateOpen, setDelegateOpen] = useState(false);
   const [delegateUserId, setDelegateUserId] = useState("");
   const [delegateComment, setDelegateComment] = useState("");
+  const [egovQrOpen, setEgovQrOpen] = useState(false);
+
+  const { data: egovQrAvailability } = useQuery({
+    queryKey: ["egov-qr-availability"],
+    queryFn: getEgovQrSigningAvailability,
+  });
 
   const { data: users = [] } = useQuery({
     queryKey: ["users-brief"],
@@ -203,55 +232,113 @@ export function WorkflowActions({
 
   const isCommentEmpty = !comment.trim();
 
+  const egovQrEnabled = egovQrAvailability?.enabled === true;
+  const showNcalayer =
+    signatureProvider === "ncalayer" || signatureProvider === "any";
+  const showEgovQr =
+    egovQrEnabled &&
+    (signatureProvider === "egov_qr" || signatureProvider === "any");
+  const signText = signPayload || documentId;
+  const titleRu = signTitleRu || signText.slice(0, 120) || documentId;
+
   if (isSignTask) {
     return (
-      <Card className="rounded-sm border-primary/40 shadow-sm bg-gradient-to-b from-background to-muted/10">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
-            <LockKeyhole className="w-4 h-4 text-primary" />
+      <>
+        <Card className="rounded-sm border-primary/40 shadow-sm bg-gradient-to-b from-background to-muted/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <LockKeyhole className="w-4 h-4 text-primary" />
 
-            {t("doc.action.signEds")}
-          </CardTitle>
-        </CardHeader>
+              {t("doc.action.signEds")}
+            </CardTitle>
+          </CardHeader>
 
-        <CardContent className="space-y-3">
-          <div className="text-xs text-muted-foreground bg-background p-2 rounded border border-border/60">
-            {t("doc.currentStage")}{" "}
-            <span className="text-foreground font-semibold">{myTask.title ?? myTask.node_id}</span>
-          </div>
+          <CardContent className="space-y-3">
+            <div className="text-xs text-muted-foreground bg-background p-2 rounded border border-border/60">
+              {t("doc.currentStage")}{" "}
+              <span className="text-foreground font-semibold">{myTask.title ?? myTask.node_id}</span>
+            </div>
 
-          {substitutePrincipalName ? (
-            <Badge
-              variant="outline"
-              className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300"
-            >
-              <UserRoundCog className="w-3 h-3" />
-              {interpolate(t("substitution.forUser"), { name: substitutePrincipalName })}
-            </Badge>
-          ) : null}
+            {substitutePrincipalName ? (
+              <Badge
+                variant="outline"
+                className="text-[10px] gap-1 border-amber-400 text-amber-800 dark:text-amber-300"
+              >
+                <UserRoundCog className="w-3 h-3" />
+                {interpolate(t("substitution.forUser"), { name: substitutePrincipalName })}
+              </Badge>
+            ) : null}
 
-          <p className="text-xs text-muted-foreground">{t("ncalayer.title")}</p>
+            {showNcalayer ? (
+              <p className="text-xs text-muted-foreground">{t("ncalayer.title")}</p>
+            ) : null}
+            {showEgovQr && !showNcalayer ? (
+              <p className="text-xs text-muted-foreground">{t("egovQr.title")}</p>
+            ) : null}
+            {showEgovQr && showNcalayer ? (
+              <p className="text-xs text-muted-foreground">{t("wf.signature.any")}</p>
+            ) : null}
 
-          {actionBlocked ? (
-            <p className="text-xs text-destructive">{t("license.banner.readOnly")}</p>
-          ) : null}
+            {actionBlocked ? (
+              <p className="text-xs text-destructive">{t("license.banner.readOnly")}</p>
+            ) : null}
 
-          <Button
-            size="sm"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-            disabled={isPending || actionBlocked}
-            onClick={() => signMutation.mutate()}
-          >
-            {signMutation.isPending ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-            ) : (
-              <LockKeyhole className="w-4 h-4 mr-1" />
-            )}
+            <div className="flex flex-col gap-2">
+              {showNcalayer ? (
+                <Button
+                  size="sm"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                  disabled={isPending || actionBlocked}
+                  onClick={() => signMutation.mutate()}
+                >
+                  {signMutation.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <LockKeyhole className="w-4 h-4 mr-1" />
+                  )}
 
-            {t("ncalayer.sign")}
-          </Button>
-        </CardContent>
-      </Card>
+                  {t("ncalayer.sign")}
+                </Button>
+              ) : null}
+
+              {showEgovQr ? (
+                <Button
+                  size="sm"
+                  variant={showNcalayer ? "outline" : "default"}
+                  className={
+                    showNcalayer
+                      ? "w-full font-medium"
+                      : "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                  }
+                  disabled={isPending || actionBlocked}
+                  onClick={() => setEgovQrOpen(true)}
+                >
+                  <QrCode className="w-4 h-4 mr-1" />
+                  {t("egovQr.sign")}
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        {showEgovQr && myTask ? (
+          <EgovQrSignDialog
+            open={egovQrOpen}
+            onOpenChange={setEgovQrOpen}
+            documentId={documentId}
+            workflowTaskId={myTask.id}
+            signText={signText}
+            titleRu={titleRu}
+            titleKk={signTitleKk}
+            regNumber={regNumber}
+            onSigned={() => {
+              qc.invalidateQueries({ queryKey: ["document", documentId] });
+              qc.invalidateQueries({ queryKey: ["myTasks"] });
+              qc.invalidateQueries({ queryKey: ["dashboard"] });
+            }}
+          />
+        ) : null}
+      </>
     );
   }
 

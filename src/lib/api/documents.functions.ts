@@ -15,3 +15,11 @@ export {
 } from "./documents/mutation.functions";
 
 export { addSignature } from "./documents/signatures.functions";
+
+export {
+  cancelEgovQrSigning,
+  completeEgovQrSigning,
+  getEgovQrSigningAvailability,
+  sendEgovQrSigningData,
+  startEgovQrSigning,
+} from "./documents/egov-qr.functions";

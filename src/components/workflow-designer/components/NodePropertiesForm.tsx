@@ -191,6 +191,7 @@ export function NodePropertiesForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ncalayer">NCALayer (ЭЦП РК)</SelectItem>
+              <SelectItem value="egov_qr">eGov QR (eGov mobile)</SelectItem>
               <SelectItem value="any">{t("wf.signature.any")}</SelectItem>
             </SelectContent>
           </Select>

@@ -47,6 +47,8 @@ import { VersionsTab } from "@/components/document-detail/components/VersionsTab
 import { AttachmentsTab } from "@/components/document-detail/components/AttachmentsTab";
 import { WorkflowActions } from "@/components/document-detail/components/WorkflowActions";
 import { WorkflowCard } from "@/components/document-detail/components/WorkflowCard";
+import { findMyPendingTask } from "@/lib/workflow/task-match";
+import { resolveTaskSignatureProvider } from "@/lib/workflow/signature-provider";
 // Инструменты и Иконки
 import { fmtDate, fmtDateShort } from "@/lib/format";
 import { localized, useI18n } from "@/i18n";
@@ -59,7 +61,6 @@ import {
   registrationJournalLabel,
 } from "@/lib/documents/reference-display";
 import { resolvePreviewFileVersion } from "@/lib/documents/file-version";
-import { findMyPendingTask } from "@/lib/workflow/task-match";
 import { hasStoredWorkflowRoute } from "@/lib/workflow/start-route.server";
 import type {
   DocumentComment,
@@ -174,6 +175,8 @@ function DocumentDetail() {
           "full_name",
         ) || myPendingTask.assignee_id
       : undefined;
+
+  const signatureProvider = resolveTaskSignatureProvider(myPendingTask, data.runs ?? []);
 
   const canEditMetadata =
     canManageDocuments ||
@@ -426,6 +429,10 @@ function DocumentDetail() {
               substituteFor={subs?.actingFor ?? []}
               substitutePrincipalName={substitutePrincipalName}
               signPayload={doc.body ?? doc.title_ru ?? id}
+              signTitleRu={doc.title_ru ?? doc.reg_number ?? id}
+              signTitleKk={doc.title_kk ?? undefined}
+              regNumber={doc.reg_number ?? undefined}
+              signatureProvider={signatureProvider}
             />
           )}
 

@@ -1185,6 +1185,20 @@ export const kkDictionary: Dictionary = {
   "ncalayer.notFound": "NCALayer табылмады. Компьютерде іске қосыңыз.",
   "ncalayer.sign": "ЭЦҚ қою",
 
+  // eGov QR
+  "egovQr.title": "eGov QR арқылы қол қою",
+  "egovQr.description":
+    "eGov mobile немесе eGov Business қосымшасында QR-кодты сканерлеп, телефонда қол қоюды растаңыз.",
+  "egovQr.sign": "eGov QR арқылы қол қою",
+  "egovQr.qrAlt": "eGov mobile қол қою QR-коды",
+  "egovQr.openMobile": "eGov mobile ашу",
+  "egovQr.starting": "QR-код дайындалуда…",
+  "egovQr.scanHint": "eGov mobile қосымшасында QR-кодты сканерлеңіз",
+  "egovQr.signHint": "Телефонда қол қоюды растаңыз…",
+  "egovQr.signed": "Құжат eGov QR арқылы қол қойылды",
+  "egovQr.error": "eGov QR қол қою қатесі",
+  "egovQr.idle": "Күту…",
+
   // Tasks
   "task.action.approve": "Келісу",
 

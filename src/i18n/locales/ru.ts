@@ -1185,6 +1185,20 @@ export const ruDictionary: Dictionary = {
   "ncalayer.notFound": "NCALayer не обнаружен. Запустите NCALayer на вашем компьютере.",
   "ncalayer.sign": "Подписать ЭЦП",
 
+  // eGov QR
+  "egovQr.title": "Подпись через eGov QR",
+  "egovQr.description":
+    "Отсканируйте QR-код приложением eGov mobile или eGov Business и подтвердите подпись на телефоне.",
+  "egovQr.sign": "Подписать eGov QR",
+  "egovQr.qrAlt": "QR-код для подписания в eGov mobile",
+  "egovQr.openMobile": "Открыть eGov mobile",
+  "egovQr.starting": "Подготовка QR-кода…",
+  "egovQr.scanHint": "Отсканируйте QR-код в приложении eGov mobile",
+  "egovQr.signHint": "Подтвердите подпись на телефоне…",
+  "egovQr.signed": "Документ подписан через eGov QR",
+  "egovQr.error": "Ошибка подписания eGov QR",
+  "egovQr.idle": "Ожидание…",
+
   // Tasks
   "task.action.approve": "Согласование",
 

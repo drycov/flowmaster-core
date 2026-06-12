@@ -37,7 +37,7 @@ export const nodeConfigSchema = z.object({
   max_escalations: z.number().int().min(1).max(20).optional(),
   sla_repeat_hours: z.number().int().min(1).max(168).optional(),
   parallel_mode: z.enum(["all", "any"]).optional(),
-  signature_provider: z.enum(["ncalayer", "any"]).optional(),
+  signature_provider: z.enum(["ncalayer", "egov_qr", "any"]).optional(),
 });
 
 export const workflowNodeSchema = z.object({
