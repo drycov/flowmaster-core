@@ -6,7 +6,7 @@
 # Run on server (e.g. /opt/edms):
 #   chmod +x scripts/deploy-production.sh
 #   DOMAIN=esedo.example.kz EMAIL=admin@example.kz \
-#   LICENSE_URL=https://your-project.vercel.app \
+#   LICENSE_URL=https://z-license.vercel.app \
 #   INSTALLATION_ID=<uuid-from-cabinet> \
 #   ./scripts/deploy-production.sh
 #
@@ -23,7 +23,7 @@ set -eu
 
 DOMAIN="${DOMAIN:-edms.satory.kz}"
 EMAIL="${EMAIL:-support@satory.kz}"
-LICENSE_URL="${LICENSE_URL:-https://z-edms.vercel.app}"
+LICENSE_URL="${LICENSE_URL:-https://z-license.vercel.app}"
 INSTALLATION_ID="${INSTALLATION_ID:-da23803d-1048-4526-b5d8-09c9e95c2999}"
 
 step() {

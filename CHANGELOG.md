@@ -15,7 +15,7 @@
 
 ### Added
 
-- Облачный license server (`apps/cloud-license-server`): Vercel, кабинет, Cloud Admin
+- Облачный license server вынесен в отдельный проект **z-license** на Vercel (удалён из монорепозитория)
 - Online-лицензирование: connect по `installation_id`, телеметрия, replica (Local LS)
 - Multi-tenant: RLS, provisioning, wildcard DNS
 

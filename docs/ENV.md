@@ -8,7 +8,8 @@
 |--------|---------|
 | [.env.docker.example](../.env.docker.example) | `env:local`, `env:production`, `env:staging`, `env:license-server` |
 | [.env.example](../.env.example) | Минимальный host dev (без Docker app) |
-| [apps/cloud-license-server/.env.example](../apps/cloud-license-server/.env.example) | Vercel / local cloud LS |
+
+Облачный z-license: env и деплой — в отдельном репозитории проекта на Vercel.
 
 Логика генерации: `scripts/lib/env-profiles.mjs`. Флаги CLI: [scripts/README.md](../scripts/README.md).
 
@@ -27,21 +28,22 @@
 
 | Флаг | Эффект на `.env` |
 |------|------------------|
-| `--with-license-server` | Включить license server (см. ниже) |
-| `--license-server-url=URL` | **Облако:** online-клиент → Vercel; `LICENSE_MODE=online`, `LICENSE_SERVER_ENABLED=false` |
+| `--with-license-server` | Online-клиент EDMS → **z-license** (default `https://z-license.vercel.app`) |
+| `--license-server-url=URL` | Переопределить URL облака (редко) |
 | `--installation-id=UUID` | Явный `INSTALLATION_ID` (из кабинета Vercel) |
 | `--license-secret=` | `LICENSE_SIGNING_SECRET` (FM1) |
 | `--license-domain=` | Домен Local LS (replica или отдельный vendor host) |
 | `--license-replica` | Два файла: EDMS `.env` + `.env.license-server` с `LICENSE_UPSTREAM_URL` |
 | `--force` / `--rotate-secrets` | Перезапись / новые секреты |
 
-**Три исхода `env:production` с лицензией:**
+**Два исхода `env:production` с лицензией:**
 
 | Сценарий | Флаги | Результат на EDMS |
 |----------|-------|-------------------|
-| Облако Vercel | `--with-license-server --license-server-url=https://...` | `LICENSE_MODE=online`, URL = Vercel |
-| Embedded vendor (редко) | `--with-license-server` без URL, domain = license domain | `LICENSE_SERVER_ENABLED=true` на том же хосте |
-| Replica | `--license-replica --license-domain=... --license-server-url=...` | `LICENSE_SERVER_URL` → local LS |
+| Облако z-license | `--with-license-server` (+ опц. `--installation-id`) | `LICENSE_MODE=online`, URL = z-license |
+| Replica (КИИ) | `--license-replica --license-domain=...` | `LICENSE_SERVER_URL` → local LS на отдельном VPS |
+
+EDMS **не** поднимает license API на своём домене (`LICENSE_SERVER_ENABLED` не задаётся).
 
 <a id="supabase-keys"></a>
 
@@ -174,20 +176,9 @@ Profile: `npm run docker:monitoring`. См. [TROUBLESHOOTING.md](./TROUBLESHOOTI
 
 Полный upstream reference: `docker/supabase/CONFIG.md` (vendored).
 
-## Cloud license server (Vercel)
+## Cloud license server (z-license)
 
-Отдельный Supabase-проект. См. [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
-
-| Переменная | Описание |
-|------------|----------|
-| `SUPABASE_URL` | URL проекта |
-| `SUPABASE_SERVICE_ROLE_KEY` | API server-side |
-| `SUPABASE_ANON_KEY` | JWT кабинета |
-| `LICENSE_SERVER_ADMIN_SECRET` | Bearer machine API |
-| `VENDOR_TELEGRAM_BOT_TOKEN` | Бот вендора (не EDMS) |
-| `VENDOR_TELEGRAM_WEBHOOK_SECRET` | Telegram webhook |
-| `LICENSE_SERVER_VENDOR_ADMIN_TELEGRAM_CHATS` | `email:chat_id` |
-| `VITE_SUPABASE_*` / `VITE_LICENSE_SERVER_URL` | Build-time для web |
+Отдельный Supabase-проект и env — в репозитории **z-license** на Vercel. На клиентском EDMS задаётся только `LICENSE_SERVER_URL` и `INSTALLATION_ID`.
 
 <a id="uat-e2e-ci"></a>
 
@@ -212,7 +203,7 @@ Profile: `npm run docker:monitoring`. См. [TROUBLESHOOTING.md](./TROUBLESHOOTI
 
 ## Безопасность
 
-- Не коммитьте `.env`, `.env.production`, `apps/cloud-license-server/.env`
+- Не коммитьте `.env`, `.env.production`
 - `LICENSE_SERVER_ADMIN_SECRET` — только vendor / Vercel, не на клиентском EDMS
 - Ротация: `npm run env:production -- --rotate-secrets --force`
 

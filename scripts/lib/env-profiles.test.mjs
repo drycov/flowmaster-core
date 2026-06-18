@@ -28,7 +28,7 @@ describe("buildProfileValues production", () => {
     assert.equal(values.LICENSE_SERVER_ENABLED, undefined);
   });
 
-  it("enables embedded license server with --with-license-server", () => {
+  it("defaults to z-license cloud with --with-license-server", () => {
     const values = buildProfileValues("production", {
       domain: "edms.satory.kz",
       certEmail: "support@satory.kz",
@@ -39,10 +39,10 @@ describe("buildProfileValues production", () => {
       force: true,
     });
 
-    assert.equal(values.LICENSE_SERVER_ENABLED, "true");
-    assert.match(values.LICENSE_SERVER_ADMIN_SECRET, /^[0-9a-f]{64}$/);
-    assert.match(values.LICENSE_SIGNING_SECRET, /^[0-9a-f]{64}$/);
-    assert.equal(values.LICENSE_MODE, "offline");
+    assert.equal(values.LICENSE_MODE, "online");
+    assert.equal(values.LICENSE_SERVER_URL, "https://z-license.vercel.app");
+    assert.equal(values.LICENSE_SERVER_ENABLED, undefined);
+    assert.equal(values.LICENSE_SERVER_ADMIN_SECRET, undefined);
   });
 
   it("configures cloud license client with URL and installation id", () => {
@@ -52,7 +52,7 @@ describe("buildProfileValues production", () => {
       certEmail: "support@satory.kz",
       publicUrl: "https://edms.satory.kz",
       withLicenseServer: true,
-      licenseServerUrl: "https://z-edms.vercel.app",
+      licenseServerUrl: "https://z-license.vercel.app",
       installationId,
       existing: new Map(),
       rotateSecrets: true,
@@ -60,8 +60,8 @@ describe("buildProfileValues production", () => {
     });
 
     assert.equal(values.LICENSE_MODE, "online");
-    assert.equal(values.LICENSE_SERVER_URL, "https://z-edms.vercel.app");
-    assert.equal(values.LICENSE_SERVER_ENABLED, "false");
+    assert.equal(values.LICENSE_SERVER_URL, "https://z-license.vercel.app");
+    assert.equal(values.LICENSE_SERVER_ENABLED, undefined);
     assert.equal(values.INSTALLATION_ID, installationId);
     assert.equal(values.LICENSE_SERVER_ADMIN_SECRET, undefined);
   });
@@ -75,7 +75,7 @@ describe("buildProfileValues production", () => {
       withLicenseServer: true,
       licenseReplica: true,
       licenseDomain: "license.client.kz",
-      licenseServerUrl: "https://z-edms.vercel.app",
+      licenseServerUrl: "https://z-license.vercel.app",
       installationId,
       existing: new Map(),
       rotateSecrets: true,
@@ -84,7 +84,7 @@ describe("buildProfileValues production", () => {
 
     assert.equal(edms.LICENSE_MODE, "online");
     assert.equal(edms.LICENSE_SERVER_URL, "https://license.client.kz");
-    assert.equal(edms.LICENSE_SERVER_ENABLED, "false");
+    assert.equal(edms.LICENSE_SERVER_ENABLED, undefined);
     assert.equal(edms.INSTALLATION_ID, installationId);
 
     const local = buildProfileValues("license-server", {
@@ -92,14 +92,14 @@ describe("buildProfileValues production", () => {
       certEmail: "admin@client.kz",
       publicUrl: "https://license.client.kz",
       licenseReplica: true,
-      licenseServerUrl: "https://z-edms.vercel.app",
+      licenseServerUrl: "https://z-license.vercel.app",
       installationId,
       existing: new Map(),
       rotateSecrets: true,
       force: true,
     });
 
-    assert.equal(local.LICENSE_UPSTREAM_URL, "https://z-edms.vercel.app");
+    assert.equal(local.LICENSE_UPSTREAM_URL, "https://z-license.vercel.app");
     assert.equal(local.LICENSE_SERVER_ENABLED, "true");
     assert.equal(local.INSTALLATION_ID, installationId);
   });

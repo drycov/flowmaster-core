@@ -171,7 +171,7 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 - `LICENSE_SERVER_ADMIN_SECRET` — только на license server (machine API, revoke/register)
 - `VENDOR_TELEGRAM_*` — **отдельный** бот вендора для Cloud Admin (не `TELEGRAM_BOT_TOKEN` EDMS)
 
-См. также: [README.md](./README.md), [RUNBOOK.md § Security](./RUNBOOK.md#security-incident), [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+См. также: [README.md](./README.md), [RUNBOOK.md § Security](./RUNBOOK.md#security-incident).
 
 ## Соответствие (РК)
 

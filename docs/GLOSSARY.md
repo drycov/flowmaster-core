@@ -11,7 +11,7 @@
 | **ЕСЭДО** | Пользовательское название системы электронного документооборота (Казахстан) |
 | **Flowmaster Core** | Техническое имя монорепозитория и Docker-стека |
 | **EDMS** | Electronic Document Management System — англоязычное обозначение в архитектурных диаграммах |
-| **Cloud license server** | Приложение `apps/cloud-license-server` на Vercel: API + сайт + кабинет |
+| **Cloud license server** | Проект [z-license](https://z-license.vercel.app) на Vercel: API + сайт + кабинет (отдельный репозиторий) |
 | **Self-hosted Supabase** | PostgreSQL + Kong + PostgREST + Storage в Docker (`docker/supabase/`) |
 
 ## Организации и multi-tenant

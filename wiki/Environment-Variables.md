@@ -8,7 +8,7 @@
 |------|---------|
 | `.env.docker.example` | `env:local`, `production`, `staging`, `license-server` |
 | `.env.example` | host dev |
-| `apps/cloud-license-server/.env.example` | Vercel LS |
+| z-license (Vercel) | env в отдельном репозитории |
 
 ```bash
 npm run env:local
@@ -35,7 +35,7 @@ npm run env:sync    # → docker/supabase/.env
 | Сценарий | Ключевые vars |
 |----------|---------------|
 | Offline | `LICENSE_MODE=offline`, FM1 в UI |
-| Cloud | `LICENSE_MODE=online`, `LICENSE_SERVER_URL`, `INSTALLATION_ID` |
+| Cloud | `LICENSE_MODE=online`, `LICENSE_SERVER_URL` → `https://z-license.vercel.app`, `INSTALLATION_ID` |
 | Replica | EDMS → local URL; upstream только на Local LS |
 
 **Не** задавать `LICENSE_SERVER_ENABLED=true` на EDMS при облаке Vercel.

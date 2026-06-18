@@ -88,7 +88,7 @@ npm run docker:monitoring
 
 ## Облачный license server (Vercel)
 
-Telegram 401, webhook, Cloud Admin — [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md#401-на-apiv1hookstelegram).
+Telegram 401, webhook, Cloud Admin — в репозитории и деплое **z-license** (`https://z-license.vercel.app/admin`).
 
 ## Multi-tenant
 

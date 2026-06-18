@@ -20,7 +20,6 @@ curl https://esedo.example.kz/api/health
 npm run env:production -- \
   --domain=esedo.example.kz \
   --with-license-server \
-  --license-server-url=https://your-project.vercel.app \
   --installation-id=<uuid> \
   --install
 ```

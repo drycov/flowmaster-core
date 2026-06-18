@@ -5,7 +5,7 @@
 **Wiki (навигация):** [wiki/Home.md](../wiki/Home.md) · [wiki/README.md](../wiki/README.md) (публикация в GitHub Wiki)
 
 **Продукт:** ЕСЭДО — EDMS для Казахстана (on-prem / SaaS).  
-**Сателлит:** `apps/cloud-license-server` — облачный сервер лицензирования (Vercel).
+**Облачные лицензии:** отдельный проект [z-license](https://z-license.vercel.app) на Vercel (не в этом репозитории).
 
 ---
 
@@ -15,7 +15,7 @@
 |--------|-------|
 | Новый разработчик | **[QUICKSTART.md](./QUICKSTART.md)** → [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | DevOps / администратор | [QUICKSTART.md](./QUICKSTART.md) → [DEPLOYMENT.md](./DEPLOYMENT.md) → [RUNBOOK.md](./RUNBOOK.md) |
-| Вендор (лицензии) | [LICENSE-SERVER.md](./LICENSE-SERVER.md) → [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md) |
+| Вендор (лицензии) | [LICENSE-SERVER.md](./LICENSE-SERVER.md) · [z-license](https://z-license.vercel.app) |
 | Интегратор (API) | [INTEGRATIONS.md](./INTEGRATIONS.md) → [api-v1.yaml](./api-v1.yaml) |
 | Приёмка / пилот | [STAGING.md](./STAGING.md) → [UAT.md](./UAT.md) |
 | Не знаете термин | [GLOSSARY.md](./GLOSSARY.md) |
@@ -65,7 +65,6 @@ Wiki — краткие страницы; канонический текст о
 | [../README.md](../README.md) | Обзор продукта, быстрый старт, стек |
 | [../docker/README.md](../docker/README.md) | Docker Compose, профили, ONLYOFFICE |
 | [../scripts/README.md](../scripts/README.md) | Канонический справочник npm-скриптов |
-| [../apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md) | Vercel, кабинет, Cloud Admin |
 | [../src/routes/README.md](../src/routes/README.md) | TanStack Start routing |
 | [../supabase/seeds/README.md](../supabase/seeds/README.md) | Seed SQL из CSV |
 | [../e2e/README.md](../e2e/README.md) | Playwright E2E |
@@ -80,9 +79,8 @@ Wiki — краткие страницы; канонический текст о
 
 | Схема | EDMS | License server |
 |-------|------|----------------|
-| **Облако (Vercel)** | `LICENSE_SERVER_URL` → Vercel | `apps/cloud-license-server` |
-| **Self-hosted vendor** | → vendor VPS | `compose:license-server` |
-| **Replica** | → local LS | Local LS → Vercel upstream |
+| **Облако (z-license)** | `LICENSE_SERVER_URL` → `https://z-license.vercel.app` | Отдельный репозиторий / Vercel |
+| **Replica (КИИ)** | → local LS на отдельном VPS | Local LS → z-license upstream |
 
 Подробности: [LICENSE-SERVER.md](./LICENSE-SERVER.md).
 
@@ -97,7 +95,6 @@ flowmaster-core/
 ├── docker/                      # Compose overrides, nginx, monitoring
 ├── docker-compose*.yml          # Entrypoints Compose (корень — по convention)
 ├── scripts/                     # env, orchestration — scripts/README.md
-├── apps/cloud-license-server/   # Vercel LS
 ├── docs/                        # ← вы здесь (канонические guides)
 ├── wiki/                        # Wiki-страницы (+ GitHub Wiki)
 ├── e2e/                         # Playwright
@@ -108,7 +105,7 @@ flowmaster-core/
 
 ## Соглашения
 
-- **Домены в примерах:** `esedo.example.kz`, `license.example.kz`, `https://your-project.vercel.app`
+- **Домены в примерах:** `esedo.example.kz`, `license.example.kz`, `https://z-license.vercel.app`
 - **Supabase keys:** ЕСЭДО — `SUPABASE_PUBLISHABLE_KEY`; cloud LS — `SUPABASE_ANON_KEY` ([ENV.md](./ENV.md#supabase-keys))
 - **Якоря:** ASCII id в `LICENSE-SERVER.md` (`#edms-vercel-cloud`, `#docker-self-hosted`, `#replica-phase-2`)
 - **Язык:** ops-доки — русский; `src/routes/README.md` — английский (TanStack)

@@ -33,46 +33,6 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
           SUPABASE_JWT_SECRET: placeholder-jwt-secret-for-ci-build-only
 
-  cloud-license:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: apps/cloud-license-server/package-lock.json
-
-      - run: npm ci
-        working-directory: apps/cloud-license-server
-
-      - run: node scripts/validate-migrations.mjs
-        working-directory: apps/cloud-license-server
-
-      - run: node scripts/validate-migrations.mjs --apply
-        working-directory: apps/cloud-license-server
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
-
-      - run: npm run typecheck
-        working-directory: apps/cloud-license-server
-
-      - run: npm run build
-        working-directory: apps/cloud-license-server
-
   smoke-db:
     runs-on: ubuntu-latest
     if: ${{ secrets.E2E_SUPABASE_URL != '' && secrets.E2E_SUPABASE_SERVICE_ROLE_KEY != '' }}

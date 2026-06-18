@@ -54,12 +54,6 @@
     "license:server": "node scripts/license-server-admin.mjs",
     "license:support-code": "node scripts/license-support-code.mjs",
     "license:admin": "node scripts/license-admin-local.mjs",
-    "license:cloud:dev": "npm run dev --prefix apps/cloud-license-server",
-    "license:cloud:web": "npm run dev:web --prefix apps/cloud-license-server",
-    "license:cloud:build": "npm run build --prefix apps/cloud-license-server",
-    "license:cloud:support-code": "npm run support-code --prefix apps/cloud-license-server",
-    "license:cloud:typecheck": "npm run typecheck --prefix apps/cloud-license-server",
-    "license:cloud:validate-migrations": "npm run validate-migrations --prefix apps/cloud-license-server",
     "backup:db": "node scripts/backup-db.mjs"
   },
   "dependencies": {

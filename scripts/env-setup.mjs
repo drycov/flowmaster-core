@@ -11,9 +11,9 @@
  *   --install            (production) copy output → .env
  *   --domain=HOST        production domain (default: esedo.example.kz)
  *   --email=ADDR         Let's Encrypt email
- *   --with-license-server  production: лицензирование (online с --license-server-url, vendor без URL)
+ *   --with-license-server  production: online-клиент → z-license (Vercel)
  *   --cloud-license        alias для --with-license-server
- *   --license-server-url=URL  production: облачный license server (Vercel)
+ *   --license-server-url=URL  production: override z-license URL (default: https://z-license.vercel.app)
  *   --installation-id=UUID production: INSTALLATION_ID из кабинета vendor
  *   --license-domain=HOST  production: также создать .env.license-server
  *   --output=PATH        custom output path
@@ -40,6 +40,7 @@ import {
 import {
   PROFILES,
   TEMPLATE_FILE,
+  DEFAULT_CLOUD_LICENSE_URL,
   buildHeader,
   buildProfileValues,
   printNextSteps,
@@ -66,8 +67,9 @@ Options:
   --license-secret=HEX   production: shared LICENSE_SIGNING_SECRET from vendor
   --license-server-url=URL production: облачный license server (online-клиент)
   --installation-id=UUID production: INSTALLATION_ID из кабинета vendor
-  --with-license-server  production: включить лицензирование
-  --cloud-license        alias для --with-license-server (облачная связка с --license-server-url)
+  --with-license-server  production: online-клиент → z-license (по умолчанию)
+  --cloud-license        alias для --with-license-server
+  --license-server-url=URL production: URL облака (default https://z-license.vercel.app)
   --license-domain=HOST  production: локальный license server (replica или отдельный VPS)
   --license-replica      production: Local LS у клиента + cloud master (--license-server-url)
   --output=PATH     override output file
@@ -152,10 +154,13 @@ export function runEnvSetup(argv = process.argv.slice(2)) {
     `admin@${domain}`;
   const publicUrl = `https://${domain}`;
   const licenseSecret = values.get("--license-secret") ?? null;
-  const licenseServerUrl = values.get("--license-server-url")?.trim().replace(/\/$/, "") || null;
-  const installationId = values.get("--installation-id")?.trim() || null;
+  const licenseServerUrlRaw = values.get("--license-server-url")?.trim().replace(/\/$/, "") || null;
   const withLicenseServer =
     flags.has("--with-license-server") || flags.has("--cloud-license");
+  const licenseServerUrl =
+    licenseServerUrlRaw ||
+    (profileId === "production" && withLicenseServer ? DEFAULT_CLOUD_LICENSE_URL : null);
+  const installationId = values.get("--installation-id")?.trim() || null;
   const licenseReplica = flags.has("--license-replica");
   const licenseDomain = values.get("--license-domain")?.trim() || null;
 

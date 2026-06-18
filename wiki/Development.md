@@ -25,12 +25,9 @@ File-based routing (TanStack Start): `src/routes/README.md`
 npm run docker:migrate
 ```
 
-## Облачный license server
+## Облачные лицензии
 
-```bash
-npm run license:cloud:dev
-npm run license:cloud:web
-```
+Проект [z-license](https://z-license.vercel.app) — отдельный репозиторий. В этом репо только клиентская связка EDMS → облако.
 
 ## E2E
 

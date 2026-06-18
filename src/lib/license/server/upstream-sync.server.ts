@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getInstallationId } from "@/lib/env.server";
-import { getAppVersion, getLicenseUpstreamUrl, isLicenseServerEnabled } from "./config.server";
+import { getAppVersion, getLicenseProduct, getLicenseUpstreamUrl, isLicenseServerEnabled } from "./config.server";
 import type { LicenseActivateResponse, LicenseHeartbeatResponse } from "./types";
 
 async function postUpstreamJson<T>(path: string, body: unknown): Promise<T> {
@@ -39,6 +39,7 @@ export async function syncInstallationFromUpstream(
   const hostname = process.env.PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "";
   const result = await postUpstreamJson<LicenseActivateResponse>("/api/v1/license/connect", {
     installation_id: installationId,
+    product: getLicenseProduct(),
     hostname,
     app_version: getAppVersion(),
   });
@@ -100,6 +101,7 @@ export async function relayUpstreamHeartbeat(
     const result = await postUpstreamJson<LicenseHeartbeatResponse>("/api/v1/license/heartbeat", {
       token: row.upstream_token,
       installation_id: installationId,
+      product: getLicenseProduct(),
       active_users: activeUsers,
       hostname,
       app_version: getAppVersion(),

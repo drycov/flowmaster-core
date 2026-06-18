@@ -13,7 +13,7 @@ import {
   syncLicenseWithServer,
   syncLicenseWithServerSoft,
 } from "@/lib/license/server/client.server";
-import { getLicenseMode, isOnlineLicenseRequired, usesCloudLicense } from "@/lib/license/server/config.server";
+import { getLicenseMode, getLicenseProduct, isOnlineLicenseRequired, usesCloudLicense } from "@/lib/license/server/config.server";
 import type { LicenseStatusResponse } from "@/lib/license/types";
 import { requireModuleAccess } from "../_helpers";
 
@@ -219,6 +219,7 @@ export const getLicenseServerConfig = createServerFn({ method: "GET" })
     const cloud = usesCloudLicense();
     return {
       mode: getLicenseMode(),
+      product: getLicenseProduct(),
       server_configured: cloud,
       cloud_license: cloud,
       server_url: process.env.LICENSE_SERVER_URL?.trim() || null,

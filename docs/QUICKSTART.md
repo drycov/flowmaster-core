@@ -52,13 +52,11 @@ npm run dev            # http://localhost:3000
 | Postgres | 127.0.0.1:54322 |
 | Studio | `npm run docker:up -- --studio` → :54323 |
 
-## Облачный license server (опционально)
+## Облачные лицензии (z-license)
 
-```bash
-cp apps/cloud-license-server/.env.example apps/cloud-license-server/.env
-npm run license:cloud:dev    # :3848
-npm run license:cloud:web    # :5173
-```
+Кабинет и API: [https://z-license.vercel.app](https://z-license.vercel.app). Разработка и деплой облака — в отдельном репозитории **z-license**.
+
+На EDMS см. [LICENSE-SERVER.md](./LICENSE-SERVER.md).
 
 ## Что дальше
 

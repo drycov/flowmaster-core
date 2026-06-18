@@ -15,12 +15,11 @@
  *
  * Облако (Vercel) — только env, отдельный compose не нужен:
  *   npm run env:production -- --domain=edms.satory.kz \
- *     --with-license-server --license-server-url=https://z-edms.vercel.app \
- *     --installation-id=<uuid> --install
+ *     --with-license-server --installation-id=<uuid> --install
  *   npm run docker:up -- --tls --cron
  *
  * Vendor (license API на том же домене):
- *   npm run env:production -- --domain=edms.example.kz --with-license-server --install
+ * Vendor (license API на том же домене) — не используется; лицензии только через z-license (Vercel).
  *   npm run docker:up -- --tls
  */
 
@@ -56,7 +55,7 @@ if (monitoring && !dev) profiles.push("monitoring");
 if (office && !dev) profiles.push("office");
 
 const envHint = tls
-  ? "npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --license-server-url=https://....vercel.app --installation-id=UUID --install"
+  ? "npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --installation-id=UUID --install"
   : "npm run env:local";
 
 orchestrateStack(root, {
@@ -84,20 +83,16 @@ if (startLicenseServerStack && !dev) {
   const cloudLicense = Boolean(process.env.LICENSE_SERVER_URL?.trim());
   if (cloudLicense) {
     console.log("");
-    console.log("License (облако): EDMS → " + process.env.LICENSE_SERVER_URL.trim());
+    console.log("License (облако z-license): EDMS → " + process.env.LICENSE_SERVER_URL.trim());
     console.log("  Cron sync: npm run docker:up -- --tls --cron");
   } else if (!enabled) {
     console.log("");
     console.log("License: не настроен в .env");
-    console.log("  Облако (Vercel):");
+    console.log("  Облако (z-license):");
     console.log(
-      "    npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --license-server-url=https://....vercel.app --installation-id=UUID --install",
+      "    npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --installation-id=UUID --install",
     );
-    console.log("  Vendor (API на том же домене, без Vercel):");
-    console.log(
-      "    npm run env:production -- --domain=YOUR_DOMAIN --with-license-server --install",
-    );
-    console.log("  Self-hosted license VPS:");
+    console.log("  Replica (закрытый контур, отдельный VPS license):");
     console.log("    npm run env:license-server -- --domain=license.example.kz --install");
     console.log("    npm run docker:up -- --tls --license-server-stack");
   }

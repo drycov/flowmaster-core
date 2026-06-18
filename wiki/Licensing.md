@@ -10,25 +10,26 @@
 | `online` | Heartbeat к license server |
 | `hybrid` | Online + offline fallback |
 
-## Три схемы online
+## Две схемы online
 
 | Схема | EDMS | License server |
 |-------|------|----------------|
-| **Облако** | → Vercel | `apps/cloud-license-server` |
-| **Vendor Docker** | → vendor VPS | `compose:license-server` |
-| **Replica** | → local LS | Local LS → Vercel upstream |
+| **Облако (типовая)** | → z-license | `https://z-license.vercel.app` |
+| **Replica (КИИ)** | → local LS на отдельном VPS | Local LS → z-license upstream |
+
+EDMS **не** встраивает license API на своём домене.
 
 ## Облако (типовая)
 
-1. Клиент регистрируется в `/cabinet` → `installation_id`
+1. Клиент регистрируется в `https://z-license.vercel.app/cabinet` → `installation_id`
 2. EDMS env: `LICENSE_SERVER_URL`, `INSTALLATION_ID`, `LICENSE_MODE=online`
 3. **Без** `LICENSE_SERVER_ENABLED` на EDMS
 4. Cron `license-sync` каждые ~6 ч
 
 ```bash
 npm run env:production -- \
+  --domain=esedo.example.kz \
   --with-license-server \
-  --license-server-url=https://your-project.vercel.app \
   --installation-id=<uuid> \
   --install
 ```

@@ -83,13 +83,12 @@ npm run env:production -- \
   --domain=esedo.example.kz \
   --email=admin@example.kz \
   --with-license-server \
-  --license-server-url=https://your-project.vercel.app \
   --installation-id=<uuid-from-cabinet> \
   --install
 npm run compose:tls:cron
 ```
 
-Облачная связка EDMS + Vercel: [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md). Self-hosted vendor: `env:license-server` + `compose:license-server`.
+Облачная связка EDMS + **z-license** (Vercel): [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md). Replica для закрытого контура: `env:license-server` + `compose:license-server` на отдельном VPS.
 
 Env: `.env.docker.example` + `npm run env:production`. Подробнее: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
@@ -102,15 +101,9 @@ npm run start
 
 Reverse proxy (nginx) перед приложением обязателен в production — см. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-### Сервер лицензирования (vendor)
+### License replica (закрытый контур, отдельный VPS)
 
-```bash
-npm run env:license-server -- --domain=license.example.kz --install
-npm run compose:license-server
-curl https://license.example.kz/api/v1/license/health
-```
-
-Подробнее: [docs/LICENSE-SERVER.md](docs/LICENSE-SERVER.md).
+Не путать с EDMS: локальный license server только как **replica** с `LICENSE_UPSTREAM_URL` → z-license.
 
 ## Документация
 
@@ -124,7 +117,7 @@ curl https://license.example.kz/api/v1/license/health
 | CI/CD | [CI](docs/CI.md), [CHANGELOG](CHANGELOG.md), [scripts/README](scripts/README.md) |
 | Безопасность | [SECURITY](docs/SECURITY.md), [MULTI-TENANT](docs/MULTI-TENANT.md) |
 | Интеграции | [INTEGRATIONS](docs/INTEGRATIONS.md), [api-v1.yaml](docs/api-v1.yaml) |
-| Лицензии | [LICENSE-SERVER](docs/LICENSE-SERVER.md), [cloud-license-server](apps/cloud-license-server/README.md) |
+| Лицензии | [LICENSE-SERVER](docs/LICENSE-SERVER.md) · [z-license](https://z-license.vercel.app) |
 | Приёмка | [STAGING](docs/STAGING.md), [UAT](docs/UAT.md) |
 | Сбои | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 
@@ -132,7 +125,7 @@ curl https://license.example.kz/api/v1/license/health
 
 Полный справочник: **[scripts/README.md](scripts/README.md)** (`env:*`, `docker:*`, `compose:*`, UAT, лицензии, тесты).
 
-Частые команды: `env:local` → `docker:up` (dev); `env:production --install` → `compose:tls:cron` (prod); `compose:staging` (UAT); `license:cloud:dev` + `license:cloud:web` (облачный LS).
+Частые команды: `env:local` → `docker:up` (dev); `env:production --install` → `compose:tls:cron` (prod); `compose:staging` (UAT).
 
 ## Стек
 

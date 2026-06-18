@@ -6,6 +6,7 @@ import { fetchLicenseStatus } from "../enforcement";
 import type { LicenseStatusResponse } from "../types";
 import {
   getAppVersion,
+  getLicenseProduct,
   getLicenseServerUrl,
   isOnlineLicenseRequired,
   shouldUseLicenseServer,
@@ -140,6 +141,7 @@ export async function connectWithLicenseServer(
   const hostname = process.env.PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "";
   const result = await postJson<LicenseActivateResponse>("/api/v1/license/connect", {
     installation_id: installationId,
+    product: getLicenseProduct(),
     hostname,
     app_version: getAppVersion(),
   });
@@ -162,6 +164,7 @@ export async function activateWithLicenseServer(
   const result = await postJson<LicenseActivateResponse>("/api/v1/license/activate", {
     license_key: licenseKey.trim(),
     installation_id: installationId,
+    product: getLicenseProduct(),
     hostname,
     app_version: getAppVersion(),
   });
@@ -182,6 +185,7 @@ async function runHeartbeatSync(
   const result = await postJson<LicenseHeartbeatResponse>("/api/v1/license/heartbeat", {
     token: license.license_server_token,
     installation_id: license.installation_id,
+    product: getLicenseProduct(),
     active_users: telemetry.active_users,
     hostname: process.env.PUBLIC_APP_URL?.trim() || "",
     app_version: telemetry.app_version || getAppVersion(),

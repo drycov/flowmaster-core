@@ -286,7 +286,7 @@ server {
 
 ## 7. Лицензия
 
-Полная инструкция: [LICENSE-SERVER.md](./LICENSE-SERVER.md). Облачный деплой: [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+Полная инструкция: [LICENSE-SERVER.md](./LICENSE-SERVER.md). Облачный деплой: [z-license](https://z-license.vercel.app) (отдельный репозиторий).
 
 | Схема | Когда | Документация |
 |-------|-------|--------------|

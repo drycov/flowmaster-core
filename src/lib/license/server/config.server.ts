@@ -2,6 +2,10 @@ import { loadServerEnv } from "@/lib/env.server";
 
 export type LicenseMode = "offline" | "online" | "hybrid";
 
+export type LicenseProduct = "edms" | "backup_tools";
+
+const LICENSE_PRODUCTS = new Set<LicenseProduct>(["edms", "backup_tools"]);
+
 export function getLicenseMode(): LicenseMode {
   loadServerEnv();
   const raw = (process.env.LICENSE_MODE ?? "offline").trim().toLowerCase();
@@ -56,4 +60,14 @@ export function isLicenseServerLocalAdminEnabled(): boolean {
 
 export function getAppVersion(): string {
   return process.env.APP_VERSION?.trim() || process.env.npm_package_version || "unknown";
+}
+
+/** Product line for z-license connect/heartbeat (default: edms). */
+export function getLicenseProduct(): LicenseProduct {
+  loadServerEnv();
+  const raw = (process.env.LICENSE_PRODUCT ?? "edms").trim().toLowerCase();
+  if (LICENSE_PRODUCTS.has(raw as LicenseProduct)) {
+    return raw as LicenseProduct;
+  }
+  return "edms";
 }

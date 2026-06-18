@@ -12,7 +12,6 @@ flowmaster-core/
 ├── supabase/migrations/         # PostgreSQL (self-hosted Supabase)
 ├── docker/                      # Compose overlays, nginx, ONLYOFFICE (см. docker/README.md)
 ├── scripts/                     # env, orchestration, UAT, FM1 CLI (см. scripts/README.md)
-├── apps/cloud-license-server/   # Vercel: license API + portal + Cloud Admin
 ├── docs/                        # Канонические runbook'и (см. docs/README.md)
 ├── wiki/                        # Краткие страницы для GitHub Wiki
 └── e2e/                         # Playwright
@@ -21,7 +20,7 @@ flowmaster-core/
 Корневые `docker-compose*.yml` — **точки входа** Compose (стандарт Docker); overrides в `docker/compose/`.
 Шаблоны env: `.env.docker.example`, `.env.example` (генерация через `npm run env:*`).
 
-Отдельного `packages/` нет. Облачный LS вызывается через `npm run license:cloud:*` или `--prefix apps/cloud-license-server`.
+Отдельного `packages/` нет. Облачные лицензии — отдельный проект [z-license](https://z-license.vercel.app) на Vercel (не в этом репозитории).
 
 ## Runtime: ЕСЭДО (on-prem / SaaS)
 
@@ -88,7 +87,7 @@ flowchart TB
 | Режим | `LICENSE_MODE` | License server | Типичный сценарий |
 |-------|----------------|----------------|-------------------|
 | Offline FM1 | `offline` | — | Изолированный контур, ключ в UI |
-| Online облако | `online` | Vercel | On-prem EDMS + `apps/cloud-license-server` |
+| Online облако | `online` | [z-license](https://z-license.vercel.app) | On-prem EDMS → внешний Vercel |
 | Online vendor | `online` | Docker `compose:license-server` | Self-hosted LS у поставщика |
 | Hybrid | `hybrid` | любой online | Online + fallback на локальный FM1 |
 | Replica | `online` на EDMS | Local LS → Vercel upstream | Закрытый контур (КИИ) |
@@ -126,9 +125,9 @@ sequenceDiagram
 
 Подробнее: [LICENSE-SERVER.md § Replica](./LICENSE-SERVER.md#replica-phase-2).
 
-### Облачный license server (Vercel)
+### Облачный license server (z-license)
 
-Отдельный Supabase-проект, отдельные миграции `apps/cloud-license-server/supabase/migrations/001…005`.
+Отдельный репозиторий и Supabase-проект на Vercel: [https://z-license.vercel.app](https://z-license.vercel.app).
 
 | UI | URL | Аудитория |
 |----|-----|-----------|
@@ -137,7 +136,7 @@ sequenceDiagram
 | Cloud Admin | `/admin` → `/admin/app` | Вендор (`vendor_staff` + Telegram) |
 | Machine API | `/api/v1/license/*` | EDMS, CI (Bearer) |
 
-Подробнее: [apps/cloud-license-server/README.md](../apps/cloud-license-server/README.md).
+Подробнее: [LICENSE-SERVER.md](./LICENSE-SERVER.md).
 
 <a id="db-migrations"></a>
 
@@ -161,9 +160,9 @@ sequenceDiagram
 | `20260616100000_license_server_upstream_replica.sql` | Local LS replica |
 | `20260617100000_license_server_usage_telemetry.sql` | Телеметрия heartbeat |
 
-### Cloud LS (отдельный Supabase)
+### Cloud LS (отдельный Supabase, проект z-license)
 
-`001_license_server_schema.sql` … `005_vendor_staff.sql` — см. [cloud README](../apps/cloud-license-server/README.md#база-данных).
+Схема и миграции облака — в репозитории **z-license**, не в `flowmaster-core`.
 
 ## Compose-стеки
 

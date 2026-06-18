@@ -7,7 +7,7 @@
 | **Репозиторий** | `flowmaster-core` |
 | **Стек** | React 19, TanStack Start, PostgreSQL (Supabase), nginx, Docker |
 | **Лицензия ПО** | Проприетарная (FM1 / online) |
-| **Облачный LS** | `apps/cloud-license-server` (Vercel) |
+| **Облачный LS** | [z-license](https://z-license.vercel.app) (отдельный репозиторий) |
 
 ## Возможности
 
@@ -72,7 +72,6 @@ npm run compose:tls:cron                  # production
 src/              ЕСЭДО
 supabase/         миграции БД
 docker/           Compose, nginx
-apps/cloud-license-server/
 docs/             канонические guides
 wiki/             эта wiki
 ```

@@ -61,20 +61,12 @@ CI (`.github/workflows/ci.yml`) запускает `lint`, `typecheck`, `test`; 
 npm run docker:migrate
 ```
 
-Облачный license server: отдельный Supabase-проект, миграции в `apps/cloud-license-server/supabase/migrations/`.
-
-## Облачный license server
-
-```bash
-npm run license:cloud:dev    # API :3848
-npm run license:cloud:web    # web :5173
-npm run license:cloud:typecheck
-```
+Облачный license server (**z-license**): отдельный репозиторий и Supabase-проект на Vercel — не в `flowmaster-core`.
 
 ## Секреты и git
 
-- **Не коммитьте** `.env`, `.env.production`, `apps/cloud-license-server/.env`
-- Шаблоны: `.env.docker.example`, `.env.example`, `apps/cloud-license-server/.env.example`
+- **Не коммитьте** `.env`, `.env.production`
+- Шаблоны: `.env.docker.example`, `.env.example`
 - Генерация env: `npm run env:*` — см. [ENV.md](./ENV.md), [scripts/README.md](../scripts/README.md)
 - CI: [CI.md](./CI.md)
 

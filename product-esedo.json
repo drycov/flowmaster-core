@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "slug": "esedo",
+  "make_default": true,
+  "product": {
+    "label": "Единая система электронного документооборота",
+    "plans": {
+      "trial": {
+        "features": {
+          "workflows": true,
+          "templates": true,
+          "eds_signing": true,
+          "office": true,
+          "archive": true,
+          "references": true,
+          "nomenclature": true,
+          "audit": true,
+          "knowledge_base": true,
+          "projects": true,
+          "contracts": true,
+          "counterparties": true,
+          "hr": true,
+          "substitutions": true,
+          "correspondence": true,
+          "integrations": true,
+          "reports": true,
+          "monitoring": true
+        },
+        "max_users": 10,
+        "trial_days": 30
+      },
+      "standard": {
+        "features": {
+          "workflows": true,
+          "templates": true,
+          "eds_signing": true,
+          "office": false,
+          "archive": true,
+          "references": true,
+          "nomenclature": true,
+          "audit": false,
+          "knowledge_base": false,
+          "projects": false,
+          "contracts": false,
+          "counterparties": true,
+          "hr": false,
+          "substitutions": true,
+          "correspondence": true,
+          "integrations": false,
+          "reports": false,
+          "monitoring": false
+        },
+        "max_users": 25
+      },
+      "enterprise": {
+        "features": {
+          "workflows": true,
+          "templates": true,
+          "eds_signing": true,
+          "office": true,
+          "archive": true,
+          "references": true,
+          "nomenclature": true,
+          "audit": true,
+          "knowledge_base": true,
+          "projects": true,
+          "contracts": true,
+          "counterparties": true,
+          "hr": true,
+          "substitutions": true,
+          "correspondence": true,
+          "integrations": true,
+          "reports": true,
+          "monitoring": true
+        },
+        "max_users": 9999
+      },
+      "professional": {
+        "features": {
+          "workflows": true,
+          "templates": true,
+          "eds_signing": true,
+          "office": true,
+          "archive": true,
+          "references": true,
+          "nomenclature": true,
+          "audit": true,
+          "knowledge_base": true,
+          "projects": true,
+          "contracts": true,
+          "counterparties": true,
+          "hr": true,
+          "substitutions": true,
+          "correspondence": true,
+          "integrations": false,
+          "reports": true,
+          "monitoring": false
+        },
+        "max_users": 100
+      }
+    },
+    "marketing": {
+      "trial": {
+        "cta": "Начать пробный период",
+        "title": "Пробный",
+        "subtitle": "30 дней, полный функционал ЕСЭДО",
+        "priceLabel": "Бесплатно"
+      },
+      "standard": {
+        "cta": "Запросить коммерческое предложение",
+        "title": "Стандарт",
+        "subtitle": "Базовый документооборот для небольших команд",
+        "priceLabel": "По запросу"
+      },
+      "enterprise": {
+        "cta": "Связаться с нами",
+        "title": "Enterprise",
+        "subtitle": "Без лимитов, интеграции и SLA",
+        "priceLabel": "Индивидуально"
+      },
+      "professional": {
+        "cta": "Выбрать Professional",
+        "title": "Professional",
+        "subtitle": "Расширенные модули: договоры, проекты, отчёты",
+        "highlight": true,
+        "priceLabel": "По запросу"
+      }
+    },
+    "key_prefix": "FM1",
+    "feature_labels": {
+      "workflows": "Маршруты согласования",
+      "templates": "Шаблоны документов",
+      "eds_signing": "ЭЦП и подписание",
+      "office": "Офисный редактор",
+      "archive": "Архив и хранение",
+      "references": "Справочники",
+      "nomenclature": "Номенклатура дел",
+      "audit": "Аудит и журнал событий",
+      "knowledge_base": "База знаний",
+      "projects": "Проекты",
+      "contracts": "Договоры",
+      "counterparties": "Контрагенты",
+      "hr": "Кадровый учёт",
+      "substitutions": "Замещения",
+      "correspondence": "Корреспонденция",
+      "integrations": "Интеграции и API",
+      "reports": "Отчёты и аналитика",
+      "monitoring": "Мониторинг системы"
+    },
+    "supports_devices": false,
+    "telemetry_fields": [
+      "total_users",
+      "active_users",
+      "max_users_allowed",
+      "documents_total",
+      "documents_30d",
+      "workflows_published",
+      "app_version",
+      "environment",
+      "platform"
+    ]
+  }
+}
