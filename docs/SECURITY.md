@@ -46,11 +46,30 @@ In-memory лимиты на server functions аутентификации (`src/
 | password reset (Telegram) | 5–10 / час | 3–5 / час |
 | vendor admin login | 5 / 15 мин | — |
 
-Ключ IP: `X-Forwarded-For` (первый hop) или `X-Real-IP`. При нескольких репликах счётчики **per-process** — для строгого лимита нужен shared store (Redis) или nginx `limit_req`.
+Ключ IP: `X-Forwarded-For` (первый hop) или `X-Real-IP`.
 
-Отключение: `AUTH_RATE_LIMIT_ENABLED=false` (только для dev/test).
+**Важно при горизонтальном масштабировании:** счётчики **per-process**. При нескольких репликах `app` глобальный лимит не гарантируется. Для production с >1 репликой:
+
+1. **Обязательно** включите nginx `limit_req` (см. `docker/nginx/snippets/rate-limit.conf`).
+2. В `http {}` задайте зоны:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=fm_auth:10m rate=5r/s;
+limit_req_zone $binary_remote_addr zone=fm_api:10m rate=30r/s;
+```
+
+3. Подключите snippet в `server {}` **перед** общим `location /` (порядок location важен).
+4. Среднесрочно — shared store (Redis) для app-layer лимитов; до этого nginx — основной контур.
+
+Отключение app-layer: `AUTH_RATE_LIMIT_ENABLED=false` (только для dev/test).
 
 GoTrue (Supabase Auth) имеет собственные лимиты на `/token` и email — см. `docker/supabase/CONFIG.md`.
+
+Проверка RBAC/audit после деплоя:
+
+```bash
+npm run uat:verify-rbac
+```
 
 ## Авторизация
 
@@ -109,6 +128,7 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 ## Hardening checklist (production)
 
 - [ ] `AUTH_RATE_LIMIT_ENABLED` не отключён на production (или nginx `limit_req` на `/auth`)
+- [ ] nginx `limit_req` зоны `fm_auth` / `fm_api` (см. `docker/nginx/snippets/rate-limit.conf`)
 - [ ] `ONLYOFFICE_JWT_ENABLED=true` на production (общий `ONLYOFFICE_JWT_SECRET` у app и Document Server)
 - [ ] Cron sidecar: `docker compose -f docker-compose.tls.yml --profile cron up -d`
 - [ ] Telegram webhook secret зарегистрирован
@@ -125,6 +145,7 @@ PostgreSQL RLS на tenant-таблицах с предикатом `tenant_matc
 - [ ] Security headers (app добавляет `X-Content-Type-Options`, `X-Frame-Options`, …); HSTS на proxy
 - [ ] Backup БД настроен
 - [ ] Аудит: раздел **Аудит** доступен compliance-офицеру
+- [ ] `npm run uat:verify-rbac` — зелёный на staging
 - [ ] Pen-test / security review перед госсектором
 
 ## Отчёт об инциденте

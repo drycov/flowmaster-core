@@ -7,13 +7,26 @@
 
 ## [Unreleased]
 
+### Added
+
+- E2E: `e2e/workflow-actions.spec.ts` — approve / reject / return с обязательным комментарием
+- E2E helper `e2e/helpers/documents.ts` — создание документа с custom route
+- Smoke: сценарий reject с карточки документа
+- `npm run uat:verify-rbac` — проверка audit triggers, `user_has_permission`, `correlation_id`
+- nginx snippet `docker/nginx/snippets/rate-limit.conf` (пример `limit_req` для auth/API)
+
 ### Documentation
+
+- Уточнены ограничения in-memory rate-limit при нескольких репликах; рекомендация nginx/Redis
+- Обновлены `e2e/README.md`, `scripts/README.md`
+
+### Documentation (ранее)
 
 - Полный комплект в `docs/`: архитектура, env, CI/CD, runbook, глоссарий, quickstart
 - Wiki в `wiki/`: 16 страниц + sidebar для GitHub Wiki
 - Индекс: [docs/README.md](docs/README.md) · Wiki: [wiki/Home.md](wiki/Home.md)
 
-### Added
+### Added (ранее)
 
 - Облачный license server вынесен в отдельный проект **z-license** на Vercel (удалён из монорепозитория)
 - Online-лицензирование: connect по `installation_id`, телеметрия, replica (Local LS)

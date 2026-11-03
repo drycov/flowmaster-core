@@ -35,6 +35,12 @@ npm run test:e2e:security
 
 DB-проверка без Playwright: `npm run uat:smoke:db` (нужны ≥2 org с пользователями и документами).
 
+RBAC / audit (без браузера):
+
+```bash
+npm run uat:verify-rbac
+```
+
 ## Против staging / CI
 
 ```bash
@@ -50,7 +56,15 @@ GitHub Actions: [docs/CI.md](../docs/CI.md).
 
 | Путь | Назначение |
 |------|------------|
-| `e2e/*.spec.ts` | Playwright specs |
+| `e2e/smoke.spec.ts` | Create document → approve / reject |
+| `e2e/workflow-actions.spec.ts` | Approve, reject, return (comment required) |
+| `e2e/security-routes.spec.ts` | Route guards |
+| `e2e/tenant-isolation.spec.ts` | Cross-tenant isolation |
+| `e2e/auth.spec.ts` / `health.spec.ts` | Auth & health |
+| `e2e/helpers/auth.ts` | Login helper |
+| `e2e/helpers/documents.ts` | Create document with custom route |
+| `e2e/helpers/env.ts` | Credentials gates |
+| `e2e/helpers/ui.ts` | Radix Select helper |
 | `playwright.config.ts` | Конфиг (корень репозитория) |
 
-Smoke-сценарий: вход → документ с маршрутом → согласование задачи.
+Smoke-сценарий: вход → документ с маршрутом → согласование / отклонение задачи.
