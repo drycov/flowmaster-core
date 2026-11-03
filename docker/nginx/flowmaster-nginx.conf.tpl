@@ -1,5 +1,9 @@
 # HTTPS + HTTP bootstrap for jonasal/nginx-certbot (docker-compose.tls.yml)
 # Variables: PROXY_DOMAIN
+# Included into http {} via user_conf.d — limit_req_zone is valid here.
+
+limit_req_zone $binary_remote_addr zone=fm_auth:10m rate=5r/s;
+limit_req_zone $binary_remote_addr zone=fm_api:10m rate=30r/s;
 
 resolver 127.0.0.11 valid=10s ipv6=off;
 
@@ -59,6 +63,38 @@ server {
     location /sso { proxy_pass $flowmaster_kong; }
 
     include /etc/nginx/snippets/onlyoffice.conf;
+
+    location /api/ {
+        limit_req zone=fm_api burst=60 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /auth {
+        limit_req zone=fm_auth burst=20 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ^~ /auth/ {
+        limit_req zone=fm_auth burst=20 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     location / {
         proxy_set_header Host $http_host;
@@ -123,6 +159,38 @@ server {
     location /sso { proxy_pass $flowmaster_kong; }
 
     include /etc/nginx/snippets/onlyoffice.conf;
+
+    location /api/ {
+        limit_req zone=fm_api burst=60 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /auth {
+        limit_req zone=fm_auth burst=20 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ^~ /auth/ {
+        limit_req zone=fm_auth burst=20 nodelay;
+        limit_req_status 429;
+        proxy_set_header Host $http_host;
+        proxy_pass $flowmaster_app;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     location / {
         proxy_set_header Host $http_host;

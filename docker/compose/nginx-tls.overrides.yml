@@ -35,6 +35,7 @@ services:
       - ../../docker/nginx/ensure-self-signed-cert.sh:/etc/nginx/ensure-self-signed-cert.sh:ro
       - ../../docker/nginx/run-certbot-with-fallback.sh:/etc/nginx/run-certbot-with-fallback.sh:ro
       - ../../docker/nginx/snippets/onlyoffice.conf:/etc/nginx/snippets/onlyoffice.conf:ro
+      - ../../docker/nginx/snippets/rate-limit.conf:/etc/nginx/snippets/rate-limit.conf:ro
       - nginx_letsencrypt:/etc/letsencrypt
     healthcheck:
       test:

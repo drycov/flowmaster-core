@@ -58,6 +58,7 @@ GitHub Actions: [docs/CI.md](../docs/CI.md).
 |------|------------|
 | `e2e/smoke.spec.ts` | Create document → approve / reject |
 | `e2e/workflow-actions.spec.ts` | Approve, reject, return (comment required) |
+| `e2e/roles-admin.spec.ts` | Роли: список, создание, матрица permissions |
 | `e2e/security-routes.spec.ts` | Route guards |
 | `e2e/tenant-isolation.spec.ts` | Cross-tenant isolation |
 | `e2e/auth.spec.ts` / `health.spec.ts` | Auth & health |

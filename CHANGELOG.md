@@ -10,15 +10,17 @@
 ### Added
 
 - E2E: `e2e/workflow-actions.spec.ts` — approve / reject / return с обязательным комментарием
+- E2E: `e2e/roles-admin.spec.ts` — список ролей, создание, toggle permission + save
 - E2E helper `e2e/helpers/documents.ts` — создание документа с custom route
 - Smoke: сценарий reject с карточки документа
 - `npm run uat:verify-rbac` — проверка audit triggers, `user_has_permission`, `correlation_id`
-- nginx snippet `docker/nginx/snippets/rate-limit.conf` (пример `limit_req` для auth/API)
+- nginx `limit_req` zones (`fm_auth`, `fm_api`) в HTTP и TLS стеках
+- `docker/nginx/conf.d/00-rate-limit-zones.conf` + location limits в `flowmaster.conf` / TLS tpl
 
 ### Documentation
 
-- Уточнены ограничения in-memory rate-limit при нескольких репликах; рекомендация nginx/Redis
-- Обновлены `e2e/README.md`, `scripts/README.md`
+- Уточнены ограничения in-memory rate-limit при нескольких репликах; nginx как production-контур
+- Обновлены `e2e/README.md`, `scripts/README.md`, `docs/SECURITY.md`
 
 ### Documentation (ранее)
 
